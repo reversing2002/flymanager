@@ -32,12 +32,11 @@ const ProfilePage = () => {
   const [balance, setBalance] = useState<{
     validated: number;
     pending: number;
-    total: number;
   } | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [dismissedAnnouncements, setDismissedAnnouncements] = useState<string[]>(
-    []
-  );
+  const [dismissedAnnouncements, setDismissedAnnouncements] = useState<
+    string[]
+  >([]);
   const [reservations, setReservations] = useState<any[]>([]);
 
   useEffect(() => {
@@ -133,7 +132,6 @@ const ProfilePage = () => {
         // Load balance using the centralized getMemberBalance function
         const balanceData = await getMemberBalance(user.id);
         setBalance(balanceData);
-
       } catch (error) {
         console.error("Error loading data:", error);
         setError("Erreur lors du chargement des données");
@@ -319,7 +317,11 @@ const ProfilePage = () => {
                     Prochains vols
                   </p>
                   <p className="mt-2 text-2xl font-bold text-slate-900">
-                    {reservations.filter(r => new Date(r.startTime) > new Date()).length}
+                    {
+                      reservations.filter(
+                        (r) => new Date(r.startTime) > new Date()
+                      ).length
+                    }
                   </p>
                 </div>
                 <div className="p-2 bg-slate-50 rounded-lg">

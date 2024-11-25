@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import type { Aircraft, FlightType, User } from "../../types/database";
-import { createFlight, getUsers } from "../../lib/queries";
+import { createFlight, getUsers } from "../../lib/queries/index";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";

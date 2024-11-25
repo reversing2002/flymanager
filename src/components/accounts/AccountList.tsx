@@ -9,7 +9,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import type { AccountEntry, User } from "../../types/database";
-import { getAccountEntries, getUsers } from "../../lib/queries";
+import { getAccountEntries, getUsers } from "../../lib/queries/index";
 import AccountEntryModal from "./AccountEntryModal";
 import CreditAccountModal from "./CreditAccountModal";
 import { useAuth } from "../../contexts/AuthContext";
@@ -151,9 +151,6 @@ const AccountList = () => {
   const pendingBalance = filteredEntries
     .filter((entry) => !entry.is_validated)
     .reduce((acc, entry) => acc + entry.amount, 0);
-
-  // Calculer le solde total
-  const totalBalance = validatedBalance + pendingBalance;
 
   const getUserName = (userId: string | null) => {
     if (!userId) return "-";
@@ -316,18 +313,6 @@ const AccountList = () => {
                 </h2>
                 <p className="text-2xl font-bold text-amber-600">
                   {formatAmount(pendingBalance)}
-                </p>
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Solde total
-                </h2>
-                <p
-                  className={`text-2xl font-bold ${
-                    totalBalance >= 0 ? "text-emerald-600" : "text-red-600"
-                  }`}
-                >
-                  {formatAmount(totalBalance)}
                 </p>
               </div>
             </div>

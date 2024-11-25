@@ -1,9 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { User, Phone, Mail, Calendar } from "lucide-react";
+import { User, Phone, Mail } from "lucide-react";
 import type { User as UserType } from "../../types/database";
-import { getMembershipStatus } from "../../lib/queries";
+import { getMembershipStatus } from "../../lib/queries/index";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -26,7 +25,10 @@ const MemberCard: React.FC<MemberCardProps> = ({ member }) => {
         const isValid = await getMembershipStatus(member.id);
         setIsMembershipValid(isValid);
       } catch (error) {
-        console.error("Erreur lors de la vérification de la cotisation:", error);
+        console.error(
+          "Erreur lors de la vérification de la cotisation:",
+          error
+        );
       }
     };
     checkMembership();

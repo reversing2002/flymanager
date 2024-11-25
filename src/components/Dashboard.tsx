@@ -1,23 +1,14 @@
 import React, { useState, useEffect } from "react";
-import {
-  Plane,
-  Users,
-  Calendar,
-  AlertTriangle,
-  Clock,
-  RotateCcw,
-  CreditCard,
-  CloudSun,
-  Award,
-  CalendarDays,
-} from "lucide-react";
+import { Plane, Users, Calendar, CreditCard } from "lucide-react";
 import {
   getAircraft,
   getUsers,
   getReservations,
   getFlights,
   getMemberBalance,
-} from "../lib/queries";
+  getDailyChallenge,
+} from "../lib/queries/index";
+
 import type {
   Aircraft,
   User,
@@ -30,11 +21,7 @@ import { useAuth } from "../contexts/AuthContext";
 import EditReservationModal from "./reservations/EditReservationModal";
 import AnnouncementBanner from "./announcements/AnnouncementBanner";
 import { supabase } from "../lib/supabase";
-import { toast } from "react-hot-toast";
-import { format, addDays } from "date-fns";
-import { fr } from "date-fns/locale";
 import type { DailyChallenge } from "../types/training";
-import { getDailyChallenge } from "../lib/queries/training";
 
 const StatCard = ({
   icon,
@@ -70,9 +57,9 @@ const Dashboard = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [flights, setFlights] = useState<Flight[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [dismissedAnnouncements, setDismissedAnnouncements] = useState<string[]>(
-    []
-  );
+  const [dismissedAnnouncements, setDismissedAnnouncements] = useState<
+    string[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [selectedReservation, setSelectedReservation] =
     useState<Reservation | null>(null);
@@ -80,7 +67,6 @@ const Dashboard = () => {
   const [balance, setBalance] = useState<{
     validated: number;
     pending: number;
-    total: number;
   } | null>(null);
   const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge | null>(
     null
@@ -171,7 +157,9 @@ const Dashboard = () => {
     );
   }
 
-  const activeAircraft = aircraft.filter((a) => a.status === "AVAILABLE").length;
+  const activeAircraft = aircraft.filter(
+    (a) => a.status === "AVAILABLE"
+  ).length;
   const totalAircraft = aircraft.length;
   const activePilots = users.filter((u) => u.role === "PILOT").length;
   const todayFlights = reservations.filter(

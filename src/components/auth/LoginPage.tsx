@@ -50,6 +50,26 @@ const testAccounts: TestAccount[] = [
     email: "thomas.roux@skyprout.fr",
     password: "TemporaryPassword123!",
   },
+  {
+    title: "Administrateur Saint Chamond - Pascal Descombe",
+    email: "pascal.descombe@ac-stchamond.fr",
+    password: "TemporaryPassword123!",
+  },
+  {
+    title: "Mécanicien Saint Chamond - André Jacoud",
+    email: "andre.jacoud@ac-stchamond.fr",
+    password: "TemporaryPassword123!",
+  },
+  {
+    title: "Pilote Saint Chamond - Eddy Fayet",
+    email: "eddy.fayet@ac-stchamond.fr",
+    password: "TemporaryPassword123!",
+  },
+  {
+    title: "Instructeur Saint Chamond - Nicolas Becuwe",
+    email: "nicolas.becuwe@ac-stchamond.fr",
+    password: "TemporaryPassword123!",
+  },
 ];
 
 const LoginPage = () => {

@@ -1,13 +1,15 @@
-import { supabase } from '../supabase';
-import type { User } from '../../types/database';
+import { supabase } from "../supabase";
+import type { User } from "../../types/database";
 
-export async function updateUser(data: Partial<User> & { id: string }): Promise<void> {
+export async function updateUser(
+  data: Partial<User> & { id: string }
+): Promise<void> {
   try {
-    console.log('Updating user with data:', data);
+    console.log("Updating user with data:", data);
 
     // Update user data in the public.users table
     const { error: userError } = await supabase
-      .from('users')
+      .from("users")
       .update({
         first_name: data.firstName,
         last_name: data.lastName,
@@ -19,27 +21,28 @@ export async function updateUser(data: Partial<User> & { id: string }): Promise<
         image_url: data.imageUrl,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', data.id);
+      .eq("id", data.id);
 
     if (userError) {
-      console.error('Error updating user:', userError);
+      console.error("Error updating user:", userError);
       throw userError;
     }
 
-    console.log('User update completed successfully');
+    console.log("User update completed successfully");
   } catch (error) {
-    console.error('Error in updateUser:', error);
+    console.error("Error in updateUser:", error);
     throw error;
   }
 }
 
 export async function getUserById(id: string): Promise<User | null> {
   try {
-    console.log('Getting user by ID:', id);
-    
+    console.log("Getting user by ID:", id);
+
     const { data, error } = await supabase
-      .from('users')
-      .select(`
+      .from("users")
+      .select(
+        `
         *,
         medical_certifications (
           id,
@@ -61,30 +64,34 @@ export async function getUserById(id: string): Promise<User | null> {
           name,
           has_qualification
         )
-      `)
-      .eq('id', id)
+      `
+      )
+      .eq("id", id)
       .single();
 
     if (error) {
-      console.error('Error fetching user:', error);
+      console.error("Error fetching user:", error);
       throw error;
     }
 
     if (!data) {
-      console.log('No user found with ID:', id);
+      console.log("No user found with ID:", id);
       return null;
     }
 
-    console.log('User data retrieved:', data);
+    console.log("User data retrieved:", data);
 
     // Get the latest valid medical certification
-    const latestMedical = data.medical_certifications?.sort((a, b) => 
-      new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime()
+    const latestMedical = data.medical_certifications?.sort(
+      (a, b) =>
+        new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime()
     )[0];
 
     // Get the latest license
-    const latestLicense = data.pilot_licenses?.sort((a, b) => 
-      new Date(b.valid_until || '').getTime() - new Date(a.valid_until || '').getTime()
+    const latestLicense = data.pilot_licenses?.sort(
+      (a, b) =>
+        new Date(b.valid_until || "").getTime() -
+        new Date(a.valid_until || "").getTime()
     )[0];
 
     return {
@@ -104,43 +111,38 @@ export async function getUserById(id: string): Promise<User | null> {
       updatedAt: data.updated_at,
     };
   } catch (error) {
-    console.error('Error in getUserById:', error);
+    console.error("Error in getUserById:", error);
     return null;
   }
 }
 
-export async function getUserQualifications(userId: string) {
-  const { data, error } = await supabase
-    .from('pilot_qualifications')
-    .select('*')
-    .eq('user_id', userId);
+export async function getUsers(): Promise<User[]> {
+  const { data, error } = await supabase.from("users").select("*");
 
   if (error) throw error;
-  return data;
-}
 
-export async function updatePilotQualifications(userId: string, qualifications: any[]): Promise<void> {
-  const { error: deleteError } = await supabase
-    .from('pilot_qualifications')
-    .delete()
-    .eq('user_id', userId);
+  const formatDate = (date: string | null) => {
+    if (!date) return null;
+    return new Date(date).toISOString().split("T")[0];
+  };
 
-  if (deleteError) throw deleteError;
-
-  const qualificationsToInsert = qualifications
-    .filter(qual => qual.hasQualification)
-    .map(qual => ({
-      user_id: userId,
-      code: qual.code,
-      name: qual.name,
-      has_qualification: true,
-    }));
-
-  if (qualificationsToInsert.length > 0) {
-    const { error: insertError } = await supabase
-      .from('pilot_qualifications')
-      .insert(qualificationsToInsert);
-
-    if (insertError) throw insertError;
-  }
+  return data.map((user) => ({
+    id: user.id,
+    firstName: user.first_name,
+    lastName: user.last_name,
+    email: user.email,
+    phone: user.phone,
+    gender: user.gender,
+    birthDate: formatDate(user.birth_date),
+    imageUrl: user.image_url,
+    defaultSchedule: user.default_schedule,
+    role: user.role,
+    membershipExpiry: formatDate(user.membership_expiry),
+    login: user.login,
+    password: user.password,
+    balance: user.balance,
+    isInstructor: user.role === "INSTRUCTOR",
+    createdAt: user.created_at,
+    updatedAt: user.updated_at,
+  }));
 }
