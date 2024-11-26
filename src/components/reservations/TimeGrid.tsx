@@ -178,6 +178,14 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     );
   };
 
+  const canEditReservation = (reservation: Reservation) => {
+    if (!user) return false;
+    if (user.role === "ADMIN") return true;
+    return reservation.userId === user.id || 
+           reservation.pilotId === user.id ||
+           reservation.instructorId === user.id;
+  };
+
   const handleCreateFlight = (reservation: Reservation) => {
     // Check if a flight already exists
     const hasExistingFlight = flights.some(
@@ -425,18 +433,31 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     }
 
     const canModify = canModifyReservation(reservation);
+    const isEditable = canEditReservation(reservation);
+    const hasStarted = new Date() > new Date(reservation.startTime);
+    const isCompleted = flights.some((f) => f.reservationId === reservation.id);
 
     return (
       <div
         className={`absolute inset-x-0 mx-0.5 sm:mx-1 ${bgColor} ${textColor} rounded-md text-xs overflow-hidden transition-colors shadow-sm border ${borderColor} group
-          ${canModify ? 'hover:shadow-md hover:scale-[1.02] transition-all cursor-grab active:cursor-grabbing' : ''}`}
+          ${isEditable && !isCompleted ? 'hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer' : ''}`}
         style={{
           height: `${height}rem`,
           top: `${top}rem`,
           zIndex: dragState.reservation?.id === reservation.id ? 2 : 1,
         }}
-        onMouseDown={(e) => handleReservationMouseDown(e, reservation, 'move')}
-        onMouseMove={handleReservationMouseMove}
+        onMouseDown={(e) => {
+          if (isEditable && !isCompleted) {
+            handleReservationMouseDown(e, reservation, 'move');
+          }
+        }}
+        onMouseUp={(e) => {
+          if (isEditable && !isCompleted && !dragState.type) {
+            onReservationClick(reservation);
+          }
+          handleMouseUp(e);
+        }}
+        onMouseMove={handleMouseMove}
       >
         {/* Poignées de redimensionnement */}
         {canModify && (
@@ -627,16 +648,16 @@ const TimeGrid: React.FC<TimeGridProps> = ({
           </div>
         </div>
       </div>
-      {showReservationModal && selectedReservation && (
+      {showReservationModal && (
         <ReservationModal
-          startTime={selectedReservation.startTime}
-          endTime={selectedReservation.endTime}
-          onClose={handleModalClose}
+          startTime={selectedReservation?.startTime}
+          endTime={selectedReservation?.endTime}
+          onClose={() => setShowReservationModal(false)}
           onSuccess={handleModalSuccess}
           aircraft={aircraft}
           users={users}
-          preselectedAircraftId={selectedReservation.aircraftId}
-          existingReservation={selectedReservation.reservation}
+          preselectedAircraftId={selectedReservation?.aircraftId}
+          existingReservation={selectedReservation?.reservation}
         />
       )}
     </div>

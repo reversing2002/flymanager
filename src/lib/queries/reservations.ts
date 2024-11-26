@@ -81,6 +81,7 @@ export async function updateReservation(id: string, data: Partial<Reservation>):
         instructor_id: data.instructorId || null,
         comments: data.comments,
         status: data.status,
+        flight_type_id: data.flightTypeId,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id);
