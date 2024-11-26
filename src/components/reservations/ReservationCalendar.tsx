@@ -9,9 +9,10 @@ import {
   isThisWeek,
   isBefore,
   isAfter,
+  subDays,
 } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import type { Aircraft, Reservation, User } from "../../types/database";
 import {
   getAircraft,
@@ -95,6 +96,18 @@ const ReservationCalendar = () => {
   const startDate = startOfWeek(currentDate, { locale: fr });
   const weekDays = [...Array(7)].map((_, i) => addDays(startDate, i));
 
+  const handlePreviousDay = () => {
+    setSelectedDate(subDays(selectedDate, 1));
+  };
+
+  const handleNextDay = () => {
+    setSelectedDate(addDays(selectedDate, 1));
+  };
+
+  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(startOfDay(new Date(event.target.value)));
+  };
+
   const handlePreviousWeek = () => {
     setCurrentDate(addDays(currentDate, -7));
   };
@@ -154,7 +167,11 @@ const ReservationCalendar = () => {
   const handleReservationUpdate = async (updatedReservation: Reservation) => {
     try {
       await updateReservation(updatedReservation.id, updatedReservation);
-      await loadInitialData(); // Recharger les données après la mise à jour
+      setReservations(prevReservations => {
+        return prevReservations.map(reservation => 
+          reservation.id === updatedReservation.id ? updatedReservation : reservation
+        );
+      });
       toast.success("Réservation mise à jour");
     } catch (error) {
       console.error("Error updating reservation:", error);
@@ -273,39 +290,63 @@ const ReservationCalendar = () => {
   const instructors = users.filter((u) => u.role === "INSTRUCTOR");
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-slate-900">
-            Planning des Réservations
-          </h1>
+    <div className="flex flex-col h-full">
+      <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white border-b gap-4">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
           <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+            onClick={handlePreviousDay}
+            className="p-2 hover:bg-gray-100 rounded-full"
+            aria-label="Jour précédent"
           >
-            <Filter className="h-4 w-4" />
-            <span>Filtres</span>
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          
+          <div className="flex items-center gap-2">
+            <div className="relative flex items-center gap-2 cursor-pointer">
+              <input
+                type="date"
+                value={format(selectedDate, "yyyy-MM-dd")}
+                onChange={handleDateChange}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                aria-label="Sélectionner une date"
+              />
+              <span className="text-lg font-semibold hidden sm:inline">
+                {format(selectedDate, "EEEE d MMMM yyyy", { locale: fr })}
+              </span>
+              <span className="text-lg font-semibold sm:hidden">
+                {format(selectedDate, "EEE d MMM", { locale: fr })}
+              </span>
+              <CalendarIcon className="w-5 h-5 text-gray-500 hover:text-gray-700 flex-shrink-0" />
+            </div>
+          </div>
+
+          <button
+            onClick={handleNextDay}
+            className="p-2 hover:bg-gray-100 rounded-full"
+            aria-label="Jour suivant"
+          >
+            <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex items-center space-x-4">
+
+        <div className="flex items-center gap-2">
           <button
-            onClick={handlePreviousWeek}
-            className="p-2 hover:bg-slate-100 rounded-full"
+            onClick={() => setSelectedDate(startOfDay(new Date()))}
+            className={`px-3 py-1.5 rounded-md text-sm ${
+              isToday(selectedDate)
+                ? "bg-blue-100 text-blue-700"
+                : "hover:bg-gray-100"
+            }`}
           >
-            <ChevronLeft className="h-5 w-5" />
+            Aujourd'hui
           </button>
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-slate-600" />
-            <span className="font-medium">
-              {format(startDate, "dd MMMM", { locale: fr })} -{" "}
-              {format(addDays(startDate, 6), "dd MMMM yyyy", { locale: fr })}
-            </span>
-          </div>
+          
           <button
-            onClick={handleNextWeek}
-            className="p-2 hover:bg-slate-100 rounded-full"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1 px-3 py-1.5 hover:bg-gray-100 rounded-md"
           >
-            <ChevronRight className="h-5 w-5" />
+            <Filter className="w-4 h-4" />
+            <span className="hidden sm:inline">Filtres</span>
           </button>
         </div>
       </div>
