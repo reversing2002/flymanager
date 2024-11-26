@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                String    @id @default(uuid())
+  firstName         String
+  lastName          String
+  email            String    @unique
+  phone            String?
+  role             String    // Au lieu de UserRole
+  licenseNumber    String?
+  licenseExpiry    DateTime?
+  medicalExpiry    DateTime?
+  membershipExpiry DateTime?
+  login            String    @unique
+  password         String
+  balance          Float     @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  reservations     Reservation[]
+  flights          Flight[]
+  instructedFlights Flight[] @relation("InstructorFlights")
+  accountEntries   AccountEntry[]
+  unavailabilities Unavailability[]
+  memberships      Membership[]
+
+  @@map("users")
+}
+
+model Aircraft {
+  id                String    @id @default(uuid())
+  name             String
+  type             String    // Au lieu de AircraftType
+  registration     String    @unique
+  capacity         Int       @default(1)
+  hourlyRate       Float
+  lastMaintenance  DateTime?
+  hoursBeforeMaintenance Int @default(0)
+  status           String    @default("AVAILABLE") // Au lieu de AircraftStatus
+  imageUrl         String?   // Nouveau champ pour l'URL de l'image
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  reservations     Reservation[]
+  flights          Flight[]
+  maintenances     Maintenance[]
+
+  @@map("aircraft")
+}
+
+model FlightType {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  requiresInstructor Boolean @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  reservations    Reservation[]
+  flights         Flight[]
+
+  @@map("flight_types")
+}
+
+model Membership {
+  id              String    @id @default(uuid())
+  userId          String
+  year            Int
+  amount          Float
+  paymentMethod   String
+  paymentDate     DateTime
+  isValid         Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@map("memberships")
+}
+
+model Reservation {
+  id              String    @id @default(uuid())
+  userId          String
+  aircraftId      String
+  flightTypeId    String
+  startTime       DateTime
+  endTime         DateTime
+  withInstructor  Boolean   @default(false)
+  status          String    @default("ACTIVE") // Au lieu de ReservationStatus
+  comments        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+  aircraft        Aircraft  @relation(fields: [aircraftId], references: [id])
+  flightType      FlightType @relation(fields: [flightTypeId], references: [id])
+  flight          Flight?
+
+  @@map("reservations")
+}
+
+model Flight {
+  id              String    @id @default(uuid())
+  reservationId   String    @unique
+  userId          String
+  aircraftId      String
+  flightTypeId    String
+  instructorId    String?
+  date            DateTime
+  duration        Int
+  destination     String?
+  cost            Float
+  paymentMethod   String    // Au lieu de PaymentMethod
+  isValidated     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  reservation     Reservation @relation(fields: [reservationId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
+  aircraft        Aircraft  @relation(fields: [aircraftId], references: [id])
+  flightType      FlightType @relation(fields: [flightTypeId], references: [id])
+  instructor      User?     @relation("InstructorFlights", fields: [instructorId], references: [id])
+
+  @@map("flights")
+}
+
+model AccountEntry {
+  id              String    @id @default(uuid())
+  userId          String
+  date            DateTime
+  type            String    // Au lieu de TransactionType
+  amount          Float
+  description     String?
+  isValidated     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@map("account_entries")
+}
+
+model Maintenance {
+  id              String    @id @default(uuid())
+  aircraftId      String
+  date            DateTime
+  type            String    // Au lieu de MaintenanceType
+  comments        String?
+  hoursAfterMaintenance Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  aircraft        Aircraft  @relation(fields: [aircraftId], references: [id])
+
+  @@map("maintenance")
+}
+
+model Unavailability {
+  id              String    @id @default(uuid())
+  userId          String
+  startTime       DateTime
+  endTime         DateTime
+  type            String    // Au lieu de UnavailabilityType
+  comments        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@map("unavailabilities")
+}
