@@ -6,6 +6,7 @@ import {
   Plane as PlaneSolid,
   Megaphone,
   Terminal,
+  ListOrdered,
 } from "lucide-react";
 import FlightImportTab from "./imports/FlightImportTab";
 import AccountImportTab from "./imports/AccountImportTab";
@@ -17,6 +18,7 @@ import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import ApiExplorer from "../api/ApiExplorer";
+import FlightTypeOrderModal from "./FlightTypeOrderModal";
 
 type TabType =
   | "flights"
@@ -24,12 +26,14 @@ type TabType =
   | "members"
   | "aircraft"
   | "announcements"
-  | "api";
+  | "api"
+  | "flightTypes";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<TabType>("flights");
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
+  const [showFlightTypeModal, setShowFlightTypeModal] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] =
     useState<Announcement | null>(null);
 
@@ -39,6 +43,7 @@ const SettingsPage = () => {
     { id: "members", label: "Membres", icon: Users },
     { id: "aircraft", label: "Avions", icon: PlaneSolid },
     { id: "announcements", label: "Annonces", icon: Megaphone },
+    { id: "flightTypes", label: "Types de vol", icon: ListOrdered },
     { id: "api", label: "API Explorer", icon: Terminal },
   ] as const;
 
@@ -111,7 +116,9 @@ const SettingsPage = () => {
         </div>
 
         <div className="p-6">
-          {activeTab !== "announcements" && activeTab !== "api" && (
+          {activeTab !== "announcements" && 
+           activeTab !== "api" && 
+           activeTab !== "flightTypes" && (
             <div className="mb-6 p-4 bg-sky-50 text-sky-800 rounded-lg">
               <h3 className="font-medium mb-2">Ordre d'import recommandé :</h3>
               <ol className="list-decimal list-inside space-y-1">
@@ -128,6 +135,24 @@ const SettingsPage = () => {
           {activeTab === "members" && <MemberImportTab />}
           {activeTab === "aircraft" && <AircraftImportTab />}
           {activeTab === "api" && <ApiExplorer />}
+          {activeTab === "flightTypes" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold">Types de vol</h2>
+                <button
+                  onClick={() => setShowFlightTypeModal(true)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <ListOrdered className="h-4 w-4" />
+                  <span>Gérer les types</span>
+                </button>
+              </div>
+
+              <p className="text-slate-600">
+                Gérez les différents types de vol disponibles et leur ordre d'affichage.
+              </p>
+            </div>
+          )}
           {activeTab === "announcements" && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
@@ -165,6 +190,10 @@ const SettingsPage = () => {
           )}
         </div>
       </div>
+
+      {showFlightTypeModal && (
+        <FlightTypeOrderModal onClose={() => setShowFlightTypeModal(false)} />
+      )}
     </div>
   );
 };

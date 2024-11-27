@@ -16,6 +16,7 @@ import {
   BarChart2,
   GraduationCap,
   ChevronDown,
+  Cog,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { signOut } from "../../lib/supabase";
@@ -56,6 +57,7 @@ const Navbar = () => {
   const canAccessTrainingAdmin = user?.role === "ADMIN" || user?.role === "INSTRUCTOR";
   const canAccessEvents = true;
   const showMyProgression = user?.role === "PILOT";
+  const canAccessDocumentation = true;
 
   const trainingPath = canAccessTrainingAdmin ? "/training-admin" : "/training";
 
@@ -195,6 +197,15 @@ const Navbar = () => {
                 />
               )}
 
+              {canAccessDocumentation && (
+                <NavLink
+                  to="/documentation"
+                  icon={<Book className="h-5 w-5" />}
+                  text="Documentation"
+                  compact
+                />
+              )}
+
               {canAccessTraining && showMyProgression && (
                 <NavLink
                   to="/progression"
@@ -320,6 +331,15 @@ const Navbar = () => {
                     to="/flights"
                     icon={<ClipboardList className="h-5 w-5" />}
                     text="Vols"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  />
+                )}
+
+                {canAccessDocumentation && (
+                  <NavLink
+                    to="/documentation"
+                    icon={<Book className="h-5 w-5" />}
+                    text="Documentation"
                     onClick={() => setIsMobileMenuOpen(false)}
                   />
                 )}

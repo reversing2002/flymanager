@@ -18,7 +18,7 @@ import type {
   ClubEvent,
 } from "../types/database";
 import { useAuth } from "../contexts/AuthContext";
-import EditReservationModal from "./reservations/EditReservationModal";
+import ReservationModal from "./reservations/ReservationModal";
 import AnnouncementBanner from "./announcements/AnnouncementBanner";
 import { supabase } from "../lib/supabase";
 import type { DailyChallenge } from "../types/training";
@@ -225,11 +225,17 @@ const Dashboard = () => {
       </div>
 
       {selectedReservation && (
-        <EditReservationModal
-          reservation={selectedReservation}
+        <ReservationModal
+          startTime={new Date(selectedReservation.startTime)}
+          endTime={new Date(selectedReservation.endTime)}
           onClose={() => setSelectedReservation(null)}
-          onUpdate={loadData}
-          reservations={reservations}
+          onSuccess={() => {
+            setSelectedReservation(null);
+            loadData();
+          }}
+          aircraft={aircraft}
+          users={users}
+          existingReservation={selectedReservation}
         />
       )}
     </div>

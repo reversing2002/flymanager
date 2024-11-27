@@ -23,7 +23,6 @@ import {
 import { getAircraftOrder, updateAircraftOrder } from "../../services/aircraft";
 import TimeGrid from "./TimeGrid";
 import ReservationModal from "./ReservationModal";
-import EditReservationModal from "./EditReservationModal";
 import FilterPanel, { FilterState } from "./FilterPanel";
 import { toast } from "react-hot-toast";
 import { validateReservation } from "../../lib/reservationValidation";
@@ -37,14 +36,12 @@ const ReservationCalendar = () => {
   const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
   const [showFilters, setShowFilters] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{
     start: Date;
     end: Date;
     aircraftId?: string;
   } | null>(null);
-  const [selectedReservation, setSelectedReservation] =
-    useState<Reservation | null>(null);
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
@@ -121,7 +118,6 @@ const ReservationCalendar = () => {
   };
 
   const handleTimeSlotClick = (start: Date, end: Date, aircraftId: string) => {
-    // Créer des dates locales en préservant les heures exactes
     const localStart = new Date(start.getTime());
     const localEnd = new Date(end.getTime());
 
@@ -130,12 +126,14 @@ const ReservationCalendar = () => {
       end: localEnd,
       aircraftId,
     });
+    setSelectedReservation(null);
     setShowReservationModal(true);
   };
 
   const handleReservationClick = (reservation: Reservation) => {
     setSelectedReservation(reservation);
-    setShowEditModal(true);
+    setSelectedTimeSlot(null);
+    setShowReservationModal(true);
   };
 
   const handleCreateFlight = (reservation: Reservation) => {
@@ -378,24 +376,25 @@ const ReservationCalendar = () => {
         />
       </div>
 
-      {showReservationModal && selectedTimeSlot && (
+      {showReservationModal && (
         <ReservationModal
-          startTime={selectedTimeSlot.start}
-          endTime={selectedTimeSlot.end}
-          preselectedAircraftId={selectedTimeSlot.aircraftId}
-          onClose={() => setShowReservationModal(false)}
-          onSuccess={loadInitialData}
-          aircraft={filteredAircraft}
+          startTime={selectedTimeSlot?.start || new Date(selectedReservation?.startTime || '')}
+          endTime={selectedTimeSlot?.end || new Date(selectedReservation?.endTime || '')}
+          onClose={() => {
+            setShowReservationModal(false);
+            setSelectedTimeSlot(null);
+            setSelectedReservation(null);
+          }}
+          onSuccess={() => {
+            setShowReservationModal(false);
+            setSelectedTimeSlot(null);
+            setSelectedReservation(null);
+            loadInitialData();
+          }}
+          aircraft={aircraft}
           users={users}
-        />
-      )}
-
-      {showEditModal && selectedReservation && (
-        <EditReservationModal
-          reservation={selectedReservation}
-          onClose={() => setShowEditModal(false)}
-          onUpdate={loadInitialData}
-          reservations={reservations}
+          preselectedAircraftId={selectedTimeSlot?.aircraftId}
+          existingReservation={selectedReservation}
         />
       )}
     </div>

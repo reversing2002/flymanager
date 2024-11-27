@@ -25,6 +25,7 @@ import ProgressionAdminPage from "./components/progression/admin/ProgressionAdmi
 import StudentProgressionsPage from "./components/progression/admin/StudentProgressionsPage";
 import SettingsPage from "./components/admin/SettingsPage";
 import StatsPage from "./components/stats/StatsPage";
+import DocumentationPage from "./components/documentation/DocumentationPage";
 
 function App() {
   const queryClient = new QueryClient({
@@ -118,6 +119,13 @@ function App() {
 
               {/* Events */}
               <Route path="events" element={<EventsPage />} />
+
+              {/* Documentation */}
+              <Route path="documentation" element={
+                <ProtectedRoute>
+                  <DocumentationPage />
+                </ProtectedRoute>
+              } />
 
               {/* Training */}
               <Route path="training" element={<TrainingPage />} />
