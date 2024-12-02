@@ -1,0 +1,361 @@
+import { createContext, useContext, useEffect, useState } from "react";
+import { Session, User as SupabaseUser } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
+import { useNavigate } from "react-router-dom";
+import { Role } from "../types/roles";
+
+interface AuthContextType {
+  session: Session | null;
+  user:
+    | (SupabaseUser & {
+        roles: Role[];
+        firstName?: string;
+        lastName?: string;
+        login?: string;
+        id: string;
+        auth_id: string;
+        club?: {
+          id: string;
+          name: string;
+        } | null;
+      })
+    | null;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  loading: boolean;
+  error: string | null;
+  getAccessToken: () => string | null;
+  updateUserData: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const AUTH_ERRORS = {
+  INVALID_CREDENTIALS: "Identifiants incorrects",
+  USER_NOT_FOUND: "Utilisateur non trouvé",
+  NETWORK_ERROR: "Erreur de connexion au serveur",
+  UNKNOWN_ERROR: "Une erreur inattendue est survenue",
+} as const;
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  const getAccessToken = () => {
+    const token = session?.access_token;
+    console.log(
+      "🔑 getAccessToken appelé:",
+      token ? "Token présent" : "Pas de token"
+    );
+    return token || null;
+  };
+
+  const debugSessionState = (session: Session | null) => {
+    console.group("🔍 Debug Session");
+    console.log("Session présente:", !!session);
+    if (session) {
+      console.log(
+        "Access Token:",
+        session.access_token?.substring(0, 20) + "..."
+      );
+      console.log("Expiration:", new Date(session.expires_at! * 1000));
+      console.log("User ID:", session.user?.id);
+    }
+    console.groupEnd();
+  };
+
+  useEffect(() => {
+    console.log("🔄 Initialisation de l'AuthProvider");
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log(
+        "📥 Session récupérée:",
+        session ? "Session active" : "Pas de session"
+      );
+      debugSessionState(session);
+
+      if (session?.user) {
+        console.log("👤 Utilisateur de la session:", session.user.email);
+
+        // Première requête pour obtenir les données utilisateur
+        supabase
+          .from("users")
+          .select(`
+            *,
+            club:club_members!inner(
+              club:clubs(
+                id,
+                name
+              )
+            )
+          `)
+          .eq("auth_id", session.user.id)
+          .single()
+          .then(({ data: userData, error: userError }) => {
+            if (userError) {
+              console.error(
+                "❌ Erreur lors de la récupération des données utilisateur:",
+                userError
+              );
+              return;
+            }
+
+            if (userData) {
+              // Deuxième requête pour obtenir les groupes via RPC
+              supabase
+                .rpc('get_user_groups', { user_id: userData.id })
+                .then(({ data: userGroups, error: groupsError }) => {
+                  if (groupsError) {
+                    console.error(
+                      "❌ Erreur lors de la récupération des groupes:",
+                      groupsError
+                    );
+                    return;
+                  }
+
+                  console.log("✅ Données utilisateur récupérées:", userData);
+                  console.log("✅ Groupes utilisateur:", userGroups);
+                  const roles = Array.isArray(userGroups) ? userGroups as Role[] : [];
+
+                  // Transformer la structure du club pour correspondre au type attendu
+                  const clubData = userData.club?.[0]?.club ? {
+                    id: userData.club[0].club.id,
+                    name: userData.club[0].club.name
+                  } : null;
+
+                  setUser({
+                    ...session.user,
+                    ...userData,
+                    roles,
+                    club: clubData
+                  });
+                });
+            }
+          });
+      }
+
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("🔄 Changement d'état d'authentification:", _event);
+      debugSessionState(session);
+
+      if (session?.user) {
+        console.log("👤 Nouvel utilisateur:", session.user.email);
+
+        // Première requête pour obtenir les données utilisateur
+        supabase
+          .from("users")
+          .select(`
+            *,
+            club:club_members!inner(
+              club:clubs(
+                id,
+                name
+              )
+            )
+          `)
+          .eq("auth_id", session.user.id)
+          .single()
+          .then(({ data: userData, error: userError }) => {
+            if (userError) {
+              console.error(
+                "❌ Erreur lors de la récupération des données utilisateur:",
+                userError
+              );
+              return;
+            }
+
+            if (userData) {
+              // Deuxième requête pour obtenir les groupes via RPC
+              supabase
+                .rpc('get_user_groups', { user_id: userData.id })
+                .then(({ data: userGroups, error: groupsError }) => {
+                  if (groupsError) {
+                    console.error(
+                      "❌ Erreur lors de la récupération des groupes:",
+                      groupsError
+                    );
+                    return;
+                  }
+
+                  console.log("✅ Données utilisateur mises à jour:", userData);
+                  console.log("✅ Groupes utilisateur:", userGroups);
+                  const roles = Array.isArray(userGroups) ? userGroups as Role[] : [];
+
+                  // Transformer la structure du club pour correspondre au type attendu
+                  const clubData = userData.club?.[0]?.club ? {
+                    id: userData.club[0].club.id,
+                    name: userData.club[0].club.name
+                  } : null;
+
+                  setUser({
+                    ...session.user,
+                    ...userData,
+                    roles,
+                    club: clubData
+                  });
+                });
+            }
+          });
+      } else {
+        setUser(null);
+      }
+
+      setSession(session);
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const updateUserData = async () => {
+    if (!session?.user) return;
+
+    // Première requête pour obtenir les données utilisateur
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select(`
+        *,
+        club:club_members!inner(
+          club:clubs(
+            id,
+            name
+          )
+        )
+      `)
+      .eq("auth_id", session.user.id)
+      .single();
+
+    if (userError) {
+      console.error(
+        "❌ Erreur lors de la récupération des données utilisateur:",
+        userError
+      );
+      return;
+    }
+
+    if (userData) {
+      // Deuxième requête pour obtenir les groupes via RPC
+      const { data: userGroups, error: groupsError } = await supabase
+        .rpc('get_user_groups', { user_id: userData.id });
+
+      if (groupsError) {
+        console.error(
+          "❌ Erreur lors de la récupération des groupes:",
+          groupsError
+        );
+        return;
+      }
+
+      console.log("✅ Données utilisateur mises à jour:", userData);
+      console.log("✅ Groupes utilisateur:", userGroups);
+      const roles = Array.isArray(userGroups) ? userGroups as Role[] : [];
+
+      // Transformer la structure du club pour correspondre au type attendu
+      const clubData = userData.club?.[0]?.club ? {
+        id: userData.club[0].club.id,
+        name: userData.club[0].club.name
+      } : null;
+
+      setUser({
+        ...session.user,
+        ...userData,
+        roles,
+        club: clubData
+      });
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error("❌ Erreur de connexion:", error);
+        if (error.message.includes("Invalid login credentials")) {
+          setError(AUTH_ERRORS.INVALID_CREDENTIALS);
+        } else if (error.message.includes("User not found")) {
+          setError(AUTH_ERRORS.USER_NOT_FOUND);
+        } else if (error.message.includes("NetworkError")) {
+          setError(AUTH_ERRORS.NETWORK_ERROR);
+        } else {
+          setError(AUTH_ERRORS.UNKNOWN_ERROR);
+        }
+        return;
+      }
+
+      if (data.user) {
+        console.log("✅ Connexion réussie:", data.user.email);
+      }
+    } catch (error) {
+      console.error("❌ Erreur inattendue:", error);
+      setError(AUTH_ERRORS.UNKNOWN_ERROR);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("❌ Erreur de déconnexion:", error);
+        setError(AUTH_ERRORS.UNKNOWN_ERROR);
+        return;
+      }
+
+      console.log("✅ Déconnexion réussie");
+      navigate("/login");
+    } catch (error) {
+      console.error("❌ Erreur inattendue:", error);
+      setError(AUTH_ERRORS.UNKNOWN_ERROR);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        session,
+        user,
+        signIn,
+        signOut,
+        loading,
+        error,
+        getAccessToken,
+        updateUserData,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}
