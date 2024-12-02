@@ -2629,6 +2629,18 @@
           ]
       },
       {
+          "name": "user_clubs",
+          "columns": [
+              {
+                  "name": "club_id",
+                  "type": "uuid",
+                  "nullable": true,
+                  "default_value": null
+              }
+          ],
+          "constraints": null
+      },
+      {
           "name": "discovery_flights",
           "columns": [
               {
@@ -2640,38 +2652,38 @@
               {
                   "name": "pilot_id",
                   "type": "uuid",
-                  "nullable": false,
+                  "nullable": true,
                   "default_value": null
               },
               {
                   "name": "aircraft_id",
                   "type": "uuid",
-                  "nullable": false,
+                  "nullable": true,
                   "default_value": null
               },
               {
                   "name": "date",
                   "type": "date",
-                  "nullable": false,
+                  "nullable": true,
                   "default_value": null
               },
               {
                   "name": "start_time",
                   "type": "time without time zone",
-                  "nullable": false,
+                  "nullable": true,
                   "default_value": null
               },
               {
                   "name": "end_time",
                   "type": "time without time zone",
-                  "nullable": false,
+                  "nullable": true,
                   "default_value": null
               },
               {
                   "name": "status",
                   "type": "text",
                   "nullable": false,
-                  "default_value": null
+                  "default_value": "'REQUESTED'::text"
               },
               {
                   "name": "total_weight",
@@ -2696,34 +2708,52 @@
                   "type": "timestamp with time zone",
                   "nullable": true,
                   "default_value": "CURRENT_TIMESTAMP"
+              },
+              {
+                  "name": "passenger_count",
+                  "type": "integer",
+                  "nullable": false,
+                  "default_value": "1"
+              },
+              {
+                  "name": "preferred_dates",
+                  "type": "text",
+                  "nullable": true,
+                  "default_value": null
+              },
+              {
+                  "name": "contact_email",
+                  "type": "text",
+                  "nullable": true,
+                  "default_value": null
+              },
+              {
+                  "name": "contact_phone",
+                  "type": "text",
+                  "nullable": true,
+                  "default_value": null
+              },
+              {
+                  "name": "club_id",
+                  "type": "uuid",
+                  "nullable": false,
+                  "default_value": null
               }
           ],
           "constraints": [
               "discovery_flights_aircraft_id_fkey",
+              "discovery_flights_club_id_fkey",
+              "discovery_flights_passenger_count_check",
               "discovery_flights_pilot_id_fkey",
               "discovery_flights_pkey",
               "discovery_flights_status_check",
-              "2200_80969_1_not_null",
-              "2200_80969_2_not_null",
-              "2200_80969_3_not_null",
-              "2200_80969_4_not_null",
-              "2200_80969_5_not_null",
-              "2200_80969_6_not_null",
-              "2200_80969_7_not_null",
-              "2200_80969_8_not_null"
+              "discovery_flights_total_weight_check",
+              "2200_81041_1_not_null",
+              "2200_81041_7_not_null",
+              "2200_81041_8_not_null",
+              "2200_81041_12_not_null",
+              "2200_81041_16_not_null"
           ]
-      },
-      {
-          "name": "user_clubs",
-          "columns": [
-              {
-                  "name": "club_id",
-                  "type": "uuid",
-                  "nullable": true,
-                  "default_value": null
-              }
-          ],
-          "constraints": null
       },
       {
           "name": "pilot_qualifications",
@@ -3131,6 +3161,73 @@
               "maintenance_history_pkey",
               "2200_42267_1_not_null",
               "2200_42267_4_not_null"
+          ]
+      },
+      {
+          "name": "discovery_notes",
+          "columns": [
+              {
+                  "name": "id",
+                  "type": "uuid",
+                  "nullable": false,
+                  "default_value": "uuid_generate_v4()"
+              },
+              {
+                  "name": "flight_id",
+                  "type": "uuid",
+                  "nullable": true,
+                  "default_value": null
+              },
+              {
+                  "name": "author_id",
+                  "type": "uuid",
+                  "nullable": true,
+                  "default_value": null
+              },
+              {
+                  "name": "content",
+                  "type": "text",
+                  "nullable": false,
+                  "default_value": null
+              },
+              {
+                  "name": "type",
+                  "type": "text",
+                  "nullable": true,
+                  "default_value": null
+              },
+              {
+                  "name": "notification_settings",
+                  "type": "jsonb",
+                  "nullable": true,
+                  "default_value": "'{\"send_sms\": false, \"sms_sent\": false, \"email_sent\": false, \"send_email\": false}'::jsonb"
+              },
+              {
+                  "name": "created_at",
+                  "type": "timestamp with time zone",
+                  "nullable": true,
+                  "default_value": "timezone('utc'::text, now())"
+              },
+              {
+                  "name": "updated_at",
+                  "type": "timestamp with time zone",
+                  "nullable": true,
+                  "default_value": "timezone('utc'::text, now())"
+              },
+              {
+                  "name": "is_archived",
+                  "type": "boolean",
+                  "nullable": true,
+                  "default_value": "false"
+              }
+          ],
+          "constraints": [
+              "discovery_notes_author_id_fkey",
+              "discovery_notes_flight_id_fkey",
+              "discovery_notes_pkey",
+              "discovery_notes_type_check",
+              "2200_81651_1_not_null",
+              "2200_81651_4_not_null"
           ]
       },
       {
@@ -4507,7 +4604,43 @@
           "permissive": "PERMISSIVE"
       },
       {
-          "name": "Discovery flights are viewable by admins and discovery pilots",
+          "name": "Users can delete discovery flights from their club",
+          "roles": [
+              [
+                  "public"
+              ]
+          ],
+          "table": "discovery_flights",
+          "command": "DELETE",
+          "definition": "(club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid())))",
+          "permissive": "PERMISSIVE"
+      },
+      {
+          "name": "Users can insert discovery flights for their club",
+          "roles": [
+              [
+                  "public"
+              ]
+          ],
+          "table": "discovery_flights",
+          "command": "INSERT",
+          "definition": null,
+          "permissive": "PERMISSIVE"
+      },
+      {
+          "name": "Users can update discovery flights from their club",
+          "roles": [
+              [
+                  "public"
+              ]
+          ],
+          "table": "discovery_flights",
+          "command": "UPDATE",
+          "definition": "(club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid())))",
+          "permissive": "PERMISSIVE"
+      },
+      {
+          "name": "Users can view discovery flights from their club",
           "roles": [
               [
                   "public"
@@ -4515,7 +4648,7 @@
           ],
           "table": "discovery_flights",
           "command": "SELECT",
-          "definition": "(auth.uid() IN ( SELECT user_roles.user_id\n   FROM user_roles\n  WHERE (user_roles.role = ANY (ARRAY['ADMIN'::text, 'DISCOVERY_PILOT'::text]))))",
+          "definition": "(club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid())))",
           "permissive": "PERMISSIVE"
       },
       {
@@ -4696,6 +4829,30 @@
           "table": "maintenance_types",
           "command": "SELECT",
           "definition": "true",
+          "permissive": "PERMISSIVE"
+      },
+      {
+          "name": "Les notes peuvent être créées par les pilotes découverte et",
+          "roles": [
+              [
+                  "public"
+              ]
+          ],
+          "table": "discovery_notes",
+          "command": "INSERT",
+          "definition": null,
+          "permissive": "PERMISSIVE"
+      },
+      {
+          "name": "Les notes sont visibles par les pilotes découverte et admins",
+          "roles": [
+              [
+                  "public"
+              ]
+          ],
+          "table": "discovery_notes",
+          "command": "SELECT",
+          "definition": "(EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = ANY ((ARRAY['ADMIN'::character varying, 'DISCOVERY_PILOT'::character varying])::text[])))))",
           "permissive": "PERMISSIVE"
       },
       {
