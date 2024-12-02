@@ -311,7 +311,7 @@ Dates préférées : ${flight.preferred_dates}`;
             onReservationClose();
             queryClient.invalidateQueries(['discoveryFlights']);
           }}
-          aircraft={aircraft || []}
+          aircraft={(aircraft || []).filter(a => a.capacity >= ((selectedFlight.passenger_count || 0) + 1))}
           users={users || []}
           preselectedAircraftId={selectedFlight.aircraft_id}
           preselectedFlightTypeId={discoveryFlightTypeId}
