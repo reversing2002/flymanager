@@ -15,6 +15,7 @@ import { createReservation } from '../../lib/queries/reservations';
 
 const DiscoveryFlightList = () => {
   const [selectedFlight, setSelectedFlight] = useState<DiscoveryFlight | null>(null);
+  const [discoveryFlightTypeId] = useState<string>('77777777-3333-3333-3333-333333333333');
   const { isOpen: isNewFlightOpen, onOpen: onNewFlightOpen, onClose: onNewFlightClose } = useDisclosure();
   const { isOpen: isReservationOpen, onOpen: onReservationOpen, onClose: onReservationClose } = useDisclosure();
   const { user } = useAuth();
@@ -72,22 +73,12 @@ const DiscoveryFlightList = () => {
     }
   });
 
-  const createDateFromTimeString = (date: string | null, time: string | null): Date => {
-    if (!date || !time) {
-      throw new Error('La date et l\'heure sont requises');
-    }
-    
-    // Format attendu pour date: "YYYY-MM-DD"
-    // Format attendu pour time: "HH:mm:ss" ou "HH:mm"
-    const [hours, minutes] = time.split(':');
-    const dateObj = new Date(date);
-    dateObj.setHours(parseInt(hours, 10));
-    dateObj.setMinutes(parseInt(minutes, 10));
-    dateObj.setSeconds(0);
-    return dateObj;
+  const handleAssignClick = (flight: DiscoveryFlight) => {
+    setSelectedFlight(flight);
+    onReservationOpen();
   };
 
-  const handleAssignClick = (flight: DiscoveryFlight) => {
+  const handleReservationClick = (flight: DiscoveryFlight) => {
     setSelectedFlight(flight);
     onReservationOpen();
   };
@@ -116,6 +107,17 @@ const DiscoveryFlightList = () => {
       console.error('Erreur lors de l\'assignation du vol:', error);
       toast.error('Erreur lors de l\'assignation du vol');
     }
+  };
+
+  const formatClientComment = (flight: DiscoveryFlight) => {
+    const clientName = flight.client_name?.trim() || 'Non renseigné';
+    const phone = flight.phone_number?.trim() || 'Non renseigné';
+    const email = flight.email?.trim() || 'Non renseigné';
+
+    return `Informations du client :
+Nom et prénom : ${clientName}
+Téléphone : ${phone}
+Email : ${email}`;
   };
 
   if (isLoading) {
@@ -272,7 +274,7 @@ const DiscoveryFlightList = () => {
             <Button
               colorScheme="blue"
               size="sm"
-              onClick={() => handleAssignClick(flight)}
+              onClick={() => handleReservationClick(flight)}
               className="mt-4"
             >
               S'assigner ce vol
@@ -294,23 +296,24 @@ const DiscoveryFlightList = () => {
         onClose={onNewFlightClose} 
       />
 
-      {/* Modal de réservation */}
-      {selectedFlight && (
+      {selectedFlight && isReservationOpen && (
         <ReservationModal
           startTime={new Date()}
           endTime={new Date(new Date().setHours(new Date().getHours() + 1))}
           onClose={() => {
-            onReservationClose();
             setSelectedFlight(null);
+            onReservationClose();
           }}
-          onSuccess={handleReservationSuccess}
+          onSuccess={() => {
+            setSelectedFlight(null);
+            onReservationClose();
+            queryClient.invalidateQueries(['discoveryFlights']);
+          }}
           aircraft={aircraft || []}
           users={users || []}
           preselectedAircraftId={selectedFlight.aircraft_id}
-          existingReservation={null}
-          comments={`Vol découverte pour ${selectedFlight.client_name || 'Client'}\n` +
-            `${selectedFlight.phone_number ? `Téléphone: ${selectedFlight.phone_number}\n` : ''}` +
-            `${selectedFlight.email ? `Email: ${selectedFlight.email}` : ''}`}
+          preselectedFlightTypeId={discoveryFlightTypeId}
+          comments={formatClientComment(selectedFlight)}
         />
       )}
     </div>

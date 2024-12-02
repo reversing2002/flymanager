@@ -18,8 +18,10 @@ interface ReservationModalProps {
   aircraft: Aircraft[];
   users: User[];
   preselectedAircraftId?: string;
+  preselectedFlightTypeId?: string;
   existingReservation?: Reservation;
   onCreateFlight?: (reservation: Reservation) => void;
+  comments?: string;
 }
 
 const ReservationModal: React.FC<ReservationModalProps> = ({
@@ -30,8 +32,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   aircraft: propAircraft,
   users: propUsers,
   preselectedAircraftId,
+  preselectedFlightTypeId,
   existingReservation,
   onCreateFlight,
+  comments,
 }) => {
   const { user: currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -68,8 +72,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     startTime: formatDateForInput(startTime),
     endTime: formatDateForInput(endTime),
     instructorId: existingReservation?.instructorId || "",
-    comments: existingReservation?.comments || "",
-    flightTypeId: existingReservation?.flightTypeId || "",
+    comments: comments || existingReservation?.comments || "",
+    flightTypeId: preselectedFlightTypeId || existingReservation?.flightTypeId || "",
     withInstructor: existingReservation?.instructorId ? true : false,
   });
 
@@ -129,8 +133,16 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         if (flightTypesData) {
           setFlightTypes(flightTypesData);
           
-          // Only set default flight type for new reservations
-          if (!existingReservation) {
+          // Si un type est présélectionné, l'utiliser
+          if (preselectedFlightTypeId) {
+            setFormData(prev => ({
+              ...prev,
+              flightTypeId: preselectedFlightTypeId,
+              withInstructor: flightTypesData.find(t => t.id === preselectedFlightTypeId)?.requires_instructor || false,
+            }));
+          }
+          // Sinon, utiliser le type par défaut pour les nouvelles réservations
+          else if (!existingReservation) {
             const defaultType = flightTypesData.find(t => !t.requires_instructor);
             if (defaultType) {
               setFormData(prev => ({
