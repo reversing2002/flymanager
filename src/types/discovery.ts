@@ -3,20 +3,22 @@ import { User, Aircraft } from './database';
 export interface DiscoveryFlight {
   id: string;
   pilot_id: string | null;
-  aircraft_id: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  aircraft_id: string | null;
+  date: string | null;
+  start_time: string | null;
+  end_time: string | null;
   status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
   total_weight: number;
-  comments?: string;
+  comments: string;
   created_at: string;
   updated_at: string;
+  passenger_count: number;
+  preferred_dates: string;
+  contact_email: string;
+  contact_phone: string;
+  club_id: string;
   pilot?: User;
   aircraft?: Aircraft;
-  client_name: string;
-  phone_number: string;
-  email: string;
 }
 
 export interface Passenger {

@@ -110,14 +110,16 @@ const DiscoveryFlightList = () => {
   };
 
   const formatClientComment = (flight: DiscoveryFlight) => {
-    const clientName = flight.client_name?.trim() || 'Non renseigné';
-    const phone = flight.phone_number?.trim() || 'Non renseigné';
-    const email = flight.email?.trim() || 'Non renseigné';
+    const phone = flight.contact_phone || 'Non renseigné';
+    const email = flight.contact_email || 'Non renseigné';
 
-    return `Informations du client :
-Nom et prénom : ${clientName}
+    const comment = `Informations du client :
 Téléphone : ${phone}
-Email : ${email}`;
+Email : ${email}
+Nombre de passagers : ${flight.passenger_count}
+Dates préférées : ${flight.preferred_dates}`;
+
+    return comment;
   };
 
   if (isLoading) {
