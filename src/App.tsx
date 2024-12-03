@@ -33,6 +33,8 @@ import DocumentationPage from "./components/documentation/DocumentationPage";
 import DiscoveryFlightsPage from "./pages/DiscoveryFlightsPage";
 import DiscoveryQRCode from "./components/discovery/DiscoveryQRCode";
 import NewDiscoveryFlightPage from "./pages/NewDiscoveryFlightPage";
+import DiscoveryFlightSuccess from "./components/discovery/DiscoveryFlightSuccess";
+import DiscoveryFlightError from "./components/discovery/DiscoveryFlightError";
 
 function App() {
   const queryClient = new QueryClient({
@@ -54,6 +56,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
             <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
+            <Route path="/discovery-flight/success" element={<DiscoveryFlightSuccess />} />
+            <Route path="/discovery-flight/error" element={<DiscoveryFlightError />} />
 
             {/* Protected routes - MainLayout */}
             <Route
