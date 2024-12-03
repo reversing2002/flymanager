@@ -51,6 +51,36 @@ app.post("/api/webhooks/stripe",
           const paymentIntent = event.data.object;
           console.log('PaymentIntent was successful!');
           break;
+        case 'checkout.session.completed':
+          const session = event.data.object;
+          console.log('Checkout session completed:', session);
+          // Vous pouvez accéder aux métadonnées de la session
+          const { flightId, customerEmail, customerPhone } = session.metadata || {};
+          
+          if (flightId) {
+            try {
+              // Mettre à jour le statut du vol dans votre base de données
+              const { data: flightData, error: flightError } = await supabase
+                .from('discovery_flights')
+                .update({ payment_status: 'paid' })
+                .eq('id', flightId)
+                .select('*')
+                .single();
+              
+              if (flightError) throw flightError;
+              
+              console.log(`Vol découverte ${flightId} marqué comme payé`);
+
+              // Créer la conversation et envoyer le message de confirmation
+              await getOrCreateConversation(flightId, customerPhone);
+              await sendConfirmationMessage(flightId, flightData);
+              
+              console.log('Message de confirmation envoyé avec succès');
+            } catch (err) {
+              console.error('Erreur lors du traitement du paiement:', err);
+            }
+          }
+          break;
         // Add other event types as needed
         default:
           console.log(`Unhandled event type ${event.type}`);
