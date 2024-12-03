@@ -20,6 +20,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
+import { stripePromise } from '../../lib/stripe';
 
 interface NewDiscoveryFlightModalProps {
   isOpen?: boolean;
@@ -70,10 +71,11 @@ const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({
 
   const onSubmit = async (data: FormData) => {
     try {
-      const { error } = await supabase
+      // 1. Créer d'abord le vol découverte
+      const { data: flight, error: flightError } = await supabase
         .from('discovery_flights')
         .insert([{
-          status: 'REQUESTED',
+          status: 'PENDING',
           contact_email: data.contact_email,
           contact_phone: data.contact_phone,
           passenger_count: data.passenger_count,
@@ -81,16 +83,44 @@ const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({
           preferred_dates: data.preferred_dates,
           comments: data.comments,
           club_id: data.club_id
-        }]);
+        }])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (flightError) throw flightError;
 
-      toast({
-        title: 'Demande envoyée',
-        description: 'Nous vous contacterons pour confirmer les disponibilités',
-        status: 'success',
-        duration: 5000,
+      // 2. Créer une session de paiement Stripe
+      const response = await fetch("https://stripe.linked.fr/api/create-discovery-session/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          flightId: flight.id,
+          customerEmail: data.contact_email
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Erreur ${response.status}: ${errorData.error || response.statusText}`);
+      }
+
+      const { sessionId } = await response.json();
+
+      // 3. Rediriger vers Stripe Checkout
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error("Stripe non initialisé");
+      }
+
+      const { error: stripeError } = await stripe.redirectToCheckout({
+        sessionId,
+      });
+
+      if (stripeError) {
+        throw stripeError;
+      }
 
       queryClient.invalidateQueries({ queryKey: ['discoveryFlights'] });
       reset();
