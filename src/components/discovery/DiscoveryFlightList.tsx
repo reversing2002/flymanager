@@ -227,6 +227,36 @@ Dates préférées : ${flight.preferred_dates}`;
     }
   };
 
+  const handleSubmit = async (content: string, type: 'CLIENT_COMMUNICATION' | 'INTERNAL', sendEmail: boolean, sendSMS: boolean) => {
+    if (!selectedFlight || !user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('discovery_notes')
+        .insert({
+          flight_id: selectedFlight.id,
+          content,
+          type,
+          author_id: user.id,
+          notification_settings: {
+            send_email: sendEmail,
+            send_sms: sendSMS,
+            email_sent: false,
+            sms_sent: false
+          }
+        });
+
+      if (error) throw error;
+
+      // Rafraîchir les notes
+      queryClient.invalidateQueries(['discoveryNotes']);
+      toast.success('Note créée avec succès');
+    } catch (err) {
+      console.error('Erreur lors de la création de la note:', err);
+      toast.error('Erreur lors de la création de la note');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -329,160 +359,180 @@ Dates préférées : ${flight.preferred_dates}`;
         .map(flight => (
           <div 
             key={flight.id}
-            className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6 border border-transparent hover:border-blue-100"
+            className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-4 border border-transparent hover:border-blue-100"
           >
-            <div className="flex items-start justify-between">
-              <div className="space-y-4 flex-grow">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                      Vol découverte {flight.aircraft?.registration ? `- ${flight.aircraft.registration}` : ''}
-                      <Badge
-                        colorScheme={
-                          flight.status === 'REQUESTED' ? 'purple' :
-                          flight.status === 'PENDING' ? 'orange' :
-                          flight.status === 'CONFIRMED' ? 'green' :
-                          flight.status === 'COMPLETED' ? 'blue' : 'red'
-                        }
-                        className="ml-2"
-                      >
-                        {flight.status === 'REQUESTED' ? 'Demande reçue' :
-                         flight.status === 'PENDING' ? 'En attente' :
-                         flight.status === 'CONFIRMED' ? 'Confirmé' :
-                         flight.status === 'COMPLETED' ? 'Effectué' : 'Annulé'}
-                      </Badge>
-                    </h3>
-
-                    {flight.date && (
-                      <p className="text-slate-600 flex items-center gap-2 mt-2">
-                        <Calendar className="h-4 w-4" />
-                        {format(new Date(flight.date), 'EEEE d MMMM yyyy', { locale: fr })}
-                        {flight.start_time && flight.end_time && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {flight.start_time.substring(0, 5)} - {flight.end_time.substring(0, 5)}
-                          </span>
-                        )}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    {canAddFlight && !flight.pilot_id && (
-                      <Button
-                        colorScheme="blue"
-                        size="sm"
-                        onClick={() => handleAssignClick(flight)}
-                      >
-                        S'assigner ce vol
-                      </Button>
-                    )}
-                    {flight.pilot?.id === user?.id && (
-                      <Button
-                        colorScheme="red"
-                        size="sm"
-                        variant="ghost"
-                        onClick={async () => {
-                          try {
-                            if (!user?.id) return;
-                            const { error: updateError } = await supabase
-                              .from('discovery_flights')
-                              .update({ pilot_id: null })
-                              .eq('id', flight.id);
-
-                            if (updateError) throw updateError;
-                            toast.success('Vol découverte désassigné');
-                            queryClient.invalidateQueries(['discoveryFlights']);
-                          } catch (error) {
-                            console.error('Erreur lors de la désassignation:', error);
-                            toast.error('Erreur lors de la désassignation');
-                          }
-                        }}
-                      >
-                        Se désassigner
-                      </Button>
-                    )}
-                  </div>
+            <div className="flex items-center gap-4">
+              {/* Partie gauche avec les informations principales */}
+              <div className="flex-grow">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-base font-medium">
+                    {flight.aircraft?.registration}
+                  </h3>
+                  <Badge
+                    variant="subtle"
+                    colorScheme={
+                      flight.status === 'REQUESTED' ? 'purple' :
+                      flight.status === 'PENDING' ? 'orange' :
+                      flight.status === 'CONFIRMED' ? 'green' :
+                      flight.status === 'COMPLETED' ? 'blue' : 'red'
+                    }
+                    className="text-xs px-2 py-0.5 rounded-full"
+                  >
+                    {flight.status === 'REQUESTED' ? 'Demande reçue' :
+                     flight.status === 'PENDING' ? 'En attente' :
+                     flight.status === 'CONFIRMED' ? 'Confirmé' :
+                     flight.status === 'COMPLETED' ? 'Effectué' : 'Annulé'}
+                  </Badge>
+                  <span className="text-xs text-gray-500 ml-auto">
+                    Demande créée le {format(new Date(flight.created_at), 'dd/MM/yyyy', { locale: fr })}
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Tooltip label="Nombre de passagers">
-                    <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-3 rounded-lg">
-                      <Users className="h-5 w-5" />
-                      <span>{flight.passenger_count} passager(s)</span>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <div className="flex items-center gap-1.5 text-gray-600">
+                    <Calendar className="h-4 w-4" />
+                    {flight.date ? 
+                      format(new Date(flight.date + 'T00:00:00'), 'd MMM yyyy', { locale: fr }) : 
+                      flight.preferred_dates ? 
+                        <span className="italic">Préférence : {flight.preferred_dates}</span> :
+                        'Date à définir'
+                    }
+                  </div>
+                  {flight.start_time && flight.end_time && (
+                    <div className="flex items-center gap-1.5 text-gray-600">
+                      <Clock className="h-4 w-4" />
+                      {flight.start_time.substring(0, 5)} - {flight.end_time.substring(0, 5)}
                     </div>
-                  </Tooltip>
-
-                  <Tooltip label="Poids total">
-                    <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-3 rounded-lg">
-                      <Scale className="h-5 w-5" />
-                      <span>{flight.total_weight} kg</span>
-                    </div>
-                  </Tooltip>
-
-                  <Tooltip label={flight.contact_email}>
-                    <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-3 rounded-lg cursor-help">
-                      <Mail className="h-5 w-5" />
+                  )}
+                  {flight.contact_email && (
+                    <div className="flex items-center gap-1.5 text-gray-600">
+                      <Mail className="h-4 w-4" />
                       <span className="truncate">{flight.contact_email}</span>
                     </div>
-                  </Tooltip>
-
-                  <Tooltip label={flight.contact_phone}>
-                    <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-3 rounded-lg">
-                      <Phone className="h-5 w-5" />
-                      <span>{flight.contact_phone}</span>
+                  )}
+                  {flight.contact_phone && (
+                    <div className="flex items-center gap-1.5 text-gray-600">
+                      <Phone className="h-4 w-4" />
+                      {flight.contact_phone}
                     </div>
-                  </Tooltip>
+                  )}
                 </div>
+              </div>
 
-                {flight.pilot && (
-                  <div className="flex items-center gap-2 text-slate-600 mt-2 bg-blue-50 p-2 rounded-lg">
-                    <Users className="h-5 w-5" />
-                    <span>
-                      Pilote : {flight.pilot.first_name} {flight.pilot.last_name}
-                    </span>
-                  </div>
+              {/* Partie droite avec les actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Tooltip label="Ajouter une note">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setSelectedFlight(flight);
+                      setSelectedNoteType('INTERNAL');
+                      onNotesOpen();
+                    }}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                  </Button>
+                </Tooltip>
+                {canAddFlight && !flight.pilot_id && (
+                  <Button
+                    colorScheme="blue"
+                    size="sm"
+                    onClick={() => handleAssignClick(flight)}
+                  >
+                    S'assigner ce vol
+                  </Button>
                 )}
+                {flight.pilot?.id === user?.id && (
+                  <Button
+                    colorScheme="red"
+                    size="sm"
+                    variant="ghost"
+                    onClick={async () => {
+                      try {
+                        if (!user?.id) return;
+                        const { error: updateError } = await supabase
+                          .from('discovery_flights')
+                          .update({ pilot_id: null })
+                          .eq('id', flight.id);
 
-                {/* Section des notes */}
-                <div className="mt-4 border-t pt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 text-slate-700">
-                      <MessageCircle className="h-5 w-5" />
-                      <h4 className="font-medium">
-                        Notes et communications {notesMap?.get(flight.id)?.length > 0 && `(${notesMap.get(flight.id).length})`}
-                      </h4>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        colorScheme="green"
-                        leftIcon={<MessageSquare className="h-4 w-4" />}
-                        onClick={() => {
-                          setSelectedFlight(flight);
-                          setSelectedNoteType('CLIENT_COMMUNICATION');
-                          onNotesOpen();
-                        }}
+                        if (updateError) throw updateError;
+                        toast.success('Vol découverte désassigné');
+                        queryClient.invalidateQueries(['discoveryFlights']);
+                      } catch (error) {
+                        console.error('Erreur lors de la désassignation:', error);
+                        toast.error('Erreur lors de la désassignation');
+                      }
+                    }}
+                  >
+                    Se désassigner
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Section des notes */}
+            <div className="mt-4 border-t pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  onClick={() => setExpandedNotes(prev => ({
+                    ...prev,
+                    [flight.id]: !prev[flight.id]
+                  }))}
+                  className="flex items-center gap-2 text-slate-700 hover:text-blue-600 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="h-5 w-5" />
+                    <h4 className="font-medium flex items-center gap-2">
+                      Notes et communications 
+                      {notesMap?.get(flight.id)?.length > 0 && (
+                        <span className="bg-slate-100 px-2 py-0.5 rounded text-sm">
+                          {notesMap.get(flight.id).length}
+                        </span>
+                      )}
+                      <svg
+                        className={`w-4 h-4 transition-transform ${expandedNotes[flight.id] ? 'transform rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
-                        Communication client
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        colorScheme="purple"
-                        leftIcon={<MessageCircle className="h-4 w-4" />}
-                        onClick={() => {
-                          setSelectedFlight(flight);
-                          setSelectedNoteType('INTERNAL');
-                          onNotesOpen();
-                        }}
-                      >
-                        Note interne
-                      </Button>
-                    </div>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </h4>
                   </div>
+                </button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    colorScheme="green"
+                    leftIcon={<MessageSquare className="h-4 w-4" />}
+                    onClick={() => {
+                      setSelectedFlight(flight);
+                      setSelectedNoteType('CLIENT_COMMUNICATION');
+                      onNotesOpen();
+                    }}
+                  >
+                    Communication client
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    colorScheme="purple"
+                    leftIcon={<MessageCircle className="h-4 w-4" />}
+                    onClick={() => {
+                      setSelectedFlight(flight);
+                      setSelectedNoteType('INTERNAL');
+                      onNotesOpen();
+                    }}
+                  >
+                    Note interne
+                  </Button>
+                </div>
+              </div>
 
+              {expandedNotes[flight.id] && (
+                <>
                   {notesMap?.get(flight.id)?.length > 0 ? (
                     <div className="space-y-3">
                       {notesMap.get(flight.id).map((note: any) => (
@@ -532,8 +582,8 @@ Dates préférées : ${flight.preferred_dates}`;
                       <p className="text-slate-600 text-sm">Aucune note pour le moment</p>
                     </div>
                   )}
-                </div>
-              </div>
+                </>
+              )}
             </div>
           </div>
         ))}
