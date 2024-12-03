@@ -31,6 +31,8 @@ import SettingsPage from "./components/admin/SettingsPage";
 import StatsPage from "./components/stats/StatsPage";
 import DocumentationPage from "./components/documentation/DocumentationPage";
 import DiscoveryFlightsPage from "./pages/DiscoveryFlightsPage";
+import DiscoveryQRCode from "./components/discovery/DiscoveryQRCode";
+import NewDiscoveryFlightPage from "./pages/NewDiscoveryFlightPage";
 
 function App() {
   const queryClient = new QueryClient({
@@ -50,6 +52,8 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
+            <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
 
             {/* Protected routes - MainLayout */}
             <Route

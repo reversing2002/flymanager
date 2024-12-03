@@ -4,6 +4,8 @@ import {
   Modal,
   ModalOverlay,
   ModalContent,
+  ModalHeader,
+  ModalCloseButton,
   Button,
   FormControl,
   FormLabel,
@@ -12,15 +14,17 @@ import {
   Stack,
   useToast,
   FormHelperText,
-  Select
+  Select,
+  useDisclosure
 } from '@chakra-ui/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 
 interface NewDiscoveryFlightModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  isPublic?: boolean;
 }
 
 interface FormData {
@@ -33,7 +37,15 @@ interface FormData {
   club_id: string;
 }
 
-export default function NewDiscoveryFlightModal({ isOpen, onClose }: NewDiscoveryFlightModalProps) {
+const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({ 
+  isOpen: propIsOpen, 
+  onClose: propOnClose,
+  isPublic = false 
+}) => {
+  const { isOpen: defaultIsOpen, onClose: defaultOnClose } = useDisclosure({ defaultIsOpen: isPublic });
+  const isOpen = propIsOpen ?? defaultIsOpen;
+  const onClose = propOnClose ?? defaultOnClose;
+
   const {
     register,
     handleSubmit,
@@ -96,18 +108,12 @@ export default function NewDiscoveryFlightModal({ isOpen, onClose }: NewDiscover
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay className="bg-black/50" />
-      <ModalContent mx={4} className="bg-white rounded-xl shadow-xl">
+      <ModalContent maxW="2xl" className="bg-white rounded-xl shadow-xl">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex items-center justify-between p-6 border-b">
-            <h2 className="text-xl font-semibold">Nouveau vol découverte</h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
+          <ModalHeader>
+            {isPublic ? 'Réserver un vol découverte' : 'Nouveau vol découverte'}
+          </ModalHeader>
+          {!isPublic && <ModalCloseButton />}
           <div className="p-6 space-y-6">
             <FormControl isInvalid={!!errors.contact_email}>
               <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
@@ -231,24 +237,19 @@ export default function NewDiscoveryFlightModal({ isOpen, onClose }: NewDiscover
           </div>
 
           <div className="flex justify-end space-x-4 p-6 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-              disabled={isSubmitting}
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors disabled:opacity-50"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Envoi...' : 'Envoyer la demande'}
-            </button>
+            <Button colorScheme="blue" type="submit" isLoading={isSubmitting}>
+              {isPublic ? 'Envoyer ma demande' : 'Créer le vol découverte'}
+            </Button>
+            {!isPublic && (
+              <Button variant="ghost" onClick={onClose}>
+                Annuler
+              </Button>
+            )}
           </div>
         </form>
       </ModalContent>
     </Modal>
   );
 }
+
+export default NewDiscoveryFlightModal;
