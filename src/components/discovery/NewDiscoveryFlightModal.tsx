@@ -71,67 +71,86 @@ const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({
 
   const onSubmit = async (data: FormData) => {
     try {
-      // 1. Créer d'abord le vol découverte
-      const { data: flight, error: flightError } = await supabase
+      // Créer la réservation dans Supabase
+      const { data: flightData, error: flightError } = await supabase
         .from('discovery_flights')
-        .insert([{
-          status: 'PENDING',
-          contact_email: data.contact_email,
-          contact_phone: data.contact_phone,
-          passenger_count: data.passenger_count,
-          total_weight: data.total_weight,
-          preferred_dates: data.preferred_dates,
-          comments: data.comments,
-          club_id: data.club_id
-        }])
+        .insert([
+          {
+            contact_email: data.contact_email,
+            contact_phone: data.contact_phone,
+            passenger_count: data.passenger_count,
+            total_weight: data.total_weight,
+            preferred_dates: data.preferred_dates,
+            comments: data.comments,
+            club_id: data.club_id,
+            status: 'PENDING'
+          }
+        ])
         .select()
         .single();
 
       if (flightError) throw flightError;
 
-      // 2. Créer une session de paiement Stripe
-      const response = await fetch("https://stripe.linked.fr/api/create-discovery-session/", {
-        method: "POST",
+      // Créer une conversation Twilio pour ce vol
+      const conversationResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/conversations/create`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          flightId: flight.id,
-          customerEmail: data.contact_email
+          flightId: flightData.id,
+          customerPhone: data.contact_phone,
+        }),
+      });
+
+      if (!conversationResponse.ok) {
+        const errorData = await conversationResponse.json().catch(() => ({}));
+        console.error('Erreur lors de la création de la conversation:', errorData);
+      }
+
+      // Créer la session de paiement Stripe
+      const stripe = await stripePromise;
+      if (!stripe) throw new Error('Stripe n\'est pas initialisé');
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stripe/create-discovery-flight-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          flightId: flightData.id,
+          customerEmail: data.contact_email,
+          customerPhone: data.contact_phone,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Erreur ${response.status}: ${errorData.error || response.statusText}`);
+        throw new Error(`Erreur lors de la création de la session: ${errorData.error || response.statusText}`);
       }
 
-      const { sessionId } = await response.json();
+      const session = await response.json();
 
-      // 3. Rediriger vers Stripe Checkout
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error("Stripe non initialisé");
-      }
-
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId,
+      // Rediriger vers la page de paiement Stripe
+      const result = await stripe.redirectToCheckout({
+        sessionId: session.id,
       });
 
-      if (stripeError) {
-        throw stripeError;
+      if (result.error) {
+        throw new Error(result.error.message);
       }
 
-      queryClient.invalidateQueries({ queryKey: ['discoveryFlights'] });
-      reset();
-      onClose();
     } catch (error) {
+      console.error('Erreur:', error);
       toast({
         title: 'Erreur',
-        description: 'Une erreur est survenue lors de la création de la demande',
+        description: error instanceof Error ? error.message : 'Une erreur est survenue lors de la réservation',
         status: 'error',
         duration: 5000,
       });
+    } finally {
+      reset();
+      onClose();
     }
   };
 
