@@ -185,10 +185,13 @@ async function sendConfirmationMessage(flightId, flightDetails) {
       .conversations(`flight_${flightId}`)
       .fetch();
 
-    await conversation.messages.create({
-      author: 'service',
-      body: message
-    });
+    await twilioClient.conversations.v1
+      .conversations(`flight_${flightId}`)
+      .messages
+      .create({
+        author: 'service',
+        body: message
+      });
 
     // Mettre à jour le statut du vol dans Supabase
     const { error } = await supabase
