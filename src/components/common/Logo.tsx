@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 interface LogoProps {
   className?: string;
@@ -6,7 +7,7 @@ interface LogoProps {
 
 export const Logo: React.FC<LogoProps> = ({ className = '' }) => {
   return (
-    <div className={`logo-container ${className}`}>
+    <Link to="/" className={`logo-container ${className}`}>
     <div className="logo-wrapper">
       <span className="logo-number">4</span>
       <span className="logo-text">fly</span>
@@ -40,7 +41,6 @@ export const Logo: React.FC<LogoProps> = ({ className = '' }) => {
         margin-left: -0.05em;
       }
     `}</style>
-  </div>
-  
+  </Link>
   );
 };
