@@ -414,7 +414,13 @@ const Dashboard = () => {
 
       // Filter for valid aircraft
       const aircraftExists = aircraft.some(a => a.id === r.aircraftId);
-      return aircraftExists;
+      if (!aircraftExists) return false;
+
+      // Filter for reservations relevant to the current user
+      const isUserPilot = r.pilotId === user?.id;
+      const isUserInstructor = r.instructorId === user?.id;
+      
+      return isUserPilot || isUserInstructor;
     })
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 

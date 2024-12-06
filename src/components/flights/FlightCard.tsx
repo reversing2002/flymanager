@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plane, Clock, MapPin, CreditCard } from 'lucide-react';
+import { Plane, Clock, MapPin, CreditCard, GraduationCap } from 'lucide-react';
 import type { Flight, Aircraft, User } from '../../types/database';
 
 interface FlightCardProps {
@@ -49,6 +49,12 @@ const FlightCard: React.FC<FlightCardProps> = ({ flight, aircraft, user }) => {
               <CreditCard className="h-4 w-4 text-slate-400" />
               <span>{flight.cost.toFixed(2)} €</span>
             </div>
+            {flight.instructor_cost > 0 && (
+              <div className="flex items-center space-x-2">
+                <GraduationCap className="h-4 w-4 text-slate-400" />
+                <span>{flight.instructor_cost.toFixed(2)} €</span>
+              </div>
+            )}
           </div>
         </div>
 

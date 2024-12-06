@@ -392,6 +392,9 @@ const FlightList = () => {
                         <th className="text-right p-4 font-medium text-slate-600">
                           Prix du vol
                         </th>
+                        <th className="text-right p-4 font-medium text-slate-600">
+                          Prix instruction
+                        </th>
                         <th className="text-left p-4 font-medium text-slate-600">
                           Mode de paiement
                         </th>
@@ -446,6 +449,9 @@ const FlightList = () => {
                             </td>
                             <td className="p-4 text-right">
                               {flight.cost?.toFixed(2) || "N/A"}
+                            </td>
+                            <td className="p-4 text-right">
+                              {flight.instructor_cost > 0 ? flight.instructor_cost.toFixed(2) : "-"}
                             </td>
                             <td className="p-4">
                               {flight.paymentMethod === "ACCOUNT"
@@ -511,6 +517,9 @@ const FlightList = () => {
                         <th className="text-right p-4 font-medium text-slate-600">
                           Prix du vol
                         </th>
+                        <th className="text-right p-4 font-medium text-slate-600">
+                          Prix instruction
+                        </th>
                         <th className="text-left p-4 font-medium text-slate-600">
                           Mode de paiement
                         </th>
@@ -565,6 +574,9 @@ const FlightList = () => {
                             </td>
                             <td className="p-4 text-right">
                               {flight.cost?.toFixed(2) || "N/A"}
+                            </td>
+                            <td className="p-4 text-right">
+                              {flight.instructor_cost > 0 ? flight.instructor_cost.toFixed(2) : "-"}
                             </td>
                             <td className="p-4">
                               {flight.paymentMethod === "ACCOUNT"
@@ -621,6 +633,9 @@ const FlightList = () => {
                       <th className="text-right p-4 font-medium text-slate-600">
                         Prix du vol
                       </th>
+                      <th className="text-right p-4 font-medium text-slate-600">
+                        Prix instruction
+                      </th>
                       <th className="text-left p-4 font-medium text-slate-600">
                         Mode de paiement
                       </th>
@@ -675,6 +690,9 @@ const FlightList = () => {
                           </td>
                           <td className="p-4 text-right">
                             {flight.cost?.toFixed(2) || "N/A"}
+                          </td>
+                          <td className="p-4 text-right">
+                            {flight.instructor_cost > 0 ? flight.instructor_cost.toFixed(2) : "-"}
                           </td>
                           <td className="p-4">
                             {flight.paymentMethod === "ACCOUNT"

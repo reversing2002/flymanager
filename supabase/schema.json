@@ -873,12 +873,6 @@
                     "default_value": "now()"
                 },
                 {
-                    "name": "role",
-                    "type": "text",
-                    "nullable": false,
-                    "default_value": null
-                },
-                {
                     "name": "status",
                     "type": "text",
                     "nullable": true,
@@ -889,11 +883,9 @@
                 "club_members_club_id_fkey",
                 "club_members_pkey",
                 "club_members_user_id_fkey",
-                "valid_member_role",
                 "valid_member_status",
                 "2200_44859_1_not_null",
-                "2200_44859_2_not_null",
-                "2200_44859_3_not_null"
+                "2200_44859_2_not_null"
             ]
         },
         {
@@ -961,24 +953,6 @@
                 "2200_44846_2_not_null",
                 "2200_44846_3_not_null"
             ]
-        },
-        {
-            "name": "user_roles",
-            "columns": [
-                {
-                    "name": "user_id",
-                    "type": "uuid",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "role",
-                    "type": "text",
-                    "nullable": true,
-                    "default_value": null
-                }
-            ],
-            "constraints": null
         },
         {
             "name": "user_groups",
@@ -1575,12 +1549,6 @@
                     "default_value": "uuid_generate_v4()"
                 },
                 {
-                    "name": "sep_validity",
-                    "type": "date",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
                     "name": "registration_date",
                     "type": "timestamp without time zone",
                     "nullable": true,
@@ -1767,6 +1735,12 @@
                     "default_value": null
                 },
                 {
+                    "name": "sep_validity",
+                    "type": "date",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
                     "name": "first_name",
                     "type": "text",
                     "nullable": false,
@@ -1798,12 +1772,6 @@
                 },
                 {
                     "name": "login",
-                    "type": "text",
-                    "nullable": false,
-                    "default_value": null
-                },
-                {
-                    "name": "password",
                     "type": "text",
                     "nullable": false,
                     "default_value": null
@@ -1941,7 +1909,6 @@
                 "2200_32844_3_not_null",
                 "2200_32844_4_not_null",
                 "2200_32844_11_not_null",
-                "2200_32844_12_not_null",
                 "16488_16489_2_not_null",
                 "16488_16489_33_not_null",
                 "16488_16489_35_not_null"
@@ -3999,6 +3966,30 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Everyone can view clubs",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "clubs",
+            "command": "SELECT",
+            "definition": "true",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Only super admins can manage clubs",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "clubs",
+            "command": "ALL",
+            "definition": "has_any_group(auth.uid(), ARRAY['ADMIN'::text])",
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Enable club membership management",
             "roles": [
                 [
@@ -4056,30 +4047,6 @@
             "table": "club_members",
             "command": "ALL",
             "definition": "is_super_admin(auth.uid())",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Everyone can view clubs",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "clubs",
-            "command": "SELECT",
-            "definition": "true",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Only super admins can manage clubs",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "clubs",
-            "command": "ALL",
-            "definition": "has_any_group(auth.uid(), ARRAY['ADMIN'::text])",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4263,6 +4230,42 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Enable aircraft management for admins and mechanics",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "aircraft",
+            "command": "ALL",
+            "definition": "(has_any_group(auth.uid(), ARRAY['ADMIN'::text, 'MECHANIC'::text]) AND (EXISTS ( SELECT 1\n   FROM club_members\n  WHERE ((club_members.user_id = auth.uid()) AND (club_members.club_id = aircraft.club_id)))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable read access for club members",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "aircraft",
+            "command": "SELECT",
+            "definition": "(EXISTS ( SELECT 1\n   FROM club_members\n  WHERE ((club_members.user_id = auth.uid()) AND (club_members.club_id = aircraft.club_id))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable insert access for administrators",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "users",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Enable member creation for instructors",
             "roles": [
                 [
@@ -4299,6 +4302,30 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Enable read access for authenticated users",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "users",
+            "command": "SELECT",
+            "definition": "true",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Users can update their own record",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "users",
+            "command": "UPDATE",
+            "definition": "(id = auth.uid())",
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "users_read_policy",
             "roles": [
                 [
@@ -4308,30 +4335,6 @@
             "table": "users",
             "command": "SELECT",
             "definition": "((auth.uid() = id) OR (EXISTS ( SELECT 1\n   FROM (club_members auth_member\n     JOIN club_members target_member ON ((auth_member.club_id = target_member.club_id)))\n  WHERE ((auth_member.user_id = auth.uid()) AND (target_member.user_id = users.id)))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable aircraft management for admins and mechanics",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "aircraft",
-            "command": "ALL",
-            "definition": "(has_any_group(auth.uid(), ARRAY['ADMIN'::text, 'MECHANIC'::text]) AND (EXISTS ( SELECT 1\n   FROM club_members\n  WHERE ((club_members.user_id = auth.uid()) AND (club_members.club_id = aircraft.club_id)))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable read access for club members",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "aircraft",
-            "command": "SELECT",
-            "definition": "(EXISTS ( SELECT 1\n   FROM club_members\n  WHERE ((club_members.user_id = auth.uid()) AND (club_members.club_id = aircraft.club_id))))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4539,6 +4542,18 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Enable read access for skill validations",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "skill_validations",
+            "command": "SELECT",
+            "definition": "((instructor_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM club_members viewer\n  WHERE ((viewer.user_id = auth.uid()) AND (EXISTS ( SELECT 1\n           FROM (club_members student\n             JOIN student_progressions sp ON ((sp.student_id = student.user_id)))\n          WHERE ((student.club_id = viewer.club_id) AND (sp.id = skill_validations.progression_id))))))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Enable write access for instructors and admins",
             "roles": [
                 [
@@ -4644,6 +4659,18 @@
             "table": "student_progressions",
             "command": "SELECT",
             "definition": "((student_id = auth.uid()) OR has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text]))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable read access for student progressions",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "student_progressions",
+            "command": "SELECT",
+            "definition": "(EXISTS ( SELECT 1\n   FROM club_members viewer\n  WHERE ((viewer.user_id = auth.uid()) AND (EXISTS ( SELECT 1\n           FROM club_members student\n          WHERE ((student.club_id = viewer.club_id) AND (student.user_id = student_progressions.student_id)))))))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4767,6 +4794,18 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Enable read access for progression modules",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "progression_modules",
+            "command": "SELECT",
+            "definition": "true",
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Enable write access for instructors and admins",
             "roles": [
                 [
@@ -4804,6 +4843,18 @@
         },
         {
             "name": "Enable read access for all users",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "progression_skills",
+            "command": "SELECT",
+            "definition": "true",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable read access for progression skills",
             "roles": [
                 [
                     "authenticated"
@@ -4878,12 +4929,12 @@
             "name": "Enable read access for account entries",
             "roles": [
                 [
-                    "public"
+                    "authenticated"
                 ]
             ],
             "table": "account_entries",
             "command": "SELECT",
-            "definition": "\nCASE\n    WHEN (EXISTS ( SELECT 1\n       FROM club_members cm1\n      WHERE ((cm1.user_id = auth.uid()) AND (cm1.role = 'ADMIN'::text) AND (EXISTS ( SELECT 1\n               FROM club_members cm2\n              WHERE ((cm2.club_id = cm1.club_id) AND (cm2.user_id = account_entries.user_id))))))) THEN true\n    ELSE (user_id = auth.uid())\nEND",
+            "definition": "((EXISTS ( SELECT 1\n   FROM (((flights f\n     JOIN club_members cm ON ((cm.club_id = f.club_id)))\n     JOIN user_group_memberships ugm ON ((ugm.user_id = auth.uid())))\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((f.id = account_entries.flight_id) AND (((ug.name)::text = 'Administrateurs'::text) OR ((account_entries.user_id = auth.uid()) AND ((ug.name)::text = ANY ((ARRAY['Pilotes'::character varying, 'Instructeurs'::character varying])::text[]))))))) OR (user_id = auth.uid()))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -5430,8 +5481,8 @@
     "functions": [
         {
             "name": "add_club_member",
-            "arguments": "p_club_id uuid, p_user_id uuid, p_role text",
-            "definition": "CREATE OR REPLACE FUNCTION public.add_club_member(p_club_id uuid, p_user_id uuid, p_role text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n    INSERT INTO club_members (club_id, user_id, role)\n    VALUES (p_club_id, p_user_id, p_role)\n    ON CONFLICT (club_id, user_id) \n    DO UPDATE SET \n        role = EXCLUDED.role,\n        updated_at = now();\nEND;\n$function$\n",
+            "arguments": "p_club_id uuid, p_user_id uuid",
+            "definition": "CREATE OR REPLACE FUNCTION public.add_club_member(p_club_id uuid, p_user_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n    INSERT INTO club_members (club_id, user_id)\n    VALUES (p_club_id, p_user_id)\n    ON CONFLICT (club_id, user_id) \n    DO UPDATE SET \n        updated_at = now();\nEND;\n$function$\n",
             "return_type": "void"
         },
         {
@@ -5467,7 +5518,13 @@
         {
             "name": "create_auth_user",
             "arguments": "p_email text, p_password text, p_role text, p_login text",
-            "definition": "CREATE OR REPLACE FUNCTION public.create_auth_user(p_email text, p_password text, p_role text, p_login text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_existing_user RECORD;\n  v_user_id UUID;\n  v_instance_id UUID := '00000000-0000-0000-0000-000000000000';\nBEGIN\n  -- Récupérer l'ID existant et le rôle\n  SELECT id, role, email INTO v_existing_user\n  FROM public.users\n  WHERE login = p_login;\n\n  -- Générer un UUID pour auth.users\n  v_user_id := gen_random_uuid();\n\n  -- Insérer dans auth.users\n  INSERT INTO auth.users (\n    id,\n    instance_id,\n    email,\n    encrypted_password,\n    email_confirmed_at,    -- cette colonne est OK\n    role,\n    aud,\n    created_at,\n    updated_at,\n    is_sso_user,\n    is_anonymous,\n    raw_user_meta_data,\n    raw_app_meta_data\n  )\n  VALUES (\n    v_user_id,\n    v_instance_id,\n    v_existing_user.email,\n    crypt(p_password, gen_salt('bf')),\n    NOW(),                 -- email_confirmed_at est OK\n    'authenticated',\n    'authenticated',\n    NOW(),\n    NOW(),\n    false,\n    false,\n    jsonb_build_object(\n      'login', p_login,\n      'role', v_existing_user.role\n    ),\n    jsonb_build_object(\n      'provider', 'email',\n      'providers', ARRAY['email']\n    )\n  );\n\n  -- Mettre à jour public.users avec l'auth_id\n  UPDATE public.users\n  SET auth_id = v_user_id\n  WHERE id = v_existing_user.id;\n\n  RETURN v_user_id;\nEND;\n$function$\n",
+            "definition": "CREATE OR REPLACE FUNCTION public.create_auth_user(p_email text, p_password text, p_role text, p_login text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_existing_user RECORD;\n  v_user_id UUID;\n  v_instance_id UUID := '00000000-0000-0000-0000-000000000000';\nBEGIN\n  -- Récupérer l'ID existant\n  SELECT id, email INTO v_existing_user\n  FROM public.users\n  WHERE login = p_login;\n\n  -- Générer un UUID pour auth.users\n  v_user_id := gen_random_uuid();\n\n  -- Insérer dans auth.users\n  INSERT INTO auth.users (\n    id,\n    instance_id,\n    email,\n    encrypted_password,\n    email_confirmed_at,\n    role,\n    aud,\n    created_at,\n    updated_at,\n    is_sso_user,\n    is_anonymous,\n    raw_user_meta_data,\n    raw_app_meta_data\n  )\n  VALUES (\n    v_user_id,\n    v_instance_id,\n    v_existing_user.email,\n    crypt(p_password, gen_salt('bf')),\n    NOW(),\n    'authenticated',\n    'authenticated',\n    NOW(),\n    NOW(),\n    false,\n    false,\n    jsonb_build_object(\n      'login', p_login,\n      'role', p_role\n    ),\n    jsonb_build_object(\n      'provider', 'email',\n      'providers', ARRAY['email']\n    )\n  );\n\n  -- Mettre à jour public.users avec l'auth_id\n  UPDATE public.users\n  SET auth_id = v_user_id\n  WHERE id = v_existing_user.id;\n\n  RETURN v_user_id;\nEND;\n$function$\n",
+            "return_type": "uuid"
+        },
+        {
+            "name": "create_auth_user",
+            "arguments": "p_email text, p_password text, p_role text, p_login text, p_user_id uuid",
+            "definition": "CREATE OR REPLACE FUNCTION public.create_auth_user(p_email text, p_password text, p_role text, p_login text, p_user_id uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_existing_user RECORD;\n  v_instance_id UUID := '00000000-0000-0000-0000-000000000000';\nBEGIN\n  -- Récupérer l'utilisateur existant\n  SELECT id, email INTO v_existing_user\n  FROM public.users\n  WHERE id = p_user_id;\n\n  -- Insérer dans auth.users avec l'ID fourni\n  INSERT INTO auth.users (\n    id,\n    instance_id,\n    email,\n    encrypted_password,\n    email_confirmed_at,\n    role,\n    aud,\n    created_at,\n    updated_at,\n    is_sso_user,\n    is_anonymous,\n    raw_user_meta_data,\n    raw_app_meta_data\n  )\n  VALUES (\n    p_user_id,  -- Utiliser l'ID fourni au lieu d'en générer un nouveau\n    v_instance_id,\n    v_existing_user.email,\n    crypt(p_password, gen_salt('bf')),\n    NOW(),\n    'authenticated',\n    'authenticated',\n    NOW(),\n    NOW(),\n    false,\n    false,\n    jsonb_build_object(\n      'login', p_login,\n      'role', p_role\n    ),\n    jsonb_build_object(\n      'provider', 'email',\n      'providers', ARRAY['email']\n    )\n  );\n\n  -- Mettre à jour public.users avec l'auth_id\n  UPDATE public.users\n  SET auth_id = p_user_id  -- Utiliser le même ID\n  WHERE id = v_existing_user.id;\n\n  RETURN p_user_id;\nEND;\n$function$\n",
             "return_type": "uuid"
         },
         {

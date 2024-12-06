@@ -123,6 +123,7 @@ export interface Flight {
   destination?: string;
   hourly_rate: number;
   cost: number;
+  instructor_cost?: number;
   payment_method: PaymentMethod;
   is_validated: boolean;
   accounting_category: string;

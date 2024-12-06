@@ -34,6 +34,7 @@ export async function getFlights(): Promise<Flight[]> {
     destination: flight.destination,
     hourlyRate: flight.hourly_rate,
     cost: flight.cost,
+    instructorCost: flight.instructor_cost,
     paymentMethod: flight.payment_method,
     isValidated: flight.is_validated,
     accountingCategory: flight.flight_type?.accounting_category?.name,
