@@ -194,8 +194,9 @@ const Navbar = () => {
       </div>
 
       {/* Menu latéral */}
-      <nav className={`fixed top-[48px] left-0 bottom-0 bg-[#1a1f2e] text-gray-300 transition-all duration-300 ease-in-out z-[9998] overflow-y-auto
-        ${isMobileMenuOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full md:translate-x-0'}`}>
+      <nav className={`fixed top-[48px] left-0 bottom-0 bg-[#1a1f2e] text-gray-300 transition-all duration-300 ease-in-out md:top-0 md:w-64 ${
+        isMobileMenuOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full md:translate-x-0"
+      }`}>
         <div className="min-h-full p-4 pb-24">
           {/* Navigation sections */}
           <div className="space-y-4">
