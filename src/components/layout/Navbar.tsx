@@ -182,16 +182,39 @@ const Navbar = () => {
   return (
     <>
       {/* Header fixe avec logo */}
-      <div className="fixed top-0 left-0 right-0 z-[9999] bg-[#1a1f2e] border-b border-gray-700 flex items-center lg:pl-64">
-        <div className="flex items-center gap-2 px-4 py-2 lg:hidden">
-          <Logo className="h-8" />
+      <div className="fixed top-0 left-0 right-0 z-50 bg-[#1a1f2e] border-b border-gray-700 flex items-center justify-between">
+        {/* Logo et bouton menu */}
+        <div className="flex items-center">
+          <div className="px-8 py-2 z-50 bg-[#1a1f2e]">
+            <Logo className="h-8" />
+          </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden"
+            className="lg:hidden px-2"
             aria-label="Menu"
           >
             <Menu className="w-5 h-5 text-gray-400" />
           </button>
+        </div>
+
+        {/* Icônes de navigation - visibles sur tous les écrans */}
+        <div className="flex items-center gap-4 px-4 py-2">
+          {canAccessChat && (
+            <Link 
+              to="/chat" 
+              className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+              title="Messages"
+            >
+              <MessageSquare className="w-5 h-5" />
+            </Link>
+          )}
+          <Link 
+            to="/reservations" 
+            className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+            title="Planning"
+          >
+            <Calendar className="w-5 h-5" />
+          </Link>
         </div>
       </div>
 
@@ -199,18 +222,12 @@ const Navbar = () => {
       <nav
         className={`
           fixed top-0 left-0 z-40 w-64 bg-slate-900 shadow-xl transform transition-transform duration-300 ease-in-out
-          h-full overflow-hidden flex flex-col
+          h-full overflow-hidden flex flex-col pt-14
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
       >
-        {/* Logo pour desktop */}
-        <div className="hidden lg:block px-8 py-4">
-          <Logo className="h-10" />
-        </div>
-
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto min-h-0 pt-14 lg:pt-0">
+        <div className="flex-1 overflow-y-auto min-h-0">
           <div className="p-4 space-y-4 pb-20">
             {/* Navigation sections */}
             <div className="space-y-4">
@@ -223,6 +240,33 @@ const Navbar = () => {
                 <Calendar className="w-5 h-5 mr-3" />
                 <span>Planning</span>
               </Link>
+            </div>
+
+            {/* VOLS section */}
+            <div className="py-4">
+              <div className="px-4 py-2 text-sm text-gray-500 uppercase">Vols</div>
+              <Link to="/my-reservations" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <Calendar className="w-5 h-5 mr-3" />
+                <span>Mes réservations</span>
+              </Link>
+              {canAccessFlights && (
+                <Link to="/flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <ClipboardList className="w-5 h-5 mr-3" />
+                  <span>Carnet de route</span>
+                </Link>
+              )}
+              {isInstructor && (
+                <Link to="/instructor-flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <ClipboardList className="w-5 h-5 mr-3" />
+                  <span>Vols d'instruction</span>
+                </Link>
+              )}
+              {canAccessAccounts && (
+                <Link to="/accounts" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <CreditCard className="w-5 h-5 mr-3" />
+                  <span>Mes comptes</span>
+                </Link>
+              )}
             </div>
 
             {/* FORMATION section */}
@@ -291,33 +335,6 @@ const Navbar = () => {
               </Link>
             </div>
 
-            {/* VOLS section */}
-            <div className="py-4">
-              <div className="px-4 py-2 text-sm text-gray-500 uppercase">Vols</div>
-              <Link to="/my-reservations" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <Calendar className="w-5 h-5 mr-3" />
-                <span>Mes réservations</span>
-              </Link>
-              {canAccessFlights && (
-                <Link to="/flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                  <ClipboardList className="w-5 h-5 mr-3" />
-                  <span>Mes vols</span>
-                </Link>
-              )}
-              {isInstructor && (
-                <Link to="/instructor-flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                  <ClipboardList className="w-5 h-5 mr-3" />
-                  <span>Vols d'instruction</span>
-                </Link>
-              )}
-              {canAccessAccounts && (
-                <Link to="/accounts" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                  <CreditCard className="w-5 h-5 mr-3" />
-                  <span>Mes comptes</span>
-                </Link>
-              )}
-            </div>
-
             {/* Additional Links */}
             <div className="py-4">
               {canAccessChat && (
@@ -357,7 +374,7 @@ const Navbar = () => {
               </div>
             )}
             <div className="flex-1">
-              <div className="text-sm font-medium">{user?.first_name} {user?.last_name}</div>
+              <div className="text-sm font-medium text-white">{user?.first_name} {user?.last_name}</div>
               <div className="flex flex-col gap-1 mt-2">
                 {user?.roles?.map((role) => (
                   <span
