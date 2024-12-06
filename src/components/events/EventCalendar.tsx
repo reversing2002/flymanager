@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, isWithinInterval, setHours, setMinutes, startOfWeek, endOfWeek, addDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, isWithinInterval, setHours, setMinutes, startOfWeek, endOfWeek, addDays, isBefore, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Globe, Lock } from 'lucide-react';
 import type { ClubEvent } from '../../types/database';
@@ -171,7 +171,8 @@ const EventCalendar = () => {
                 onClick={() => handleDayClick(date)}
                 className={`
                   min-h-[120px] bg-white p-2 relative cursor-pointer
-                  ${isToday(date) ? 'bg-sky-50' : ''}
+                  ${isToday(date) ? 'bg-sky-50 ring-2 ring-sky-500' : ''}
+                  ${isBefore(date, startOfDay(new Date())) ? 'opacity-50' : ''}
                   ${isSelected ? 'ring-2 ring-sky-500' : ''}
                   hover:bg-slate-50
                 `}
@@ -180,7 +181,8 @@ const EventCalendar = () => {
                   dateTime={format(date, 'yyyy-MM-dd')}
                   className={`
                     text-sm font-medium
-                    ${isToday(date) ? 'text-sky-600' : 'text-slate-900'}
+                    ${isToday(date) ? 'text-sky-600 font-bold' : 'text-slate-900'}
+                    ${isBefore(date, startOfDay(new Date())) ? 'text-slate-500' : ''}
                   `}
                 >
                   {format(date, 'd')}
