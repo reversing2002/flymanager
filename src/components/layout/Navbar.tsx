@@ -25,6 +25,7 @@ import { hasAnyGroup } from "../../lib/permissions";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { getInitials } from "../../lib/utils/avatarUtils";
 import type { Role } from "../../types/roles";
+import { Logo } from '../common/Logo';
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -194,8 +195,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-1">
-            <Plane className="h-6 w-6 text-sky-400" />
-            <span className="text-lg font-bold">SkyProut</span>
+            <Logo />
           </Link>
 
           <div className="hidden lg:flex lg:gap-x-3 items-center">
