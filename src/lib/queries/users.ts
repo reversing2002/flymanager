@@ -138,6 +138,12 @@ export async function getUsers(): Promise<User[]> {
       *,
       user_group_memberships (
         group:user_groups(name)
+      ),
+      club_members!user_id (
+        club:club_id (
+          id,
+          name
+        )
       )
     `);
 
@@ -249,6 +255,39 @@ export async function getMembersWithBalance(): Promise<User[]> {
     console.error("Error in getMembersWithBalance:", error);
     throw error;
   }
+}
+
+export async function getClubStudents(instructorId: string): Promise<User[]> {
+  // Récupérer d'abord le club de l'instructeur
+  const { data: instructorClub } = await supabase
+    .from("club_members")
+    .select("club_id")
+    .eq("user_id", instructorId)
+    .single();
+
+  if (!instructorClub) return [];
+
+  // Récupérer tous les élèves du même club
+  const { data, error } = await supabase
+    .from("users")
+    .select(`
+      *,
+      user_group_memberships (
+        group:user_groups(name)
+      ),
+      club_members!inner (
+        club:club_id (
+          id,
+          name
+        )
+      )
+    `)
+    .eq("club_members.club_id", instructorClub.club_id)
+    .in("user_group_memberships.group.name", ["STUDENT"]);
+
+  if (error) throw error;
+
+  return data;
 }
 
 function generateRandomPassword(length = 12) {

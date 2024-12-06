@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getUsers } from '../../../lib/queries/users';
+import { getClubStudents } from '../../../lib/queries/users';
 import { getProgressionTemplates, createStudentProgression, getStudentProgressions } from '../../../lib/queries/progression';
 import { PlusCircle, Search, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -16,8 +16,9 @@ export default function StudentProgressionsPage() {
   const [showTemplateSelect, setShowTemplateSelect] = useState(false);
 
   const { data: users, isLoading: loadingUsers } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => getUsers(),
+    queryKey: ['clubStudents', user?.id],
+    queryFn: () => getClubStudents(user!.id),
+    enabled: !!user,
   });
 
   const { data: templates, isLoading: loadingTemplates } = useQuery({
@@ -32,9 +33,8 @@ export default function StudentProgressionsPage() {
   });
 
   const students = users?.filter(user => 
-    hasAnyGroup(user, ['PILOT']) &&
-    (search === '' || 
-     `${user.firstName} ${user.lastName}`.toLowerCase().includes(search.toLowerCase()))
+    search === '' || 
+    `${user.firstName} ${user.lastName}`.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleCreateProgression = async (templateId: string) => {
