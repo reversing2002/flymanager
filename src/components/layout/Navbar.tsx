@@ -35,19 +35,8 @@ const Navbar = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.classList.add("menu-open");
-    } else {
-      document.body.classList.remove("menu-open");
-      setOpenDropdown(null);
-    }
-
-    return () => {
-      document.body.classList.remove("menu-open");
-    };
-  }, [isMobileMenuOpen]);
-
-  useEffect(() => {
+    // Ferme le menu après le changement de page
+    setIsMobileMenuOpen(false);
     setOpenDropdown(null);
   }, [location.pathname]);
 
@@ -78,17 +67,17 @@ const Navbar = () => {
   const getRoleBadgeColor = (role: Role) => {
     switch (role) {
       case "PILOT":
-        return "bg-sky-500 text-sky-100";
+        return "bg-sky-900/50 text-sky-300 ring-1 ring-sky-500/50";
       case "INSTRUCTOR":
-        return "bg-green-500 text-green-100";
+        return "bg-emerald-900/50 text-emerald-300 ring-1 ring-emerald-500/50";
       case "ADMIN":
-        return "bg-purple-500 text-purple-100";
+        return "bg-purple-900/50 text-purple-300 ring-1 ring-purple-500/50";
       case "MECHANIC":
-        return "bg-orange-500 text-orange-100";
+        return "bg-orange-900/50 text-orange-300 ring-1 ring-orange-500/50";
       case "STUDENT":
-        return "bg-blue-500 text-blue-100";
+        return "bg-blue-900/50 text-blue-300 ring-1 ring-blue-500/50";
       default:
-        return "bg-gray-500 text-gray-100";
+        return "bg-gray-900/50 text-gray-300 ring-1 ring-gray-500/50";
     }
   };
 
@@ -191,478 +180,190 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-slate-900 text-white">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center space-x-1">
-            <Logo />
-          </Link>
-
-          <div className="hidden lg:flex lg:gap-x-3 items-center">
-            <NavLink
-              to="/reservations"
-              icon={<Calendar className="h-4 w-4" />}
-              text="Planning"
-              compact
-            />
-
-            {canAccessTraining && (
-              <NavDropdown text="Élève" icon={<GraduationCap className="h-4 w-4" />} id="eleve">
-                <NavDropdownItem
-                  to="/training"
-                  icon={<GraduationCap className="h-4 w-4" />}
-                  text="Entrainement"
-                />
-                {showMyProgression && (
-                  <NavDropdownItem
-                    to="/progression"
-                    icon={<Book className="h-4 w-4" />}
-                    text="Ma progression"
-                  />
-                )}
-              </NavDropdown>
-            )}
-
-            <div className="flex flex-wrap gap-0.5">
-              <NavDropdown
-                id="data"
-                text="Données"
-                icon={<Database className="h-4 w-4" />}
-              >
-                <NavDropdownItem
-                  to="/aircraft"
-                  icon={<Plane className="h-4 w-4" />}
-                  text="Appareils"
-                />
-                {canAccessMembers && (
-                  <NavDropdownItem
-                    to="/members"
-                    icon={<Users className="h-4 w-4" />}
-                    text="Membres"
-                  />
-                )}
-                {isInstructor && (
-                  <NavDropdownItem
-                    to="/instructor-students"
-                    icon={<GraduationCap className="h-4 w-4" />}
-                    text="Mes élèves"
-                  />
-                )}
-                {canAccessDiscoveryFlights && (
-                  <NavDropdownItem
-                    to="/discovery-flights"
-                    icon={<Plane className="h-4 w-4" />}
-                    text="Vols découverte"
-                  />
-                )}
-                {canAccessDocumentation && (
-                  <NavDropdownItem
-                    to="/documentation"
-                    icon={<Book className="h-4 w-4" />}
-                    text="Documentation"
-                  />
-                )}
-                <NavDropdownItem
-                  to="/stats"
-                  icon={<BarChart2 className="h-4 w-4" />}
-                  text="Statistiques"
-                />
-              </NavDropdown>
-
-              <NavDropdown
-                id="vol"
-                text="Vol"
-                icon={<Plane className="h-4 w-4" />}
-              >
-                <NavDropdownItem
-                  to="/my-reservations"
-                  icon={<Calendar className="h-4 w-4" />}
-                  text="Mes réservations"
-                />
-                {canAccessFlights && (
-                  <NavDropdownItem
-                    to="/flights"
-                    icon={<ClipboardList className="h-4 w-4" />}
-                    text="Mes vols"
-                  />
-                )}
-                {isInstructor && (
-                  <NavDropdownItem
-                    to="/instructor-flights"
-                    icon={<ClipboardList className="h-4 w-4" />}
-                    text="Vols d'instruction"
-                  />
-                )}
-                {canAccessAccounts && (
-                  <NavDropdownItem
-                    to="/accounts"
-                    icon={<CreditCard className="h-4 w-4" />}
-                    text="Mes comptes"
-                  />
-                )}
-              </NavDropdown>
-
-              {canAccessTrainingAdmin && (
-                <NavDropdown
-                  id="formation"
-                  text="Formation"
-                  icon={<GraduationCap className="h-4 w-4" />}
-                >
-                  <NavDropdownItem
-                    to="/progression/admin"
-                    icon={<Book className="h-4 w-4" />}
-                    text="Formations"
-                  />
-                  <NavDropdownItem
-                    to="/progression/students"
-                    icon={<Users className="h-4 w-4" />}
-                    text="Progression des élèves"
-                  />
-                  {canAccessTraining && (
-                    <NavDropdownItem
-                      to={trainingPath}
-                      icon={<Book className="h-4 w-4" />}
-                      text="QCM"
-                    />
-                  )}
-                </NavDropdown>
-              )}
-
-              {canAccessChat && (
-                <NavLink
-                  to="/chat"
-                  icon={<MessageSquare className="h-4 w-4" />}
-                  text="Messages"
-                  compact
-                />
-              )}
-
-              {canAccessEvents && (
-                <NavLink
-                  to="/events"
-                  icon={<CalendarDays className="h-4 w-4" />}
-                  text="Événements"
-                  compact
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-3">
-              <div className="flex flex-col items-end">
-                <div className="text-sm font-medium text-slate-300">
-                  {user?.first_name}
-                </div>
-                <div className="flex gap-1 mt-0.5">
-                  {user?.roles?.map((role) => (
-                    <span
-                      key={role}
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-opacity-20 ${getRoleBadgeColor(
-                        role
-                      )}`}
-                    >
-                      {getRoleLabel(role)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="relative group">
-                  <button
-                    onClick={() => setOpenDropdown(openDropdown === "user" ? null : "user")}
-                    className="flex items-center gap-2 p-2 rounded-full hover:bg-slate-800"
-                  >
-                    {user?.image_url ? (
-                      <img
-                        src={user.image_url}
-                        alt={`${user.first_name} ${user.last_name}`}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium text-white">
-                        {getInitials(user?.first_name, user?.last_name)}
-                      </div>
-                    )}
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                  {openDropdown === "user" && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-slate-800 ring-1 ring-black ring-opacity-5">
-                      <div className="py-1">
-                        {canAccessSettings && (
-                          <NavDropdownItem
-                            to="/settings"
-                            icon={<Settings className="h-4 w-4" />}
-                            text="Paramètres"
-                            onClick={() => setOpenDropdown(null)}
-                          />
-                        )}
-                        <NavDropdownItem
-                          to="#"
-                          icon={<LogOut className="h-4 w-4" />}
-                          text="Déconnexion"
-                          onClick={handleLogout}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-md hover:bg-slate-800"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-          </div>
-        </div>
+    <>
+      {/* Header fixe avec logo */}
+      <div className="fixed top-0 left-0 right-0 z-[9999] bg-[#1a1f2e] border-b border-gray-700 px-4 py-2 flex items-center">
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="flex items-center gap-2 md:pointer-events-none"
+          aria-label="Menu"
+        >
+          <Logo className="h-8" />
+          <Menu className="w-5 h-5 text-gray-400 md:hidden" />
+        </button>
       </div>
 
-      {/* Mobile menu */}
-      <div
-        className={`
-          fixed inset-0 z-50 lg:hidden bg-slate-900 overflow-y-auto
-          transition-transform duration-300 ease-in-out
-          ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}
-        `}
-      >
-        <div className="flex flex-col h-full pt-16 px-4 pb-4">
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="absolute top-4 right-4 p-2 rounded-md hover:bg-slate-800"
-          >
-            <X className="h-6 w-6" />
-          </button>
-
+      {/* Menu latéral */}
+      <nav className={`fixed top-[48px] left-0 bottom-0 bg-[#1a1f2e] text-gray-300 transition-all duration-300 ease-in-out z-[9998] overflow-y-auto
+        ${isMobileMenuOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full md:translate-x-0'}`}>
+        <div className="min-h-full p-4 pb-24">
+          {/* Navigation sections */}
           <div className="space-y-4">
-            <NavLink
-              to="/reservations"
-              icon={<Calendar className="h-4 w-4" />}
-              text="Planning"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-
-            {canAccessTraining && (
-              <NavDropdown 
-                id="eleve-mobile"
-                text="Élève" 
-                icon={<GraduationCap className="h-4 w-4" />}
-              >
-                <div className="space-y-2 p-2">
-                  <NavDropdownItem
-                    to="/training"
-                    icon={<GraduationCap className="h-4 w-4" />}
-                    text="Entrainement"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
-                  {showMyProgression && (
-                    <NavDropdownItem
-                      to="/progression"
-                      icon={<Book className="h-4 w-4" />}
-                      text="Ma progression"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    />
-                  )}
-                </div>
-              </NavDropdown>
-            )}
-
-            <NavDropdown
-              id="donnees-mobile"
-              text="Données"
-              icon={<Database className="h-4 w-4" />}
-            >
-              <div className="space-y-2 p-2">
-                <NavDropdownItem
-                  to="/aircraft"
-                  icon={<Plane className="h-4 w-4" />}
-                  text="Appareils"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                />
-                {canAccessMembers && (
-                  <NavDropdownItem
-                    to="/members"
-                    icon={<Users className="h-4 w-4" />}
-                    text="Membres"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
-                )}
-                {isInstructor && (
-                  <NavDropdownItem
-                    to="/instructor-students"
-                    icon={<GraduationCap className="h-4 w-4" />}
-                    text="Mes élèves"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
-                )}
-                {canAccessDiscoveryFlights && (
-                  <NavDropdownItem
-                    to="/discovery-flights"
-                    icon={<Plane className="h-4 w-4" />}
-                    text="Vols découverte"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
-                )}
-                {canAccessDocumentation && (
-                  <NavDropdownItem
-                    to="/documentation"
-                    icon={<Book className="h-4 w-4" />}
-                    text="Documentation"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
-                )}
-                <NavDropdownItem
-                  to="/stats"
-                  icon={<BarChart2 className="h-4 w-4" />}
-                  text="Statistiques"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                />
-              </div>
-            </NavDropdown>
-
-            <NavDropdown
-              id="vol-mobile"
-              text="Vol"
-              icon={<Plane className="h-4 w-4" />}
-            >
-              <div className="space-y-2 p-2">
-                <NavDropdownItem
-                  to="/my-reservations"
-                  icon={<Calendar className="h-4 w-4" />}
-                  text="Mes réservations"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                />
-                {canAccessFlights && (
-                  <NavDropdownItem
-                    to="/flights"
-                    icon={<ClipboardList className="h-4 w-4" />}
-                    text="Mes vols"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
-                )}
-                {isInstructor && (
-                  <NavDropdownItem
-                    to="/instructor-flights"
-                    icon={<ClipboardList className="h-4 w-4" />}
-                    text="Vols d'instruction"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
-                )}
-                {canAccessAccounts && (
-                  <NavDropdownItem
-                    to="/accounts"
-                    icon={<CreditCard className="h-4 w-4" />}
-                    text="Mes comptes"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
-                )}
-              </div>
-            </NavDropdown>
-
-            {canAccessTrainingAdmin && (
-              <NavDropdown
-                id="formation-mobile"
-                text="Formation"
-                icon={<GraduationCap className="h-4 w-4" />}
-              >
-                <div className="space-y-2 p-2">
-                  <NavDropdownItem
-                    to="/progression/admin"
-                    icon={<Book className="h-4 w-4" />}
-                    text="Formations"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
-                  <NavDropdownItem
-                    to="/progression/students"
-                    icon={<Users className="h-4 w-4" />}
-                    text="Progression des élèves"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
-                  {canAccessTraining && (
-                    <NavDropdownItem
-                      to={trainingPath}
-                      icon={<Book className="h-4 w-4" />}
-                      text="QCM"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    />
-                  )}
-                </div>
-              </NavDropdown>
-            )}
-
-            {canAccessChat && (
-              <NavLink
-                to="/chat"
-                icon={<MessageSquare className="h-4 w-4" />}
-                text="Messages"
-                onClick={() => setIsMobileMenuOpen(false)}
-              />
-            )}
-
-            {canAccessEvents && (
-              <NavLink
-                to="/events"
-                icon={<CalendarDays className="h-4 w-4" />}
-                text="Événements"
-                onClick={() => setIsMobileMenuOpen(false)}
-              />
-            )}
+            <div className="px-4 py-2 text-sm text-gray-500 uppercase">Navigation</div>
+            <Link to="/" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+              <Home className="w-5 h-5 mr-3" />
+              <span>Accueil</span>
+            </Link>
+            <Link to="/reservations" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+              <Calendar className="w-5 h-5 mr-3" />
+              <span>Planning</span>
+            </Link>
           </div>
 
-          {/* Mobile user info */}
-          <div className="mt-auto pt-6 border-t border-slate-800">
-            <div className="flex items-center gap-4">
-              {user?.image_url ? (
-                <img
-                  src={user.image_url}
-                  alt={`${user.first_name} ${user.last_name}`}
-                  className="h-10 w-10 rounded-full"
-                />
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
-                    {getInitials(user?.first_name, user?.last_name)}
-                  </span>
-                </div>
+          {/* FORMATION section */}
+          {canAccessTraining && (
+            <div className="py-4">
+              <div className="px-4 py-2 text-sm text-gray-500 uppercase">Formation</div>
+              <Link to={trainingPath} className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <Book className="w-5 h-5 mr-3" />
+                <span>Formation</span>
+              </Link>
+              {canAccessTrainingAdmin && (
+                <>
+                  <Link to="/progression/admin" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                    <Book className="w-5 h-5 mr-3" />
+                    <span>Formations</span>
+                  </Link>
+                  <Link to="/progression/students" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                    <Users className="w-5 h-5 mr-3" />
+                    <span>Progression des élèves</span>
+                  </Link>
+                </>
               )}
-              <div>
-                <div className="text-sm font-medium text-white">
-                  {user?.first_name} {user?.last_name}
-                </div>
-                <div className="text-xs text-slate-400">{user?.email}</div>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-1">
-              {canAccessSettings && (
-                <Link
-                  to="/settings"
-                  className="flex items-center gap-2 px-2 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Paramètres</span>
+              {showMyProgression && (
+                <Link to="/progression" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <Book className="w-5 h-5 mr-3" />
+                  <span>Ma progression</span>
                 </Link>
               )}
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-2 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Déconnexion</span>
-              </button>
             </div>
+          )}
+
+          {/* DONNEES section */}
+          <div className="py-4">
+            <div className="px-4 py-2 text-sm text-gray-500 uppercase">Données</div>
+            <Link to="/aircraft" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+              <Plane className="w-5 h-5 mr-3" />
+              <span>Appareils</span>
+            </Link>
+            {canAccessMembers && (
+              <Link to="/members" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <Users className="w-5 h-5 mr-3" />
+                <span>Membres</span>
+              </Link>
+            )}
+            {isInstructor && (
+              <Link to="/instructor-students" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <GraduationCap className="w-5 h-5 mr-3" />
+                <span>Mes élèves</span>
+              </Link>
+            )}
+            {canAccessDiscoveryFlights && (
+              <Link to="/discovery-flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <Plane className="w-5 h-5 mr-3" />
+                <span>Vols découverte</span>
+              </Link>
+            )}
+            {canAccessDocumentation && (
+              <Link to="/documentation" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <Book className="w-5 h-5 mr-3" />
+                <span>Documentation</span>
+              </Link>
+            )}
+            <Link to="/stats" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+              <BarChart2 className="w-5 h-5 mr-3" />
+              <span>Statistiques</span>
+            </Link>
+          </div>
+
+          {/* VOLS section */}
+          <div className="py-4">
+            <div className="px-4 py-2 text-sm text-gray-500 uppercase">Vols</div>
+            <Link to="/my-reservations" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+              <Calendar className="w-5 h-5 mr-3" />
+              <span>Mes réservations</span>
+            </Link>
+            {canAccessFlights && (
+              <Link to="/flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <ClipboardList className="w-5 h-5 mr-3" />
+                <span>Mes vols</span>
+              </Link>
+            )}
+            {isInstructor && (
+              <Link to="/instructor-flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <ClipboardList className="w-5 h-5 mr-3" />
+                <span>Vols d'instruction</span>
+              </Link>
+            )}
+            {canAccessAccounts && (
+              <Link to="/accounts" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <CreditCard className="w-5 h-5 mr-3" />
+                <span>Mes comptes</span>
+              </Link>
+            )}
+          </div>
+
+          {/* Additional Links */}
+          <div className="py-4">
+            {canAccessChat && (
+              <Link to="/chat" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <MessageSquare className="w-5 h-5 mr-3" />
+                <span>Messages</span>
+              </Link>
+            )}
+            {canAccessEvents && (
+              <Link to="/events" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <CalendarDays className="w-5 h-5 mr-3" />
+                <span>Événements</span>
+              </Link>
+            )}
+            {canAccessSettings && (
+              <Link to="/settings" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <Settings className="w-5 h-5 mr-3" />
+                <span>Paramètres</span>
+              </Link>
+            )}
           </div>
         </div>
-      </div>
-    </nav>
+
+        {/* User section at bottom */}
+        <div className="border-t border-gray-700 p-4">
+          <div className="flex items-center space-x-3">
+            {user?.image_url ? (
+              <img
+                src={user.image_url}
+                alt={`${user.first_name} ${user.last_name}`}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                {getInitials(user?.first_name, user?.last_name)}
+              </div>
+            )}
+            <div className="flex-1">
+              <div className="text-sm font-medium">{user?.first_name} {user?.last_name}</div>
+              <div className="flex flex-col gap-1 mt-2">
+                {user?.roles?.map((role) => (
+                  <span
+                    key={role}
+                    className={`inline-flex items-center w-full px-3 py-0.5 rounded-md text-[11px] font-medium tracking-wide ${getRoleBadgeColor(role)}`}
+                  >
+                    {getRoleLabel(role)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="mt-4 w-full flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400 rounded"
+          >
+            <LogOut className="w-5 h-5 mr-3" />
+            <span>Déconnexion</span>
+          </button>
+        </div>
+      </nav>
+    </>
   );
 };
 
