@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, isWithinInterval, setHours, setMinutes } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, isWithinInterval, setHours, setMinutes, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Globe, Lock } from 'lucide-react';
 import type { ClubEvent } from '../../types/database';
@@ -26,8 +26,8 @@ const EventCalendar = () => {
 
   const loadEvents = async () => {
     try {
-      const start = startOfMonth(currentDate);
-      const end = endOfMonth(currentDate);
+      const start = startOfWeek(startOfMonth(currentDate), { locale: fr });
+      const end = endOfWeek(endOfMonth(currentDate), { locale: fr });
 
       const { data } = await supabase
         .from('club_events')
@@ -70,8 +70,8 @@ const EventCalendar = () => {
   };
 
   const days = eachDayOfInterval({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate),
+    start: startOfWeek(startOfMonth(currentDate), { locale: fr }),
+    end: endOfWeek(endOfMonth(currentDate), { locale: fr }),
   });
 
   const getEventsForDay = (date: Date) => {
