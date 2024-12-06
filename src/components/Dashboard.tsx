@@ -38,16 +38,18 @@ const StatCard = ({
   description: string;
   color: string;
 }) => (
-  <div className={`rounded-xl p-4 sm:p-6 ${color}`}>
+  <div className={`rounded-xl p-4 sm:p-6 bg-gradient-to-br from-white to-slate-50 shadow-sm border border-slate-100`}>
     <div className="flex items-start justify-between">
       <div>
         <p className="text-sm font-medium text-slate-600">{title}</p>
-        <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">
+        <p className="mt-2 text-2xl sm:text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
           {value}
         </p>
-        <p className="mt-1 text-sm text-slate-600">{description}</p>
+        <p className="mt-1 text-sm text-slate-500">{description}</p>
       </div>
-      <div className="p-2 rounded-lg bg-white/50">{icon}</div>
+      <div className="p-2 rounded-lg bg-gradient-to-br from-slate-100 to-white shadow-sm">
+        <div className="text-slate-600">{icon}</div>
+      </div>
     </div>
   </div>
 );
@@ -420,14 +422,7 @@ const Dashboard = () => {
   const nextReservations = futureReservations.slice(0, 5);
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <header className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-          Tableau de bord
-        </h1>
-        <p className="text-slate-600">Aperçu de l'activité du club</p>
-      </header>
-
+    <div className="container mx-auto px-4 py-8">
       {Array.isArray(announcements) &&
         announcements
           .filter((a) => !dismissedAnnouncements.includes(a.id))
@@ -440,31 +435,31 @@ const Dashboard = () => {
             </div>
           ))}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
-          icon={<Plane className="h-6 w-6 text-blue-600" />}
+          icon={<Users className="w-6 h-6" />}
+          title="Membres actifs"
+          value={users?.length.toString() || "0"}
+          description="Nombre total de membres"
+          color="bg-gradient-to-br from-white to-slate-50"
+        />
+        <StatCard
+          icon={<Plane className="w-6 h-6" />}
           title="Avions"
-          value={aircraft.length.toString()}
-          description="Avions disponibles"
-          color="bg-blue-50"
+          value={aircraft?.length.toString() || "0"}
+          description="Flotte disponible"
+          color="bg-gradient-to-br from-white to-slate-50"
         />
         <StatCard
-          icon={<Users className="h-6 w-6 text-emerald-600" />}
-          title="Membres"
-          value={users.length.toString()}
-          description="Membres actifs"
-          color="bg-emerald-50"
-        />
-        <StatCard
-          icon={<Calendar className="h-6 w-6 text-purple-600" />}
+          icon={<Calendar className="w-6 h-6" />}
           title="Réservations"
           value={futureReservations.length.toString()}
           description="Réservations à venir"
-          color="bg-purple-50"
+          color="bg-gradient-to-br from-white to-slate-50"
         />
         {balance && (
           <StatCard
-            icon={<CreditCard className="h-6 w-6 text-rose-600" />}
+            icon={<CreditCard className="w-6 h-6" />}
             title="Solde"
             value={`${balance.validated.toFixed(2)}€`}
             description={
@@ -472,57 +467,73 @@ const Dashboard = () => {
                 ? `${balance.pending.toFixed(2)}€ en attente`
                 : "Solde validé"
             }
-            color="bg-rose-50"
+            color="bg-gradient-to-br from-white to-slate-50"
           />
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <div className="space-y-4">
-          <UpcomingEvents />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl p-6 shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-slate-800">Messages récents</h2>
+            <Link to="/messages" className="text-sm text-slate-600 hover:text-slate-800">
+              Voir tout
+            </Link>
+          </div>
           <RecentMessages />
         </div>
-        <div className="space-y-4">
-          {dailyChallenge && (
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <h2 className="text-lg font-semibold mb-4">Défi du jour</h2>
-              <p className="text-sm text-slate-600">{dailyChallenge.description}</p>
-            </div>
-          )}
-          {/* Prochaines réservations */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Mes prochaines réservations</h2>
-            <div className="space-y-4">
-              {nextReservations.map((reservation) => {
-                const aircraftItem = aircraft.find(
-                  (a) => a.id === reservation.aircraftId
-                );
-                return (
-                  <div
-                    key={reservation.id}
-                    className="flex items-center justify-between p-4 bg-slate-50 rounded-lg"
-                  >
-                    <div>
-                      <div className="font-medium">
-                        {aircraftItem?.registration || "Avion inconnu"}
-                      </div>
-                      <div className="text-sm text-slate-600">
-                        {new Date(reservation.startTime).toLocaleDateString()}
-                      </div>
+
+        <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl p-6 shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-slate-800">Événements à venir</h2>
+            <Link to="/calendar" className="text-sm text-slate-600 hover:text-slate-800">
+              Voir tout
+            </Link>
+          </div>
+          <UpcomingEvents />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {dailyChallenge && (
+          <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl p-6 shadow-sm border border-slate-100">
+            <h2 className="text-xl font-semibold text-slate-800">Défi du jour</h2>
+            <p className="text-sm text-slate-600">{dailyChallenge.description}</p>
+          </div>
+        )}
+        {/* Prochaines réservations */}
+        <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl p-6 shadow-sm border border-slate-100">
+          <h2 className="text-xl font-semibold text-slate-800">Mes prochaines réservations</h2>
+          <div className="space-y-4">
+            {nextReservations.map((reservation) => {
+              const aircraftItem = aircraft.find(
+                (a) => a.id === reservation.aircraftId
+              );
+              return (
+                <div
+                  key={reservation.id}
+                  className="flex items-center justify-between p-4 bg-slate-50 rounded-lg"
+                >
+                  <div>
+                    <div className="font-medium">
+                      {aircraftItem?.registration || "Avion inconnu"}
                     </div>
-                    <div className="text-sm">
-                      {new Date(reservation.startTime).toLocaleTimeString()} -{" "}
-                      {new Date(reservation.endTime).toLocaleTimeString()}
+                    <div className="text-sm text-slate-600">
+                      {new Date(reservation.startTime).toLocaleDateString()}
                     </div>
                   </div>
-                );
-              })}
-              {nextReservations.length === 0 && (
-                <p className="text-center text-slate-500">
-                  Aucune réservation à venir
-                </p>
-              )}
-            </div>
+                  <div className="text-sm">
+                    {new Date(reservation.startTime).toLocaleTimeString()} -{" "}
+                    {new Date(reservation.endTime).toLocaleTimeString()}
+                  </div>
+                </div>
+              );
+            })}
+            {nextReservations.length === 0 && (
+              <p className="text-center text-slate-500">
+                Aucune réservation à venir
+              </p>
+            )}
           </div>
         </div>
       </div>

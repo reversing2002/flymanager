@@ -182,153 +182,168 @@ const Navbar = () => {
   return (
     <>
       {/* Header fixe avec logo */}
-      <div className="fixed top-0 left-0 right-0 z-[9999] bg-[#1a1f2e] border-b border-gray-700 px-4 py-2 flex items-center">
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="flex items-center gap-2 md:pointer-events-none"
-          aria-label="Menu"
-        >
+      <div className="fixed top-0 left-0 right-0 z-[9999] bg-[#1a1f2e] border-b border-gray-700 flex items-center lg:pl-64">
+        <div className="flex items-center gap-2 px-4 py-2 lg:hidden">
           <Logo className="h-8" />
-          <Menu className="w-5 h-5 text-gray-400 md:hidden" />
-        </button>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="lg:hidden"
+            aria-label="Menu"
+          >
+            <Menu className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
       </div>
 
       {/* Menu latéral */}
-      <nav className={`fixed top-[48px] left-0 bottom-0 bg-[#1a1f2e] text-gray-300 transition-all duration-300 ease-in-out md:top-0 md:w-64 ${
-        isMobileMenuOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full md:translate-x-0"
-      }`}>
-        <div className="min-h-full p-4 pb-24">
-          {/* Navigation sections */}
-          <div className="space-y-4">
-            <div className="px-4 py-2 text-sm text-gray-500 uppercase">Navigation</div>
-            <Link to="/" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-              <Home className="w-5 h-5 mr-3" />
-              <span>Accueil</span>
-            </Link>
-            <Link to="/reservations" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-              <Calendar className="w-5 h-5 mr-3" />
-              <span>Planning</span>
-            </Link>
-          </div>
+      <nav
+        className={`
+          fixed top-0 left-0 z-40 w-64 bg-slate-900 shadow-xl transform transition-transform duration-300 ease-in-out
+          h-full overflow-hidden flex flex-col
+          ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0
+        `}
+      >
+        {/* Logo pour desktop */}
+        <div className="hidden lg:block px-8 py-4">
+          <Logo className="h-10" />
+        </div>
 
-          {/* FORMATION section */}
-          {canAccessTraining && (
-            <div className="py-4">
-              <div className="px-4 py-2 text-sm text-gray-500 uppercase">Formation</div>
-              <Link to={trainingPath} className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <Book className="w-5 h-5 mr-3" />
-                <span>Formation</span>
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto min-h-0 pt-14 lg:pt-0">
+          <div className="p-4 space-y-4 pb-20">
+            {/* Navigation sections */}
+            <div className="space-y-4">
+              <div className="px-4 py-2 text-sm text-gray-500 uppercase">Navigation</div>
+              <Link to="/" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <Home className="w-5 h-5 mr-3" />
+                <span>Accueil</span>
               </Link>
-              {canAccessTrainingAdmin && (
-                <>
-                  <Link to="/progression/admin" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                    <Book className="w-5 h-5 mr-3" />
-                    <span>Formations</span>
-                  </Link>
-                  <Link to="/progression/students" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                    <Users className="w-5 h-5 mr-3" />
-                    <span>Progression des élèves</span>
-                  </Link>
-                </>
-              )}
-              {showMyProgression && (
-                <Link to="/progression" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+              <Link to="/reservations" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <Calendar className="w-5 h-5 mr-3" />
+                <span>Planning</span>
+              </Link>
+            </div>
+
+            {/* FORMATION section */}
+            {canAccessTraining && (
+              <div className="py-4">
+                <div className="px-4 py-2 text-sm text-gray-500 uppercase">Formation</div>
+                <Link to={trainingPath} className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                   <Book className="w-5 h-5 mr-3" />
-                  <span>Ma progression</span>
+                  <span>Formation</span>
+                </Link>
+                {canAccessTrainingAdmin && (
+                  <>
+                    <Link to="/progression/admin" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                      <Book className="w-5 h-5 mr-3" />
+                      <span>Formations</span>
+                    </Link>
+                    <Link to="/progression/students" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                      <Users className="w-5 h-5 mr-3" />
+                      <span>Progression des élèves</span>
+                    </Link>
+                  </>
+                )}
+                {showMyProgression && (
+                  <Link to="/progression" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                    <Book className="w-5 h-5 mr-3" />
+                    <span>Ma progression</span>
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* DONNEES section */}
+            <div className="py-4">
+              <div className="px-4 py-2 text-sm text-gray-500 uppercase">Données</div>
+              <Link to="/aircraft" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <Plane className="w-5 h-5 mr-3" />
+                <span>Appareils</span>
+              </Link>
+              {canAccessMembers && (
+                <Link to="/members" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <Users className="w-5 h-5 mr-3" />
+                  <span>Membres</span>
+                </Link>
+              )}
+              {isInstructor && (
+                <Link to="/instructor-students" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <GraduationCap className="w-5 h-5 mr-3" />
+                  <span>Mes élèves</span>
+                </Link>
+              )}
+              {canAccessDiscoveryFlights && (
+                <Link to="/discovery-flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <Plane className="w-5 h-5 mr-3" />
+                  <span>Vols découverte</span>
+                </Link>
+              )}
+              {canAccessDocumentation && (
+                <Link to="/documentation" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <Book className="w-5 h-5 mr-3" />
+                  <span>Documentation</span>
+                </Link>
+              )}
+              <Link to="/stats" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <BarChart2 className="w-5 h-5 mr-3" />
+                <span>Statistiques</span>
+              </Link>
+            </div>
+
+            {/* VOLS section */}
+            <div className="py-4">
+              <div className="px-4 py-2 text-sm text-gray-500 uppercase">Vols</div>
+              <Link to="/my-reservations" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <Calendar className="w-5 h-5 mr-3" />
+                <span>Mes réservations</span>
+              </Link>
+              {canAccessFlights && (
+                <Link to="/flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <ClipboardList className="w-5 h-5 mr-3" />
+                  <span>Mes vols</span>
+                </Link>
+              )}
+              {isInstructor && (
+                <Link to="/instructor-flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <ClipboardList className="w-5 h-5 mr-3" />
+                  <span>Vols d'instruction</span>
+                </Link>
+              )}
+              {canAccessAccounts && (
+                <Link to="/accounts" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <CreditCard className="w-5 h-5 mr-3" />
+                  <span>Mes comptes</span>
                 </Link>
               )}
             </div>
-          )}
 
-          {/* DONNEES section */}
-          <div className="py-4">
-            <div className="px-4 py-2 text-sm text-gray-500 uppercase">Données</div>
-            <Link to="/aircraft" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-              <Plane className="w-5 h-5 mr-3" />
-              <span>Appareils</span>
-            </Link>
-            {canAccessMembers && (
-              <Link to="/members" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <Users className="w-5 h-5 mr-3" />
-                <span>Membres</span>
-              </Link>
-            )}
-            {isInstructor && (
-              <Link to="/instructor-students" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <GraduationCap className="w-5 h-5 mr-3" />
-                <span>Mes élèves</span>
-              </Link>
-            )}
-            {canAccessDiscoveryFlights && (
-              <Link to="/discovery-flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <Plane className="w-5 h-5 mr-3" />
-                <span>Vols découverte</span>
-              </Link>
-            )}
-            {canAccessDocumentation && (
-              <Link to="/documentation" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <Book className="w-5 h-5 mr-3" />
-                <span>Documentation</span>
-              </Link>
-            )}
-            <Link to="/stats" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-              <BarChart2 className="w-5 h-5 mr-3" />
-              <span>Statistiques</span>
-            </Link>
-          </div>
-
-          {/* VOLS section */}
-          <div className="py-4">
-            <div className="px-4 py-2 text-sm text-gray-500 uppercase">Vols</div>
-            <Link to="/my-reservations" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-              <Calendar className="w-5 h-5 mr-3" />
-              <span>Mes réservations</span>
-            </Link>
-            {canAccessFlights && (
-              <Link to="/flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <ClipboardList className="w-5 h-5 mr-3" />
-                <span>Mes vols</span>
-              </Link>
-            )}
-            {isInstructor && (
-              <Link to="/instructor-flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <ClipboardList className="w-5 h-5 mr-3" />
-                <span>Vols d'instruction</span>
-              </Link>
-            )}
-            {canAccessAccounts && (
-              <Link to="/accounts" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <CreditCard className="w-5 h-5 mr-3" />
-                <span>Mes comptes</span>
-              </Link>
-            )}
-          </div>
-
-          {/* Additional Links */}
-          <div className="py-4">
-            {canAccessChat && (
-              <Link to="/chat" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <MessageSquare className="w-5 h-5 mr-3" />
-                <span>Messages</span>
-              </Link>
-            )}
-            {canAccessEvents && (
-              <Link to="/events" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <CalendarDays className="w-5 h-5 mr-3" />
-                <span>Événements</span>
-              </Link>
-            )}
-            {canAccessSettings && (
-              <Link to="/settings" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <Settings className="w-5 h-5 mr-3" />
-                <span>Paramètres</span>
-              </Link>
-            )}
+            {/* Additional Links */}
+            <div className="py-4">
+              {canAccessChat && (
+                <Link to="/chat" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <MessageSquare className="w-5 h-5 mr-3" />
+                  <span>Messages</span>
+                </Link>
+              )}
+              {canAccessEvents && (
+                <Link to="/events" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <CalendarDays className="w-5 h-5 mr-3" />
+                  <span>Événements</span>
+                </Link>
+              )}
+              {canAccessSettings && (
+                <Link to="/settings" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <Settings className="w-5 h-5 mr-3" />
+                  <span>Paramètres</span>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 
         {/* User section at bottom */}
-        <div className="border-t border-gray-700 p-4">
+        <div className="border-t border-gray-700 p-4 flex-shrink-0">
           <div className="flex items-center space-x-3">
             {user?.image_url ? (
               <img
