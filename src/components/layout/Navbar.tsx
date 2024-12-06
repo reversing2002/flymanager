@@ -231,7 +231,7 @@ const Navbar = () => {
                 <div className="px-4 py-2 text-sm text-gray-500 uppercase">Formation</div>
                 <Link to={trainingPath} className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                   <Book className="w-5 h-5 mr-3" />
-                  <span>Formation</span>
+                  <span>QCM</span>
                 </Link>
                 {canAccessTrainingAdmin && (
                   <>
@@ -241,7 +241,7 @@ const Navbar = () => {
                     </Link>
                     <Link to="/progression/students" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                       <Users className="w-5 h-5 mr-3" />
-                      <span>Progression des élèves</span>
+                      <span>Progression élèves</span>
                     </Link>
                   </>
                 )}
