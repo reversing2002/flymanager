@@ -250,3 +250,123 @@ export async function getMembersWithBalance(): Promise<User[]> {
     throw error;
   }
 }
+
+function generateRandomPassword(length = 12) {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * charset.length);
+    password += charset[randomIndex];
+  }
+  return password;
+}
+
+export async function createMember(data: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  roles: string[];
+}): Promise<{ password: string }> {
+  try {
+    // Vérifier si l'email existe déjà
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", data.email)
+      .single();
+
+    if (existingUser) {
+      throw new Error("Un utilisateur avec cet email existe déjà");
+    }
+
+    // Récupérer le club de l'administrateur connecté
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("Utilisateur non connecté");
+    }
+
+    const { data: adminClub, error: clubError } = await supabase
+      .from("club_members")
+      .select("club_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (clubError) {
+      throw clubError;
+    }
+
+    // Générer un login à partir du prénom et du nom
+    const login = `${data.firstName.toLowerCase()}.${data.lastName.toLowerCase()}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    // Générer un mot de passe aléatoire
+    const password = generateRandomPassword();
+
+    // 1. Créer l'utilisateur dans public.users
+    const { data: newUser, error: userError } = await supabase
+      .from("users")
+      .insert({
+        first_name: data.firstName,
+        last_name: data.lastName,
+        email: data.email,
+        login: login,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (userError) {
+      throw userError;
+    }
+
+    // 2. Créer l'utilisateur dans auth.users via la fonction RPC en utilisant le même ID
+    const { error: authError } = await supabase.rpc("create_auth_user", {
+      p_email: data.email,
+      p_password: password,
+      p_login: login,
+      p_role: data.roles[0], // On utilise le premier rôle comme rôle principal pour les métadonnées
+      p_user_id: newUser.id  // Passer l'ID de public.users
+    });
+
+    if (authError) {
+      // En cas d'erreur, supprimer l'utilisateur de public.users
+      await supabase.from("users").delete().eq("id", newUser.id);
+      throw authError;
+    }
+
+    // 3. Attribuer les rôles via les groupes
+    if (data.roles.length > 0) {
+      const { error: rolesError } = await supabase
+        .rpc('update_user_groups', {
+          p_user_id: newUser.id,
+          p_groups: data.roles
+        });
+
+      if (rolesError) {
+        // En cas d'erreur avec les rôles, supprimer l'utilisateur
+        await supabase.from("users").delete().eq("id", newUser.id);
+        throw rolesError;
+      }
+    }
+
+    // 4. Ajouter l'utilisateur à la table club_members avec le club de l'admin
+    const { error: clubMemberError } = await supabase
+      .from("club_members")
+      .insert({
+        user_id: newUser.id,
+        club_id: adminClub.club_id,
+        joined_at: new Date().toISOString()
+      });
+
+    if (clubMemberError) {
+      // En cas d'erreur, supprimer l'utilisateur
+      await supabase.from("users").delete().eq("id", newUser.id);
+      throw clubMemberError;
+    }
+
+    return { password };
+  } catch (error) {
+    console.error("[createMember] Error:", error);
+    throw error;
+  }
+}

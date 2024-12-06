@@ -5,6 +5,7 @@ import { getMembersWithBalance } from "../../lib/queries/users";
 import MemberCard from "./MemberCard";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
+import AddMemberForm from "./AddMemberForm";
 
 const MemberList = () => {
   const { user } = useAuth();
@@ -13,6 +14,7 @@ const MemberList = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [members, setMembers] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 
   useEffect(() => {
     const loadMembers = async () => {
@@ -63,7 +65,10 @@ const MemberList = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Membres</h1>
         {hasAnyGroup(user, ["ADMIN"]) && (
-          <button className="btn btn-primary flex items-center space-x-2">
+          <button 
+            onClick={() => setIsAddMemberOpen(true)}
+            className="btn btn-primary flex items-center space-x-2"
+          >
             <Plus className="h-4 w-4" />
             <span>Ajouter un membre</span>
           </button>
@@ -148,6 +153,15 @@ const MemberList = () => {
           <MemberCard key={member.id} member={member} />
         ))}
       </div>
+
+      <AddMemberForm
+        isOpen={isAddMemberOpen}
+        onClose={() => setIsAddMemberOpen(false)}
+        onSuccess={() => {
+          // Recharger la liste des membres
+          getMembersWithBalance().then(setMembers);
+        }}
+      />
     </div>
   );
 };
