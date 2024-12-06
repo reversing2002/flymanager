@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Plane, AlertTriangle } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { Logo } from "../common/Logo";
 
 interface TestAccount {
   title: string;
@@ -76,83 +77,39 @@ const LoginPage = () => {
   const { user, signIn, loading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showTestAccounts, setShowTestAccounts] = useState(false);
 
   if (user) {
-    console.log("Utilisateur déjà connecté:", user);
     return <Navigate to="/" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log("Tentative de connexion avec:", { email, password });
-      console.log("Configuration Supabase:", {
-        url: process.env.REACT_APP_SUPABASE_URL,
-        hasAnon: !!process.env.REACT_APP_SUPABASE_ANON_KEY,
-      });
-      const result = await signIn(email, password);
-      console.log("Résultat de la connexion:", result);
+      await signIn(email, password);
     } catch (error) {
-      console.error("Erreur détaillée lors de la connexion:", {
-        error,
-        message: error instanceof Error ? error.message : "Erreur inconnue",
-        stack: error instanceof Error ? error.stack : undefined,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      console.error("Erreur lors de la connexion:", error);
     }
   };
 
-  const handleTestAccountClick = async (account: TestAccount) => {
-    if (loading) return;
-    try {
-      console.log("Tentative de connexion avec compte test:", {
-        email: account.email,
-        password: account.password,
-      });
-      const result = await signIn(account.email, account.password);
-      console.log("Résultat de la connexion test:", result);
-    } catch (error) {
-      console.error("Erreur détaillée lors de la connexion test:", {
-        account: account.title,
-        error,
-        message: error instanceof Error ? error.message : "Erreur inconnue",
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-    }
+  const handleTestAccountSelect = (account: TestAccount) => {
+    setEmail(account.email);
+    setPassword(account.password);
+    setShowTestAccounts(false);
   };
-
-  console.log("État actuel:", { loading, error, user });
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <Plane className="h-12 w-12 text-sky-600" />
+    <div className="min-h-screen bg-[#1a1d21] flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-8">
+        <div className="flex flex-col items-center">
+          <Logo className="mb-2" />
+          <p className="text-gray-400 text-sm">Pilotez facilement votre aéroclub</p>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-slate-900">
-          4fly
-        </h2>
-        <p className="mt-2 text-center text-sm text-slate-600">
-          Pilotez facilement votre aéroclub
-        </p>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-sm rounded-lg sm:px-10">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-50 text-red-800 rounded-lg flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
-                <p>{error}</p>
-              </div>
-            )}
-
+        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+          <div className="space-y-4">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700"
-              >
+              <label htmlFor="email" className="text-gray-300 text-sm">
                 Email
               </label>
               <input
@@ -160,16 +117,13 @@ const LoginPage = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 bg-[#2a2e33] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
-                className="mt-1 block w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-slate-700"
-              >
+              <label htmlFor="password" className="text-gray-300 text-sm">
                 Mot de passe
               </label>
               <input
@@ -177,53 +131,50 @@ const LoginPage = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 bg-[#2a2e33] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
-                className="mt-1 block w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
               />
             </div>
+          </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
-              >
-                {loading ? "Connexion..." : "Se connecter"}
-              </button>
+          {error && (
+            <div className="text-red-500 text-sm mt-2">
+              {error}
             </div>
+          )}
 
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-slate-500">
-                    Comptes de test
-                  </span>
-                </div>
-              </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Se connecter
+          </button>
+        </form>
 
-              <div className="mt-6 grid grid-cols-1 gap-3 text-sm">
-                {testAccounts.map((account) => (
-                  <button
-                    key={account.email}
-                    type="button"
-                    onClick={() => handleTestAccountClick(account)}
-                    disabled={loading}
-                    className="rounded-lg border border-slate-200 p-3 hover:border-slate-300 hover:bg-slate-50 transition-colors text-left"
-                  >
-                    <p className="font-medium text-slate-900">
-                      {account.title}
-                    </p>
-                    <p className="text-slate-500">
-                      Email: {account.email} / Password: {account.password}
-                    </p>
-                  </button>
-                ))}
-              </div>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowTestAccounts(!showTestAccounts)}
+            className="w-full flex items-center justify-center space-x-2 text-gray-400 text-sm hover:text-gray-300"
+          >
+            <span>Comptes de test</span>
+            <ChevronDown className={`w-4 h-4 transform transition-transform ${showTestAccounts ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showTestAccounts && (
+            <div className="absolute w-full mt-2 py-2 bg-[#2a2e33] border border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {testAccounts.map((account, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleTestAccountSelect(account)}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700"
+                >
+                  {account.title}
+                </button>
+              ))}
             </div>
-          </form>
+          )}
         </div>
       </div>
     </div>
