@@ -28,6 +28,10 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!user.club?.id) {
+      setError('Club non défini pour l\'utilisateur');
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -51,6 +55,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({
           {
             ...formData,
             created_by: user.id,
+            club_id: user.club.id,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
