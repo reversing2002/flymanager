@@ -32,6 +32,7 @@ import StatsPage from "./components/stats/StatsPage";
 import DocumentationPage from "./components/documentation/DocumentationPage";
 import DiscoveryFlightsPage from "./pages/DiscoveryFlightsPage";
 import DiscoveryQRCode from "./components/discovery/DiscoveryQRCode";
+import EnhancedDiscoveryPage from "./components/discovery/EnhancedDiscoveryPage"; // Import the new component
 import NewDiscoveryFlightPage from "./pages/NewDiscoveryFlightPage";
 import DiscoveryFlightSuccess from "./components/discovery/DiscoveryFlightSuccess";
 import DiscoveryFlightError from "./components/discovery/DiscoveryFlightError";
@@ -57,6 +58,7 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
+            <Route path="/discovery/qr2" element={<EnhancedDiscoveryPage />} />
             <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
             <Route path="/discovery-flight/success" element={<DiscoveryFlightSuccess />} />
             <Route path="/discovery-flight/error" element={<DiscoveryFlightError />} />
