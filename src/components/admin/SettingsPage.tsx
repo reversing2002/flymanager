@@ -1,57 +1,52 @@
 import { useState, useEffect } from "react";
 import {
-  Plane,
-  CreditCard,
-  Users,
-  Plane as PlaneSolid,
+  Building,
   Megaphone,
   Terminal,
   ListOrdered,
   Receipt,
   Calculator,
+  Upload,
 } from "lucide-react";
-import FlightImportTab from "./imports/FlightImportTab";
-import AccountImportTab from "./imports/AccountImportTab";
-import MemberImportTab from "./imports/MemberImportTab";
-import AircraftImportTab from "./imports/AircraftImportTab";
 import AnnouncementList from "../announcements/AnnouncementList";
 import AnnouncementForm from "../announcements/AnnouncementForm";
 import AccountTypesSettings from "../settings/AccountTypesSettings";
+import ClubManagement from "../settings/ClubManagement";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import ApiExplorer from "../api/ApiExplorer";
 import FlightTypeManager from "./FlightTypeManager";
 import AccountingCategoryManager from "./AccountingCategoryManager";
+import ImportManager from "./imports/ImportManager";
 
 type TabType =
-  | "flights"
-  | "accounts"
-  | "members"
-  | "aircraft"
+  | "club"
   | "announcements"
-  | "api"
+  | "imports"
   | "flightTypes"
   | "accountTypes"
-  | "accountingCategories";
+  | "accountingCategories"
+  | "api";
 
 const SettingsPage = () => {
-  const [activeTab, setActiveTab] = useState<TabType>("flights");
+  const [activeTab, setActiveTab] = useState<TabType>("club");
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] =
     useState<Announcement | null>(null);
 
   const tabs = [
-    { id: "flights", label: "Vols", icon: Plane },
-    { id: "accounts", label: "Comptes", icon: CreditCard },
-    { id: "members", label: "Membres", icon: Users },
-    { id: "aircraft", label: "Avions", icon: PlaneSolid },
+    // Gestion du club
+    { id: "club", label: "Club", icon: Building },
     { id: "announcements", label: "Annonces", icon: Megaphone },
-    { id: "flightTypes", label: "Types de vol", icon: ListOrdered },
-    { id: "accountingCategories", label: "Catégories comptables", icon: Calculator },
-    { id: "accountTypes", label: "Types d'opérations", icon: Receipt },
-    { id: "api", label: "API Explorer", icon: Terminal },
+    // Imports
+    { id: "imports", label: "Imports", icon: Upload },
+    // Configuration
+    { id: "flightTypes", label: "Types vol", icon: ListOrdered },
+    { id: "accountTypes", label: "Types op.", icon: Receipt },
+    { id: "accountingCategories", label: "Cat. compta", icon: Calculator },
+    { id: "api", label: "API", icon: Terminal },
   ] as const;
 
   useEffect(() => {
@@ -103,19 +98,19 @@ const SettingsPage = () => {
           <p className="text-slate-600">Configuration et imports</p>
         </div>
 
-        <div className="border-b">
-          <nav className="flex -mb-px">
+        <div className="border-b overflow-x-auto">
+          <nav className="flex -mb-px min-w-full">
             {tabs.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id as TabType)}
-                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex items-center gap-1 px-3 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                   activeTab === id
                     ? "border-sky-500 text-sky-600"
                     : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
                 }`}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-4 w-4" />
                 <span>{label}</span>
               </button>
             ))}
@@ -123,30 +118,12 @@ const SettingsPage = () => {
         </div>
 
         <div className="p-6">
-          {activeTab !== "announcements" && 
-           activeTab !== "api" && 
-           activeTab !== "flightTypes" &&
-           activeTab !== "accountTypes" &&
-           activeTab !== "accountingCategories" && (
-            <div className="mb-6 p-4 bg-sky-50 text-sky-800 rounded-lg">
-              <h3 className="font-medium mb-2">Ordre d'import recommandé :</h3>
-              <ol className="list-decimal list-inside space-y-1">
-                <li>Appareils</li>
-                <li>Membres</li>
-                <li>Opérations comptables</li>
-                <li>Vols</li>
-              </ol>
-            </div>
-          )}
-
-          {activeTab === "flights" && <FlightImportTab />}
-          {activeTab === "accounts" && <AccountImportTab />}
-          {activeTab === "members" && <MemberImportTab />}
-          {activeTab === "aircraft" && <AircraftImportTab />}
-          {activeTab === "api" && <ApiExplorer />}
+          {activeTab === "club" && <ClubManagement />}
+          {activeTab === "imports" && <ImportManager />}
           {activeTab === "flightTypes" && <FlightTypeManager />}
           {activeTab === "accountTypes" && <AccountTypesSettings />}
           {activeTab === "accountingCategories" && <AccountingCategoryManager />}
+          {activeTab === "api" && <ApiExplorer />}
           {activeTab === "announcements" && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
