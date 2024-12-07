@@ -32,7 +32,7 @@ import { hasAnyGroup } from "../../lib/permissions";
 import { cn } from "../../lib/utils";
 
 // Générer les intervalles de 15 minutes de 7h à 21h
-const TIME_SLOTS = Array.from({ length: 15 * 4 }, (_, i) => {
+const TIME_SLOTS = Array.from({ length: 57 }, (_, i) => {
   const hour = Math.floor(i / 4) + 7;
   const minutes = (i % 4) * 15;
   return { hour, minutes };
@@ -277,8 +277,8 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
 
   // Fonction pour déterminer si on doit afficher la bordure pour ce créneau
   const shouldShowBorder = (hour: number, minutes: number) => {
-    // Afficher une bordure plus marquée pour les heures pleines
-    return minutes === 0;
+    // Afficher une bordure plus marquée au début de chaque heure pleine
+    return minutes === 45;  // La bordure sera sur le slot précédent celui de l'heure pleine
   };
 
   const handleCreateFlight = (reservation: Reservation) => {
@@ -386,7 +386,7 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
 
   // Fonction utilitaire pour trouver l'index du créneau horaire
   const findTimeSlotIndex = (hour: number, minutes: number) => {
-    return TIME_SLOTS.findIndex(slot => slot.hour === hour && slot.minutes === minutes);
+    return ((hour - 7) * 4) + Math.floor(minutes / 15);
   };
 
   return (

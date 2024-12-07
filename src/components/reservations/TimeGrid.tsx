@@ -88,15 +88,12 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     minute: number,
     aircraftId: string
   ) => {
-    if (!isSelecting) {
-      setIsSelecting(true);
-      setSelectionStart({ hour, minute, aircraftId });
-      setSelectionEnd({ hour, minute });
-    }
+    setIsSelecting(true);
+    setSelectionStart({ hour, minute, aircraftId });
   };
 
   const handleMouseMove = (hour: number, minute: number) => {
-    if (isSelecting && selectionStart) {
+    if (isSelecting) {
       setSelectionEnd({ hour, minute });
     }
   };
@@ -107,12 +104,30 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       start.setHours(selectionStart.hour, selectionStart.minute, 0, 0);
 
       const end = new Date(selectedDate);
-      end.setHours(selectionEnd.hour, selectionEnd.minute, 0, 0);
+      // Arrondir à l'intervalle de 15 minutes supérieur et ajouter 15 minutes
+      const endMinutes = selectionEnd.hour * 60 + selectionEnd.minute;
+      const roundedEndMinutes = Math.ceil(endMinutes / 15) * 15 + 15;
+      const endHour = Math.floor(roundedEndMinutes / 60);
+      const endMinute = roundedEndMinutes % 60;
+      end.setHours(endHour, endMinute, 0, 0);
 
       if (end > start) {
         onTimeSlotClick(start, end, selectionStart.aircraftId);
       } else {
-        onTimeSlotClick(end, start, selectionStart.aircraftId);
+        // Si on fait un drag vers le haut, on inverse start et end
+        const adjustedStart = new Date(selectedDate);
+        // Arrondir à l'intervalle de 15 minutes inférieur
+        const startMinutes = selectionEnd.hour * 60 + selectionEnd.minute;
+        const roundedStartMinutes = Math.floor(startMinutes / 15) * 15;
+        const startHour = Math.floor(roundedStartMinutes / 60);
+        const startMinute = roundedStartMinutes % 60;
+        adjustedStart.setHours(startHour, startMinute, 0, 0);
+
+        // Ajouter 15 minutes à l'heure de fin (qui était l'heure de début)
+        const adjustedEnd = new Date(start);
+        adjustedEnd.setMinutes(adjustedEnd.getMinutes() + 15);
+        
+        onTimeSlotClick(adjustedStart, adjustedEnd, selectionStart.aircraftId);
       }
 
       setIsSelecting(false);
@@ -126,22 +141,15 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     minute: number,
     aircraftId: string
   ) => {
-    if (
-      !isSelecting ||
-      !selectionStart ||
-      !selectionEnd ||
-      selectionStart.aircraftId !== aircraftId
-    ) {
-      return false;
-    }
+    if (!selectionStart || !selectionEnd) return false;
 
-    const slotTime = hour * 60 + minute;
-    const startTime = selectionStart.hour * 60 + selectionStart.minute;
-    const endTime = selectionEnd.hour * 60 + selectionEnd.minute;
+    const startMinutes = selectionStart.hour * 60 + selectionStart.minute;
+    const endMinutes = selectionEnd.hour * 60 + selectionEnd.minute;
+    const slotMinutes = hour * 60 + minute;
 
     return (
-      slotTime >= Math.min(startTime, endTime) &&
-      slotTime <= Math.max(startTime, endTime)
+      aircraftId === selectionStart.aircraftId &&
+      (slotMinutes >= startMinutes && slotMinutes <= endMinutes)
     );
   };
 
@@ -300,20 +308,22 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   <div
                     key={`slot-${aircraft.id}-${hour}-${minute}`}
                     className={`h-4 border-b border-slate-100 relative group ${
-                      minute === 0 ? "border-b-slate-200" : ""
+                      minute === 45 ? "border-b-2 border-b-slate-200" : ""
                     } ${
                       isSlotSelected(hour, minute, aircraft.id)
                         ? "bg-sky-100"
                         : "hover:bg-slate-50"
                     }`}
-                    onMouseDown={() => handleMouseDown(hour, minute, aircraft.id)}
-                    onMouseMove={() => handleMouseMove(hour, minute)}
-                    onMouseUp={handleMouseUp}
+                    onMouseDown={(e) => handleMouseDown(hour, minute, aircraft.id)}
+                    onMouseMove={(e) => handleMouseMove(hour, minute)}
+                    onMouseUp={(e) => handleMouseUp()}
                   >
                     <div className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {`${hour.toString().padStart(2, "0")}:${minute
-                        .toString()
-                        .padStart(2, "0")}`}
+                      {isSlotSelected(hour, minute, aircraft.id) ? (
+                        `${selectionStart?.hour}h à ${selectionEnd ? Math.ceil((selectionEnd.hour * 60 + selectionEnd.minute) / 60) : selectionStart?.hour + 1}h`
+                      ) : (
+                        `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
+                      )}
                     </div>
                   </div>
                 ))}
