@@ -1,10 +1,13 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Box, Button, Container, Heading, Text, useClipboard } from '@chakra-ui/react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const DiscoveryQRCode = () => {
-  // L'URL complète de votre application + le chemin pour ouvrir la modal
-  const qrCodeUrl = `${window.location.origin}/discovery/new`;
+  const { user } = useAuth();
+  const clubId = user?.club?.id;
+  // L'URL complète de votre application + le chemin pour ouvrir la modal avec le club pré-rempli
+  const qrCodeUrl = `${window.location.origin}/discovery/new${clubId ? `?club=${clubId}` : ''}`;
   const { hasCopied, onCopy } = useClipboard(qrCodeUrl);
 
   return (

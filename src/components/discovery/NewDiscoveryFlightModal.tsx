@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import {
   Modal,
   ModalOverlay,
@@ -14,13 +14,18 @@ import {
   Stack,
   useToast,
   FormHelperText,
-  Select,
-  useDisclosure
+  useDisclosure,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Box
 } from '@chakra-ui/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { stripePromise } from '../../lib/stripe';
+import { useSearchParams } from 'react-router-dom';
 
 interface NewDiscoveryFlightModalProps {
   isOpen?: boolean;
@@ -46,28 +51,80 @@ const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({
   const { isOpen: defaultIsOpen, onClose: defaultOnClose } = useDisclosure({ defaultIsOpen: isPublic });
   const isOpen = propIsOpen ?? defaultIsOpen;
   const onClose = propOnClose ?? defaultOnClose;
+  const [searchParams] = useSearchParams();
+  const clubIdFromUrl = searchParams.get('club');
+
+  const { data: club, isLoading: isLoadingClub, error: clubError } = useQuery({
+    queryKey: ['club', clubIdFromUrl],
+    queryFn: async () => {
+      if (!clubIdFromUrl) return null;
+      const { data, error } = await supabase
+        .from('clubs')
+        .select('*')
+        .eq('id', clubIdFromUrl)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!clubIdFromUrl
+  });
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    reset
-  } = useForm<FormData>();
+    reset,
+    setValue
+  } = useForm<FormData>({
+    defaultValues: {
+      club_id: clubIdFromUrl || ''
+    }
+  });
   
   const queryClient = useQueryClient();
   const toast = useToast();
 
-  const { data: clubs } = useQuery({
-    queryKey: ['clubs'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('clubs')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data;
-    }
-  });
+  // Si le club n'existe pas et qu'on a fini de charger, afficher une erreur
+  if (!isLoadingClub && clubIdFromUrl && !club) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+        <ModalOverlay className="bg-black/50" />
+        <ModalContent maxW="2xl" className="bg-white rounded-xl shadow-xl">
+          <ModalHeader className="text-red-600">
+            Club non trouvé
+          </ModalHeader>
+          <div className="p-6">
+            <Alert status="error" variant="subtle" flexDirection="column" alignItems="center" justifyContent="center" textAlign="center" height="200px">
+              <AlertIcon boxSize="40px" mr={0} />
+              <AlertTitle mt={4} mb={1} fontSize="lg">
+                Club introuvable
+              </AlertTitle>
+              <AlertDescription maxWidth="sm">
+                Le club spécifié n'existe pas. Veuillez vérifier le lien ou contacter l'administrateur.
+              </AlertDescription>
+            </Alert>
+          </div>
+        </ModalContent>
+      </Modal>
+    );
+  }
+
+  // Si on est en train de charger, afficher un loader
+  if (isLoadingClub) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+        <ModalOverlay className="bg-black/50" />
+        <ModalContent maxW="2xl" className="bg-white rounded-xl shadow-xl">
+          <ModalHeader>
+            Chargement...
+          </ModalHeader>
+          <div className="p-6 flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
+          </div>
+        </ModalContent>
+      </Modal>
+    );
+  }
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -240,25 +297,6 @@ const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({
               </FormErrorMessage>
             </FormControl>
 
-            <FormControl isInvalid={!!errors.club_id} isRequired>
-              <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
-                Club
-              </FormLabel>
-              <Select
-                {...register('club_id', { required: 'Le club est requis' })}
-                placeholder="Sélectionnez un club"
-              >
-                {clubs?.map((club) => (
-                  <option key={club.id} value={club.id}>
-                    {club.name}
-                  </option>
-                ))}
-              </Select>
-              <FormErrorMessage>
-                {errors.club_id?.message}
-              </FormErrorMessage>
-            </FormControl>
-
             <FormControl>
               <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
                 Dates souhaitées
@@ -283,6 +321,8 @@ const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({
                 placeholder="Informations complémentaires..."
               />
             </FormControl>
+
+            <input type="hidden" {...register('club_id', { required: true })} />
           </div>
 
           <div className="flex justify-end space-x-4 p-6 border-t">
