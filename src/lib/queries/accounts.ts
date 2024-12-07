@@ -52,23 +52,8 @@ export async function getMembersWithBalance(): Promise<User[]> {
 
     if (licensesError) throw licensesError;
 
-    // Get account entries for balance calculation
-    const { data: entries, error: entriesError } = await supabase
-      .from("account_entries")
-      .select(`
-        *,
-        account_entry_types!inner(
-          id,
-          code,
-          name,
-          is_credit
-        )
-      `);
-
-    if (entriesError) throw entriesError;
-
     // Process and format user data
-    const processedUsers = users.map((user) => {
+    const processedUsers = await Promise.all(users.map(async (user) => {
       // Get user's licenses
       const userLicenses = licenses.filter((l) => l.user_id === user.id);
 
@@ -78,17 +63,31 @@ export async function getMembersWithBalance(): Promise<User[]> {
           new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime()
       )[0];
 
+      // Get account entries for balance calculation
+      const { data: entries, error: entriesError } = await supabase
+        .from("account_entries")
+        .select(`
+          *,
+          account_entry_types(
+            id,
+            code,
+            name,
+            is_credit
+          )
+        `)
+        .eq("assigned_to_id", user.id);
+
+      if (entriesError) throw entriesError;
+
       // Calculate balances
-      const userEntries = entries.filter((entry) => entry.assigned_to_id === user.id);
+      const userEntries = entries;
       
       // Calculate validated balance (only validated entries not paid by club)
       const validatedEntries = userEntries.filter(
         (entry) => entry.is_validated && !entry.is_club_paid
       );
       const validatedBalance = validatedEntries.reduce((acc, entry) => {
-        // Use is_credit from account_entry_types to determine if it's a credit or debit
-        const amount = entry.account_entry_types.is_credit ? entry.amount : -entry.amount;
-        return acc + amount;
+        return acc + entry.amount;
       }, 0);
 
       // Calculate pending balance (non-validated entries not paid by club)
@@ -96,9 +95,7 @@ export async function getMembersWithBalance(): Promise<User[]> {
         (entry) => !entry.is_validated && !entry.is_club_paid
       );
       const pendingBalance = pendingEntries.reduce((acc, entry) => {
-        // Use is_credit from account_entry_types to determine if it's a credit or debit
-        const amount = entry.account_entry_types.is_credit ? entry.amount : -entry.amount;
-        return acc + amount;
+        return acc + entry.amount;
       }, 0);
 
       return {
@@ -116,7 +113,7 @@ export async function getMembersWithBalance(): Promise<User[]> {
         pendingBalance,
         qualifications: user.pilot_qualifications || [],
       };
-    });
+    }));
 
     return processedUsers;
   } catch (error) {
@@ -130,29 +127,29 @@ export async function getMemberBalance(userId: string) {
     .from("account_entries")
     .select(`
       *,
-      account_entry_types!inner(
+      account_entry_types(
         id,
         code,
         name,
         is_credit
       )
     `)
-    .eq("assigned_to_id", userId);
+    .eq("assigned_to_id", userId)
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
 
   if (error) throw error;
 
   // Calculate validated balance (only validated entries not paid by club)
   const validatedEntries = data.filter(entry => entry.is_validated && !entry.is_club_paid);
   const validated = validatedEntries.reduce((acc, entry) => {
-    const amount = entry.account_entry_types.is_credit ? entry.amount : -entry.amount;
-    return acc + amount;
+    return acc + entry.amount;
   }, 0);
 
   // Calculate pending balance (non-validated entries not paid by club)
   const pendingEntries = data.filter(entry => !entry.is_validated && !entry.is_club_paid);
   const pending = pendingEntries.reduce((acc, entry) => {
-    const amount = entry.account_entry_types.is_credit ? entry.amount : -entry.amount;
-    return acc + amount;
+    return acc + entry.amount;
   }, 0);
 
   return {
