@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { getCategories, getDocuments, deleteDocument, downloadDocument, deleteCategory } from '../../services/documentService';
@@ -140,10 +140,13 @@ const DocumentationPage: React.FC = () => {
     }
   };
 
-  const filteredDocuments = documents.filter(doc =>
-    doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filtrer les documents en fonction de la recherche et de la catégorie sélectionnée
+  const filteredDocuments = useMemo(() => {
+    return documents.filter(doc =>
+      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      (!selectedCategory || doc.category_id === selectedCategory)
+    );
+  }, [documents, searchQuery, selectedCategory]);
 
   if (!user?.club?.id) {
     return (

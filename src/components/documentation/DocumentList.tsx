@@ -38,21 +38,12 @@ const DocumentList: React.FC<DocumentListProps> = ({
 }) => {
   const { user } = useAuth();
   const isAdmin = hasAnyGroup(user, ['ADMIN']);
-  const [search, setSearch] = useState('');
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
-
-  // Utiliser useMemo pour éviter les re-rendus inutiles
-  const filteredDocuments = useMemo(() => {
-    return documents.filter(doc =>
-      doc.title.toLowerCase().includes(search.toLowerCase()) &&
-      (!selectedCategory || doc.category_id === selectedCategory)
-    );
-  }, [documents, search, selectedCategory]);
 
   const handleMoveDocument = async (currentIndex: number, direction: 'up' | 'down') => {
     if (!isAdmin) return;
 
-    const sortedDocs = [...filteredDocuments].sort((a, b) => 
+    const sortedDocs = [...documents].sort((a, b) => 
       (a.display_order ?? 0) - (b.display_order ?? 0)
     );
 
@@ -161,24 +152,14 @@ const DocumentList: React.FC<DocumentListProps> = ({
   }
 
   const sortedDocuments = useMemo(() => {
-    return [...filteredDocuments].sort((a, b) => 
+    return [...documents].sort((a, b) => 
       (a.display_order ?? 0) - (b.display_order ?? 0)
     );
-  }, [filteredDocuments]);
+  }, [documents]);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-4">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Rechercher un document..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-        </div>
         {isAdmin && (
           <NewDocumentCard onUpload={onUpload} />
         )}
