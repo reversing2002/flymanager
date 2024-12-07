@@ -61,6 +61,17 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState<{
+    hour: number;
+    minute: number;
+    aircraftId: string;
+  } | null>(null);
+  const [selectionEnd, setSelectionEnd] = useState<{
+    hour: number;
+    minute: number;
+  } | null>(null);
+
   useEffect(() => {
     loadInitialData();
   }, [selectedDate]);
@@ -167,9 +178,25 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     });
   };
 
-  const handleTimeSlotClick = (hour: number, minutes: number, aircraftId: string) => {
-    const start = setMinutes(setHours(selectedDate, hour), minutes);
-    const end = addMinutes(start, 15);
+  const handleTimeSlotClick = (
+    startHour: number,
+    startMinutes: number,
+    aircraftId: string,
+    endHour?: number,
+    endMinutes?: number
+  ) => {
+    const start = setMinutes(setHours(selectedDate, startHour), startMinutes);
+    let end;
+
+    if (typeof endHour === 'number' && typeof endMinutes === 'number') {
+      end = setMinutes(setHours(selectedDate, endHour), endMinutes);
+      // Si la fin est avant le début, on ajoute 15 minutes au début
+      if (end <= start) {
+        end = addMinutes(start, 15);
+      }
+    } else {
+      end = addMinutes(start, 15);
+    }
 
     setSelectedTimeSlot({
       start,
@@ -291,6 +318,77 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     }
   };
 
+  const handleMouseDown = (hour: number, minutes: number, aircraftId: string) => {
+    if (!isSelecting) {
+      setIsSelecting(true);
+      setSelectionStart({ hour, minute: minutes, aircraftId });
+      setSelectionEnd({ hour, minute: minutes });
+    }
+  };
+
+  const handleMouseMove = (hour: number, minutes: number) => {
+    if (isSelecting && selectionStart) {
+      setSelectionEnd({ hour, minute: minutes });
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isSelecting && selectionStart && selectionEnd) {
+      const start = new Date(selectedDate);
+      start.setHours(selectionStart.hour, selectionStart.minute, 0, 0);
+
+      const end = new Date(selectedDate);
+      end.setHours(selectionEnd.hour, selectionEnd.minute, 0, 0);
+
+      if (end > start) {
+        handleTimeSlotClick(
+          selectionStart.hour,
+          selectionStart.minute,
+          selectionStart.aircraftId,
+          selectionEnd.hour,
+          selectionEnd.minute
+        );
+      } else {
+        handleTimeSlotClick(
+          selectionEnd.hour,
+          selectionEnd.minute,
+          selectionStart.aircraftId,
+          selectionStart.hour,
+          selectionStart.minute
+        );
+      }
+
+      setIsSelecting(false);
+      setSelectionStart(null);
+      setSelectionEnd(null);
+    }
+  };
+
+  const isSlotSelected = (hour: number, minute: number, aircraftId: string) => {
+    if (
+      !isSelecting ||
+      !selectionStart ||
+      !selectionEnd ||
+      selectionStart.aircraftId !== aircraftId
+    ) {
+      return false;
+    }
+
+    const slotTime = hour * 60 + minute;
+    const startTime = selectionStart.hour * 60 + selectionStart.minute;
+    const endTime = selectionEnd.hour * 60 + selectionEnd.minute;
+
+    return (
+      slotTime >= Math.min(startTime, endTime) &&
+      slotTime <= Math.max(startTime, endTime)
+    );
+  };
+
+  // Fonction utilitaire pour trouver l'index du créneau horaire
+  const findTimeSlotIndex = (hour: number, minutes: number) => {
+    return TIME_SLOTS.findIndex(slot => slot.hour === hour && slot.minutes === minutes);
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header avec la date */}
@@ -371,28 +469,19 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
                   {TIME_SLOTS.map(({ hour, minutes }) => (
                     <div
                       key={`${hour}-${minutes}`}
-                      className="absolute h-12"
                       style={{ 
-                        left: `${TIME_SLOTS.indexOf({ hour, minutes }) * SLOT_WIDTH}rem`,
+                        left: `${findTimeSlotIndex(hour, minutes) * SLOT_WIDTH}rem`,
                         width: `${SLOT_WIDTH}rem`,
                       }}
-                      onClick={() => {
-                        const existingReservation = getReservationsForAircraft(aircraft.id).find(r => {
-                          const start = new Date(r.startTime);
-                          const end = new Date(r.endTime);
-                          const slotStart = setMinutes(setHours(selectedDate, hour), minutes);
-                          const slotEnd = addMinutes(slotStart, 15);
-                          return (
-                            (start <= slotStart && end > slotStart) ||
-                            (start < slotEnd && end >= slotEnd) ||
-                            (start >= slotStart && end <= slotEnd)
-                          );
-                        });
-                        
-                        if (!existingReservation) {
-                          handleTimeSlotClick(hour, minutes, aircraft.id);
+                      className={cn(
+                        "absolute h-12 cursor-pointer hover:bg-gray-50",
+                        {
+                          "bg-blue-100": isSlotSelected(hour, minutes, aircraft.id),
                         }
-                      }}
+                      )}
+                      onMouseDown={() => handleMouseDown(hour, minutes, aircraft.id)}
+                      onMouseMove={() => handleMouseMove(hour, minutes)}
+                      onMouseUp={handleMouseUp}
                     />
                   ))}
                   
