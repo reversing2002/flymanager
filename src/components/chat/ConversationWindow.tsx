@@ -1,5 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Loader, Image as ImageIcon, Paperclip, File, X, ChevronLeft } from 'lucide-react';
+import { 
+  Send, 
+  Loader, 
+  Image as ImageIcon, 
+  Paperclip, 
+  File as FileIcon, 
+  X as XIcon, 
+  ChevronLeft, 
+  Check as CheckIcon,
+  Pencil,
+  Trash2
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuth } from '../../contexts/AuthContext';
@@ -22,6 +33,8 @@ export interface Message {
 interface ConversationWindowProps {
   messages: Message[];
   onSendMessage: (content: string, fileUrl?: string, fileType?: 'image' | 'video' | 'document') => Promise<void>;
+  onDeleteMessage?: (messageId: string) => Promise<void>;
+  onEditMessage?: (messageId: string, newContent: string) => Promise<void>;
   type: 'room' | 'private';
   title: string;
   subtitle?: string;
@@ -33,6 +46,8 @@ interface ConversationWindowProps {
 const ConversationWindow: React.FC<ConversationWindowProps> = ({
   messages,
   onSendMessage,
+  onDeleteMessage,
+  onEditMessage,
   type,
   title,
   subtitle,
@@ -46,9 +61,13 @@ const ConversationWindow: React.FC<ConversationWindowProps> = ({
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [sending, setSending] = useState(false);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (file && file.type.startsWith('image/')) {
@@ -66,6 +85,12 @@ const ConversationWindow: React.FC<ConversationWindowProps> = ({
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (editingMessageId && editInputRef.current) {
+      editInputRef.current.focus();
+    }
+  }, [editingMessageId]);
+
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -82,6 +107,38 @@ const ConversationWindow: React.FC<ConversationWindowProps> = ({
       setFile(selectedFile);
     }
   };
+
+  const getSignedUrl = async (filePath: string) => {
+    try {
+      const { data: { signedUrl } } = await supabase.storage
+        .from('chat-files')
+        .createSignedUrl(filePath, 60 * 60 * 24); // URL valide pendant 24 heures
+
+      return signedUrl;
+    } catch (error) {
+      console.error('Error getting signed URL:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const loadSignedUrls = async () => {
+      const newSignedUrls: Record<string, string> = {};
+      
+      for (const message of messages) {
+        if (message.file_url && !message.file_url.startsWith('http')) {
+          const signedUrl = await getSignedUrl(message.file_url);
+          if (signedUrl) {
+            newSignedUrls[message.file_url] = signedUrl;
+          }
+        }
+      }
+      
+      setSignedUrls(newSignedUrls);
+    };
+
+    loadSignedUrls();
+  }, [messages]);
 
   const uploadFile = async (file: File): Promise<{ url: string; type: 'image' | 'video' | 'document' } | null> => {
     const fileExt = file.name.split('.').pop()?.toLowerCase();
@@ -103,13 +160,8 @@ const ConversationWindow: React.FC<ConversationWindowProps> = ({
 
       if (uploadError) throw uploadError;
 
-      const { data: { signedUrl } } = await supabase.storage
-        .from('chat-files')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 7); // URL valide pendant 7 jours
-
-      if (!signedUrl) throw new Error("Impossible de générer l'URL signée");
-
-      return { url: signedUrl, type: fileType };
+      // Retourner le chemin du fichier au lieu de l'URL signée
+      return { url: filePath, type: fileType };
     } catch (error) {
       console.error('Error uploading file:', error);
       toast.error("Erreur lors de l'upload du fichier");
@@ -148,6 +200,40 @@ const ConversationWindow: React.FC<ConversationWindowProps> = ({
     }
   };
 
+  const handleStartEdit = (message: Message) => {
+    setEditingMessageId(message.id);
+    setEditingContent(message.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingContent('');
+  };
+
+  const handleConfirmEdit = async (messageId: string) => {
+    if (!editingContent.trim() || !onEditMessage) return;
+
+    try {
+      await onEditMessage(messageId, editingContent.trim());
+      setEditingMessageId(null);
+      setEditingContent('');
+    } catch (error) {
+      console.error('Error editing message:', error);
+      toast.error("Erreur lors de la modification du message");
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!onDeleteMessage) return;
+
+    try {
+      await onDeleteMessage(messageId);
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast.error("Erreur lors de la suppression du message");
+    }
+  };
+
   const renderFilePreview = () => {
     if (!file) return null;
 
@@ -162,7 +248,7 @@ const ConversationWindow: React.FC<ConversationWindowProps> = ({
         ) : (
           <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg">
             {file.type.startsWith('video/') ? (
-              <File className="h-5 w-5 text-blue-500" />
+              <FileIcon className="h-5 w-5 text-blue-500" />
             ) : (
               <Paperclip className="h-5 w-5 text-blue-500" />
             )}
@@ -173,7 +259,7 @@ const ConversationWindow: React.FC<ConversationWindowProps> = ({
           onClick={() => setFile(null)}
           className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
         >
-          <X className="h-4 w-4" />
+          <XIcon className="h-4 w-4" />
         </button>
       </div>
     );
@@ -217,78 +303,141 @@ const ConversationWindow: React.FC<ConversationWindowProps> = ({
         ref={messageContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4"
       >
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex gap-3 ${
-              message.sender.id === user?.id ? 'flex-row-reverse' : ''
-            }`}
-          >
-            {/* Avatar */}
-            {message.sender.avatar ? (
-              <img
-                src={message.sender.avatar}
-                alt={message.sender.name}
-                className="h-8 w-8 rounded-full flex-shrink-0"
-              />
-            ) : (
-              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                <span className="text-gray-500 text-xs">
-                  {message.sender.name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
+        {messages.map((message) => {
+          const displayUrl = message.file_url && !message.file_url.startsWith('http') 
+            ? signedUrls[message.file_url] 
+            : message.file_url;
+          const isOwnMessage = message.sender.id === user?.id;
 
-            {/* Message content */}
+          return (
             <div
-              className={`flex flex-col ${
-                message.sender.id === user?.id ? 'items-end' : 'items-start'
+              key={message.id}
+              className={`flex gap-3 group ${
+                isOwnMessage ? 'flex-row-reverse' : ''
               }`}
             >
-              <div className="flex items-end gap-2 max-w-[75%] lg:max-w-[50%]">
-                <div
-                  className={`px-4 py-2 rounded-2xl break-words ${
-                    message.sender.id === user?.id
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-white text-gray-900 border border-gray-200'
-                  }`}
-                >
-                  {message.file_url ? (
-                    message.file_type === 'image' ? (
-                      <img
-                        src={message.file_url}
-                        alt="Image"
-                        className="max-w-full rounded-lg cursor-pointer"
-                        onClick={() => window.open(message.file_url, '_blank')}
-                      />
-                    ) : message.file_type === 'video' ? (
-                      <video
-                        src={message.file_url}
-                        controls
-                        className="max-w-full rounded-lg"
-                      />
+              {/* Avatar et nom */}
+              <div className={`flex flex-col items-center gap-1 ${isOwnMessage ? 'items-end' : 'items-start'}`}>
+                {message.sender.avatar ? (
+                  <img
+                    src={message.sender.avatar}
+                    alt={message.sender.name}
+                    className="h-8 w-8 rounded-full flex-shrink-0"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <span className="text-gray-500 text-xs">
+                      {message.sender.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <span className="text-xs text-gray-500">
+                  {message.sender.name}
+                </span>
+              </div>
+
+              {/* Message content */}
+              <div
+                className={`flex flex-col ${
+                  isOwnMessage ? 'items-end' : 'items-start'
+                }`}
+              >
+                <div className="flex items-end gap-2 max-w-[75%] lg:max-w-[50%] relative group">
+                  <div
+                    className={`relative px-4 py-2 rounded-2xl break-words ${
+                      isOwnMessage
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white text-gray-900 border border-gray-200'
+                    }`}
+                  >
+                    {editingMessageId === message.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          ref={editInputRef}
+                          type="text"
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              handleConfirmEdit(message.id);
+                            }
+                          }}
+                          className="w-full px-2 py-1 rounded bg-white text-gray-900"
+                        />
+                        <button
+                          onClick={() => handleConfirmEdit(message.id)}
+                          className="p-1 hover:bg-blue-600 rounded"
+                        >
+                          <CheckIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="p-1 hover:bg-blue-600 rounded"
+                        >
+                          <XIcon className="h-4 w-4" />
+                        </button>
+                      </div>
                     ) : (
-                      <a
-                        href={message.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-blue-500 hover:text-blue-600"
+                      <>
+                        {displayUrl ? (
+                          message.file_type === 'image' ? (
+                            <img
+                              src={displayUrl}
+                              alt="Image"
+                              className="max-w-full rounded-lg cursor-pointer"
+                              onClick={() => window.open(displayUrl, '_blank')}
+                            />
+                          ) : message.file_type === 'video' ? (
+                            <video
+                              src={displayUrl}
+                              controls
+                              className="max-w-full rounded-lg"
+                            />
+                          ) : (
+                            <a
+                              href={displayUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-blue-500 hover:text-blue-600"
+                            >
+                              <FileIcon className="h-5 w-5" />
+                              <span>Voir le document</span>
+                            </a>
+                          )
+                        ) : (
+                          <p>{message.content}</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Boutons d'action */}
+                  {isOwnMessage && !displayUrl && (
+                    <div className={`absolute flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${
+                      isOwnMessage ? '-left-16' : '-right-16'
+                    } top-1/2 -translate-y-1/2`}>
+                      <button
+                        onClick={() => handleStartEdit(message)}
+                        className="p-1 hover:bg-gray-100 rounded-full bg-white shadow-sm"
                       >
-                        <File className="h-5 w-5" />
-                        <span>Voir le document</span>
-                      </a>
-                    )
-                  ) : (
-                    <p>{message.content}</p>
+                        <Pencil className="h-4 w-4 text-gray-500" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMessage(message.id)}
+                        className="p-1 hover:bg-gray-100 rounded-full bg-white shadow-sm"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </button>
+                    </div>
                   )}
                 </div>
+                <span className="text-xs text-gray-500 mt-1">
+                  {format(message.timestamp, 'HH:mm', { locale: fr })}
+                </span>
               </div>
-              <span className="text-xs text-gray-500 mt-1">
-                {format(message.timestamp, 'HH:mm', { locale: fr })}
-              </span>
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 

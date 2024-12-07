@@ -3,11 +3,13 @@ import ConversationWindow from './ConversationWindow';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Message } from './ConversationWindow';
+import toast from 'react-hot-toast';
 
 interface User {
   id: string;
   email: string;
-  full_name?: string;
+  first_name?: string;
+  last_name?: string;
   image_url?: string;
 }
 
@@ -19,9 +21,13 @@ interface DatabaseMessage {
   id: string;
   content: string;
   created_at: string;
+  updated_at: string;
   sender_id: string;
-  sender: {
-    full_name: string;
+  file_url: string;
+  file_type: string;
+  users: {
+    first_name: string;
+    last_name: string;
     image_url: string;
   };
 }
@@ -34,11 +40,11 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ recipientId }) => {
   useEffect(() => {
     if (!recipientId || !user?.id) return;
 
-    // Fetch recipient data
+    // Charger les données du destinataire
     const fetchRecipient = async () => {
       const { data: recipientData, error: recipientError } = await supabase
         .from('users')
-        .select('id, email, full_name, image_url')
+        .select('id, email, first_name, last_name, image_url')
         .eq('id', recipientId)
         .single();
       
@@ -47,19 +53,9 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ recipientId }) => {
       }
     };
 
-    // Mark messages as read
-    const markMessagesAsRead = async () => {
-      const { error } = await supabase
-        .from('private_messages')
-        .update({ read_at: new Date().toISOString() })
-        .eq('sender_id', recipientId)
-        .eq('recipient_id', user.id)
-        .is('read_at', null);
+    fetchRecipient();
 
-      if (error) console.error('Error marking messages as read:', error);
-    };
-
-    // Load existing messages
+    // Charger les messages initiaux
     const loadMessages = async () => {
       const { data } = await supabase
         .from('private_messages')
@@ -67,11 +63,14 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ recipientId }) => {
           id,
           content,
           created_at,
+          updated_at,
           sender_id,
-          recipient_id,
-          sender:sender_id (
+          file_url,
+          file_type,
+          users!private_messages_sender_id_fkey (
             id,
-            full_name,
+            first_name,
+            last_name,
             image_url
           )
         `)
@@ -82,78 +81,125 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ recipientId }) => {
         const formattedMessages = data.map(msg => ({
           id: msg.id,
           content: msg.content,
-          timestamp: new Date(msg.created_at),
+          timestamp: new Date(msg.updated_at || msg.created_at),
           sender: {
             id: msg.sender_id,
-            name: msg.sender?.full_name || 'Unknown',
-            avatar: msg.sender?.image_url
-          }
+            name: msg.users ? `${msg.users.first_name} ${msg.users.last_name}`.trim() : 'Unknown',
+            avatar: msg.users?.image_url
+          },
+          file_url: msg.file_url,
+          file_type: msg.file_type
         }));
         setMessages(formattedMessages);
       }
     };
 
-    fetchRecipient();
     loadMessages();
-    markMessagesAsRead();
 
-    // Subscribe to new messages
-    const channel = supabase.channel(`private_messages:${recipientId}`)
+    // S'abonner aux changements
+    const channel = supabase
+      .channel('private_messages')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'private_messages',
           filter: `or(and(sender_id=eq.${user.id},recipient_id=eq.${recipientId}),and(sender_id=eq.${recipientId},recipient_id=eq.${user.id}))`
         },
         async (payload) => {
-          console.log('Received new private message:', payload);
-          
-          // Ne pas ajouter le message si c'est nous qui l'avons envoyé
-          if (payload.new.sender_id === user?.id) {
+          if (payload.eventType === 'DELETE') {
+            setMessages(prev => prev.filter(msg => msg.id !== payload.old.id));
             return;
           }
+
+          const messageData = payload.new;
           
-          // Get sender information
-          const { data: senderData } = await supabase
+          // Récupérer les informations de l'utilisateur
+          const { data: userData } = await supabase
             .from('users')
-            .select('full_name, image_url')
-            .eq('id', payload.new.sender_id)
+            .select('first_name, last_name, image_url')
+            .eq('id', messageData.sender_id)
             .single();
 
-          if (senderData) {
-            const newMessage = {
-              id: payload.new.id,
-              content: payload.new.content,
-              timestamp: new Date(payload.new.created_at),
-              sender: {
-                id: payload.new.sender_id,
-                name: senderData.full_name || 'Unknown',
-                avatar: senderData.image_url
-              }
-            };
+          const formattedMessage = {
+            id: messageData.id,
+            content: messageData.content,
+            timestamp: new Date(messageData.updated_at || messageData.created_at),
+            sender: {
+              id: messageData.sender_id,
+              name: userData ? `${userData.first_name} ${userData.last_name}`.trim() : 'Unknown',
+              avatar: userData?.image_url
+            },
+            file_url: messageData.file_url,
+            file_type: messageData.file_type
+          };
 
-            setMessages(prev => [...prev, newMessage]);
-
-            // Mark message as read if we're the recipient
-            if (payload.new.sender_id === recipientId) {
-              markMessagesAsRead();
-            }
+          if (payload.eventType === 'INSERT') {
+            setMessages(prev => [...prev, formattedMessage]);
+          } else if (payload.eventType === 'UPDATE') {
+            setMessages(prev => prev.map(msg => 
+              msg.id === messageData.id ? formattedMessage : msg
+            ));
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Private messages subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
-      void supabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [recipientId, user?.id]);
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('private_messages')
+        .delete()
+        .match({ 
+          id: messageId,
+          sender_id: user.id
+        });
+
+      if (error) {
+        console.error('Error deleting message:', error);
+        toast.error('Erreur lors de la suppression du message');
+      }
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast.error('Erreur lors de la suppression du message');
+    }
+  };
+
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('private_messages')
+        .update({ 
+          content: newContent,
+          updated_at: new Date().toISOString()
+        })
+        .match({ 
+          id: messageId,
+          sender_id: user.id
+        });
+
+      if (error) {
+        console.error('Error editing message:', error);
+        toast.error('Erreur lors de la modification du message');
+      }
+    } catch (error) {
+      console.error('Error editing message:', error);
+      toast.error('Erreur lors de la modification du message');
+    }
+  };
+
   const handleSendMessage = async (content: string, fileUrl?: string, fileType?: 'image' | 'video' | 'document') => {
-    if (!user?.id || !recipientId || !content.trim()) return;
+    if (!user?.id || !recipientId || (!content.trim() && !fileUrl)) return;
 
     try {
       const { data: newMessage, error } = await supabase
@@ -162,7 +208,7 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ recipientId }) => {
           content: content.trim(),
           sender_id: user.id,
           recipient_id: recipientId,
-          file_url: fileUrl,
+          file_url: fileUrl,  
           file_type: fileType,
           created_at: new Date().toISOString()
         })
@@ -186,16 +232,17 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ recipientId }) => {
           timestamp: new Date(newMessage.created_at),
           sender: {
             id: newMessage.sender_id,
-            name: user.full_name || user.email.split('@')[0],
+            name: user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email.split('@')[0],
             avatar: user.image_url
           },
-          file_url: newMessage.file_url,
+          file_url: newMessage.file_url,  
           file_type: newMessage.file_type
         };
         setMessages(prev => [...prev, formattedMessage]);
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      toast.error("Erreur lors de l'envoi du message");
     }
   };
 
@@ -204,11 +251,13 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ recipientId }) => {
   return (
     <ConversationWindow
       type="private"
-      title={recipientData.full_name || recipientData.email}
-      recipientName={recipientData.full_name}
+      title={recipientData.first_name && recipientData.last_name ? `${recipientData.first_name} ${recipientData.last_name}` : recipientData.email}
+      recipientName={recipientData.first_name && recipientData.last_name ? `${recipientData.first_name} ${recipientData.last_name}` : recipientData.email}
       recipientAvatar={recipientData.image_url}
       messages={messages}
       onSendMessage={handleSendMessage}
+      onDeleteMessage={handleDeleteMessage}
+      onEditMessage={handleEditMessage}
     />
   );
 };
