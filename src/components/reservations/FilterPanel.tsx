@@ -1,14 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import type { Aircraft, User } from '../../types/database';
-
-interface FilterPanelProps {
-  onClose: () => void;
-  onFiltersChange: (filters: FilterState) => void;
-  aircraft: Aircraft[];
-  instructors: User[];
-  filters: FilterState;
-}
+import { hasAnyGroup } from '../../lib/permissions';
 
 export interface FilterState {
   aircraftTypes: string[];
@@ -17,28 +10,45 @@ export interface FilterState {
   availability: string;
 }
 
+interface FilterPanelProps {
+  onClose: () => void;
+  onChange: (filters: FilterState) => void;
+  aircraft: Aircraft[];
+  users: User[];
+  filters: FilterState;
+}
+
 const FilterPanel: React.FC<FilterPanelProps> = ({ 
   onClose, 
-  onFiltersChange,
+  onChange,
   aircraft,
-  instructors: allInstructors,
+  users,
   filters 
 }) => {
   // Get unique aircraft types
-  const aircraftTypes = [...new Set(aircraft.map(a => a.type))];
+  const aircraftTypes = [...new Set(aircraft?.map(a => a.type) || [])];
+  const instructors = users?.filter(u => hasAnyGroup({ role: u.role } as User, ["INSTRUCTOR"])) || [];
 
   const handleTypeChange = (type: string, checked: boolean) => {
     const newTypes = checked 
       ? [...filters.aircraftTypes, type]
       : filters.aircraftTypes.filter(t => t !== type);
-    onFiltersChange({ ...filters, aircraftTypes: newTypes });
+    onChange({ ...filters, aircraftTypes: newTypes });
   };
 
   const handleInstructorChange = (instructorId: string, checked: boolean) => {
     const newInstructors = checked
       ? [...filters.instructors, instructorId]
       : filters.instructors.filter(i => i !== instructorId);
-    onFiltersChange({ ...filters, instructors: newInstructors });
+    onChange({ ...filters, instructors: newInstructors });
+  };
+
+  const handleStatusChange = (status: string) => {
+    onChange({ ...filters, status });
+  };
+
+  const handleAvailabilityChange = (availability: string) => {
+    onChange({ ...filters, availability });
   };
 
   return (
@@ -82,7 +92,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             Instructeur
           </label>
           <div className="space-y-2">
-            {allInstructors.map((instructor) => (
+            {instructors.map((instructor) => (
               <label key={instructor.id} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -98,20 +108,38 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Disponibilité
-          </label>
-          <select
-            value={filters.availability}
-            onChange={(e) => onFiltersChange({ ...filters, availability: e.target.value })}
-            className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-          >
-            <option value="all">Tous</option>
-            <option value="available">Disponible maintenant</option>
-            <option value="today">Disponible aujourd'hui</option>
-            <option value="week">Disponible cette semaine</option>
-          </select>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Statut
+            </label>
+            <select
+              value={filters.status}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="mt-1 block w-full rounded-md border-slate-300 text-sm focus:border-sky-500 focus:ring-sky-500"
+            >
+              <option value="all">Tous</option>
+              <option value="pending">En attente</option>
+              <option value="confirmed">Confirmé</option>
+              <option value="cancelled">Annulé</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Disponibilité
+            </label>
+            <select
+              value={filters.availability}
+              onChange={(e) => handleAvailabilityChange(e.target.value)}
+              className="mt-1 block w-full rounded-md border-slate-300 text-sm focus:border-sky-500 focus:ring-sky-500"
+            >
+              <option value="all">Toutes les réservations</option>
+              <option value="available">Disponible maintenant</option>
+              <option value="today">Aujourd'hui</option>
+              <option value="week">Cette semaine</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ import {
   subDays,
 } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Aircraft, Reservation, User } from "../../types/database";
 import {
   getAircraft,
@@ -23,19 +23,22 @@ import {
 import { getAircraftOrder, updateAircraftOrder } from "../../services/aircraft";
 import TimeGrid from "./TimeGrid";
 import ReservationModal from "./ReservationModal";
-import FilterPanel, { FilterState } from "./FilterPanel";
+import type { FilterState } from "./FilterPanel";
 import { toast } from "react-hot-toast";
 import { validateReservation } from "../../lib/reservationValidation";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
 
-const ReservationCalendar = () => {
+interface ReservationCalendarProps {
+  filters: FilterState;
+}
+
+const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [currentDate, setCurrentDate] = useState(startOfDay(new Date()));
   const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
-  const [showFilters, setShowFilters] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{
     start: Date;
@@ -48,12 +51,6 @@ const ReservationCalendar = () => {
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [aircraftOrder, setAircraftOrder] = useState<{ [key: string]: number }>({});
   const [users, setUsers] = useState<User[]>([]);
-  const [filters, setFilters] = useState<FilterState>({
-    aircraftTypes: [],
-    instructors: [],
-    status: "all",
-    availability: "all",
-  });
   const [flights, setFlights] = useState<{ reservationId: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -337,46 +334,24 @@ const ReservationCalendar = () => {
   const instructors = users.filter((u) => hasAnyGroup({ role: u.role } as User, ["INSTRUCTOR"]));
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col h-full">
+      {/* En-tête avec navigation */}
       <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePreviousDay}
-              className="p-2 hover:bg-slate-100 rounded-full"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              onClick={handleNextDay}
-              className="p-2 hover:bg-slate-100 rounded-full"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-          <h2 className="text-xl font-semibold">
-            {format(selectedDate, "EEEE d MMMM yyyy", { locale: fr })}
-          </h2>
-        </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-md"
-          >
-            <Filter className="h-4 w-4" />
-            Filtres
+          <button onClick={handlePreviousWeek} className="p-2">
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4" />
+            <span className="font-medium">
+              {format(startDate, "MMMM yyyy", { locale: fr })}
+            </span>
+          </div>
+          <button onClick={handleNextWeek} className="p-2">
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
-
-      {showFilters && (
-        <FilterPanel
-          filters={filters}
-          onFiltersChange={setFilters}
-          aircraft={aircraft}
-          users={users}
-        />
-      )}
 
       <div className="flex-1 overflow-auto">
         <TimeGrid

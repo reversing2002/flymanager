@@ -11,7 +11,7 @@ import MemberList from "./components/members/MemberList";
 import MemberProfile from "./components/members/MemberProfile";
 import AircraftList from "./components/aircraft/AircraftList";
 import MaintenancePage from "./pages/MaintenancePage";
-import ReservationCalendar from "./components/reservations/ReservationCalendar";
+import CalendarContainer from "./components/reservations/CalendarContainer";
 import ReservationList from "./components/reservations/ReservationList";
 import FlightList from "./components/flights/FlightList";
 import NewFlightForm from "./components/flights/NewFlightForm";
@@ -123,7 +123,7 @@ function App() {
                 path="reservations"
                 element={
                   <ProtectedRoute roles={["ADMIN", "INSTRUCTOR", "PILOT", "MECHANIC"]}>
-                    <ReservationCalendar />
+                    <CalendarContainer />
                   </ProtectedRoute>
                 }
               />
