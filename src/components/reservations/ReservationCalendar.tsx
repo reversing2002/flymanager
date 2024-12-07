@@ -338,16 +338,16 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
       {/* En-tête avec navigation */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
-          <button onClick={handlePreviousWeek} className="p-2">
+          <button onClick={handlePreviousDay} className="p-2 hover:bg-slate-50 rounded-lg">
             <ChevronLeft className="h-4 w-4" />
           </button>
           <div className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
+            <CalendarIcon className="h-4 w-4 text-slate-500" />
             <span className="font-medium">
-              {format(startDate, "MMMM yyyy", { locale: fr })}
+              {format(selectedDate, "EEEE d MMMM", { locale: fr })}
             </span>
           </div>
-          <button onClick={handleNextWeek} className="p-2">
+          <button onClick={handleNextDay} className="p-2 hover:bg-slate-50 rounded-lg">
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>

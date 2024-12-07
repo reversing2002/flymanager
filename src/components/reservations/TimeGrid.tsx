@@ -62,14 +62,13 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   const gridContainerRef = useRef<HTMLDivElement>(null);
   const startHour = 7;
   const endHour = 21;
-  const timeSlots = [];
 
-  // Generate time slots
-  for (let hour = startHour; hour < endHour; hour++) {
-    for (let minute = 0; minute < 60; minute += 15) {
-      timeSlots.push({ hour, minute });
-    }
-  }
+  // Générer les créneaux horaires de manière optimisée
+  const TIME_SLOTS = Array.from({ length: (endHour - startHour) * 4 }, (_, i) => {
+    const hour = Math.floor(i / 4) + startHour;
+    const minute = (i % 4) * 15;
+    return { hour, minute };
+  });
 
   // Filter only available aircraft
   const availableAircraft = aircraft.filter((a) => a.status === "AVAILABLE");
@@ -167,11 +166,11 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     const startTime = new Date(reservation.startTime);
     const endTime = new Date(reservation.endTime);
     const duration = differenceInMinutes(endTime, startTime);
-    const height = (duration / 15) * 2.5;
+    const height = (duration / 15) * 1;
     const top =
       ((startTime.getHours() - startHour) * 4 +
         startTime.getMinutes() / 15) *
-      2.5;
+      1;
 
     const pilot = users.find((u) => u.id === reservation.pilotId);
     const hasAssociatedFlight = flights.some(
@@ -249,14 +248,14 @@ const TimeGrid: React.FC<TimeGridProps> = ({
         className="absolute left-0 top-[40px] bottom-0 w-20 bg-white z-10 border-r border-slate-200 overflow-hidden"
       >
         <div className="h-full">
-          {timeSlots.map(({ hour, minute }, index) => (
+          {TIME_SLOTS.map(({ hour, minute }, index) => (
             <div
               key={`time-${hour}-${minute}`}
-              className="h-10 flex items-center justify-end pr-2 text-sm text-slate-500"
+              className="h-4 flex items-center justify-end pr-2 text-xs text-slate-500"
             >
-              {`${hour.toString().padStart(2, "0")}:${minute
-                .toString()
-                .padStart(2, "0")}`}
+              {minute === 0 && (
+                <span className="font-semibold">{`${hour}h`}</span>
+              )}
             </div>
           ))}
         </div>
@@ -297,10 +296,12 @@ const TimeGrid: React.FC<TimeGridProps> = ({
           >
             {sortedAircraft.map((aircraft) => (
               <div key={`grid-${aircraft.id}`} className="relative">
-                {timeSlots.map(({ hour, minute }, index) => (
+                {TIME_SLOTS.map(({ hour, minute }, index) => (
                   <div
                     key={`slot-${aircraft.id}-${hour}-${minute}`}
-                    className={`h-10 border-b border-slate-100 relative group ${
+                    className={`h-4 border-b border-slate-100 relative group ${
+                      minute === 0 ? "border-b-slate-200" : ""
+                    } ${
                       isSlotSelected(hour, minute, aircraft.id)
                         ? "bg-sky-100"
                         : "hover:bg-slate-50"

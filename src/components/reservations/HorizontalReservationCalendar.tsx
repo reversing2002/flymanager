@@ -143,6 +143,7 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
       setReservations(reservationsData);
 
       const usersData = await getUsers();
+      console.log('Loaded users:', usersData);
       setUsers(usersData);
     } catch (error) {
       console.error("Error loading initial data:", error);
@@ -257,9 +258,9 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     const selectedAircraft = aircraft.find(
       (a) => a.id === reservation.aircraftId
     );
-    const pilot = users.find((u) => u.id === reservation.pilot_id);
-    const instructor = reservation.instructor_id
-      ? users.find((u) => u.id === reservation.instructor_id)
+    const pilot = users.find((u) => u.id === reservation.pilotId);
+    const instructor = reservation.instructorId
+      ? users.find((u) => u.id === reservation.instructorId)
       : undefined;
 
     // Calculer la durée en minutes
@@ -399,14 +400,12 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
                   {getReservationsForAircraft(aircraft.id).map(reservation => {
                     const status = getReservationStatus(reservation);
                     const style = calculateReservationStyle(reservation);
-                    
-                    // Debug log pour voir les données
-                    console.log('Reservation:', reservation);
-                    console.log('Users:', users);
-                    
-                    const pilot = users.find(u => u.id === reservation.pilot_id);
-                    const instructor = reservation.instructor_id 
-                      ? users.find(u => u.id === reservation.instructor_id)
+                    console.log('Looking for pilot with ID:', reservation.pilotId);
+                    console.log('Available users:', users);
+                    const pilot = users.find(u => u.id === reservation.pilotId);
+                    console.log('Found pilot:', pilot);
+                    const instructor = reservation.instructorId 
+                      ? users.find(u => u.id === reservation.instructorId)
                       : undefined;
                     
                     if (!style) return null;
