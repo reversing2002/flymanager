@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, Plus, X, Trash2 } from "lucide-react";
+import { Filter, Plus, X, Trash2, Check, Edit, CheckCircle2 } from "lucide-react";
 import { getFlights, getAircraft, getUsers, validateFlight, deleteFlight } from "../../lib/queries";
 import type { Aircraft, User, Flight } from "../../types/database";
 import { useAuth } from "../../contexts/AuthContext";
@@ -157,14 +157,7 @@ const FlightList = () => {
     // Filter by validation status
     if (filters.validated !== "all") {
       filtered = filtered.filter((flight) =>
-        filters.validated === "yes" ? flight.isValidated : !flight.isValidated
-      );
-    }
-
-    // Filter by payment method
-    if (filters.paymentMethods.length > 0) {
-      filtered = filtered.filter((flight) =>
-        filters.paymentMethods.includes(flight.paymentMethod)
+        filters.validated === "yes" ? flight.validated : !flight.validated
       );
     }
 
@@ -177,7 +170,7 @@ const FlightList = () => {
   };
 
   const handleEditClick = (flight: Flight) => {
-    if (!user || (!hasAnyGroup(user, ["ADMIN"]) && flight.isValidated)) return;
+    if (!user || (!hasAnyGroup(user, ["ADMIN"]) && flight.validated)) return;
     setEditingFlight(flight);
   };
 
@@ -198,7 +191,7 @@ const FlightList = () => {
   };
 
   const handleDeleteFlight = async (flight: Flight) => {
-    if (!flight.isValidated) {
+    if (!flight.validated) {
       try {
         await deleteFlight(flight.id);
         toast.success("Vol supprimé avec succès");
@@ -207,6 +200,8 @@ const FlightList = () => {
         console.error("Error deleting flight:", error);
         toast.error("Erreur lors de la suppression du vol");
       }
+    } else {
+      toast.error("Impossible de supprimer un vol validé");
     }
   };
 
@@ -220,7 +215,7 @@ const FlightList = () => {
 
   const canEditFlight = (flight: Flight) => {
     // Un pilote peut modifier son vol s'il n'est pas validé
-    return !flight.isValidated && (
+    return !flight.validated && (
       flight.userId === user?.id || // Le pilote du vol
       hasAnyGroup(user, ["ADMIN"]) || // Les administrateurs
       (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id) // L'instructeur du vol
@@ -234,24 +229,32 @@ const FlightList = () => {
           <button
             onClick={() => setEditingFlight(flight)}
             className="text-blue-600 hover:text-blue-800"
+            title="Modifier"
           >
-            Modifier
+            <Edit size={20} />
           </button>
         )}
-        {hasAnyGroup(user, ["ADMIN"]) && !flight.isValidated && (
+        {hasAnyGroup(user, ["ADMIN"]) && !flight.validated && (
           <button
             onClick={() => handleValidateFlight(flight)}
             className="text-green-600 hover:text-green-800"
+            title="Valider"
           >
-            Valider
+            <Check size={20} />
           </button>
         )}
-        {!flight.isValidated && (hasAnyGroup(user, ["ADMIN"]) || flight.userId === user.id) && (
+        {(hasAnyGroup(user, ["ADMIN"]) || 
+          (!flight.isValidated && (
+            flight.userId === user?.id || // Le pilote du vol
+            (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id) // L'instructeur du vol
+          ))
+        ) && (
           <button
             onClick={() => handleDeleteFlight(flight)}
             className="text-red-600 hover:text-red-800"
+            title="Supprimer"
           >
-            Supprimer
+            <Trash2 size={20} />
           </button>
         )}
       </div>
@@ -387,21 +390,15 @@ const FlightList = () => {
                           Durée
                         </th>
                         <th className="text-right p-4 font-medium text-slate-600">
-                          Taux horaire
+                          Coût total
                         </th>
                         <th className="text-right p-4 font-medium text-slate-600">
-                          Prix du vol
-                        </th>
-                        <th className="text-right p-4 font-medium text-slate-600">
-                          Prix instruction
-                        </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
-                          Mode de paiement
+                          Dont instruction
                         </th>
                         <th className="text-center p-4 font-medium text-slate-600">
                           Validé
                         </th>
-                        <th className="text-center p-4 font-medium text-slate-600 min-w-[100px]">
+                        <th className="text-center p-4 font-medium text-slate-600">
                           Actions
                         </th>
                       </tr>
@@ -445,28 +442,52 @@ const FlightList = () => {
                               {formatDuration(flight.duration)}
                             </td>
                             <td className="p-4 text-right">
-                              {flight.hourlyRate?.toFixed(2) || "N/A"}
+                              {flight.cost ? flight.cost.toFixed(2) : "-"}
                             </td>
                             <td className="p-4 text-right">
-                              {flight.cost?.toFixed(2) || "N/A"}
-                            </td>
-                            <td className="p-4 text-right">
-                              {flight.instructor_cost > 0 ? flight.instructor_cost.toFixed(2) : "-"}
-                            </td>
-                            <td className="p-4">
-                              {flight.paymentMethod === "ACCOUNT"
-                                ? "Compte"
-                                : flight.paymentMethod === "CARD"
-                                ? "Carte"
-                                : flight.paymentMethod === "CASH"
-                                ? "Espèces"
-                                : "Virement"}
+                              {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
                             </td>
                             <td className="p-4 text-center">
-                              {flight.isValidated ? "Oui" : "Non"}
+                              {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
+                                <button
+                                  onClick={() => handleValidateFlight(flight)}
+                                  className="text-green-600 hover:text-green-800"
+                                  title="Valider"
+                                >
+                                  <Check size={20} />
+                                </button>
+                              ) : flight.isValidated ? (
+                                <span className="text-green-600" title="Vol validé">
+                                  <CheckCircle2 size={20} />
+                                </span>
+                              ) : null}
                             </td>
-                            <td className="p-4 text-center">
-                              {renderActionButtons(flight)}
+                            <td className="p-4 flex justify-center gap-2">
+                              {!flight.isValidated && (
+                                <>
+                                  <button
+                                    onClick={() => setEditingFlight(flight)}
+                                    className="text-blue-600 hover:text-blue-800"
+                                    title="Modifier"
+                                  >
+                                    <Edit size={20} />
+                                  </button>
+                                  {(hasAnyGroup(user, ["ADMIN"]) || 
+                                    (!flight.isValidated && (
+                                      flight.userId === user?.id || // Le pilote du vol
+                                      (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id) // L'instructeur du vol
+                                    ))
+                                  ) && (
+                                    <button
+                                      onClick={() => handleDeleteFlight(flight)}
+                                      className="text-red-600 hover:text-red-800"
+                                      title="Supprimer"
+                                    >
+                                      <Trash2 size={20} />
+                                    </button>
+                                  )}
+                                </>
+                              )}
                             </td>
                           </tr>
                         );
@@ -512,21 +533,15 @@ const FlightList = () => {
                           Durée
                         </th>
                         <th className="text-right p-4 font-medium text-slate-600">
-                          Taux horaire
+                          Coût total
                         </th>
                         <th className="text-right p-4 font-medium text-slate-600">
-                          Prix du vol
-                        </th>
-                        <th className="text-right p-4 font-medium text-slate-600">
-                          Prix instruction
-                        </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
-                          Mode de paiement
+                          Dont instruction
                         </th>
                         <th className="text-center p-4 font-medium text-slate-600">
                           Validé
                         </th>
-                        <th className="text-center p-4 font-medium text-slate-600 min-w-[100px]">
+                        <th className="text-center p-4 font-medium text-slate-600">
                           Actions
                         </th>
                       </tr>
@@ -570,28 +585,52 @@ const FlightList = () => {
                               {formatDuration(flight.duration)}
                             </td>
                             <td className="p-4 text-right">
-                              {flight.hourlyRate?.toFixed(2) || "N/A"}
+                              {flight.cost ? flight.cost.toFixed(2) : "-"}
                             </td>
                             <td className="p-4 text-right">
-                              {flight.cost?.toFixed(2) || "N/A"}
-                            </td>
-                            <td className="p-4 text-right">
-                              {flight.instructor_cost > 0 ? flight.instructor_cost.toFixed(2) : "-"}
-                            </td>
-                            <td className="p-4">
-                              {flight.paymentMethod === "ACCOUNT"
-                                ? "Compte"
-                                : flight.paymentMethod === "CARD"
-                                ? "Carte"
-                                : flight.paymentMethod === "CASH"
-                                ? "Espèces"
-                                : "Virement"}
+                              {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
                             </td>
                             <td className="p-4 text-center">
-                              {flight.isValidated ? "Oui" : "Non"}
+                              {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
+                                <button
+                                  onClick={() => handleValidateFlight(flight)}
+                                  className="text-green-600 hover:text-green-800"
+                                  title="Valider"
+                                >
+                                  <Check size={20} />
+                                </button>
+                              ) : flight.isValidated ? (
+                                <span className="text-green-600" title="Vol validé">
+                                  <CheckCircle2 size={20} />
+                                </span>
+                              ) : null}
                             </td>
-                            <td className="p-4 text-center">
-                              {renderActionButtons(flight)}
+                            <td className="p-4 flex justify-center gap-2">
+                              {!flight.isValidated && (
+                                <>
+                                  <button
+                                    onClick={() => setEditingFlight(flight)}
+                                    className="text-blue-600 hover:text-blue-800"
+                                    title="Modifier"
+                                  >
+                                    <Edit size={20} />
+                                  </button>
+                                  {(hasAnyGroup(user, ["ADMIN"]) || 
+                                    (!flight.isValidated && (
+                                      flight.userId === user?.id || // Le pilote du vol
+                                      (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id) // L'instructeur du vol
+                                    ))
+                                  ) && (
+                                    <button
+                                      onClick={() => handleDeleteFlight(flight)}
+                                      className="text-red-600 hover:text-red-800"
+                                      title="Supprimer"
+                                    >
+                                      <Trash2 size={20} />
+                                    </button>
+                                  )}
+                                </>
+                              )}
                             </td>
                           </tr>
                         );
@@ -628,21 +667,15 @@ const FlightList = () => {
                         Durée
                       </th>
                       <th className="text-right p-4 font-medium text-slate-600">
-                        Taux horaire
+                        Coût total
                       </th>
                       <th className="text-right p-4 font-medium text-slate-600">
-                        Prix du vol
-                      </th>
-                      <th className="text-right p-4 font-medium text-slate-600">
-                        Prix instruction
-                      </th>
-                      <th className="text-left p-4 font-medium text-slate-600">
-                        Mode de paiement
+                        Dont instruction
                       </th>
                       <th className="text-center p-4 font-medium text-slate-600">
                         Validé
                       </th>
-                      <th className="text-center p-4 font-medium text-slate-600 min-w-[100px]">
+                      <th className="text-center p-4 font-medium text-slate-600">
                         Actions
                       </th>
                     </tr>
@@ -686,28 +719,52 @@ const FlightList = () => {
                             {formatDuration(flight.duration)}
                           </td>
                           <td className="p-4 text-right">
-                            {flight.hourlyRate?.toFixed(2) || "N/A"}
+                            {flight.cost ? flight.cost.toFixed(2) : "-"}
                           </td>
                           <td className="p-4 text-right">
-                            {flight.cost?.toFixed(2) || "N/A"}
-                          </td>
-                          <td className="p-4 text-right">
-                            {flight.instructor_cost > 0 ? flight.instructor_cost.toFixed(2) : "-"}
-                          </td>
-                          <td className="p-4">
-                            {flight.paymentMethod === "ACCOUNT"
-                              ? "Compte"
-                              : flight.paymentMethod === "CARD"
-                              ? "Carte"
-                              : flight.paymentMethod === "CASH"
-                              ? "Espèces"
-                              : "Virement"}
+                            {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
                           </td>
                           <td className="p-4 text-center">
-                            {flight.isValidated ? "Oui" : "Non"}
+                            {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
+                              <button
+                                onClick={() => handleValidateFlight(flight)}
+                                className="text-green-600 hover:text-green-800"
+                                title="Valider"
+                              >
+                                <Check size={20} />
+                              </button>
+                            ) : flight.isValidated ? (
+                              <span className="text-green-600" title="Vol validé">
+                                <CheckCircle2 size={20} />
+                              </span>
+                            ) : null}
                           </td>
-                          <td className="p-4 text-center">
-                            {renderActionButtons(flight)}
+                          <td className="p-4 flex justify-center gap-2">
+                            {!flight.isValidated && (
+                              <>
+                                <button
+                                  onClick={() => setEditingFlight(flight)}
+                                  className="text-blue-600 hover:text-blue-800"
+                                  title="Modifier"
+                                >
+                                  <Edit size={20} />
+                                </button>
+                                {(hasAnyGroup(user, ["ADMIN"]) || 
+                                  (!flight.isValidated && (
+                                    flight.userId === user?.id || // Le pilote du vol
+                                    (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id) // L'instructeur du vol
+                                  ))
+                                ) && (
+                                  <button
+                                    onClick={() => handleDeleteFlight(flight)}
+                                    className="text-red-600 hover:text-red-800"
+                                    title="Supprimer"
+                                  >
+                                    <Trash2 size={20} />
+                                  </button>
+                                )}
+                              </>
+                            )}
                           </td>
                         </tr>
                       );
