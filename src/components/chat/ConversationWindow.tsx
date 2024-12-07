@@ -412,16 +412,18 @@ const ConversationWindow: React.FC<ConversationWindowProps> = ({
                   </div>
 
                   {/* Boutons d'action */}
-                  {isOwnMessage && !displayUrl && (
+                  {isOwnMessage && (
                     <div className={`absolute flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${
                       isOwnMessage ? '-left-16' : '-right-16'
                     } top-1/2 -translate-y-1/2`}>
-                      <button
-                        onClick={() => handleStartEdit(message)}
-                        className="p-1 hover:bg-gray-100 rounded-full bg-white shadow-sm"
-                      >
-                        <Pencil className="h-4 w-4 text-gray-500" />
-                      </button>
+                      {!displayUrl && (
+                        <button
+                          onClick={() => handleStartEdit(message)}
+                          className="p-1 hover:bg-gray-100 rounded-full bg-white shadow-sm"
+                        >
+                          <Pencil className="h-4 w-4 text-gray-500" />
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDeleteMessage(message.id)}
                         className="p-1 hover:bg-gray-100 rounded-full bg-white shadow-sm"

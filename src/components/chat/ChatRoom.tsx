@@ -68,9 +68,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ roomId }) => {
               file_url: payload.new.file_url,
               file_type: payload.new.file_type,
               user: {
-                firstName: userData.first_name,
-                lastName: userData.last_name,
-                imageUrl: userData.image_url
+                first_name: userData.first_name,
+                last_name: userData.last_name,
+                image_url: userData.image_url
               }
             };
 
@@ -171,9 +171,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ roomId }) => {
         const message = {
           ...newMessage,
           user: {
-            firstName: userData.first_name,
-            lastName: userData.last_name,
-            imageUrl: userData.image_url
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            image_url: userData.image_url
           }
         };
 
