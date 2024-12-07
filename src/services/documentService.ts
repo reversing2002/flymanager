@@ -104,12 +104,36 @@ export const getDocuments = async (clubId: string) => {
 };
 
 export const deleteDocument = async (id: string) => {
-  const { error } = await supabase
-    .from('documents')
-    .delete()
-    .eq('id', id);
+  try {
+    // 1. Get the document to find its file_url
+    const { data: document, error: fetchError } = await supabase
+      .from('documents')
+      .select('file_url')
+      .eq('id', id)
+      .single();
 
-  if (error) {
+    if (fetchError) throw fetchError;
+    if (!document) throw new Error('Document not found');
+
+    // 2. Extract the file path from the URL
+    const fileUrl = document.file_url;
+    const filePath = fileUrl.split('/').slice(-2).join('/');
+
+    // 3. Delete the file from storage
+    const { error: storageError } = await supabase.storage
+      .from('documents')
+      .remove([filePath]);
+
+    if (storageError) throw storageError;
+
+    // 4. Delete the database record
+    const { error: deleteError } = await supabase
+      .from('documents')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) throw deleteError;
+  } catch (error) {
     console.error('Error deleting document:', error);
     throw error;
   }

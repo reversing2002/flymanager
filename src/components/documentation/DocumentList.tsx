@@ -258,7 +258,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                     <button
                       onClick={() => {
                         if (window.confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
-                          onDelete(document);
+                          onDelete(document.id);
                         }
                       }}
                       className="p-1 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50"
