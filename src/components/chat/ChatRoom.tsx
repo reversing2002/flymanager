@@ -21,8 +21,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ roomId }) => {
     timestamp: new Date(message.created_at),
     sender: {
       id: message.user_id,
-      name: message.user ? `${message.user.firstName} ${message.user.lastName}` : 'Unknown',
-      avatar: message.user?.imageUrl
+      name: message.user ? `${message.user.first_name} ${message.user.last_name}` : 'Unknown',
+      avatar: message.user?.image_url
     },
     file_url: message.file_url,
     file_type: message.file_type
@@ -113,9 +113,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ roomId }) => {
       .select(`
         *,
         user:user_id (
-          firstName:first_name,
-          LastName:last_name,
-          imageUrl:image_url
+          first_name,
+          last_name,
+          image_url
         )
       `)
       .eq('room_id', roomId)
