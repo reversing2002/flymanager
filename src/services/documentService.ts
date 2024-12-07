@@ -252,21 +252,29 @@ export const deleteCategory = async (categoryId: string) => {
   }
 };
 
-export const downloadDocument = async (path: string): Promise<Blob> => {
-  const { data, error } = await supabase.storage
-    .from('documents')
-    .download(path);
+export const downloadDocument = async (fileUrl: string): Promise<Blob> => {
+  try {
+    // Extraire le chemin du fichier de l'URL complète
+    const filePath = fileUrl.split('/').slice(-2).join('/');
 
-  if (error) {
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .download(filePath);
+
+    if (error) {
+      console.error('Error downloading document:', error);
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error('No data received from storage');
+    }
+
+    return data;
+  } catch (error) {
     console.error('Error downloading document:', error);
     throw error;
   }
-
-  if (!data) {
-    throw new Error('No data received from storage');
-  }
-
-  return data;
 };
 
 export const getDocumentPublicUrl = (path: string): string => {

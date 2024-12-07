@@ -126,16 +126,16 @@ const DocumentList: React.FC<DocumentListProps> = ({
     }
   };
 
-  const handleDownload = async (document: Document) => {
+  const handleDownload = async (doc: Document) => {
     try {
-      const blob = await downloadDocument(document.file_url);
+      const blob = await downloadDocument(doc.file_url);
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = window.document.createElement('a');
       a.href = url;
-      a.download = document.title || 'document';
-      document.body.appendChild(a);
+      a.download = doc.title || 'document';
+      window.document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading document:', error);
