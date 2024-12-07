@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plane, Users, Calendar, CreditCard, MessageSquare } from "lucide-react";
+import { Plane, Users, Calendar, CreditCard, MessageSquare, Sun } from "lucide-react";
 import {
   getAircraft,
   getUsers,
@@ -24,6 +24,9 @@ import type { DailyChallenge } from "../types/training";
 import UpcomingEvents from "./events/UpcomingEvents";
 import { hasAnyGroup } from "../lib/permissions";
 import { Link } from "react-router-dom";
+import SunCalc from "suncalc";
+import { format } from "date-fns";
+import SunTimesDisplay from "./common/SunTimesDisplay";
 
 const StatCard = ({
   icon,
@@ -314,6 +317,12 @@ const Dashboard = () => {
     pending: number;
   } | null>(null);
   const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge | null>(null);
+  const [sunTimes, setSunTimes] = useState<{
+    sunrise: Date;
+    sunset: Date;
+    aeroStart: Date;
+    aeroEnd: Date;
+  } | null>(null);
 
   const loadData = async () => {
     if (!user?.id) return;
@@ -353,6 +362,31 @@ const Dashboard = () => {
       // Load daily challenge
       const challengeData = await getDailyChallenge(user.id);
       setDailyChallenge(challengeData);
+
+      // Load club coordinates and calculate sun times
+      const { data: clubData } = await supabase
+        .from('clubs')
+        .select('latitude, longitude')
+        .eq('id', user.club?.id)
+        .single();
+
+      if (clubData?.latitude && clubData?.longitude) {
+        const times = SunCalc.getTimes(new Date(), clubData.latitude, clubData.longitude);
+        const aeroStart = new Date(times.sunrise);
+        const aeroEnd = new Date(times.sunset);
+        
+        // La journée aéronautique commence 30 minutes avant le lever du soleil
+        aeroStart.setMinutes(aeroStart.getMinutes() - 30);
+        // Et se termine 30 minutes après le coucher du soleil
+        aeroEnd.setMinutes(aeroEnd.getMinutes() + 30);
+
+        setSunTimes({
+          sunrise: times.sunrise,
+          sunset: times.sunset,
+          aeroStart,
+          aeroEnd
+        });
+      }
 
     } catch (err) {
       console.error("Error loading data:", err);
@@ -442,26 +476,26 @@ const Dashboard = () => {
           ))}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
+        {/* <StatCard
           icon={<Users className="w-6 h-6" />}
           title="Membres actifs"
           value={users?.length.toString() || "0"}
           description="Nombre total de membres"
-          color="bg-gradient-to-br from-white to-slate-50"
-        />
+          color="bg-gradient-to-br from-sky-400 to-sky-600"
+        /> */}
         <StatCard
           icon={<Plane className="w-6 h-6" />}
           title="Avions"
           value={aircraft?.length.toString() || "0"}
           description="Flotte disponible"
-          color="bg-gradient-to-br from-white to-slate-50"
+          color="bg-gradient-to-br from-emerald-400 to-emerald-600"
         />
         <StatCard
           icon={<Calendar className="w-6 h-6" />}
           title="Réservations"
           value={futureReservations.length.toString()}
           description="Réservations à venir"
-          color="bg-gradient-to-br from-white to-slate-50"
+          color="bg-gradient-to-br from-amber-400 to-amber-600"
         />
         {balance && (
           <StatCard
@@ -473,9 +507,16 @@ const Dashboard = () => {
                 ? `${balance.pending.toFixed(2)}€ en attente`
                 : "Solde validé"
             }
-            color="bg-gradient-to-br from-white to-slate-50"
+            color="bg-gradient-to-br from-sky-400 to-sky-600"
           />
         )}
+        <StatCard
+          icon={<Sun className="w-6 h-6" />}
+          title="Horaires du soleil"
+          value={sunTimes ? `${format(sunTimes.sunrise, 'HH:mm')} - ${format(sunTimes.sunset, 'HH:mm')}` : "--:-- - --:--"}
+          description={sunTimes ? `Journée aéro: ${format(sunTimes.aeroStart, 'HH:mm')} - ${format(sunTimes.aeroEnd, 'HH:mm')}` : "Chargement..."}
+          color="bg-gradient-to-br from-emerald-400 to-emerald-600"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

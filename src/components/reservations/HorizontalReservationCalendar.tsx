@@ -12,6 +12,8 @@ import {
   setMinutes,
   addMinutes,
   parse,
+  subDays,
+  addDays,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
@@ -30,6 +32,7 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
 import { cn } from "../../lib/utils";
+import SunTimesDisplay from "../common/SunTimesDisplay";
 
 // Générer les intervalles de 15 minutes de 7h à 21h
 const TIME_SLOTS = Array.from({ length: 57 }, (_, i) => {
@@ -45,7 +48,8 @@ interface HorizontalReservationCalendarProps {
 const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalendarProps) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
+  const [currentDate, setCurrentDate] = useState<Date>(startOfDay(new Date()));
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{
     start: Date;
@@ -138,6 +142,10 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     setFilteredReservations(filtered);
   }, [reservations, filters, aircraft, currentUser, selectedDate]);
 
+  useEffect(() => {
+    setCurrentDate(selectedDate);
+  }, [selectedDate]);
+
   const loadInitialData = async () => {
     try {
       const aircraftData = await getAircraft();
@@ -163,19 +171,11 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
   };
 
   const handlePreviousDay = () => {
-    setSelectedDate(prev => {
-      const newDate = new Date(prev);
-      newDate.setDate(newDate.getDate() - 1);
-      return newDate;
-    });
+    setSelectedDate(subDays(selectedDate, 1));
   };
 
   const handleNextDay = () => {
-    setSelectedDate(prev => {
-      const newDate = new Date(prev);
-      newDate.setDate(newDate.getDate() + 1);
-      return newDate;
-    });
+    setSelectedDate(addDays(selectedDate, 1));
   };
 
   const handleTimeSlotClick = (
@@ -393,18 +393,36 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     <div className="flex flex-col h-full">
       {/* Header avec la date */}
       <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          <button onClick={handlePreviousDay} className="p-2">
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            <span className="font-medium">
-              {format(selectedDate, "EEEE d MMMM", { locale: fr })}
-            </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            <button onClick={handlePreviousDay} className="p-2 hover:bg-slate-100 rounded-lg">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-2 w-[16rem] justify-center">
+              <CalendarIcon className="h-4 w-4" />
+              <span className="font-medium">
+                {format(selectedDate, "EEEE d MMMM", { locale: fr })}
+              </span>
+            </div>
+            <button onClick={handleNextDay} className="p-2 hover:bg-slate-100 rounded-lg">
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
-          <button onClick={handleNextDay} className="p-2">
-            <ChevronRight className="h-4 w-4" />
+          <SunTimesDisplay 
+            date={selectedDate} 
+            className="text-sm text-gray-600 bg-white/50 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSelectedDate(startOfDay(new Date()))}
+            className={`px-3 py-1 text-sm rounded-md ${
+              isToday(selectedDate)
+                ? "bg-sky-100 text-sky-700"
+                : "hover:bg-slate-100 text-slate-600"
+            }`}
+          >
+            Aujourd'hui
           </button>
         </div>
       </div>

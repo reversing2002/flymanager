@@ -29,6 +29,7 @@ import { validateReservation } from "../../lib/reservationValidation";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
+import SunTimesDisplay from "../common/SunTimesDisplay";
 
 interface ReservationCalendarProps {
   filters: FilterState;
@@ -37,8 +38,8 @@ interface ReservationCalendarProps {
 const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const [currentDate, setCurrentDate] = useState(startOfDay(new Date()));
-  const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
+  const [currentDate, setCurrentDate] = useState<Date>(startOfDay(new Date()));
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{
     start: Date;
@@ -57,7 +58,11 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
 
   // Charger les données initiales
   useEffect(() => {
-    loadInitialData();
+    loadData();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    setCurrentDate(selectedDate);
   }, [selectedDate]);
 
   useEffect(() => {
@@ -110,35 +115,33 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
   const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([]);
 
   // Fonction pour charger les données initiales
-  const loadInitialData = async () => {
+  const loadData = async () => {
     try {
       // Charger les avions
       const aircraftData = await getAircraft();
-      setAircraft(aircraftData);
-
-      // Charger l'ordre des avions
-      if (aircraftData[0]?.club_id) {
-        const order = await getAircraftOrder(aircraftData[0].club_id);
-        setAircraftOrder(order);
+      if (aircraftData) {
+        setAircraft(aircraftData);
       }
-
-      // Charger les réservations
-      const startDate = startOfWeek(selectedDate, { locale: fr });
-      const endDate = addDays(startDate, 7);
-      const reservationsData = await getReservations(startDate, endDate);
-      setReservations(reservationsData);
 
       // Charger les utilisateurs
       const usersData = await getUsers();
-      setUsers(usersData);
+      if (usersData) {
+        setUsers(usersData);
+      }
+
+      // Charger les réservations
+      const startDate = startOfDay(selectedDate);
+      const endDate = addDays(startDate, 1);
+      const reservationsData = await getReservations(startDate, endDate);
+      setReservations(reservationsData);
+
+      // Charger l'ordre des avions
+      const order = await getAircraftOrder();
+      setAircraftOrder(order);
     } catch (error) {
-      console.error("Error loading initial data:", error);
-      toast.error("Erreur lors du chargement des données");
+      console.error("Error loading data:", error);
     }
   };
-
-  const startDate = startOfWeek(currentDate, { locale: fr });
-  const weekDays = [...Array(7)].map((_, i) => addDays(startDate, i));
 
   const handlePreviousDay = () => {
     setSelectedDate(subDays(selectedDate, 1));
@@ -150,14 +153,6 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
 
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(startOfDay(new Date(event.target.value)));
-  };
-
-  const handlePreviousWeek = () => {
-    setCurrentDate(addDays(currentDate, -7));
-  };
-
-  const handleNextWeek = () => {
-    setCurrentDate(addDays(currentDate, 7));
   };
 
   const handleDateClick = (date: Date) => {
@@ -267,7 +262,7 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
       }
 
       await updateReservation(reservationId, updates);
-      await loadInitialData();
+      await loadData();
       toast.success("Réservation déplacée avec succès");
     } catch (error) {
       toast.error("Erreur lors du déplacement de la réservation");
@@ -281,7 +276,7 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
       await updateAircraftOrder(aircraft[0].club_id, newOrder);
       setAircraftOrder(newOrder);
       // Forcer un rechargement complet des données pour s'assurer que tout est à jour
-      await loadInitialData();
+      await loadData();
       toast.success("Ordre des avions mis à jour");
     } catch (error) {
       console.error("Error updating aircraft order:", error);
@@ -337,18 +332,36 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
     <div className="flex flex-col h-full">
       {/* En-tête avec navigation */}
       <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          <button onClick={handlePreviousDay} className="p-2 hover:bg-slate-50 rounded-lg">
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4 text-slate-500" />
-            <span className="font-medium">
-              {format(selectedDate, "EEEE d MMMM", { locale: fr })}
-            </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            <button onClick={handlePreviousDay} className="p-2 hover:bg-slate-100 rounded-lg">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-2 w-[16rem] justify-center">
+              <CalendarIcon className="h-4 w-4" />
+              <span className="font-medium">
+                {format(selectedDate, "EEEE d MMMM", { locale: fr })}
+              </span>
+            </div>
+            <button onClick={handleNextDay} className="p-2 hover:bg-slate-100 rounded-lg">
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
-          <button onClick={handleNextDay} className="p-2 hover:bg-slate-50 rounded-lg">
-            <ChevronRight className="h-4 w-4" />
+          <SunTimesDisplay 
+            date={selectedDate} 
+            className="text-sm text-gray-600 bg-white/50 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSelectedDate(startOfDay(new Date()))}
+            className={`px-3 py-1 text-sm rounded-md ${
+              isToday(selectedDate)
+                ? "bg-sky-100 text-sky-700"
+                : "hover:bg-slate-100 text-slate-600"
+            }`}
+          >
+            Aujourd'hui
           </button>
         </div>
       </div>
@@ -379,7 +392,7 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
             setSelectedTimeSlot(null);
             setSelectedReservation(null);
           }}
-          onSuccess={loadInitialData}
+          onSuccess={loadData}
           aircraft={aircraft}
           users={users}
           preselectedAircraftId={selectedTimeSlot?.aircraftId}
