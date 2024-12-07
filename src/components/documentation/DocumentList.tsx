@@ -178,10 +178,10 @@ const DocumentList: React.FC<DocumentListProps> = ({
               key={document.id}
               className="bg-white rounded-lg shadow-sm border p-4"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3">
                   {isAdmin && (
-                    <div className="flex flex-col gap-1">
+                    <div className="hidden sm:flex flex-col gap-1">
                       <button
                         onClick={() => handleMoveDocument(index, 'up')}
                         disabled={index === 0}
@@ -202,9 +202,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                   <div>
                     <h3 className="font-medium">{document.title}</h3>
                     {document.description && (
-                      <p className="text-sm text-gray-500">{document.description}</p>
+                      <p className="text-sm text-gray-500 mt-1">{document.description}</p>
                     )}
-                    <div className="flex items-center space-x-2 text-xs text-gray-400 mt-1">
+                    <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-400 mt-1">
                       <span>{formatFileSize(document.file_size)}</span>
                       <span>•</span>
                       <span>
@@ -216,10 +216,29 @@ const DocumentList: React.FC<DocumentListProps> = ({
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center gap-2 mt-2 sm:mt-0 border-t sm:border-t-0 pt-2 sm:pt-0">
+                  {isAdmin && (
+                    <div className="flex sm:hidden gap-2 mr-2">
+                      <button
+                        onClick={() => handleMoveDocument(index, 'up')}
+                        disabled={index === 0}
+                        className={`p-2 rounded-lg border ${index === 0 ? 'text-gray-300 border-gray-200' : 'text-gray-500 border-gray-300'}`}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleMoveDocument(index, 'down')}
+                        disabled={index === sortedDocuments.length - 1}
+                        className={`p-2 rounded-lg border ${index === sortedDocuments.length - 1 ? 'text-gray-300 border-gray-200' : 'text-gray-500 border-gray-300'}`}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                   <button
                     onClick={() => handleDownload(document)}
-                    className="p-1 text-slate-400 hover:text-sky-600 rounded-lg hover:bg-sky-50"
+                    className="p-2 text-slate-400 hover:text-sky-600 rounded-lg hover:bg-sky-50 border border-gray-200"
                     title="Télécharger"
                   >
                     <Download className="h-4 w-4" />
@@ -228,7 +247,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                   {onEdit && (
                     <button
                       onClick={() => onEdit(document)}
-                      className="p-1 text-slate-400 hover:text-sky-600 rounded-lg hover:bg-sky-50"
+                      className="p-2 text-slate-400 hover:text-sky-600 rounded-lg hover:bg-sky-50 border border-gray-200"
                       title="Modifier"
                     >
                       <Edit2 className="h-4 w-4" />
@@ -242,7 +261,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                           onDelete(document.id);
                         }
                       }}
-                      className="p-1 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50"
+                      className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 border border-gray-200"
                       title="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />

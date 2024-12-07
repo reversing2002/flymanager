@@ -181,18 +181,19 @@ const DocumentationPage: React.FC = () => {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="bg-white border-b px-4 py-4 sm:px-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowSidebar(!showSidebar)}
               className="lg:hidden p-2 hover:bg-slate-100 rounded-lg"
+              aria-label={showSidebar ? "Masquer les catégories" : "Afficher les catégories"}
             >
               {showSidebar ? <ChevronLeft /> : <Menu />}
             </button>
             <h1 className="text-2xl font-bold text-slate-900">Documentation</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex-1 flex items-center gap-2">
+            <div className="relative flex-1 max-w-xl">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
@@ -205,17 +206,17 @@ const DocumentationPage: React.FC = () => {
             {isAdmin && (
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
+                className="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
               >
                 <Plus className="h-4 w-4" />
-                Ajouter
+                <span className="hidden sm:inline">Ajouter</span>
               </button>
             )}
           </div>
         </div>
 
         {/* Fil d'ariane */}
-        <div className="mt-2">
+        <div className="mt-4">
           <Breadcrumb
             categories={categories}
             selectedCategory={selectedCategory}
@@ -225,19 +226,35 @@ const DocumentationPage: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar overlay */}
+        {showSidebar && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+            onClick={() => setShowSidebar(false)}
+          />
+        )}
+
         {/* Sidebar */}
         <div
           className={`
-            fixed lg:static inset-0 bg-white z-30 w-80 border-r transform transition-transform duration-200
+            fixed lg:static inset-y-0 left-0 w-80 bg-white z-30 transform transition-transform duration-200 ease-in-out
             ${showSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            flex flex-col
           `}
         >
           <div className="h-14 border-b flex items-center justify-between px-4">
             <h2 className="font-medium">Catégories</h2>
+            <button
+              onClick={() => setShowSidebar(false)}
+              className="lg:hidden p-2 hover:bg-slate-100 rounded-lg"
+              aria-label="Fermer le menu"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
           </div>
 
-          <div className="h-full overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4">
             <CategoryTree
               categories={categories}
               selectedCategory={selectedCategory}
@@ -278,31 +295,8 @@ const DocumentationPage: React.FC = () => {
         </div>
 
         {/* Document list */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <div className="h-14 border-b flex items-center justify-between px-4 gap-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setShowSidebar(!showSidebar)}
-                className="lg:hidden -ml-2 p-2 hover:bg-slate-50 rounded-lg"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <h1 className="font-medium">Documents</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              {isAdmin && (
-                <button
-                  onClick={() => setShowUploadModal(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
-                >
-                  <Plus className="h-4 w-4" />
-                  Ajouter
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             <DocumentList
               documents={filteredDocuments}
               isLoading={loading}
