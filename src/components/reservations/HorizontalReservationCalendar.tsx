@@ -193,7 +193,7 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     return filteredReservations.filter(r => r.aircraftId === aircraftId);
   };
 
-  const SLOT_WIDTH = 2.5; // rem
+  const SLOT_WIDTH = 1.5; // rem
 
   const calculateReservationStyle = (reservation: Reservation) => {
     const start = new Date(reservation.startTime);
@@ -236,6 +236,60 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     return "current";
   };
 
+  // Fonction pour déterminer si on doit afficher l'heure pour ce créneau
+  const shouldShowTime = (hour: number, minutes: number) => {
+    // Afficher uniquement les heures pleines
+    return minutes === 0;
+  };
+
+  // Fonction pour formater l'heure
+  const formatHour = (hour: number) => {
+    return `${hour}h`;
+  };
+
+  // Fonction pour déterminer si on doit afficher la bordure pour ce créneau
+  const shouldShowBorder = (hour: number, minutes: number) => {
+    // Afficher une bordure plus marquée pour les heures pleines
+    return minutes === 0;
+  };
+
+  const handleCreateFlight = (reservation: Reservation) => {
+    const selectedAircraft = aircraft.find(
+      (a) => a.id === reservation.aircraftId
+    );
+    const pilot = users.find((u) => u.id === reservation.pilot_id);
+    const instructor = reservation.instructor_id
+      ? users.find((u) => u.id === reservation.instructor_id)
+      : undefined;
+
+    // Calculer la durée en minutes
+    const start = new Date(reservation.startTime);
+    const end = new Date(reservation.endTime);
+    const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+
+    navigate("/flights/create", {
+      state: {
+        aircraftId: selectedAircraft?.id,
+        pilotId: pilot?.id,
+        instructorId: instructor?.id,
+        duration,
+        date: format(start, "yyyy-MM-dd"),
+        time: format(start, "HH:mm"),
+      },
+    });
+  };
+
+  const handleReservationUpdate = async (reservation: Reservation) => {
+    try {
+      await updateReservation(reservation);
+      await loadInitialData();
+      toast.success("Réservation mise à jour avec succès");
+    } catch (error) {
+      console.error("Error updating reservation:", error);
+      toast.error("Erreur lors de la mise à jour de la réservation");
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header avec la date */}
@@ -261,14 +315,21 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
         <div className="relative min-w-full">
           {/* En-tête des heures */}
           <div className="sticky top-0 z-10 flex border-b bg-white">
-            <div className="w-24 min-w-[6rem] shrink-0 border-r bg-white" />
+            <div className="w-20 min-w-[5rem] shrink-0 border-r bg-white" />
             {TIME_SLOTS.map(({ hour, minutes }) => (
               <div
                 key={`${hour}-${minutes}`}
-                className="border-r py-2 text-center text-sm font-medium"
+                className={cn(
+                  "border-r py-1 text-center text-xs",
+                  {
+                    "font-medium": shouldShowTime(hour, minutes),
+                    "border-r-2": shouldShowBorder(hour, minutes),
+                    "border-r-gray-200": !shouldShowBorder(hour, minutes),
+                  }
+                )}
                 style={{ width: `${SLOT_WIDTH}rem`, minWidth: `${SLOT_WIDTH}rem` }}
               >
-                {format(setMinutes(setHours(new Date(), hour), minutes), "HH:mm")}
+                {shouldShowTime(hour, minutes) ? formatHour(hour) : ""}
               </div>
             ))}
           </div>
@@ -276,25 +337,43 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
           {/* Corps de la grille */}
           <div className="relative">
             {sortedAircraft.map(aircraft => (
-              <div key={aircraft.id} className="flex border-b">
+              <div key={aircraft.id} className="flex border-b hover:bg-gray-50">
                 {/* Colonne des avions */}
-                <div className="w-24 min-w-[6rem] shrink-0 border-r p-2">
+                <div className="w-20 min-w-[5rem] shrink-0 border-r p-1 bg-white sticky left-0">
                   <div className="flex flex-col">
-                    <span className="font-medium">{aircraft.registration}</span>
-                    <span className="text-sm text-gray-500">{aircraft.type}</span>
+                    <span className="font-medium text-sm">{aircraft.registration}</span>
+                    <span className="text-xs text-gray-500">{aircraft.type}</span>
                   </div>
                 </div>
 
                 {/* Colonnes des créneaux horaires */}
                 <div className="relative flex-1">
+                  {/* Grille de fond */}
+                  <div className="absolute inset-0 grid" style={{
+                    gridTemplateColumns: `repeat(${TIME_SLOTS.length}, ${SLOT_WIDTH}rem)`,
+                  }}>
+                    {TIME_SLOTS.map(({ hour, minutes }) => (
+                      <div
+                        key={`grid-${hour}-${minutes}`}
+                        className={cn(
+                          "h-12 border-r",
+                          {
+                            "border-r-2 border-r-gray-200": shouldShowBorder(hour, minutes),
+                            "border-r-gray-100": !shouldShowBorder(hour, minutes),
+                          }
+                        )}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Zones cliquables */}
                   {TIME_SLOTS.map(({ hour, minutes }) => (
                     <div
                       key={`${hour}-${minutes}`}
-                      className="absolute border-r h-16"
+                      className="absolute h-12"
                       style={{ 
                         left: `${TIME_SLOTS.indexOf({ hour, minutes }) * SLOT_WIDTH}rem`,
                         width: `${SLOT_WIDTH}rem`,
-                        minWidth: `${SLOT_WIDTH}rem`
                       }}
                       onClick={() => {
                         const existingReservation = getReservationsForAircraft(aircraft.id).find(r => {
@@ -321,14 +400,22 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
                     const status = getReservationStatus(reservation);
                     const style = calculateReservationStyle(reservation);
                     
-                    // Ne pas afficher la réservation si elle n'a pas de style valide
+                    // Debug log pour voir les données
+                    console.log('Reservation:', reservation);
+                    console.log('Users:', users);
+                    
+                    const pilot = users.find(u => u.id === reservation.pilot_id);
+                    const instructor = reservation.instructor_id 
+                      ? users.find(u => u.id === reservation.instructor_id)
+                      : undefined;
+                    
                     if (!style) return null;
                     
                     return (
                       <div
                         key={reservation.id}
                         className={cn(
-                          "absolute inset-y-1 rounded p-1 text-xs cursor-pointer z-10",
+                          "absolute inset-y-1 rounded p-1 text-xs cursor-pointer z-10 shadow-sm hover:shadow-md transition-shadow",
                           {
                             "bg-blue-100": status === "future",
                             "bg-gray-100": status === "past",
@@ -339,7 +426,13 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
                         onClick={() => handleReservationClick(reservation)}
                       >
                         <div className="font-medium truncate">
-                          {users.find(u => u.id === reservation.userId)?.name}
+                          {pilot ? `${pilot.first_name} ${pilot.last_name}` : 'Pilote inconnu'}
+                          {instructor && (
+                            <span className="text-gray-500">
+                              {" + "}
+                              {`${instructor.first_name} ${instructor.last_name}`}
+                            </span>
+                          )}
                         </div>
                         <div className="text-gray-500 truncate">
                           {format(new Date(reservation.startTime), "HH:mm")} -{" "}
@@ -358,17 +451,20 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
       {/* Modal de réservation */}
       {showReservationModal && (
         <ReservationModal
-          isOpen={showReservationModal}
+          startTime={selectedTimeSlot?.start || new Date()}
+          endTime={selectedTimeSlot?.end || new Date()}
           onClose={() => {
             setShowReservationModal(false);
             setSelectedTimeSlot(null);
             setSelectedReservation(null);
           }}
-          timeSlot={selectedTimeSlot}
-          reservation={selectedReservation}
+          onSuccess={loadInitialData}
           aircraft={aircraft}
           users={users}
-          onSave={loadInitialData}
+          preselectedAircraftId={selectedTimeSlot?.aircraftId}
+          existingReservation={selectedReservation}
+          onCreateFlight={handleCreateFlight}
+          onUpdate={handleReservationUpdate}
         />
       )}
     </div>
