@@ -212,7 +212,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       >
         <div className="p-1 sm:p-2">
           <div className="font-medium">
-            {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
+            {format(startTime, "H'h'")} - {format(endTime, "H'h'")}
           </div>
           <div className="mt-1 line-clamp-2">
             {pilot ? pilot.first_name : "Pilote inconnu"}
@@ -226,6 +226,31 @@ const TimeGrid: React.FC<TimeGridProps> = ({
         </div>
       </div>
     );
+  };
+
+  const getSelectionTimes = () => {
+    if (!selectionStart || !selectionEnd) return null;
+
+    let startHour = selectionStart.hour;
+    let startMinute = selectionStart.minute;
+    
+    const endMinutes = selectionEnd.hour * 60 + selectionEnd.minute;
+    const roundedEndMinutes = Math.ceil(endMinutes / 15) * 15 + 15;
+    const endHour = Math.floor(roundedEndMinutes / 60);
+    const endMinute = roundedEndMinutes % 60;
+
+    if (endHour * 60 + endMinute < startHour * 60 + startMinute) {
+      // Si on fait un drag vers le haut
+      const startMinutes = selectionEnd.hour * 60 + selectionEnd.minute;
+      const roundedStartMinutes = Math.floor(startMinutes / 15) * 15;
+      startHour = Math.floor(roundedStartMinutes / 60);
+      startMinute = roundedStartMinutes % 60;
+    }
+
+    return {
+      startTime: `${startHour}h${startMinute > 0 ? startMinute : ''}`,
+      endTime: `${endHour}h${endMinute > 0 ? endMinute : ''}`
+    };
   };
 
   // Synchroniser le défilement
@@ -320,7 +345,10 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   >
                     <div className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
                       {isSlotSelected(hour, minute, aircraft.id) ? (
-                        `${selectionStart?.hour}h à ${selectionEnd ? Math.ceil((selectionEnd.hour * 60 + selectionEnd.minute) / 60) : selectionStart?.hour + 1}h`
+                        (() => {
+                          const times = getSelectionTimes();
+                          return times ? `${times.startTime} à ${times.endTime}` : '';
+                        })()
                       ) : (
                         `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
                       )}
