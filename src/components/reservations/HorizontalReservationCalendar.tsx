@@ -16,7 +16,7 @@ import {
   addDays,
 } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Moon } from "lucide-react";
 import type { Aircraft, Reservation, User } from "../../types/database";
 import {
   getAircraft,
@@ -33,6 +33,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
 import { cn } from "../../lib/utils";
 import SunTimesDisplay from "../common/SunTimesDisplay";
+import { getSunTimes } from "../../lib/sunTimes";
 
 // Générer les intervalles de 15 minutes de 7h à 21h
 const TIME_SLOTS = Array.from({ length: 57 }, (_, i) => {
@@ -75,6 +76,26 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     hour: number;
     minute: number;
   } | null>(null);
+
+  const [clubCoordinates, setClubCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    const loadClubCoordinates = async () => {
+      if (!currentUser?.club?.id) return;
+
+      const { data: clubData } = await supabase
+        .from('clubs')
+        .select('latitude, longitude')
+        .eq('id', currentUser.club.id)
+        .single();
+
+      if (clubData?.latitude && clubData?.longitude) {
+        setClubCoordinates(clubData);
+      }
+    };
+
+    loadClubCoordinates();
+  }, [currentUser?.club?.id]);
 
   useEffect(() => {
     loadInitialData();
@@ -281,6 +302,34 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     return minutes === 45;  // La bordure sera sur le slot précédent celui de l'heure pleine
   };
 
+  const isNightTime = (hour: number, minute: number) => {
+    if (!clubCoordinates) return false;
+    
+    const slotTime = setMinutes(setHours(new Date(selectedDate), hour), minute);
+    const sunTimes = getSunTimes(selectedDate, clubCoordinates.latitude, clubCoordinates.longitude);
+    return slotTime < sunTimes.aeroStart || slotTime > sunTimes.aeroEnd;
+  };
+
+  const isFirstNightSlot = (hour: number, minute: number) => {
+    if (!clubCoordinates) return false;
+    
+    const slotTime = setMinutes(setHours(new Date(selectedDate), hour), minute);
+    const prevSlotTime = new Date(slotTime);
+    prevSlotTime.setMinutes(prevSlotTime.getMinutes() - 15);
+    
+    const sunTimes = getSunTimes(selectedDate, clubCoordinates.latitude, clubCoordinates.longitude);
+    return slotTime > sunTimes.aeroEnd && prevSlotTime <= sunTimes.aeroEnd;
+  };
+
+  const isFirstSelectedSlot = (hour: number, minutes: number, aircraftId: string) => {
+    if (!selectedTimeSlot || selectedTimeSlot.aircraftId !== aircraftId) return false;
+
+    const slotTime = new Date(selectedDate);
+    slotTime.setHours(hour, minutes, 0, 0);
+
+    return slotTime.getTime() === selectedTimeSlot.start.getTime();
+  };
+
   const handleCreateFlight = (reservation: Reservation) => {
     const selectedAircraft = aircraft.find(
       (a) => a.id === reservation.aircraftId
@@ -319,68 +368,71 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
   };
 
   const handleMouseDown = (hour: number, minutes: number, aircraftId: string) => {
-    if (!isSelecting) {
-      setIsSelecting(true);
-      setSelectionStart({ hour, minute: minutes, aircraftId });
-      setSelectionEnd({ hour, minute: minutes });
-    }
+    const start = setMinutes(setHours(selectedDate, hour), minutes);
+    setIsSelecting(true);
+    setSelectionStart({
+      hour,
+      minute: minutes,
+      aircraftId,
+    });
+    setSelectionEnd({ hour, minute: minutes });
+    setSelectedTimeSlot({
+      start,
+      end: addMinutes(start, 15),
+      aircraftId,
+    });
   };
 
   const handleMouseMove = (hour: number, minutes: number) => {
-    if (isSelecting && selectionStart) {
-      setSelectionEnd({ hour, minute: minutes });
-    }
+    if (!isSelecting || !selectionStart) return;
+
+    setSelectionEnd({ hour, minute: minutes });
+
+    // Calculer le début et la fin de la sélection
+    const startTime = new Date(selectedDate);
+    startTime.setHours(
+      Math.min(selectionStart.hour, hour),
+      Math.min(selectionStart.minute, minutes),
+      0,
+      0
+    );
+
+    const endTime = new Date(selectedDate);
+    endTime.setHours(
+      Math.max(selectionStart.hour, hour),
+      Math.max(selectionStart.minute, minutes),
+      0,
+      0
+    );
+
+    // Ajouter 15 minutes à la fin pour inclure le dernier créneau
+    endTime.setMinutes(endTime.getMinutes() + 15);
+
+    setSelectedTimeSlot({
+      start: startTime,
+      end: endTime,
+      aircraftId: selectionStart.aircraftId,
+    });
   };
 
   const handleMouseUp = () => {
-    if (isSelecting && selectionStart && selectionEnd) {
-      const start = new Date(selectedDate);
-      start.setHours(selectionStart.hour, selectionStart.minute, 0, 0);
-
-      const end = new Date(selectedDate);
-      end.setHours(selectionEnd.hour, selectionEnd.minute, 0, 0);
-
-      if (end > start) {
-        handleTimeSlotClick(
-          selectionStart.hour,
-          selectionStart.minute,
-          selectionStart.aircraftId,
-          selectionEnd.hour,
-          selectionEnd.minute
-        );
-      } else {
-        handleTimeSlotClick(
-          selectionEnd.hour,
-          selectionEnd.minute,
-          selectionStart.aircraftId,
-          selectionStart.hour,
-          selectionStart.minute
-        );
-      }
-
-      setIsSelecting(false);
-      setSelectionStart(null);
-      setSelectionEnd(null);
+    if (isSelecting && selectedTimeSlot) {
+      setShowReservationModal(true);
     }
+    setIsSelecting(false);
+    setSelectionStart(null);
+    setSelectionEnd(null);
   };
 
-  const isSlotSelected = (hour: number, minute: number, aircraftId: string) => {
-    if (
-      !isSelecting ||
-      !selectionStart ||
-      !selectionEnd ||
-      selectionStart.aircraftId !== aircraftId
-    ) {
-      return false;
-    }
+  const isSlotSelected = (hour: number, minutes: number, aircraftId: string) => {
+    if (!selectedTimeSlot || selectedTimeSlot.aircraftId !== aircraftId) return false;
 
-    const slotTime = hour * 60 + minute;
-    const startTime = selectionStart.hour * 60 + selectionStart.minute;
-    const endTime = selectionEnd.hour * 60 + selectionEnd.minute;
+    const slotTime = new Date(selectedDate);
+    slotTime.setHours(hour, minutes, 0, 0);
 
     return (
-      slotTime >= Math.min(startTime, endTime) &&
-      slotTime <= Math.max(startTime, endTime)
+      slotTime >= selectedTimeSlot.start &&
+      slotTime < selectedTimeSlot.end
     );
   };
 
@@ -433,118 +485,97 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
           {/* En-tête des heures */}
           <div className="sticky top-0 z-10 flex border-b bg-white">
             <div className="w-20 min-w-[5rem] shrink-0 border-r bg-white" />
-            {TIME_SLOTS.map(({ hour, minutes }) => (
-              <div
-                key={`${hour}-${minutes}`}
-                className={cn(
-                  "border-r py-1 text-center text-xs",
-                  {
-                    "font-medium": shouldShowTime(hour, minutes),
-                    "border-r-2": shouldShowBorder(hour, minutes),
-                    "border-r-gray-200": !shouldShowBorder(hour, minutes),
-                  }
-                )}
-                style={{ width: `${SLOT_WIDTH}rem`, minWidth: `${SLOT_WIDTH}rem` }}
-              >
-                {shouldShowTime(hour, minutes) ? formatHour(hour) : ""}
-              </div>
-            ))}
+            <div className="flex">
+              {TIME_SLOTS.map(({ hour, minutes }) => (
+                <div
+                  key={`${hour}-${minutes}`}
+                  className={cn(
+                    "w-6 h-8 border-r flex items-center justify-center",
+                    {
+                      "border-r-2 border-r-gray-200": shouldShowBorder(hour, minutes),
+                      "border-r-gray-100": !shouldShowBorder(hour, minutes),
+                      "bg-gray-50": isNightTime(hour, minutes),
+                    }
+                  )}
+                >
+                  {shouldShowTime(hour, minutes) && (
+                    <span className="text-xs text-gray-500">{formatHour(hour)}</span>
+                  )}
+                  {isFirstNightSlot(hour, minutes) && (
+                    <div className="absolute -top-2 left-0 w-full flex items-center justify-center">
+                      <Moon className="w-3 h-3 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Corps de la grille */}
           <div className="relative">
-            {sortedAircraft.map(aircraft => (
-              <div key={aircraft.id} className="flex border-b hover:bg-gray-50">
-                {/* Colonne des avions */}
-                <div className="w-20 min-w-[5rem] shrink-0 border-r p-1 bg-white sticky left-0">
-                  <div className="flex flex-col">
-                    <span className="font-medium text-sm">{aircraft.registration}</span>
-                    <span className="text-xs text-gray-500">{aircraft.type}</span>
-                  </div>
+            {sortedAircraft.map((aircraft) => (
+              <div key={aircraft.id} className="flex border-b">
+                <div className="w-20 min-w-[5rem] shrink-0 border-r p-2">
+                  <div className="text-sm font-medium">{aircraft.registration}</div>
                 </div>
-
-                {/* Colonnes des créneaux horaires */}
                 <div className="relative flex-1">
-                  {/* Grille de fond */}
-                  <div className="absolute inset-0 grid" style={{
-                    gridTemplateColumns: `repeat(${TIME_SLOTS.length}, ${SLOT_WIDTH}rem)`,
-                  }}>
+                  <div className="flex">
                     {TIME_SLOTS.map(({ hour, minutes }) => (
                       <div
-                        key={`grid-${hour}-${minutes}`}
+                        key={`${hour}-${minutes}`}
                         className={cn(
-                          "h-12 border-r",
+                          "w-6 h-12 border-r relative cursor-pointer",
                           {
                             "border-r-2 border-r-gray-200": shouldShowBorder(hour, minutes),
                             "border-r-gray-100": !shouldShowBorder(hour, minutes),
+                            "bg-gray-100": isNightTime(hour, minutes),
+                            "bg-sky-100": isSlotSelected(hour, minutes, aircraft.id),
+                            "hover:bg-slate-50": !isNightTime(hour, minutes) && !isSlotSelected(hour, minutes, aircraft.id),
                           }
                         )}
-                      />
+                        onMouseDown={() => handleMouseDown(hour, minutes, aircraft.id)}
+                        onMouseMove={() => handleMouseMove(hour, minutes)}
+                        onMouseUp={handleMouseUp}
+                      >
+                        {isFirstNightSlot(hour, minutes) && (
+                          <div className="absolute -top-2 left-0 w-full flex items-center justify-center">
+                            <Moon className="w-3 h-3 text-gray-400" />
+                          </div>
+                        )}
+                        {isFirstSelectedSlot(hour, minutes, aircraft.id) && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-xs text-gray-500 bg-white/75 px-1 rounded">
+                              {format(selectedTimeSlot?.start || '', 'HH:mm')} - {format(selectedTimeSlot?.end || '', 'HH:mm')}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
-
-                  {/* Zones cliquables */}
-                  {TIME_SLOTS.map(({ hour, minutes }) => (
-                    <div
-                      key={`${hour}-${minutes}`}
-                      style={{ 
-                        left: `${findTimeSlotIndex(hour, minutes) * SLOT_WIDTH}rem`,
-                        width: `${SLOT_WIDTH}rem`,
-                      }}
-                      className={cn(
-                        "absolute h-12 cursor-pointer hover:bg-gray-50",
-                        {
-                          "bg-blue-100": isSlotSelected(hour, minutes, aircraft.id),
-                        }
-                      )}
-                      onMouseDown={() => handleMouseDown(hour, minutes, aircraft.id)}
-                      onMouseMove={() => handleMouseMove(hour, minutes)}
-                      onMouseUp={handleMouseUp}
-                    />
-                  ))}
-                  
                   {/* Réservations */}
-                  {getReservationsForAircraft(aircraft.id).map(reservation => {
-                    const status = getReservationStatus(reservation);
+                  {getReservationsForAircraft(aircraft.id).map((reservation) => {
                     const style = calculateReservationStyle(reservation);
-                    console.log('Looking for pilot with ID:', reservation.pilotId);
-                    console.log('Available users:', users);
-                    const pilot = users.find(u => u.id === reservation.pilotId);
-                    console.log('Found pilot:', pilot);
-                    const instructor = reservation.instructorId 
-                      ? users.find(u => u.id === reservation.instructorId)
-                      : undefined;
-                    
                     if (!style) return null;
-                    
+
+                    const status = getReservationStatus(reservation);
+                    const pilot = users.find((u) => u.id === reservation.pilotId);
+
                     return (
-                      <div
+                      <button
                         key={reservation.id}
+                        onClick={() => handleReservationClick(reservation)}
                         className={cn(
-                          "absolute inset-y-1 rounded p-1 text-xs cursor-pointer z-10 shadow-sm hover:shadow-md transition-shadow",
+                          "absolute top-0 h-12 rounded px-2 text-xs font-medium transition-colors",
                           {
-                            "bg-blue-100": status === "future",
-                            "bg-gray-100": status === "past",
-                            "bg-green-100": status === "current",
+                            "bg-sky-100 hover:bg-sky-200": status === "future",
+                            "bg-gray-100 hover:bg-gray-200": status === "past",
+                            "bg-green-100 hover:bg-green-200": status === "current",
                           }
                         )}
                         style={style}
-                        onClick={() => handleReservationClick(reservation)}
                       >
-                        <div className="font-medium truncate">
-                          {pilot ? `${pilot.first_name} ${pilot.last_name}` : 'Pilote inconnu'}
-                          {instructor && (
-                            <span className="text-gray-500">
-                              {" + "}
-                              {`${instructor.first_name} ${instructor.last_name}`}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-gray-500 truncate">
-                          {format(new Date(reservation.startTime), "HH:mm")} -{" "}
-                          {format(new Date(reservation.endTime), "HH:mm")}
-                        </div>
-                      </div>
+                        {pilot?.firstName} {pilot?.lastName}
+                      </button>
                     );
                   })}
                 </div>

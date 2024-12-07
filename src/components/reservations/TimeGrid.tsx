@@ -8,9 +8,11 @@ import {
 } from "date-fns";
 import { Aircraft, Reservation, User } from "../../types/database";
 import { useAuth } from "../../contexts/AuthContext";
-import { Plane } from "lucide-react";
+import { Plane, Moon } from "lucide-react";
 import { toast } from "react-hot-toast";
 import ReservationModal from "./ReservationModal";
+import { getSunTimes } from "../../lib/sunTimes";
+import { supabase } from "../../lib/supabase";
 
 interface TimeGridProps {
   selectedDate: Date;
@@ -40,6 +42,26 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   onDateChange,
 }) => {
   const { user } = useAuth();
+  const [clubCoordinates, setClubCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    const loadClubCoordinates = async () => {
+      if (!user?.club?.id) return;
+
+      const { data: clubData } = await supabase
+        .from('clubs')
+        .select('latitude, longitude')
+        .eq('id', user.club.id)
+        .single();
+
+      if (clubData?.latitude && clubData?.longitude) {
+        setClubCoordinates(clubData);
+      }
+    };
+
+    loadClubCoordinates();
+  }, [user?.club?.id]);
+
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionStart, setSelectionStart] = useState<{
     hour: number;
@@ -253,6 +275,25 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     };
   };
 
+  const isNightTime = (hour: number, minute: number) => {
+    if (!clubCoordinates) return false;
+    
+    const slotTime = setMinutes(setHours(new Date(selectedDate), hour), minute);
+    const sunTimes = getSunTimes(selectedDate, clubCoordinates.latitude, clubCoordinates.longitude);
+    return slotTime < sunTimes.aeroStart || slotTime > sunTimes.aeroEnd;
+  };
+
+  const isFirstNightSlot = (hour: number, minute: number) => {
+    if (!clubCoordinates) return false;
+    
+    const slotTime = setMinutes(setHours(new Date(selectedDate), hour), minute);
+    const prevSlotTime = new Date(slotTime);
+    prevSlotTime.setMinutes(prevSlotTime.getMinutes() - 15);
+    
+    const sunTimes = getSunTimes(selectedDate, clubCoordinates.latitude, clubCoordinates.longitude);
+    return slotTime > sunTimes.aeroEnd && prevSlotTime <= sunTimes.aeroEnd;
+  };
+
   // Synchroniser le défilement
   useEffect(() => {
     const gridContainer = gridContainerRef.current;
@@ -331,18 +372,25 @@ const TimeGrid: React.FC<TimeGridProps> = ({
               <div key={`grid-${aircraft.id}`} className="relative">
                 {TIME_SLOTS.map(({ hour, minute }, index) => (
                   <div
-                    key={`slot-${aircraft.id}-${hour}-${minute}`}
+                    key={`${hour}-${minute}`}
                     className={`h-4 border-b border-slate-100 relative group ${
                       minute === 45 ? "border-b-2 border-b-slate-200" : ""
                     } ${
                       isSlotSelected(hour, minute, aircraft.id)
                         ? "bg-sky-100"
-                        : "hover:bg-slate-50"
+                        : isNightTime(hour, minute)
+                          ? "bg-gray-100"
+                          : "bg-white hover:bg-slate-50"
                     }`}
                     onMouseDown={(e) => handleMouseDown(hour, minute, aircraft.id)}
                     onMouseMove={(e) => handleMouseMove(hour, minute)}
-                    onMouseUp={(e) => handleMouseUp()}
+                    onMouseUp={handleMouseUp}
                   >
+                    {isFirstNightSlot(hour, minute) && (
+                      <div className="absolute -top-1 left-0 w-full flex items-center justify-center">
+                        <Moon className="w-3 h-3 text-gray-400" />
+                      </div>
+                    )}
                     <div className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
                       {isSlotSelected(hour, minute, aircraft.id) ? (
                         (() => {
