@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import type { ChatMessage, ChatRoom as ChatRoomType } from '../../types/chat';
 import { useAuth } from '../../contexts/AuthContext';
 import ConversationWindow from './ConversationWindow';
+import toast from 'react-hot-toast'; // Import toast
 
 interface ChatRoomProps {
   roomId: string;
@@ -183,6 +184,91 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ roomId }) => {
     }
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!user?.id) return;
+
+    try {
+      // Get the message to check ownership and file info
+      const { data: message } = await supabase
+        .from('chat_messages')
+        .select('user_id, file_url')
+        .eq('id', messageId)
+        .single();
+
+      if (!message || message.user_id !== user.id) {
+        toast.error('Vous ne pouvez supprimer que vos propres messages');
+        return;
+      }
+
+      // If message has a file, delete it from storage first
+      if (message.file_url) {
+        const filePath = message.file_url.split('/').pop(); // Get filename from URL
+        if (filePath) {
+          const { error: storageError } = await supabase.storage
+            .from('chat-attachments')
+            .remove([filePath]);
+
+          if (storageError) {
+            console.error('Error deleting file:', storageError);
+            toast.error('Erreur lors de la suppression du fichier');
+            return;
+          }
+        }
+      }
+
+      // Delete the message from the database
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      toast.success('Message supprimé');
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast.error('Erreur lors de la suppression du message');
+    }
+  };
+
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    if (!user?.id) return;
+
+    try {
+      // Get the message to check ownership
+      const { data: message } = await supabase
+        .from('chat_messages')
+        .select('user_id')
+        .eq('id', messageId)
+        .single();
+
+      if (!message || message.user_id !== user.id) {
+        toast.error('Vous ne pouvez modifier que vos propres messages');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('chat_messages')
+        .update({ content: newContent })
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, content: newContent }
+          : msg
+      ));
+      toast.success('Message modifié');
+    } catch (error) {
+      console.error('Error editing message:', error);
+      toast.error('Erreur lors de la modification du message');
+    }
+  };
+
   if (loading || !room) return null;
 
   return (
@@ -192,6 +278,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ roomId }) => {
       subtitle={room.description}
       messages={messages.map(transformMessage)}
       onSendMessage={handleSendMessage}
+      onDeleteMessage={handleDeleteMessage}
+      onEditMessage={handleEditMessage}
     />
   );
 };
