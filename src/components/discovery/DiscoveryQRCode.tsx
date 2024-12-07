@@ -31,8 +31,13 @@ const DiscoveryQRCode = () => {
   const { hasCopied, onCopy } = useClipboard(qrCodeUrl);
   const toast = useToast();
 
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const glassEffect = {
+    bg: 'whiteAlpha.50',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid',
+    borderColor: 'whiteAlpha.100',
+  };
+  
   const primaryColor = useColorModeValue('blue.600', 'blue.400');
   const secondaryBg = useColorModeValue('blue.50', 'blue.900');
 
@@ -111,7 +116,7 @@ const DiscoveryQRCode = () => {
     <Container maxW="container.md" py={8} px={4} className="print">
       <VStack spacing={8} align="stretch">
         {/* Logo et En-tête */}
-        <Box textAlign="center" bg={bgColor} p={8} borderRadius="xl" boxShadow="base" border="1px" borderColor={borderColor}>
+        <Box textAlign="center" {...glassEffect} p={8} borderRadius="xl" boxShadow="base">
           <Logo className="mx-auto mb-4" />
           {clubData?.logo_url && (
             <Image 
@@ -122,17 +127,17 @@ const DiscoveryQRCode = () => {
               mb={6}
             />
           )}
-          <Heading size="lg" mb={4} color={primaryColor}>Vol Découverte</Heading>
-          <Text fontSize="xl" fontWeight="bold" color="gray.700" mb={2}>
+          <Heading size="lg" mb={4} color="white">Vol Découverte</Heading>
+          <Text fontSize="xl" fontWeight="bold" color="white" mb={2}>
             Offrez-vous une expérience inoubliable !
           </Text>
-          <Text color="gray.600" fontSize="lg">
+          <Text color="whiteAlpha.800" fontSize="lg">
             Découvrez votre région vue du ciel
           </Text>
         </Box>
 
         {/* Prix et Informations principales */}
-        <Box bg={secondaryBg} p={6} borderRadius="xl" boxShadow="base" border="1px" borderColor={borderColor}>
+        <Box bg={secondaryBg} p={6} borderRadius="xl" boxShadow="base" border="1px" borderColor="whiteAlpha.100">
           <VStack spacing={4} align="center">
             <Heading size="2xl" color={primaryColor}>{discoveryFlightInfo.price}</Heading>
             <Text fontSize="xl" fontWeight="medium">Vol découverte {discoveryFlightInfo.duration}</Text>
@@ -150,18 +155,16 @@ const DiscoveryQRCode = () => {
         </Box>
 
         {/* QR Code */}
-        <Box textAlign="center" bg={bgColor} p={6} borderRadius="xl" boxShadow="base" border="1px" borderColor={borderColor}>
+        <Box textAlign="center" {...glassEffect} p={6} borderRadius="xl" boxShadow="base">
           <Text mb={4} fontSize="lg" fontWeight="medium">
             Scannez pour réserver votre vol
           </Text>
           <Box
-            bg="white"
+            bg="whiteAlpha.50"
             p={4}
             borderRadius="xl"
             display="inline-block"
             boxShadow="base"
-            border="1px"
-            borderColor={borderColor}
             mb={4}
           >
             <QRCodeSVG
@@ -174,9 +177,9 @@ const DiscoveryQRCode = () => {
         </Box>
 
         {/* Informations pratiques */}
-        <Box bg={bgColor} p={6} borderRadius="xl" boxShadow="base" border="1px" borderColor={borderColor}>
-          <Heading size="md" mb={4} color="gray.700">Ce qui est inclus :</Heading>
-          <List spacing={3}>
+        <Box {...glassEffect} p={6} borderRadius="xl" boxShadow="base">
+          <Heading size="md" mb={4} color="white">Ce qui est inclus :</Heading>
+          <List spacing={3} color="white">
             <ListItem>
               <ListIcon as={FaCheckCircle} color="green.500" />
               Briefing complet avant le vol
@@ -197,9 +200,9 @@ const DiscoveryQRCode = () => {
         </Box>
 
         {/* Coordonnées du club */}
-        <Box bg={bgColor} p={6} borderRadius="xl" boxShadow="base" border="1px" borderColor={borderColor}>
-          <Heading size="md" mb={4} color="gray.700">Nous contacter</Heading>
-          <VStack align="start" spacing={3}>
+        <Box {...glassEffect} p={6} borderRadius="xl" boxShadow="base">
+          <Heading size="md" mb={4} color="white">Nous contacter</Heading>
+          <VStack align="start" spacing={3} color="white">
             <HStack>
               <Icon as={FaMapMarkerAlt} color={primaryColor} />
               <Text>{clubData?.address || "Aérodrome"}</Text>
@@ -216,7 +219,7 @@ const DiscoveryQRCode = () => {
         </Box>
 
         {/* URL du formulaire en bas */}
-        <Box bg="gray.50" p={4} borderRadius="xl" border="1px" borderColor={borderColor}>
+        <Box bg="gray.50" p={4} borderRadius="xl" border="1px" borderColor="whiteAlpha.100">
           <Text fontSize="sm" color="gray.600" mb={2}>URL du formulaire :</Text>
           <HStack>
             <Text 
