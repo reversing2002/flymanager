@@ -22,6 +22,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { FaPhone, FaMapMarkerAlt, FaEnvelope, FaClock, FaPlane, FaCheckCircle } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
+import { Logo } from '../common/Logo';
 
 const DiscoveryQRCode = () => {
   const { user } = useAuth();
@@ -111,6 +112,7 @@ const DiscoveryQRCode = () => {
       <VStack spacing={8} align="stretch">
         {/* Logo et En-tête */}
         <Box textAlign="center" bg={bgColor} p={8} borderRadius="xl" boxShadow="base" border="1px" borderColor={borderColor}>
+          <Logo className="mx-auto mb-4" />
           {clubData?.logo_url && (
             <Image 
               src={clubData.logo_url} 

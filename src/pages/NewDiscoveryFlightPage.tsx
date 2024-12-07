@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { stripePromise } from '../lib/stripe'
 import toast from 'react-hot-toast'
 import { Users, Weight, Calendar, MessageSquare } from 'lucide-react'
+import { Logo } from '../components/common/Logo'
 
 interface FormData {
   contact_email: string
@@ -161,6 +162,7 @@ export default function NewDiscoveryFlightPage() {
           transition={{ duration: 0.8 }}
           className="relative h-full w-full bg-gradient-to-b from-[#1a2942] to-[#0B1120]"
         >
+          <Logo className="absolute top-4 left-4 h-20 z-10" />
           {club?.logo_url ? (
             <img
               src={club.logo_url}
