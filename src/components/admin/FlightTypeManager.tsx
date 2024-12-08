@@ -4,6 +4,8 @@ import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { Star, Edit2 } from "lucide-react";
 import type { FlightType, AccountingCategory } from "../../types/database";
+import { useAuth } from "../../contexts/AuthContext";
+import { getFlightTypes, createFlightType, updateFlightType, deleteFlightType } from "../../lib/queries/flightTypes";
 
 interface EditModalProps {
   flightType: FlightType;
@@ -24,7 +26,8 @@ const EditModal: React.FC<EditModalProps> = ({ flightType, isOpen, onClose, onSa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave(editedType);
+    const { is_system, ...updateData } = editedType;
+    await onSave(updateData);
     onClose();
   };
 
@@ -120,7 +123,20 @@ const EditModal: React.FC<EditModalProps> = ({ flightType, isOpen, onClose, onSa
   );
 };
 
+interface FlightType {
+  id: string;
+  name: string;
+  description: string | null;
+  requires_instructor: boolean;
+  is_default: boolean;
+  display_order: number;
+  accounting_category_id: string;
+  club_id: string;
+  is_system: boolean;
+}
+
 const FlightTypeManager = () => {
+  const { user } = useAuth();
   const [flightTypes, setFlightTypes] = useState<FlightType[]>([]);
   const [editingType, setEditingType] = useState<FlightType | null>(null);
   const [accountingCategories, setAccountingCategories] = useState<AccountingCategory[]>([]);
@@ -132,6 +148,7 @@ const FlightTypeManager = () => {
     requires_instructor: false,
     accounting_category_id: "",
     is_default: false,
+    club_id: user?.user_metadata?.club_id,
   });
 
   useEffect(() => {
@@ -141,17 +158,8 @@ const FlightTypeManager = () => {
 
   const loadFlightTypes = async () => {
     try {
-      // Charger les types de vol
-      const { data: flightTypesData, error: flightTypesError } = await supabase
-        .from("flight_types")
-        .select(`
-          *,
-          accounting_category:accounting_categories!accounting_category_id(*)
-        `)
-        .order("display_order");
-
-      if (flightTypesError) throw flightTypesError;
-      setFlightTypes(flightTypesData || []);
+      const types = await getFlightTypes();
+      setFlightTypes(types);
       setLoading(false);
     } catch (err) {
       console.error("Error loading flight types:", err);
@@ -211,139 +219,67 @@ const FlightTypeManager = () => {
 
   const handleAddFlightType = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFlightType.name.trim()) return;
+    if (!newFlightType.name.trim() || !user?.club?.id) return;
 
     try {
       // Si ce nouveau type est défini par défaut, on retire d'abord le statut par défaut des autres types
       if (newFlightType.is_default) {
-        const { error: updateError } = await supabase
+        const { error } = await supabase
           .from("flight_types")
           .update({ is_default: false })
-          .neq("id", "00000000-0000-0000-0000-000000000000");
-
-        if (updateError) throw updateError;
+          .neq("id", "placeholder");
+        if (error) throw error;
       }
 
-      const { data, error } = await supabase.from("flight_types").insert([
-        {
-          name: newFlightType.name,
-          description: newFlightType.description || null,
-          requires_instructor: newFlightType.requires_instructor,
-          accounting_category_id: newFlightType.accounting_category_id,
-          display_order: flightTypes.length,
-          is_default: newFlightType.is_default,
-        },
-      ]);
+      await createFlightType({
+        name: newFlightType.name,
+        description: newFlightType.description,
+        requires_instructor: newFlightType.requires_instructor,
+        accounting_category_id: newFlightType.accounting_category_id || null,
+        display_order: flightTypes.length,
+        is_default: newFlightType.is_default,
+      }, user.club.id);
 
-      if (error) throw error;
-      toast.success("Type de vol ajouté avec succès");
-      setNewFlightType({ 
-        name: "", 
-        description: "", 
+      setNewFlightType({
+        name: "",
+        description: "",
         requires_instructor: false, 
         accounting_category_id: "",
         is_default: false,
+        club_id: user?.club?.id,
       });
       loadFlightTypes();
+      toast.success("Type de vol créé avec succès");
     } catch (err) {
-      console.error("Error adding flight type:", err);
-      toast.error("Erreur lors de l'ajout du type de vol");
-    }
-  };
-
-  const handleDeleteFlightType = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce type de vol ?")) return;
-
-    try {
-      // Trouver le type de vol par défaut
-      const { data: defaultType, error: defaultTypeError } = await supabase
-        .from("flight_types")
-        .select("id")
-        .eq("is_default", true)
-        .single();
-
-      if (defaultTypeError) throw defaultTypeError;
-      if (!defaultType) {
-        toast.error("Aucun type de vol par défaut n'est défini");
-        return;
-      }
-
-      // Mettre à jour les vols existants
-      const { error: flightsError } = await supabase
-        .from("flights")
-        .update({ flight_type_id: defaultType.id })
-        .eq("flight_type_id", id);
-
-      if (flightsError) throw flightsError;
-
-      // Mettre à jour les réservations existantes
-      const { error: reservationsError } = await supabase
-        .from("reservations")
-        .update({ flight_type_id: defaultType.id })
-        .eq("flight_type_id", id);
-
-      if (reservationsError) throw reservationsError;
-
-      // Enfin, supprimer le type de vol
-      const { error: deleteError } = await supabase
-        .from("flight_types")
-        .delete()
-        .eq("id", id);
-
-      if (deleteError) throw deleteError;
-
-      toast.success("Type de vol supprimé avec succès");
-      loadFlightTypes();
-    } catch (err) {
-      console.error("Error deleting flight type:", err);
-      toast.error("Erreur lors de la suppression du type de vol");
-    }
-  };
-
-  const handleSetDefault = async (id: string) => {
-    try {
-      // D'abord, on retire le statut par défaut de tous les types
-      const { error: updateError } = await supabase
-        .from("flight_types")
-        .update({ is_default: false })
-        .neq("id", "00000000-0000-0000-0000-000000000000");
-
-      if (updateError) throw updateError;
-
-      // Ensuite, on définit le nouveau type par défaut
-      const { error } = await supabase
-        .from("flight_types")
-        .update({ is_default: true })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast.success("Type de vol défini par défaut");
-      loadFlightTypes();
-    } catch (err) {
-      console.error("Error setting default flight type:", err);
-      toast.error("Erreur lors de la définition du type de vol par défaut");
+      console.error("Error creating flight type:", err);
+      toast.error("Erreur lors de la création du type de vol");
     }
   };
 
   const handleUpdateType = async (updatedType: Partial<FlightType>) => {
     try {
-      // Filtrer les propriétés pour n'inclure que celles qui existent dans la table
-      const { accounting_category, ...updateData } = updatedType;
-      console.log('Données à mettre à jour:', updateData);
-
-      const { error } = await supabase
-        .from("flight_types")
-        .update(updateData)
-        .eq("id", updatedType.id);
-
-      if (error) throw error;
-
-      toast.success("Type de vol modifié avec succès");
+      if (!user?.club?.id) {
+        toast.error("Erreur: club_id manquant");
+        return;
+      }
+      
+      await updateFlightType(updatedType.id!, updatedType, user.club.id);
+      toast.success("Type de vol mis à jour");
       loadFlightTypes();
     } catch (err) {
       console.error("Error updating flight type:", err);
-      toast.error("Erreur lors de la modification du type de vol");
+      toast.error("Erreur lors de la mise à jour du type de vol");
+    }
+  };
+
+  const handleDeleteType = async (id: string) => {
+    try {
+      await deleteFlightType(id);
+      toast.success("Type de vol supprimé");
+      loadFlightTypes();
+    } catch (err) {
+      console.error("Error deleting flight type:", err);
+      toast.error("Erreur lors de la suppression du type de vol");
     }
   };
 
@@ -513,26 +449,30 @@ const FlightTypeManager = () => {
                             </div>
                           ) : (
                             <button
-                              onClick={() => handleSetDefault(type.id)}
+                              onClick={() => handleUpdateType({ id: type.id, is_default: true })}
                               className="flex items-center gap-1 px-2 py-1 text-slate-600 hover:bg-slate-100 rounded-lg"
                               title="Définir comme type par défaut"
                             >
                               <Star className="h-4 w-4" />
                             </button>
                           )}
-                          <button
-                            onClick={() => setEditingType(type)}
-                            className="p-1 text-slate-600 hover:bg-slate-100 rounded-lg"
-                            title="Modifier"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteFlightType(type.id)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded-lg"
-                          >
-                            Supprimer
-                          </button>
+                          {!type.is_system && (
+                            <>
+                              <button
+                                onClick={() => setEditingType(type)}
+                                className="p-1 text-slate-600 hover:bg-slate-100 rounded-lg"
+                                title="Modifier"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteType(type.id)}
+                                className="p-1 text-red-600 hover:bg-red-50 rounded-lg"
+                              >
+                                Supprimer
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
