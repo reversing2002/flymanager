@@ -2,41 +2,41 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Phone, Mail } from "lucide-react";
 import type { User as UserType } from "../../types/database";
-import { getMembershipStatus } from "../../lib/queries/index";
-import { useState, useEffect } from "react";
+import type { Contribution } from "../../types/contribution";
+import { isAfter, addMonths } from "date-fns";
 import { useAuth } from "../../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
 import { hasAnyGroup } from "../../lib/permissions";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { Role } from "../../types/roles";
 
 interface MemberCardProps {
-  member: UserType;
+  member: UserType & { contributions?: Contribution[] };
 }
 
 const MemberCard: React.FC<MemberCardProps> = ({ member }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const [isMembershipValid, setIsMembershipValid] = useState<boolean>(true);
 
   const isAdmin = hasAnyGroup(currentUser, ["ADMIN"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
   const canViewFinancials = isAdmin || isInstructor;
 
-  useEffect(() => {
-    const checkMembership = async () => {
-      try {
-        const isValid = await getMembershipStatus(member.id);
-        setIsMembershipValid(isValid);
-      } catch (error) {
-        console.error(
-          "Erreur lors de la vérification de la cotisation:",
-          error
-        );
-      }
-    };
-    checkMembership();
-  }, [member.id]);
+  // Vérifier si la cotisation est valide
+  const isMembershipValid = React.useMemo(() => {
+    if (!member.contributions?.length) return false;
+
+    // Trier les cotisations par date de validité
+    const sortedContributions = [...member.contributions].sort(
+      (a, b) => new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime()
+    );
+
+    const lastContribution = sortedContributions[0];
+    if (!lastContribution) return false;
+
+    // Une cotisation est valide pour 12 mois
+    const validUntil = addMonths(new Date(lastContribution.valid_from), 12);
+    return isAfter(validUntil, new Date());
+  }, [member.contributions]);
 
   const getRoleBadgeColor = (role: Role) => {
     switch (role) {

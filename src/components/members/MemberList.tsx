@@ -1,18 +1,22 @@
 import { useState, useEffect } from "react";
 import { Search, Filter, Plus } from "lucide-react";
 import type { User as UserType } from "../../types/database";
+import type { Contribution } from "../../types/contribution";
 import { getMembersWithBalance } from "../../lib/queries/users";
+import { getContributionsByUserId } from "../../lib/queries/contributions";
 import MemberCard from "./MemberCard";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
 import AddMemberForm from "./AddMemberForm";
+import { addMonths, isAfter } from "date-fns";
 
 const MemberList = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("all");
+  const [selectedMembershipStatus, setSelectedMembershipStatus] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
-  const [members, setMembers] = useState<UserType[]>([]);
+  const [members, setMembers] = useState<(UserType & { contributions?: Contribution[] })[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 
@@ -20,7 +24,24 @@ const MemberList = () => {
     const loadMembers = async () => {
       try {
         const data = await getMembersWithBalance();
-        setMembers(data);
+        
+        // Charger les cotisations pour chaque membre
+        const membersWithContributions = await Promise.all(
+          data.map(async (member) => {
+            try {
+              const contributions = await getContributionsByUserId(member.id);
+              return {
+                ...member,
+                contributions
+              };
+            } catch (error) {
+              console.error(`Error loading contributions for member ${member.id}:`, error);
+              return member;
+            }
+          })
+        );
+        
+        setMembers(membersWithContributions);
       } catch (error) {
         console.error("Error loading members:", error);
       } finally {
@@ -41,7 +62,23 @@ const MemberList = () => {
       selectedRole === "all" ||
       (member.roles && member.roles.includes(selectedRole.toUpperCase()));
 
-    return matchesSearch && matchesRole;
+    // Vérifier si la cotisation est valide
+    const isMembershipValid = member.contributions?.length ? (() => {
+      const sortedContributions = [...member.contributions].sort(
+        (a, b) => new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime()
+      );
+      const lastContribution = sortedContributions[0];
+      if (!lastContribution) return false;
+      const validUntil = addMonths(new Date(lastContribution.valid_from), 12);
+      return isAfter(validUntil, new Date());
+    })() : false;
+
+    const matchesMembershipStatus =
+      selectedMembershipStatus === "all" ||
+      (selectedMembershipStatus === "valid" && isMembershipValid) ||
+      (selectedMembershipStatus === "expired" && !isMembershipValid);
+
+    return matchesSearch && matchesRole && matchesMembershipStatus;
   });
 
   if (loading) {
@@ -98,14 +135,18 @@ const MemberList = () => {
               <option value="instructor">Instructeurs</option>
               <option value="admin">Administrateurs</option>
               <option value="mechanic">Mécaniciens</option>
+              <option value="student">Élèves</option>
             </select>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+
+            <select
+              value={selectedMembershipStatus}
+              onChange={(e) => setSelectedMembershipStatus(e.target.value)}
+              className="rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             >
-              <Filter className="h-4 w-4" />
-              <span>Filtres</span>
-            </button>
+              <option value="all">Toutes les cotisations</option>
+              <option value="valid">Cotisations valides</option>
+              <option value="expired">Cotisations expirées</option>
+            </select>
           </div>
         </div>
 
