@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, Book, Clock } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Award, Book, Clock, Shuffle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import type { TrainingModule, UserProgress } from '../../types/training';
 import { getTrainingModules, getUserProgress, updateAllProgressPercentages } from '../../lib/queries/training';
 import TrainingModuleCard from './TrainingModuleCard';
 import TrainingHistory from './TrainingHistory';
+import QuizMix from './QuizMix';
 
 const TrainingPage = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [modules, setModules] = useState<TrainingModule[]>([]);
   const [progress, setProgress] = useState<UserProgress[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'modules' | 'history'>('modules');
+  const [activeTab, setActiveTab] = useState<'modules' | 'history' | 'quiz'>('modules');
 
   useEffect(() => {
     if (!user) return;
@@ -106,7 +108,19 @@ const TrainingPage = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
+            <Book className="w-4 h-4 inline-block mr-2" />
             Modules
+          </button>
+          <button
+            onClick={() => setActiveTab('quiz')}
+            className={`py-2 px-1 -mb-px text-sm font-medium ${
+              activeTab === 'quiz'
+                ? 'text-sky-600 border-b-2 border-sky-600'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Shuffle className="w-4 h-4 inline-block mr-2" />
+            Quiz Mix
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -116,6 +130,7 @@ const TrainingPage = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
+            <Clock className="w-4 h-4 inline-block mr-2" />
             Historique
           </button>
         </div>
@@ -132,6 +147,8 @@ const TrainingPage = () => {
             />
           ))}
         </div>
+      ) : activeTab === 'quiz' ? (
+        <QuizMix />
       ) : (
         <TrainingHistory />
       )}

@@ -305,7 +305,7 @@ const MemberProfile = () => {
                 </div>
                 <h2 className="text-lg font-semibold">Cotisations</h2>
               </div>
-              {canManageContributions && (
+              {isAdmin && (
                 <button
                   onClick={() => setShowAddContribution(true)}
                   className="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700"
@@ -327,6 +327,7 @@ const MemberProfile = () => {
                     key={contribution.id}
                     contribution={contribution}
                     onEdit={handleEditContribution}
+                    canEdit={isAdmin}
                   />
                 ))}
               </div>

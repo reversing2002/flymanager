@@ -18,11 +18,13 @@ interface ContributionCardProps {
       description: string;
     };
   }) => void;
+  canEdit?: boolean;
 }
 
 const ContributionCard: React.FC<ContributionCardProps> = ({
   contribution,
   onEdit,
+  canEdit = true,
 }) => {
   const isExpired = new Date(contribution.valid_until) < new Date();
   const isExpiringSoon = !isExpired && new Date(contribution.valid_until) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -42,19 +44,22 @@ const ContributionCard: React.FC<ContributionCardProps> = ({
               {dateUtils.formatDate(contribution.valid_from)} - {dateUtils.formatDate(contribution.valid_until)}
             </span>
           </div>
-          <p className="text-sm text-slate-500">{contribution.account_entry.description}</p>
+          <p className="text-sm text-slate-500">{contribution.account_entry?.description || 'No description'}</p>
         </div>
 
         <div className="flex items-center gap-4">
           <span className="text-lg font-semibold text-slate-900">
-            {contribution.account_entry.amount.toFixed(2)} €
+            {contribution.account_entry ? 
+              (contribution.account_entry.amount < 0 ? '-' : '') + Math.abs(contribution.account_entry.amount).toFixed(2) : '0.00'} €
           </span>
-          <button
-            onClick={() => onEdit(contribution)}
-            className="p-2 text-slate-500 hover:text-sky-500 hover:bg-sky-50 rounded-lg transition-colors"
-          >
-            <Edit2 className="h-4 w-4" />
-          </button>
+          {canEdit && (
+            <button
+              onClick={() => onEdit(contribution)}
+              className="p-2 text-slate-500 hover:text-sky-500 hover:bg-sky-50 rounded-lg transition-colors"
+            >
+              <Edit2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 

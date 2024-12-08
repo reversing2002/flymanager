@@ -11,11 +11,13 @@ export async function getContributionsByUserId(userId: string): Promise<Contribu
     .select(`
       *,
       account_entry:account_entries (
+        id,
         amount,
         description,
         entry_type:account_entry_types!inner (
           code,
-          name
+          name,
+          is_credit
         )
       )
     `)

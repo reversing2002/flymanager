@@ -299,3 +299,179 @@ export async function getTrainingHistory(userId: string) {
     }
   }));
 }
+
+export async function getRandomQuestions(userId: string, count: number = 10) {
+  const { data: questions } = await supabase
+    .from('training_questions')
+    .select(`
+      *,
+      module:training_modules (
+        id,
+        title
+      )
+    `)
+    .limit(count);
+
+  return (questions || []).map(question => ({
+    id: question.id,
+    moduleId: question.module_id,
+    question: question.question,
+    choices: question.choices,
+    correctAnswer: question.correct_answer,
+    explanation: question.explanation,
+    points: question.points,
+    createdAt: question.created_at,
+    updatedAt: question.updated_at,
+    module: question.module
+  }));
+}
+
+export async function getDifficultQuestions(userId: string, count: number = 10) {
+  // 1. Récupérer l'historique des réponses avec les questions
+  const { data: history } = await supabase
+    .from('training_history')
+    .select(`
+      question_id,
+      is_correct
+    `)
+    .eq('user_id', userId);
+
+  if (!history) return [];
+
+  // 2. Calculer le taux de réussite par question
+  const questionStats = history.reduce((acc: { [key: string]: { total: number; correct: number } }, curr) => {
+    if (!acc[curr.question_id]) {
+      acc[curr.question_id] = { total: 0, correct: 0 };
+    }
+    acc[curr.question_id].total++;
+    if (curr.is_correct) {
+      acc[curr.question_id].correct++;
+    }
+    return acc;
+  }, {});
+
+  // 3. Calculer le pourcentage de réussite et trier
+  const questionSuccessRates = Object.entries(questionStats)
+    .map(([questionId, stats]) => ({
+      questionId,
+      successRate: (stats.correct / stats.total) * 100
+    }))
+    .sort((a, b) => a.successRate - b.successRate);
+
+  // 4. Prendre les questions avec le plus faible taux de réussite
+  const difficultQuestionIds = questionSuccessRates
+    .slice(0, count)
+    .map(q => q.questionId);
+
+  // 5. Récupérer les détails des questions
+  const { data: questions } = await supabase
+    .from('training_questions')
+    .select(`
+      *,
+      module:training_modules (
+        id,
+        title
+      )
+    `)
+    .in('id', difficultQuestionIds);
+
+  return (questions || []).map(question => ({
+    id: question.id,
+    moduleId: question.module_id,
+    question: question.question,
+    choices: question.choices,
+    correctAnswer: question.correct_answer,
+    explanation: question.explanation,
+    points: question.points,
+    createdAt: question.created_at,
+    updatedAt: question.updated_at,
+    module: question.module
+  }));
+}
+
+export async function getStudentPerformanceStats(userId: string) {
+  // 1. Récupérer l'historique des réponses avec les modules et questions
+  const { data: history } = await supabase
+    .from('training_history')
+    .select(`
+      *,
+      question:training_questions(
+        id,
+        module_id,
+        question,
+        points
+      ),
+      module:training_modules(
+        id,
+        title,
+        category
+      )
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (!history) return [];
+
+  // 2. Organiser les données par catégorie et module
+  const stats = history.reduce((acc: any, attempt) => {
+    const category = attempt.module.category;
+    const moduleId = attempt.module.id;
+    const moduleTitle = attempt.module.title;
+
+    if (!acc[category]) {
+      acc[category] = {
+        total: 0,
+        correct: 0,
+        modules: {}
+      };
+    }
+
+    if (!acc[category].modules[moduleId]) {
+      acc[category].modules[moduleId] = {
+        title: moduleTitle,
+        total: 0,
+        correct: 0,
+        recentAttempts: []
+      };
+    }
+
+    // Mettre à jour les statistiques globales de la catégorie
+    acc[category].total++;
+    if (attempt.is_correct) acc[category].correct++;
+
+    // Mettre à jour les statistiques du module
+    acc[category].modules[moduleId].total++;
+    if (attempt.is_correct) acc[category].modules[moduleId].correct++;
+
+    // Garder les 5 dernières tentatives
+    if (acc[category].modules[moduleId].recentAttempts.length < 5) {
+      acc[category].modules[moduleId].recentAttempts.push({
+        isCorrect: attempt.is_correct,
+        date: attempt.created_at
+      });
+    }
+
+    return acc;
+  }, {});
+
+  // 3. Calculer les pourcentages et identifier les forces/faiblesses
+  Object.keys(stats).forEach(category => {
+    stats[category].successRate = Math.round((stats[category].correct / stats[category].total) * 100);
+    
+    Object.keys(stats[category].modules).forEach(moduleId => {
+      const module = stats[category].modules[moduleId];
+      module.successRate = Math.round((module.correct / module.total) * 100);
+      
+      // Déterminer le statut du module
+      if (module.successRate >= 80) {
+        module.status = 'strong';
+      } else if (module.successRate <= 50) {
+        module.status = 'weak';
+      } else {
+        module.status = 'moderate';
+      }
+    });
+  });
+
+  return stats;
+}

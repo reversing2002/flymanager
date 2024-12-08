@@ -7,6 +7,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 
+interface ShuffledChoice {
+  text: string;
+  originalIndex: number;
+}
+
 const TrainingModuleDetails = () => {
   const { moduleId } = useParams();
   const navigate = useNavigate();
@@ -18,6 +23,17 @@ const TrainingModuleDetails = () => {
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [shuffledChoices, setShuffledChoices] = useState<ShuffledChoice[]>([]);
+
+  // Fonction pour mélanger un tableau
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -42,25 +58,55 @@ const TrainingModuleDetails = () => {
     loadData();
   }, [moduleId, user]);
 
+  // Mélanger les choix quand la question change
+  useEffect(() => {
+    if (questions[currentQuestion]) {
+      const choices = questions[currentQuestion].choices.map((text, index) => ({
+        text,
+        originalIndex: index
+      }));
+      setShuffledChoices(shuffleArray(choices));
+      setSelectedAnswer(null);
+    }
+  }, [currentQuestion, questions]);
+
   const handleAnswer = async () => {
     if (selectedAnswer === null || !moduleId || !user) return;
 
     const currentQ = questions[currentQuestion];
-    const isCorrect = selectedAnswer === currentQ.correctAnswer;
+    const originalSelectedIndex = shuffledChoices[selectedAnswer].originalIndex;
+    const isCorrect = originalSelectedIndex === currentQ.correctAnswer;
 
     try {
-      // Enregistrer la réponse dans l'historique
-      await supabase
+      // Obtenir le numéro de la dernière tentative
+      const { data: lastAttempt } = await supabase
         .from('training_history')
-        .upsert({
-          user_id: user.id,
-          module_id: moduleId,
-          question_id: currentQ.id,
-          answer_index: selectedAnswer,
-          is_correct: isCorrect,
-          points_earned: isCorrect ? currentQ.points : 0,
-          created_at: new Date().toISOString()
-        });
+        .select('created_at')
+        .eq('user_id', user.id)
+        .eq('module_id', moduleId)
+        .eq('question_id', currentQ.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      // Si pas de tentative ou dernière tentative > 1h, créer une nouvelle entrée
+      const lastAttemptTime = lastAttempt?.[0]?.created_at ? new Date(lastAttempt[0].created_at) : null;
+      const shouldCreateNewEntry = !lastAttemptTime || 
+        (new Date().getTime() - lastAttemptTime.getTime()) > 3600000; // 1h en millisecondes
+
+      if (shouldCreateNewEntry) {
+        // Créer une nouvelle entrée
+        await supabase
+          .from('training_history')
+          .insert({
+            user_id: user.id,
+            module_id: moduleId,
+            question_id: currentQ.id,
+            answer_index: originalSelectedIndex,
+            is_correct: isCorrect,
+            points_earned: isCorrect ? currentQ.points : 0,
+            created_at: new Date().toISOString()
+          });
+      }
 
       // Récupérer toutes les réponses pour ce module
       const { data: moduleResponses } = await supabase
@@ -69,10 +115,12 @@ const TrainingModuleDetails = () => {
         .eq('user_id', user.id)
         .eq('module_id', moduleId);
 
+      if (!moduleResponses) return;
+
       // Calculer le pourcentage de réponses correctes
-      const totalResponses = moduleResponses?.length || 0;
-      const correctResponses = moduleResponses?.filter(r => r.is_correct)?.length || 0;
-      const newProgress = totalResponses > 0 ? Math.round((correctResponses / totalResponses) * 100) : 0;
+      const totalResponses = moduleResponses.length;
+      const correctResponses = moduleResponses.filter(r => r.is_correct).length;
+      const newProgress = Math.round((correctResponses / totalResponses) * 100);
 
       // Vérifier si une progression existe déjà
       const { data: existingProgress } = await supabase
@@ -83,10 +131,11 @@ const TrainingModuleDetails = () => {
         .single();
 
       const currentPoints = existingProgress?.points_earned || 0;
-      const newPoints = currentPoints + (isCorrect ? currentQ.points : 0);
+      const newPoints = shouldCreateNewEntry ? 
+        (currentPoints + (isCorrect ? currentQ.points : 0)) : 
+        currentPoints;
 
       if (existingProgress) {
-        // Mettre à jour la progression existante
         await supabase
           .from('user_progress')
           .update({
@@ -96,7 +145,6 @@ const TrainingModuleDetails = () => {
           })
           .eq('id', existingProgress.id);
       } else {
-        // Créer une nouvelle progression
         await supabase
           .from('user_progress')
           .insert({
@@ -109,23 +157,15 @@ const TrainingModuleDetails = () => {
           });
       }
 
-      // Feedback à l'utilisateur
-      toast[isCorrect ? 'success' : 'error'](
-        isCorrect ? 'Bonne réponse !' : 'Mauvaise réponse...'
-      );
-
       // Passer à la question suivante ou terminer
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(prev => prev + 1);
         setSelectedAnswer(null);
       } else {
-        // Module terminé
-        toast.success('Module terminé !');
         navigate('/training');
       }
     } catch (err) {
       console.error('Error updating progress:', err);
-      toast.error('Erreur lors de la mise à jour de la progression');
     }
   };
 
@@ -173,7 +213,7 @@ const TrainingModuleDetails = () => {
           <div>
             <p className="text-lg font-medium text-slate-900 mb-4">{currentQ.question}</p>
             <div className="space-y-2">
-              {currentQ.choices.map((choice, index) => (
+              {shuffledChoices.map((choice, index) => (
                 <label
                   key={index}
                   className={`block p-4 rounded-lg border cursor-pointer transition-colors ${
@@ -191,7 +231,7 @@ const TrainingModuleDetails = () => {
                       onChange={() => setSelectedAnswer(index)}
                       className="sr-only"
                     />
-                    <span className="text-sm text-slate-900">{choice}</span>
+                    <span className="text-sm text-slate-900">{choice.text}</span>
                   </div>
                 </label>
               ))}

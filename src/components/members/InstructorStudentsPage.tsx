@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { format, isAfter, addMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuth } from '../../contexts/AuthContext';
+import StudentPerformanceStats from '../training/StudentPerformanceStats';
 
 interface Student {
   id: string;
@@ -38,6 +39,7 @@ const InstructorStudentsPage = () => {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     medicalStatus: 'all',
     membershipStatus: 'all',
@@ -221,226 +223,222 @@ const InstructorStudentsPage = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Mes élèves</h1>
-        <p className="text-slate-600">Suivi des élèves et de leur progression</p>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Mes élèves</h1>
+        <div className="flex space-x-4">
+          <div className="relative">
             <input
               type="text"
               placeholder="Rechercher un élève..."
+              className="pl-10 pr-4 py-2 border rounded-lg"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             />
+            <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 border rounded-lg hover:bg-gray-50"
           >
-            <Filter className="h-4 w-4" />
+            <Filter size={20} />
             <span>Filtres</span>
           </button>
         </div>
-
-        {showFilters && (
-          <div className="mt-4 p-4 bg-slate-50 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Certificat médical
-                </label>
-                <select
-                  value={filters.medicalStatus}
-                  onChange={(e) => setFilters(prev => ({ ...prev, medicalStatus: e.target.value }))}
-                  className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                >
-                  <option value="all">Tous</option>
-                  <option value="valid">Valide</option>
-                  <option value="expiring">Expire bientôt</option>
-                  <option value="expired">Expiré</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Cotisation
-                </label>
-                <select
-                  value={filters.membershipStatus}
-                  onChange={(e) => setFilters(prev => ({ ...prev, membershipStatus: e.target.value }))}
-                  className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                >
-                  <option value="all">Tous</option>
-                  <option value="valid">À jour</option>
-                  <option value="expired">Expirée</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Formation
-                </label>
-                <select
-                  value={filters.progressionStatus}
-                  onChange={(e) => setFilters(prev => ({ ...prev, progressionStatus: e.target.value }))}
-                  className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                >
-                  <option value="all">Tous</option>
-                  <option value="in_progress">En cours</option>
-                  <option value="completed">Terminée</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredStudents.map((student) => {
-          const latestMedical = student.medical_certifications?.[0];
-          const isMedicalValid = latestMedical && isAfter(new Date(latestMedical.valid_until), new Date());
-          const isMedicalExpiringSoon = latestMedical && 
-            isAfter(new Date(latestMedical.valid_until), new Date()) &&
-            !isAfter(new Date(latestMedical.valid_until), addMonths(new Date(), 3));
-          
-          const isMembershipValid = student.membership_expiry && 
-            isAfter(new Date(student.membership_expiry), new Date());
+      {showFilters && (
+        <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Certificat médical
+              </label>
+              <select
+                value={filters.medicalStatus}
+                onChange={(e) => setFilters(prev => ({ ...prev, medicalStatus: e.target.value }))}
+                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+              >
+                <option value="all">Tous</option>
+                <option value="valid">Valide</option>
+                <option value="expiring">Expire bientôt</option>
+                <option value="expired">Expiré</option>
+              </select>
+            </div>
 
-          return (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Cotisation
+              </label>
+              <select
+                value={filters.membershipStatus}
+                onChange={(e) => setFilters(prev => ({ ...prev, membershipStatus: e.target.value }))}
+                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+              >
+                <option value="all">Tous</option>
+                <option value="valid">À jour</option>
+                <option value="expired">Expirée</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Formation
+              </label>
+              <select
+                value={filters.progressionStatus}
+                onChange={(e) => setFilters(prev => ({ ...prev, progressionStatus: e.target.value }))}
+                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+              >
+                <option value="all">Tous</option>
+                <option value="in_progress">En cours</option>
+                <option value="completed">Terminée</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          {filteredStudents.map((student) => (
             <div
               key={student.id}
-              className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+              onClick={() => setSelectedStudent(student.id)}
+              className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                selectedStudent === student.id ? 'border-sky-500 bg-sky-50' : 'hover:bg-gray-50'
+              }`}
             >
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <Link
-                      to={`/members/${student.id}`}
-                      className="text-lg font-semibold text-slate-900 hover:text-sky-600"
-                    >
-                      {student.first_name} {student.last_name}
-                    </Link>
-                    <div className="mt-1 space-y-1 text-sm text-slate-500">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span>{student.email}</span>
-                      </div>
-                      {student.phone && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4" />
-                          <span>{student.phone}</span>
-                        </div>
-                      )}
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <Link
+                    to={`/members/${student.id}`}
+                    className="text-lg font-semibold text-slate-900 hover:text-sky-600"
+                  >
+                    {student.first_name} {student.last_name}
+                  </Link>
+                  <div className="mt-1 space-y-1 text-sm text-slate-500">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <span>{student.email}</span>
                     </div>
+                    {student.phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        <span>{student.phone}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm font-medium text-slate-700 mb-2">Certificat médical</div>
+                  {student.medical_certifications?.[0] ? (
+                    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      isAfter(new Date(student.medical_certifications[0].valid_until), new Date()) ? 
+                        isAfter(new Date(student.medical_certifications[0].valid_until), addMonths(new Date(), 3)) ? 
+                          'bg-emerald-100 text-emerald-800' : 
+                          'bg-amber-100 text-amber-800' : 
+                        'bg-red-100 text-red-800'
+                    }`}>
+                      {student.medical_certifications[0].class} - {
+                        isAfter(new Date(student.medical_certifications[0].valid_until), new Date()) ? 
+                          isAfter(new Date(student.medical_certifications[0].valid_until), addMonths(new Date(), 3)) ? 
+                            'Valide' : 
+                            'Expire bientôt' : 
+                          'Expiré'
+                      }
+                    </div>
+                  ) : (
+                    <span className="text-sm text-slate-500">Non renseigné</span>
+                  )}
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium text-slate-700 mb-2">Cotisation</div>
+                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    student.membership_expiry && isAfter(new Date(student.membership_expiry), new Date()) ? 
+                      'bg-emerald-100 text-emerald-800' : 
+                      'bg-red-100 text-red-800'
+                  }`}>
+                    {student.membership_expiry && isAfter(new Date(student.membership_expiry), new Date()) ? 
+                      'À jour' : 
+                      'Expirée'}
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-sm font-medium text-slate-700 mb-2">Certificat médical</div>
-                    {latestMedical ? (
-                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        isMedicalValid
-                          ? isMedicalExpiringSoon
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-emerald-100 text-emerald-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {latestMedical.class} - {
-                          isMedicalValid
-                            ? isMedicalExpiringSoon
-                              ? 'Expire bientôt'
-                              : 'Valide'
-                            : 'Expiré'
-                        }
+                <div>
+                  <div className="text-sm font-medium text-slate-700 mb-2">Formation</div>
+                  <div className="space-y-2">
+                    {student.progressions?.map((progression) => (
+                      <div
+                        key={progression.id}
+                        className="flex items-center justify-between bg-slate-50 p-2 rounded-lg"
+                      >
+                        <span className="text-sm">{progression.template.title}</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          progression.completed_at ? 
+                            'bg-emerald-100 text-emerald-800' : 
+                            'bg-amber-100 text-amber-800'
+                        }`}>
+                          {progression.completed_at ? 'Terminée' : 'En cours'}
+                        </span>
                       </div>
-                    ) : (
-                      <span className="text-sm text-slate-500">Non renseigné</span>
+                    ))}
+                    {student.training_results?.map((result) => (
+                      <div
+                        key={result.module_id}
+                        className="flex items-center justify-between bg-slate-50 p-2 rounded-lg"
+                      >
+                        <span className="text-sm">QCM - {result.score} points</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          result.completed_at ? 
+                            'bg-emerald-100 text-emerald-800' : 
+                            'bg-amber-100 text-amber-800'
+                        }`}>
+                          {result.completed_at ? 'Terminé' : 'En cours'}
+                        </span>
+                      </div>
+                    ))}
+                    {!student.progressions?.length && !student.training_results?.length && (
+                      <span className="text-sm text-slate-500">Aucune formation en cours</span>
                     )}
                   </div>
+                </div>
 
+                <div className="pt-4 border-t grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-sm font-medium text-slate-700 mb-2">Cotisation</div>
-                    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      isMembershipValid
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {isMembershipValid ? 'À jour' : 'Expirée'}
+                    <div className="text-sm text-slate-500">Vols réalisés</div>
+                    <div className="text-lg font-medium text-slate-900">
+                      {student.flight_count}
                     </div>
                   </div>
-
                   <div>
-                    <div className="text-sm font-medium text-slate-700 mb-2">Formation</div>
-                    <div className="space-y-2">
-                      {student.progressions?.map((progression) => (
-                        <div
-                          key={progression.id}
-                          className="flex items-center justify-between bg-slate-50 p-2 rounded-lg"
-                        >
-                          <span className="text-sm">{progression.template.title}</span>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            progression.completed_at
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-amber-100 text-amber-800'
-                          }`}>
-                            {progression.completed_at ? 'Terminée' : 'En cours'}
-                          </span>
-                        </div>
-                      ))}
-                      {student.training_results?.map((result) => (
-                        <div
-                          key={result.module_id}
-                          className="flex items-center justify-between bg-slate-50 p-2 rounded-lg"
-                        >
-                          <span className="text-sm">QCM - {result.score} points</span>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            result.completed_at
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-amber-100 text-amber-800'
-                          }`}>
-                            {result.completed_at ? 'Terminé' : 'En cours'}
-                          </span>
-                        </div>
-                      ))}
-                      {!student.progressions?.length && !student.training_results?.length && (
-                        <span className="text-sm text-slate-500">Aucune formation en cours</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-sm text-slate-500">Vols réalisés</div>
-                      <div className="text-lg font-medium text-slate-900">
-                        {student.flight_count}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-slate-500">Heures de vol</div>
-                      <div className="text-lg font-medium text-slate-900">
-                        {student.total_flight_hours.toFixed(1)}h
-                      </div>
+                    <div className="text-sm text-slate-500">Heures de vol</div>
+                    <div className="text-lg font-medium text-slate-900">
+                      {student.total_flight_hours.toFixed(1)}h
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
 
-        {filteredStudents.length === 0 && (
-          <div className="col-span-full text-center py-12">
-            <User className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-600">Aucun élève trouvé</p>
-          </div>
-        )}
+        <div className="border rounded-lg p-4">
+          {selectedStudent ? (
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Performance détaillée</h2>
+              <StudentPerformanceStats userId={selectedStudent} />
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-8">
+              Sélectionnez un élève pour voir ses performances
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
