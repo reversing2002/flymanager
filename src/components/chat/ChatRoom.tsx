@@ -1,19 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { ChatMessage, ChatRoom as ChatRoomType } from '../../types/chat';
 import { useAuth } from '../../contexts/AuthContext';
 import ConversationWindow from './ConversationWindow';
 import toast from 'react-hot-toast'; // Import toast
+import { useNavigate } from "react-router-dom";
+import { hasAnyGroup } from "../../lib/permissions";
+import { Edit2, Trash2 } from "lucide-react";
+import EditChatRoomModal from './EditChatRoomModal';
 
 interface ChatRoomProps {
   roomId: string;
+  refetchRooms?: () => void;
 }
 
-const ChatRoom: React.FC<ChatRoomProps> = ({ roomId }) => {
+const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, refetchRooms }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [room, setRoom] = useState<ChatRoomType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  // Vérifier si l'utilisateur est admin ou créateur
+  const isAdminOrCreator = useMemo(() => {
+    if (!user || !room) return false;
+    return hasAnyGroup(user, ['ADMIN']) || room.creator_id === user.id;
+  }, [user, room]);
 
   const transformMessage = (message: any) => ({
     id: message.id,
@@ -269,18 +282,103 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ roomId }) => {
     }
   };
 
+  const handleEditRoom = async (newData: { name: string; description: string; type: string }) => {
+    if (!room || !isAdminOrCreator) return;
+
+    try {
+      const { error } = await supabase
+        .from('chat_rooms')
+        .update({
+          name: newData.name,
+          description: newData.description,
+          type: newData.type,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', room.id);
+
+      if (error) throw error;
+
+      setRoom(prev => prev ? { ...prev, ...newData } : null);
+      toast.success('Salon modifié avec succès');
+    } catch (error) {
+      console.error('Error updating chat room:', error);
+      toast.error('Erreur lors de la modification du salon');
+    }
+  };
+
+  const handleDeleteRoom = async () => {
+    if (!room || !isAdminOrCreator) return;
+
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce salon ?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .rpc('delete_chat_room', { room_id: room.id });
+
+      if (error) throw error;
+
+      toast.success('Salon supprimé');
+      // Rafraîchir la liste des salons avant de naviguer
+      if (refetchRooms) {
+        refetchRooms();
+      }
+      navigate('/chat');
+    } catch (error) {
+      console.error('Error deleting chat room:', error);
+      toast.error('Erreur lors de la suppression du salon');
+    }
+  };
+
   if (loading || !room) return null;
 
   return (
-    <ConversationWindow
-      type="room"
-      title={room.name}
-      subtitle={room.description}
-      messages={messages.map(transformMessage)}
-      onSendMessage={handleSendMessage}
-      onDeleteMessage={handleDeleteMessage}
-      onEditMessage={handleEditMessage}
-    />
+    <div className="flex flex-col h-full bg-white">
+      {/* En-tête du salon */}
+      <div className="flex items-center justify-between p-4 border-b">
+        <div>
+          <h2 className="text-lg font-semibold">{room?.name}</h2>
+          {room?.description && (
+            <p className="text-sm text-gray-500">{room.description}</p>
+          )}
+        </div>
+        
+        {isAdminOrCreator && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <Edit2 className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleDeleteRoom}
+              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full transition-colors"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          </div>
+        )}
+      </div>
+      {showEditModal && room && (
+        <EditChatRoomModal
+          room={room}
+          onClose={() => setShowEditModal(false)}
+          onSave={handleEditRoom}
+        />
+      )}
+
+      <ConversationWindow
+        type="room"
+        title={room.name}
+        subtitle={room.description}
+        messages={messages.map(transformMessage)}
+        onSendMessage={handleSendMessage}
+        onDeleteMessage={handleDeleteMessage}
+        onEditMessage={handleEditMessage}
+      />
+    </div>
   );
 };
 

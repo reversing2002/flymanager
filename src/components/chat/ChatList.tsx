@@ -262,7 +262,7 @@ const ChatList: React.FC = () => {
 
         {/* Chat Content */}
         {activeChatType === 'rooms' && selectedRoom ? (
-          <ChatRoom roomId={selectedRoom} key={selectedRoom} />
+          <ChatRoom roomId={selectedRoom} key={selectedRoom} refetchRooms={loadRooms} />
         ) : activeChatType === 'private' && selectedRecipientId ? (
           <PrivateChat recipientId={selectedRecipientId} key={selectedRecipientId} />
         ) : (
