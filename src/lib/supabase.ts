@@ -16,8 +16,8 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 
 // Ajouter un listener global pour déboguer
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log("🔐 Événement d'authentification global:", event);
-  console.log("🔑 État de la session:", session ? "Active" : "Inactive");
+  console.log("Événement d'authentification global:", event);
+  console.log("État de la session:", session ? "Active" : "Inactive");
 });
 
 export const signIn = async (login: string, password: string) => {
@@ -109,7 +109,12 @@ export const getUserProfile = async () => {
 
   const { data: profile, error: profileError } = await supabase
     .from("users")
-    .select("*")
+    .select(`
+      *,
+      club_members!inner (
+        club_id
+      )
+    `)
     .eq("email", user.email)
     .single();
 
@@ -117,7 +122,11 @@ export const getUserProfile = async () => {
     throw profileError;
   }
 
-  return profile;
+  // Add club_id to the profile object
+  return {
+    ...profile,
+    club_id: profile.club_members?.[0]?.club_id
+  };
 };
 
 export const initializeUser = async (email: string, password: string) => {

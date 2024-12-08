@@ -91,10 +91,10 @@ const MedicalCard: React.FC<MedicalCardProps> = ({
         {canManageMedicals && onAddMedical && (
           <button
             onClick={onAddMedical}
-            className="flex items-center gap-2 text-sm text-sky-600 hover:text-sky-700"
+            className="flex items-center justify-center w-8 h-8 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-full transition-colors"
+            title="Ajouter un certificat médical"
           >
-            <Plus className="h-4 w-4" />
-            Ajouter
+            <Plus className="h-5 w-5" />
           </button>
         )}
       </div>

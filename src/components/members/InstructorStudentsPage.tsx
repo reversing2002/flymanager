@@ -72,7 +72,7 @@ const InstructorStudentsPage = () => {
 
       const studentIds = Object.keys(flightStats);
 
-      // 2. Get basic student info
+      // 2. Get basic student info and membership status
       const { data: students } = await supabase
         .from('users')
         .select(`
@@ -81,7 +81,6 @@ const InstructorStudentsPage = () => {
           last_name,
           email,
           phone,
-          membership_expiry,
           medical_certifications (
             class,
             valid_until
@@ -90,6 +89,33 @@ const InstructorStudentsPage = () => {
         .in('id', studentIds);
 
       if (!students) return [];
+
+      // Get membership entries for all students
+      const { data: membershipEntries } = await supabase
+        .from('account_entries')
+        .select(`
+          user_id,
+          date,
+          entry_type:account_entry_types(
+            code
+          )
+        `)
+        .in('user_id', studentIds)
+        .eq('entry_type.code', 'MEMBERSHIP')
+        .gte('date', new Date().toISOString())
+        .order('date', { ascending: true });
+
+      // Map membership expiry dates to students
+      const studentWithMembership = students.map(student => {
+        const latestMembership = membershipEntries
+          ?.filter(entry => entry.user_id === student.id)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+        return {
+          ...student,
+          membership_expiry: latestMembership?.date || null
+        };
+      });
 
       // 3. Get progressions for each student
       const { data: progressions } = await supabase
@@ -106,15 +132,25 @@ const InstructorStudentsPage = () => {
 
       // 4. Get training results
       const { data: trainingResults } = await supabase
-        .from('training_results')
-        .select('*')
+        .from('user_progress')
+        .select(`
+          user_id,
+          module_id,
+          progress,
+          points_earned,
+          updated_at
+        `)
         .in('user_id', studentIds);
 
       // Combine all data
-      return students.map(student => ({
+      return studentWithMembership.map(student => ({
         ...student,
         progressions: progressions?.filter(p => p.student_id === student.id) || [],
-        training_results: trainingResults?.filter(r => r.user_id === student.id) || [],
+        training_results: trainingResults?.filter(r => r.user_id === student.id).map(r => ({
+          module_id: r.module_id,
+          score: r.points_earned,
+          completed_at: r.progress === 100 ? r.updated_at : null
+        })) || [],
         flight_count: flightStats[student.id].flight_count,
         total_flight_hours: flightStats[student.id].total_duration / 60
       }));
@@ -358,7 +394,22 @@ const InstructorStudentsPage = () => {
                           </span>
                         </div>
                       ))}
-                      {!student.progressions?.length && (
+                      {student.training_results?.map((result) => (
+                        <div
+                          key={result.module_id}
+                          className="flex items-center justify-between bg-slate-50 p-2 rounded-lg"
+                        >
+                          <span className="text-sm">QCM - {result.score} points</span>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            result.completed_at
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {result.completed_at ? 'Terminé' : 'En cours'}
+                          </span>
+                        </div>
+                      ))}
+                      {!student.progressions?.length && !student.training_results?.length && (
                         <span className="text-sm text-slate-500">Aucune formation en cours</span>
                       )}
                     </div>

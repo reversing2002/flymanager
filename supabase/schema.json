@@ -464,6 +464,18 @@
             "name": "accounting_categories",
             "columns": [
                 {
+                    "name": "is_system",
+                    "type": "boolean",
+                    "nullable": false,
+                    "default_value": "false"
+                },
+                {
+                    "name": "club_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
                     "name": "id",
                     "type": "uuid",
                     "nullable": false,
@@ -501,10 +513,13 @@
                 }
             ],
             "constraints": [
+                "accounting_categories_club_id_fkey",
+                "accounting_categories_name_club_key",
                 "accounting_categories_pkey",
                 "2200_83718_1_not_null",
                 "2200_83718_2_not_null",
-                "2200_83718_6_not_null"
+                "2200_83718_6_not_null",
+                "2200_83718_8_not_null"
             ]
         },
         {
@@ -718,19 +733,19 @@
             "name": "account_entry_types",
             "columns": [
                 {
-                    "name": "updated_at",
+                    "name": "club_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "created_at",
                     "type": "timestamp with time zone",
                     "nullable": true,
                     "default_value": "now()"
                 },
                 {
-                    "name": "is_system",
-                    "type": "boolean",
-                    "nullable": false,
-                    "default_value": "false"
-                },
-                {
-                    "name": "created_at",
+                    "name": "updated_at",
                     "type": "timestamp with time zone",
                     "nullable": true,
                     "default_value": "now()"
@@ -743,6 +758,12 @@
                 },
                 {
                     "name": "is_credit",
+                    "type": "boolean",
+                    "nullable": false,
+                    "default_value": "false"
+                },
+                {
+                    "name": "is_system",
                     "type": "boolean",
                     "nullable": false,
                     "default_value": "false"
@@ -767,7 +788,8 @@
                 }
             ],
             "constraints": [
-                "account_entry_types_code_key",
+                "account_entry_types_club_id_fkey",
+                "account_entry_types_code_club_key",
                 "account_entry_types_pkey",
                 "2200_77752_1_not_null",
                 "2200_77752_2_not_null",
@@ -1357,16 +1379,16 @@
             "name": "flight_types",
             "columns": [
                 {
-                    "name": "accounting_category_id",
-                    "type": "uuid",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "is_default",
+                    "name": "is_system",
                     "type": "boolean",
                     "nullable": false,
                     "default_value": "false"
+                },
+                {
+                    "name": "club_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
                 },
                 {
                     "name": "id",
@@ -1399,6 +1421,18 @@
                     "default_value": "0"
                 },
                 {
+                    "name": "is_default",
+                    "type": "boolean",
+                    "nullable": false,
+                    "default_value": "false"
+                },
+                {
+                    "name": "accounting_category_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
                     "name": "name",
                     "type": "text",
                     "nullable": false,
@@ -1413,11 +1447,14 @@
             ],
             "constraints": [
                 "flight_types_accounting_category_id_fkey",
+                "flight_types_club_id_fkey",
+                "flight_types_name_club_key",
                 "flight_types_pkey",
                 "2200_32875_1_not_null",
                 "2200_32875_2_not_null",
                 "2200_32875_8_not_null",
-                "2200_32875_9_not_null"
+                "2200_32875_9_not_null",
+                "2200_32875_12_not_null"
             ]
         },
         {
@@ -2184,10 +2221,10 @@
             "name": "account_entries",
             "columns": [
                 {
-                    "name": "is_club_paid",
-                    "type": "boolean",
+                    "name": "club_id",
+                    "type": "uuid",
                     "nullable": true,
-                    "default_value": "false"
+                    "default_value": null
                 },
                 {
                     "name": "user_id",
@@ -2208,10 +2245,10 @@
                     "default_value": null
                 },
                 {
-                    "name": "entry_type_id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": null
+                    "name": "is_club_paid",
+                    "type": "boolean",
+                    "nullable": true,
+                    "default_value": "false"
                 },
                 {
                     "name": "id",
@@ -2250,6 +2287,12 @@
                     "default_value": null
                 },
                 {
+                    "name": "entry_type_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
                     "name": "payment_method",
                     "type": "text",
                     "nullable": false,
@@ -2264,6 +2307,7 @@
             ],
             "constraints": [
                 "account_entries_assigned_to_id_fkey",
+                "account_entries_club_id_fkey",
                 "account_entries_entry_type_id_fkey",
                 "account_entries_flight_id_fkey",
                 "account_entries_payment_method_check",
@@ -3035,6 +3079,67 @@
                 "2200_41917_1_not_null",
                 "2200_41917_3_not_null",
                 "2200_41917_4_not_null"
+            ]
+        },
+        {
+            "name": "member_contributions",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "valid_from",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "valid_until",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "account_entry_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "document_url",
+                    "type": "text",
+                    "nullable": true,
+                    "default_value": null
+                }
+            ],
+            "constraints": [
+                "member_contributions_account_entry_id_fkey",
+                "member_contributions_pkey",
+                "member_contributions_user_id_fkey",
+                "2200_93173_1_not_null",
+                "2200_93173_3_not_null",
+                "2200_93173_4_not_null"
             ]
         },
         {
@@ -3840,6 +3945,42 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Enable insert for admins",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "accounting_categories",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable update and delete for admins",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "accounting_categories",
+            "command": "ALL",
+            "definition": "(((EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'ADMIN'::text)))) AND (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid())))) OR ((is_system = true) AND (EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'SYSTEM_ADMIN'::text))))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Show system entries and club entries",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "accounting_categories",
+            "command": "SELECT",
+            "definition": "((is_system = true) OR (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid()))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Enable club admin management",
             "roles": [
                 [
@@ -3864,27 +4005,27 @@
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Enable read access for all users",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "account_entry_types",
-            "command": "SELECT",
-            "definition": "true",
-            "permissive": "PERMISSIVE"
-        },
-        {
             "name": "Enable write access for admins",
             "roles": [
                 [
-                    "public"
+                    "authenticated"
                 ]
             ],
             "table": "account_entry_types",
             "command": "ALL",
-            "definition": "(EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'ADMIN'::text))))",
+            "definition": "(((EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'ADMIN'::text)))) AND (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid())))) OR ((is_system = true) AND (EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'SYSTEM_ADMIN'::text))))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Show system entries and club entries",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "account_entry_types",
+            "command": "SELECT",
+            "definition": "((is_system = true) OR (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid()))))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4052,7 +4193,7 @@
             ],
             "table": "user_group_memberships",
             "command": "ALL",
-            "definition": "(EXISTS ( SELECT 1\n   FROM user_group_memberships ugm\n  WHERE ((ugm.user_id = auth.uid()) AND (ugm.group_id IN ( SELECT user_groups.id\n           FROM user_groups\n          WHERE ((user_groups.name)::text = 'Administrateurs'::text))))))",
+            "definition": "(EXISTS ( SELECT 1\n   FROM user_group_memberships ugm\n  WHERE ((ugm.user_id = auth.uid()) AND (ugm.group_id IN ( SELECT user_groups.id\n           FROM user_groups\n          WHERE ((user_groups.name)::text = 'Administrateurs'::text)))))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4352,7 +4493,7 @@
             ],
             "table": "users",
             "command": "UPDATE",
-            "definition": "((auth.uid() = id) OR (has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text]) AND (EXISTS ( SELECT 1\n   FROM club_members cm1\n  WHERE ((cm1.user_id = auth.uid()) AND (cm1.club_id IN ( SELECT cm2.club_id\n           FROM club_members cm2\n          WHERE (cm2.user_id = users.id))))))))",
+            "definition": "((auth.uid() = id) OR (has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text]) AND (EXISTS ( SELECT 1\n   FROM club_members cm1\n  WHERE ((cm1.user_id = auth.uid()) AND (cm1.club_id IN ( SELECT cm2.club_id\n           FROM club_members cm2\n          WHERE (cm2.user_id = users.id)))))))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4440,15 +4581,27 @@
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Enable read access for all users",
+            "name": "Enable write access for admins",
             "roles": [
                 [
-                    "public"
+                    "authenticated"
+                ]
+            ],
+            "table": "flight_types",
+            "command": "ALL",
+            "definition": "(((EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'ADMIN'::text)))) AND (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid()))) AND (NOT is_system)) OR ((is_system = true) AND (EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'SYSTEM_ADMIN'::text))))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Show system types and club types",
+            "roles": [
+                [
+                    "authenticated"
                 ]
             ],
             "table": "flight_types",
             "command": "SELECT",
-            "definition": "true",
+            "definition": "((is_system = true) OR (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid()))))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4692,6 +4845,30 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Pilots can manage their availabilities",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "pilot_availabilities",
+            "command": "ALL",
+            "definition": "(pilot_id = auth.uid())",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Pilots can view their availabilities",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "pilot_availabilities",
+            "command": "SELECT",
+            "definition": "(pilot_id = auth.uid())",
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Enable delete for instructors and admins",
             "roles": [
                 [
@@ -4749,30 +4926,6 @@
             "table": "student_progressions",
             "command": "UPDATE",
             "definition": "has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text])",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Pilots can manage their availabilities",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "pilot_availabilities",
-            "command": "ALL",
-            "definition": "(pilot_id = auth.uid())",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Pilots can view their availabilities",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "pilot_availabilities",
-            "command": "SELECT",
-            "definition": "(pilot_id = auth.uid())",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4944,6 +5097,30 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Admins and instructors can delete entries",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "DELETE",
+            "definition": "((auth.uid() IN ( SELECT u.auth_id\n   FROM ((users u\n     JOIN user_group_memberships m ON ((u.id = m.user_id)))\n     JOIN user_groups g ON ((m.group_id = g.id)))\n  WHERE ((g.name)::text = ANY ((ARRAY['ADMIN'::character varying, 'INSTRUCTOR'::character varying])::text[])))) AND (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid()))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Admins and instructors can insert entries",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Enable admin deletions",
             "roles": [
                 [
@@ -4977,18 +5154,6 @@
             "table": "account_entries",
             "command": "INSERT",
             "definition": null,
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable read access for account entries",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "account_entries",
-            "command": "SELECT",
-            "definition": "((EXISTS ( SELECT 1\n   FROM (((flights f\n     JOIN club_members cm ON ((cm.club_id = f.club_id)))\n     JOIN user_group_memberships ugm ON ((ugm.user_id = auth.uid())))\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((f.id = account_entries.flight_id) AND (((ug.name)::text = 'Administrateurs'::text) OR ((account_entries.user_id = auth.uid()) AND ((ug.name)::text = ANY ((ARRAY['Pilotes'::character varying, 'Instructeurs'::character varying])::text[]))))))) OR (user_id = auth.uid()))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -5244,6 +5409,54 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Admins and instructors can insert contributions",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "member_contributions",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Admins and instructors can update contributions",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "member_contributions",
+            "command": "UPDATE",
+            "definition": "(auth.uid() IN ( SELECT u.auth_id\n   FROM ((users u\n     JOIN user_group_memberships m ON ((u.id = m.user_id)))\n     JOIN user_groups g ON ((m.group_id = g.id)))\n  WHERE ((g.name)::text = ANY ((ARRAY['ADMIN'::character varying, 'INSTRUCTOR'::character varying])::text[]))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Admins and instructors can view all contributions",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "member_contributions",
+            "command": "SELECT",
+            "definition": "(auth.uid() IN ( SELECT u.auth_id\n   FROM ((users u\n     JOIN user_group_memberships m ON ((u.id = m.user_id)))\n     JOIN user_groups g ON ((m.group_id = g.id)))\n  WHERE ((g.name)::text = ANY ((ARRAY['ADMIN'::character varying, 'INSTRUCTOR'::character varying])::text[]))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Users can view their own contributions",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "member_contributions",
+            "command": "SELECT",
+            "definition": "(auth.uid() IN ( SELECT users.auth_id\n   FROM users\n  WHERE (users.id = member_contributions.user_id)))",
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Everyone can view participants",
             "roles": [
                 [
@@ -5408,7 +5621,7 @@
             ],
             "table": "discovery_notes",
             "command": "SELECT",
-            "definition": "(EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = ANY ((ARRAY['ADMIN'::character varying, 'DISCOVERY_PILOT'::character varying])::text[])))))",
+            "definition": "(EXISTS ( SELECT 1\n   FROM user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = ANY ((ARRAY['ADMIN'::character varying, 'DISCOVERY_PILOT'::character varying])::text[]))))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -5530,6 +5743,14 @@
             "command": "ALL",
             "definition": "true",
             "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable club member view for admins and instructors",
+            "roles": [["public"]],
+            "table": "account_entries",
+            "command": "SELECT",
+            "definition": "(auth.uid() IN (SELECT u.auth_id FROM users u JOIN user_group_memberships m ON u.id = m.user_id JOIN user_groups g ON m.group_id = g.id WHERE g.name IN ('ADMIN', 'INSTRUCTOR')) AND EXISTS (SELECT 1 FROM club_members cm1 JOIN club_members cm2 ON cm1.club_id = cm2.club_id WHERE cm1.user_id = auth.uid() AND cm2.user_id = account_entries.user_id))",
+            "permissive": "PERMISSIVE"
         }
     ],
     "functions": [
@@ -5604,6 +5825,12 @@
             "arguments": "instructor_id uuid, student_id uuid",
             "definition": "CREATE OR REPLACE FUNCTION public.create_instructor_student_chat(instructor_id uuid, student_id uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    room_id uuid;\nBEGIN\n    -- Check if instructor is actually an instructor\n    IF NOT EXISTS (\n        SELECT 1 FROM users \n        WHERE id = instructor_id AND role = 'INSTRUCTOR'\n    ) THEN\n        RAISE EXCEPTION 'Invalid instructor ID';\n    END IF;\n    \n    -- Create the chat room\n    INSERT INTO chat_rooms (name, type)\n    VALUES (\n        'Chat instructeur-élève',\n        'INSTRUCTOR_STUDENT'\n    )\n    RETURNING id INTO room_id;\n    \n    -- Add both users to the room\n    INSERT INTO chat_room_members (room_id, user_id)\n    VALUES\n        (room_id, instructor_id),\n        (room_id, student_id);\n        \n    RETURN room_id;\nEND;\n$function$\n",
             "return_type": "uuid"
+        },
+        {
+            "name": "delete_chat_room",
+            "arguments": "room_id uuid",
+            "definition": "CREATE OR REPLACE FUNCTION public.delete_chat_room(room_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n  -- Delete all messages in the room\n  DELETE FROM chat_messages WHERE chat_messages.room_id = $1;\n  \n  -- Delete all room members\n  DELETE FROM chat_room_members WHERE chat_room_members.room_id = $1;\n  \n  -- Delete the room itself\n  DELETE FROM chat_rooms WHERE chat_rooms.id = $1;\nEND;\n$function$\n",
+            "return_type": "void"
         },
         {
             "name": "delete_flight_with_entries",
@@ -5746,7 +5973,7 @@
         {
             "name": "notify_mechanics_about_remark",
             "arguments": "",
-            "definition": "CREATE OR REPLACE FUNCTION public.notify_mechanics_about_remark()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    mechanic_id uuid;\n    room_id uuid;\nBEGIN\n    -- Create a chat room for the remark if it doesn't exist\n    INSERT INTO chat_rooms (name, type)\n    VALUES (\n        'Remarque ' || NEW.id,\n        'MECHANIC_REMARK'\n    )\n    RETURNING id INTO room_id;\n\n    -- Add the remark creator to the room\n    INSERT INTO chat_room_members (room_id, user_id)\n    VALUES (room_id, NEW.user_id);\n\n    -- Add all mechanics to the room\n    FOR mechanic_id IN\n        SELECT id FROM users WHERE role = 'MECHANIC'\n    LOOP\n        INSERT INTO chat_room_members (room_id, user_id)\n        VALUES (room_id, mechanic_id);\n    END LOOP;\n\n    -- Create initial message\n    INSERT INTO chat_messages (room_id, user_id, content)\n    VALUES (\n        room_id,\n        NEW.user_id,\n        'Nouvelle remarque sur ' || (SELECT registration FROM aircraft WHERE id = NEW.aircraft_id) || ': ' || NEW.content\n    );\n\n    RETURN NEW;\nEND;\n$function$\n",
+            "definition": "CREATE OR REPLACE FUNCTION public.notify_mechanics_about_remark()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    mechanic_id uuid;\nBEGIN\n    -- Create a chat room for the remark if it doesn't exist\n    INSERT INTO chat_rooms (name, type)\n    VALUES (\n        'Remarque ' || NEW.id,\n        'MECHANIC_REMARK'\n    )\n    RETURNING id INTO room_id;\n\n    -- Add the remark creator to the room\n    INSERT INTO chat_room_members (room_id, user_id)\n    VALUES (room_id, NEW.user_id);\n\n    -- Add all mechanics to the room\n    FOR mechanic_id IN\n        SELECT id FROM users WHERE role = 'MECHANIC'\n    LOOP\n        INSERT INTO chat_room_members (room_id, user_id)\n        VALUES (room_id, mechanic_id);\n    END LOOP;\n\n    -- Create initial message\n    INSERT INTO chat_messages (room_id, user_id, content)\n    VALUES (\n        room_id,\n        NEW.user_id,\n        'Nouvelle remarque sur ' || (SELECT registration FROM aircraft WHERE id = NEW.aircraft_id) || ': ' || NEW.content\n    );\n\n    RETURN NEW;\nEND;\n$function$\n",
             "return_type": "trigger"
         },
         {
@@ -5758,44 +5985,3 @@
         {
             "name": "reset_database",
             "arguments": "",
-            "definition": "CREATE OR REPLACE FUNCTION public.reset_database()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n  -- Delete all data from tables\n  DELETE FROM daily_challenges;\n  DELETE FROM user_progress;\n  DELETE FROM training_questions;\n  DELETE FROM training_modules;\n  DELETE FROM account_entries;\n  DELETE FROM flights;\n  DELETE FROM reservations;\n  DELETE FROM flight_types;\n  DELETE FROM aircraft;\n  DELETE FROM users;\n\n  -- Insert test users\n  INSERT INTO users (id, first_name, last_name, email, role, login, password, balance) VALUES\n    (gen_random_uuid(), 'Admin', 'System', 'admin@flymanager.com', 'ADMIN', 'admin', 'admin123', 0),\n    (gen_random_uuid(), 'Marie', 'Martin', 'instructor@flymanager.com', 'INSTRUCTOR', 'instructor', 'instructor123', 500),\n    (gen_random_uuid(), 'Jean', 'Dupont', 'pilot@flymanager.com', 'PILOT', 'pilot', 'pilot123', 1000),\n    (gen_random_uuid(), 'Pierre', 'Dubois', 'mechanic@flymanager.com', 'MECHANIC', 'mechanic', 'mechanic123', 0);\n\n  -- Insert test aircraft\n  INSERT INTO aircraft (id, name, type, registration, capacity, hourly_rate, hours_before_maintenance, status) VALUES\n    (gen_random_uuid(), 'DR400-120', 'PLANE', 'F-GBQA', 4, 150, 45, 'AVAILABLE'),\n    (gen_random_uuid(), 'DR400-140', 'PLANE', 'F-GBQB', 4, 180, 30, 'AVAILABLE'),\n    (gen_random_uuid(), 'PA-28', 'PLANE', 'F-GXYZ', 4, 160, 15, 'AVAILABLE'),\n    (gen_random_uuid(), 'C152', 'PLANE', 'F-ABCD', 2, 130, 8, 'MAINTENANCE');\n\n  -- Insert flight types\n  INSERT INTO flight_types (id, name, description, requires_instructor) VALUES\n    ('local', 'Vol Local', 'Vol local sans instruction', false),\n    ('instruction', 'Instruction', 'Vol d''instruction avec instructeur', true),\n    ('navigation', 'Navigation', 'Vol de navigation', false),\n    ('discovery', 'Vol Découverte', 'Vol découverte pour le public', true);\n\n  -- Insert training modules\n  INSERT INTO training_modules (id, title, description, level, category, points) VALUES\n    (gen_random_uuid(), 'Réglementation aérienne', 'Règles de l''air et procédures opérationnelles', 'BEGINNER', 'REGULATIONS', 100),\n    (gen_random_uuid(), 'Navigation', 'Principes de navigation et planification', 'INTERMEDIATE', 'NAVIGATION', 150),\n    (gen_random_uuid(), 'Météorologie', 'Interprétation des données météo', 'BEGINNER', 'WEATHER', 100),\n    (gen_random_uuid(), 'Performance humaine', 'Facteurs humains en aviation', 'INTERMEDIATE', 'HUMAN_FACTORS', 120);\n\n  -- Insert test questions\n  WITH module_ids AS (SELECT id FROM training_modules)\n  INSERT INTO training_questions (id, module_id, question, choices, correct_answer, explanation, points)\n  SELECT \n    gen_random_uuid(),\n    id,\n    'Quelle est l''altitude de transition en France ?',\n    '[\"3000 ft\", \"5000 ft\", \"6000 ft\", \"FL 50\"]'::jsonb,\n    1,\n    'L''altitude de transition en France métropolitaine est généralement fixée à 5000 ft.',\n    10\n  FROM module_ids\n  LIMIT 1;\n\n  -- Insert test reservations and flights\n\n-- Insert flight types if not exists\nINSERT INTO flight_types (id, name, description, requires_instructor) VALUES\n  ('local', 'Vol Local', 'Vol local sans instruction', false),\n  ('instruction', 'Instruction', 'Vol d''instruction avec instructeur', true),\n  ('navigation', 'Navigation', 'Vol de navigation', false),\n  ('discovery', 'Vol Découverte', 'Vol découverte pour le public', true)\nON CONFLICT (id) DO NOTHING;\n\n-- Insert test reservations for the next few days\nWITH aircraft_ids AS (SELECT id FROM aircraft WHERE status = 'AVAILABLE'),\n     pilot_ids AS (SELECT id FROM users WHERE role IN ('PILOT', 'INSTRUCTOR')),\n     flight_type_ids AS (SELECT id FROM flight_types)\nINSERT INTO reservations (\n  id, \n  user_id, \n  aircraft_id, \n  flight_type_id,\n  start_time, \n  end_time, \n  with_instructor,\n  status\n)\nSELECT\n  gen_random_uuid(),\n  pilot_id,\n  aircraft_id,\n  flight_type_id,\n  start_time,\n  start_time + interval '2 hours',\n  CASE WHEN ft.requires_instructor THEN true ELSE false END,\n  'ACTIVE'\nFROM (\n  SELECT \n    p.pilot_id,\n    a.aircraft_id,\n    ft.id as flight_type_id,\n    ft.requires_instructor,\n    (CURRENT_DATE + (n || ' days')::interval)::timestamp + '10:00'::time AS start_time\n  FROM \n    (SELECT id AS pilot_id FROM pilot_ids) p\n    CROSS JOIN (SELECT id AS aircraft_id FROM aircraft_ids) a\n    CROSS JOIN (SELECT id, requires_instructor FROM flight_types) ft\n    CROSS JOIN generate_series(1, 5) n\n  LIMIT 10\n) AS reservations(pilot_id, aircraft_id, flight_type_id, requires_instructor, start_time)\nJOIN flight_types ft ON ft.id = flight_type_id;\n\n-- Insert test flights\nWITH pilot_ids AS (SELECT id FROM users WHERE role IN ('PILOT', 'INSTRUCTOR')),\n     aircraft_ids AS (SELECT id FROM aircraft WHERE status = 'AVAILABLE'),\n     flight_type_ids AS (SELECT id FROM flight_types)\nINSERT INTO flights (\n  id, \n  user_id, \n  aircraft_id, \n  flight_type_id,\n  date, \n  duration, \n  cost, \n  payment_method, \n  is_validated\n)\nSELECT\n  gen_random_uuid(),\n  pilot_id,\n  aircraft_id,\n  flight_type_id,\n  flight_date,\n  duration,\n  cost,\n  payment_method,\n  is_validated\nFROM (\n  SELECT \n    pilot_id,\n    aircraft_id,\n    (SELECT id FROM flight_types ORDER BY random() LIMIT 1) as flight_type_id,\n    CURRENT_DATE - (n || ' days')::interval AS flight_date,\n    60 * (1 + random()::int) AS duration,\n    150 * (1 + random()::int) AS cost,\n    CASE (random() * 3)::int\n      WHEN 0 THEN 'ACCOUNT'\n      WHEN 1 THEN 'CARD'\n      ELSE 'CASH'\n    END AS payment_method,\n    random() > 0.3 AS is_validated\n  FROM \n    (SELECT id AS pilot_id FROM pilot_ids) p\n    CROSS JOIN (SELECT id AS aircraft_id FROM aircraft_ids) a\n    CROSS JOIN generate_series(1, 10) n\n  LIMIT 20\n) AS flights(pilot_id, aircraft_id, flight_type_id, flight_date, duration, cost, payment_method, is_validated);\n\n-- Insert account entries for flights\nINSERT INTO account_entries (id, user_id, date, type, amount, payment_method, description, is_validated)\nSELECT\n  gen_random_uuid(),\n  user_id,\n  date,\n  'FLIGHT',\n  -cost,\n  payment_method,\n  'Vol du ' || to_char(date, 'DD/MM/YYYY'),\n  is_validated\nFROM flights;\n  -- Return success\n  RETURN;\nEND;\n$function$\n",
-            "return_type": "void"
-        },
-        {
-            "name": "trigger_set_updated_at",
-            "arguments": "",
-            "definition": "CREATE OR REPLACE FUNCTION public.trigger_set_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    NEW.updated_at = CURRENT_TIMESTAMP;\n    RETURN NEW;\nEND;\n$function$\n",
-            "return_type": "trigger"
-        },
-        {
-            "name": "update_auth_user_id",
-            "arguments": "user_email text, new_id text",
-            "definition": "CREATE OR REPLACE FUNCTION public.update_auth_user_id(user_email text, new_id text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\ndeclare\n  old_id text;\nbegin\n  -- Récupérer l'ancien ID\n  select id::text into old_id from auth.users where email = user_email;\n  \n  -- Mettre à jour l'ID dans auth.identities\n  update auth.identities\n  set user_id = new_id::uuid\n  where user_id::text = old_id;\n  \n  -- Mettre à jour l'ID dans auth.sessions\n  update auth.sessions\n  set user_id = new_id::uuid\n  where user_id::text = old_id;\n  \n  -- Mettre à jour l'ID dans auth.mfa_factors\n  update auth.mfa_factors\n  set user_id = new_id::uuid\n  where user_id::text = old_id;\n  \n  -- Mettre à jour l'ID dans auth.refresh_tokens\n  update auth.refresh_tokens\n  set user_id = new_id::uuid\n  where user_id::text = old_id;\n  \n  -- Finalement, mettre à jour l'ID dans auth.users\n  update auth.users\n  set id = new_id::uuid\n  where email = user_email;\nend;\n$function$\n",
-            "return_type": "void"
-        },
-        {
-            "name": "update_discovery_flight_prices_updated_at",
-            "arguments": "",
-            "definition": "CREATE OR REPLACE FUNCTION public.update_discovery_flight_prices_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    NEW.updated_at = timezone('utc'::text, now());\n    RETURN NEW;\nEND;\n$function$\n",
-            "return_type": "trigger"
-        },
-        {
-            "name": "update_updated_at_column",
-            "arguments": "",
-            "definition": "CREATE OR REPLACE FUNCTION public.update_updated_at_column()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    NEW.updated_at = timezone('utc'::text, now());\n    RETURN NEW;\nEND;\n$function$\n",
-            "return_type": "trigger"
-        },
-        {
-            "name": "update_user_groups",
-            "arguments": "p_user_id uuid, p_groups text[]",
-            "definition": "CREATE OR REPLACE FUNCTION public.update_user_groups(p_user_id uuid, p_groups text[])\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    group_name text;\n    group_id uuid;\nBEGIN\n    -- Supprimer toutes les associations existantes pour cet utilisateur\n    DELETE FROM public.user_group_memberships\n    WHERE user_id = p_user_id;\n\n    -- Pour chaque groupe fourni\n    FOREACH group_name IN ARRAY p_groups\n    LOOP\n        -- Récupérer l'ID du groupe\n        SELECT id INTO group_id\n        FROM public.user_groups\n        WHERE name = group_name;\n\n        -- Si le groupe existe\n        IF group_id IS NOT NULL THEN\n            -- Insérer la nouvelle association\n            INSERT INTO public.user_group_memberships (user_id, group_id)\n            VALUES (p_user_id, group_id);\n        ELSE\n            -- Créer le groupe s'il n'existe pas\n            INSERT INTO public.user_groups (name, description)\n            VALUES (group_name, 'Automatically created group')\n            RETURNING id INTO group_id;\n\n            -- Puis créer l'association\n            INSERT INTO public.user_group_memberships (user_id, group_id)\n            VALUES (p_user_id, group_id);\n        END IF;\n    END LOOP;\nEND;\n$function$\n",
-            "return_type": "void"
-        },
-        {
-            "name": "validate_flight_and_account",
-            "arguments": "flight_id uuid",
-            "definition": "CREATE OR REPLACE FUNCTION public.validate_flight_and_account(flight_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n  -- Update flight validation status\n  UPDATE flights \n  SET is_validated = true,\n      updated_at = NOW()\n  WHERE id = flight_id;\n\n  -- Update corresponding account entry\n  UPDATE account_entries\n  SET is_validated = true,\n      updated_at = NOW()\n  WHERE flight_id = flight_id;\nEND;\n$function$\n",
-            "return_type": "void"
-        }
-    ]
-}

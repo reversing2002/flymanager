@@ -1,23 +1,26 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { User, AlertTriangle, Edit, ChevronLeft } from "lucide-react";
+import { User, AlertTriangle, Edit, ChevronLeft, CreditCard, Plus } from "lucide-react";
 import { getUserById, updateUser } from "../../lib/queries";
 import type { User as UserType } from "../../types/database";
+import type { Contribution } from "../../types/contribution";
+import { getContributionsByUserId } from "../../lib/queries/contributions";
 import EditPilotForm from "./EditPilotForm";
+import EditMedicalForm from "./EditMedicalForm";
+import EditContributionForm from "./EditContributionForm";
+import EditQualificationsForm from "./EditQualificationsForm";
+import MedicalCard from "./MedicalCard";
+import ContributionCard from "./ContributionCard";
+import QualificationsCard from "./QualificationsCard";
 import { useAuth } from "../../contexts/AuthContext";
+import { hasAnyGroup } from "../../lib/permissions";
 import { toast } from "react-hot-toast";
 import ActivityTimeline from "./ActivityTimeline";
 import LicenseCard from "./LicenseCard";
-import MedicalCard from "./MedicalCard";
-import QualificationsCard from "./QualificationsCard";
-import EditLicenseForm from "./EditLicenseForm";
-import EditMedicalForm from "./EditMedicalForm";
-import EditQualificationsForm from "./EditQualificationsForm";
 import type { License } from "./LicenseCard";
 import type { Medical } from "./MedicalCard";
-import { hasAnyGroup } from "../../lib/permissions";
-import { Role } from "../../types/roles";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const getRoleBadgeColor = (role: Role) => {
   switch (role) {
@@ -46,14 +49,21 @@ const MemberProfile = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedLicense, setSelectedLicense] = useState<License | null>(null);
   const [selectedMedical, setSelectedMedical] = useState<Medical | null>(null);
+  const [selectedContribution, setSelectedContribution] = useState<Contribution | null>(null);
   const [isAddingLicense, setIsAddingLicense] = useState(false);
   const [isAddingMedical, setIsAddingMedical] = useState(false);
+  const [isAddingContribution, setIsAddingContribution] = useState(false);
   const [isEditingQualifications, setIsEditingQualifications] = useState(false);
+  const [showAddContribution, setShowAddContribution] = useState(false);
+  const [editingContribution, setEditingContribution] = useState<Contribution | null>(null);
+  const [contributions, setContributions] = useState<Contribution[]>([]);
+  const [loadingContributions, setLoadingContributions] = useState(false);
 
   const isAdmin = hasAnyGroup(currentUser, ["ADMIN"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
   const canEdit = isAdmin || isInstructor;
   const isOwnProfile = currentUser?.id === id;
+  const canManageContributions = isAdmin || isInstructor;
 
   useEffect(() => {
     loadData();
@@ -76,6 +86,17 @@ const MemberProfile = () => {
       }
 
       setPilot(pilotData);
+      
+      // Charger les cotisations
+      setLoadingContributions(true);
+      try {
+        const contributionsData = await getContributionsByUserId(id);
+        setContributions(contributionsData);
+      } catch (err) {
+        console.error("Erreur lors du chargement des cotisations:", err);
+      } finally {
+        setLoadingContributions(false);
+      }
     } catch (err) {
       console.error("Erreur lors du chargement des données:", err);
       setError("Erreur lors du chargement des données");
@@ -110,6 +131,22 @@ const MemberProfile = () => {
       console.error("Erreur lors de la mise à jour:", err);
       toast.error("Erreur lors de la mise à jour");
     }
+  };
+
+  const loadContributions = async () => {
+    setLoadingContributions(true);
+    try {
+      const contributionsData = await getContributionsByUserId(pilot.id);
+      setContributions(contributionsData);
+    } catch (err) {
+      console.error("Erreur lors du chargement des cotisations:", err);
+    } finally {
+      setLoadingContributions(false);
+    }
+  };
+
+  const handleEditContribution = (contribution: Contribution) => {
+    setEditingContribution(contribution);
   };
 
   if (loading) {
@@ -247,19 +284,56 @@ const MemberProfile = () => {
             </div>
           </div>
 
-          <LicenseCard 
-            userId={pilot.id}
-            onAddLicense={() => setIsAddingLicense(true)}
-            onEditLicense={setSelectedLicense}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <LicenseCard
+              userId={pilot.id}
+              onAddLicense={() => setIsAddingLicense(true)}
+              onEditLicense={setSelectedLicense}
+            />
+            <MedicalCard
+              userId={pilot.id}
+              onAddMedical={() => setIsAddingMedical(true)}
+              onEditMedical={setSelectedMedical}
+            />
+          </div>
 
-          <MedicalCard 
-            userId={pilot.id}
-            onAddMedical={() => setIsAddingMedical(true)}
-            onEditMedical={setSelectedMedical}
-          />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-sky-100 rounded-lg">
+                  <CreditCard className="h-4 w-4 text-sky-700" />
+                </div>
+                <h2 className="text-lg font-semibold">Cotisations</h2>
+              </div>
+              {canManageContributions && (
+                <button
+                  onClick={() => setShowAddContribution(true)}
+                  className="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700"
+                >
+                  <Plus className="h-4 w-4" />
+                  Ajouter
+                </button>
+              )}
+            </div>
 
-          <QualificationsCard 
+            {loadingContributions ? (
+              <div>Chargement...</div>
+            ) : contributions.length === 0 ? (
+              <div className="text-sm text-slate-500">Aucune cotisation enregistrée</div>
+            ) : (
+              <div className="space-y-4">
+                {contributions.map((contribution) => (
+                  <ContributionCard
+                    key={contribution.id}
+                    contribution={contribution}
+                    onEdit={handleEditContribution}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <QualificationsCard
             userId={pilot.id}
             onEdit={canEdit ? () => setIsEditingQualifications(true) : undefined}
           />
@@ -276,24 +350,39 @@ const MemberProfile = () => {
       {(isAddingLicense || selectedLicense) && (
         <EditLicenseForm
           userId={pilot.id}
-          currentLicense={selectedLicense || undefined}
+          license={selectedLicense}
           onClose={() => {
             setIsAddingLicense(false);
             setSelectedLicense(null);
           }}
-          onSuccess={loadData}
         />
       )}
 
       {(isAddingMedical || selectedMedical) && (
         <EditMedicalForm
           userId={pilot.id}
-          currentMedical={selectedMedical || undefined}
+          medical={selectedMedical}
           onClose={() => {
             setIsAddingMedical(false);
             setSelectedMedical(null);
           }}
-          onSuccess={loadData}
+        />
+      )}
+
+      {showAddContribution && (
+        <EditContributionForm
+          userId={pilot.id}
+          onClose={() => setShowAddContribution(false)}
+          onSuccess={loadContributions}
+        />
+      )}
+
+      {editingContribution && (
+        <EditContributionForm
+          userId={pilot.id}
+          currentContribution={editingContribution}
+          onClose={() => setEditingContribution(null)}
+          onSuccess={loadContributions}
         />
       )}
 
@@ -301,7 +390,6 @@ const MemberProfile = () => {
         <EditQualificationsForm
           userId={pilot.id}
           onClose={() => setIsEditingQualifications(false)}
-          onSuccess={loadData}
         />
       )}
     </div>

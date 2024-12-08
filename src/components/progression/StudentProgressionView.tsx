@@ -7,12 +7,14 @@ import { useUser } from '../../hooks/useUser';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
-import { ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface StudentProgressionViewProps {
   progressions: StudentProgressionWithDetails[];
   isLoading?: boolean;
   canValidate?: boolean;
+  membershipStatus?: 'active' | 'expired' | 'none';
 }
 
 interface SkillRowProps {
@@ -35,7 +37,17 @@ function SkillRow({ skill, validation, progressionId, onValidationToggle, canVal
             className="mt-1"
           />
         ) : validation && (
-          <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-1" />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-1" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Validé par {validation.instructor?.first_name} {validation.instructor?.last_name}</p>
+                <p>Le {format(new Date(validation.validated_at), 'dd MMMM yyyy', { locale: fr })}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         <div className="flex-1 min-w-0">
           <div className="font-medium text-slate-900">{skill.title}</div>
@@ -108,7 +120,7 @@ function ModuleSection({ module, validations, progressionId, onValidationToggle,
   );
 }
 
-export default function StudentProgressionView({ progressions, isLoading, canValidate = false }: StudentProgressionViewProps) {
+export default function StudentProgressionView({ progressions, isLoading, canValidate = false, membershipStatus = 'none' }: StudentProgressionViewProps) {
   const { user } = useUser();
   const queryClient = useQueryClient();
 
@@ -176,13 +188,34 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
           <div key={progression.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-200">
               <div className="space-y-4">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                    {progression.template.title}
-                  </h2>
-                  <p className="text-slate-600 mt-1">
-                    {progression.student.first_name} {progression.student.last_name}
-                  </p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                      {progression.template.title}
+                    </h2>
+                    <p className="text-slate-600 mt-1">
+                      {progression.student.first_name} {progression.student.last_name}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {membershipStatus === 'expired' && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <AlertCircle className="h-5 w-5 text-amber-500" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Adhésion expirée</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {progression.completed_at && (
+                      <div className="text-sm text-green-600 font-medium">
+                        Terminé le {format(new Date(progression.completed_at), 'dd MMMM yyyy', { locale: fr })}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="bg-slate-50 rounded-lg p-4">

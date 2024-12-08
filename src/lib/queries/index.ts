@@ -6,3 +6,4 @@ export * from "./flights";
 export * from "./accounts";
 export * from "./licenses";
 export * from "./training";
+export * from "./contributions";

@@ -24,4 +24,12 @@ export const dateUtils = {
       timeZone: "Europe/Paris",
     }).format(new Date(dateString));
   },
+
+  // Formatte une date sans l'heure pour les cotisations
+  formatDate: (dateString: string): string => {
+    return new Intl.DateTimeFormat("fr-FR", {
+      dateStyle: "short",
+      timeZone: "Europe/Paris",
+    }).format(new Date(dateString));
+  },
 };
