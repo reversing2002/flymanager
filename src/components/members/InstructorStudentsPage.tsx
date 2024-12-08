@@ -94,28 +94,35 @@ const InstructorStudentsPage = () => {
 
       // Get membership entries for all students
       const { data: membershipEntries } = await supabase
-        .from('account_entries')
+        .from('member_contributions')
         .select(`
+          id,
           user_id,
-          date,
-          entry_type:account_entry_types(
-            code
+          valid_from,
+          valid_until,
+          account_entry:account_entries (
+            id,
+            amount,
+            description,
+            entry_type:account_entry_types!inner (
+              code,
+              name,
+              is_credit
+            )
           )
         `)
         .in('user_id', studentIds)
-        .eq('entry_type.code', 'MEMBERSHIP')
-        .gte('date', new Date().toISOString())
-        .order('date', { ascending: true });
+        .order('valid_until', { ascending: false });
 
       // Map membership expiry dates to students
       const studentWithMembership = students.map(student => {
         const latestMembership = membershipEntries
           ?.filter(entry => entry.user_id === student.id)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+          ?.[0];
 
         return {
           ...student,
-          membership_expiry: latestMembership?.date || null
+          membership_expiry: latestMembership?.valid_until || null
         };
       });
 
@@ -194,9 +201,21 @@ const InstructorStudentsPage = () => {
     let membershipMatch = true;
     if (filters.membershipStatus !== 'all') {
       const membershipDate = student.membership_expiry ? new Date(student.membership_expiry) : null;
-      membershipMatch = filters.membershipStatus === 'valid' ?
-        (membershipDate ? isAfter(membershipDate, new Date()) : false) :
-        (membershipDate ? !isAfter(membershipDate, new Date()) : true);
+      const threeMonthsFromNow = addMonths(new Date(), 3);
+      
+      switch (filters.membershipStatus) {
+        case 'valid':
+          membershipMatch = membershipDate ? isAfter(membershipDate, new Date()) : false;
+          break;
+        case 'expired':
+          membershipMatch = membershipDate ? !isAfter(membershipDate, new Date()) : true;
+          break;
+        case 'expiring':
+          membershipMatch = membershipDate ? 
+            (isAfter(membershipDate, new Date()) && !isAfter(membershipDate, threeMonthsFromNow)) : 
+            false;
+          break;
+      }
     }
 
     // Progression status filter
@@ -363,9 +382,9 @@ const InstructorStudentsPage = () => {
                       'bg-emerald-100 text-emerald-800' : 
                       'bg-red-100 text-red-800'
                   }`}>
-                    {student.membership_expiry && isAfter(new Date(student.membership_expiry), new Date()) ? 
-                      'À jour' : 
-                      'Expirée'}
+                    {student.membership_expiry ? 
+                      `Valide jusqu'au ${format(new Date(student.membership_expiry), 'dd/MM/yyyy', { locale: fr })}` : 
+                      'Non renseignée'}
                   </div>
                 </div>
 
