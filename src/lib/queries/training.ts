@@ -93,6 +93,70 @@ export async function updateUserProgress(
   }
 }
 
+export async function updateAllProgressPercentages(userId: string) {
+  try {
+    // 1. Récupérer tous les modules auxquels l'utilisateur a répondu
+    const { data: userResponses } = await supabase
+      .from('training_history')
+      .select('module_id')
+      .eq('user_id', userId);
+
+    if (!userResponses) return;
+
+    // Obtenir les modules uniques
+    const uniqueModules = [...new Set(userResponses.map(r => r.module_id))];
+
+    // 2. Pour chaque module, calculer le nouveau pourcentage
+    for (const module_id of uniqueModules) {
+      // Récupérer toutes les réponses pour ce module
+      const { data: moduleResponses } = await supabase
+        .from('training_history')
+        .select('is_correct')
+        .eq('user_id', userId)
+        .eq('module_id', module_id);
+
+      if (!moduleResponses) continue;
+
+      // Calculer le pourcentage de réponses correctes
+      const totalResponses = moduleResponses.length;
+      const correctResponses = moduleResponses.filter(r => r.is_correct).length;
+      const newProgress = Math.round((correctResponses / totalResponses) * 100);
+
+      // Mettre à jour la progression dans user_progress
+      const { data: existingProgress } = await supabase
+        .from('user_progress')
+        .select('id, points_earned')
+        .eq('user_id', userId)
+        .eq('module_id', module_id)
+        .single();
+
+      if (existingProgress) {
+        await supabase
+          .from('user_progress')
+          .update({
+            progress: newProgress,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingProgress.id);
+      } else {
+        await supabase
+          .from('user_progress')
+          .insert({
+            user_id: userId,
+            module_id: module_id,
+            progress: newProgress,
+            points_earned: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+      }
+    }
+  } catch (error) {
+    console.error('Error updating progress percentages:', error);
+    throw new Error('Erreur lors de la mise à jour des pourcentages de progression');
+  }
+}
+
 // Module Management
 export async function createTrainingModule(moduleData: Partial<TrainingModule>): Promise<TrainingModule> {
   const { data, error } = await supabase
@@ -201,4 +265,37 @@ export async function deleteQuestion(id: string): Promise<void> {
     console.error('Error deleting question:', error);
     throw new Error('Erreur lors de la suppression de la question');
   }
+}
+
+export async function getTrainingHistory(userId: string) {
+  const { data, error } = await supabase
+    .from('training_history')
+    .select(`
+      *,
+      module:training_modules (
+        title,
+        description
+      ),
+      question:training_questions (
+        question,
+        choices,
+        correct_answer
+      )
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching training history:', error);
+    throw new Error('Erreur lors de la récupération de l\'historique');
+  }
+
+  // Convert snake_case to camelCase for frontend
+  return (data || []).map(item => ({
+    ...item,
+    question: {
+      ...item.question,
+      correctAnswer: item.question.correct_answer
+    }
+  }));
 }

@@ -49,19 +49,41 @@ const TrainingModuleDetails = () => {
     const isCorrect = selectedAnswer === currentQ.correctAnswer;
 
     try {
-      // Calculer la nouvelle progression
-      const totalQuestions = questions.length;
-      const questionProgress = Math.round(100 / totalQuestions);
-      const currentProgress = progress?.progress || 0;
-      const newProgress = Math.min(currentProgress + (isCorrect ? questionProgress : 0), 100);
+      // Enregistrer la réponse dans l'historique
+      await supabase
+        .from('training_history')
+        .upsert({
+          user_id: user.id,
+          module_id: moduleId,
+          question_id: currentQ.id,
+          answer_index: selectedAnswer,
+          is_correct: isCorrect,
+          points_earned: isCorrect ? currentQ.points : 0,
+          created_at: new Date().toISOString()
+        });
+
+      // Récupérer toutes les réponses pour ce module
+      const { data: moduleResponses } = await supabase
+        .from('training_history')
+        .select('is_correct')
+        .eq('user_id', user.id)
+        .eq('module_id', moduleId);
+
+      // Calculer le pourcentage de réponses correctes
+      const totalResponses = moduleResponses?.length || 0;
+      const correctResponses = moduleResponses?.filter(r => r.is_correct)?.length || 0;
+      const newProgress = totalResponses > 0 ? Math.round((correctResponses / totalResponses) * 100) : 0;
 
       // Vérifier si une progression existe déjà
       const { data: existingProgress } = await supabase
         .from('user_progress')
-        .select('id')
+        .select('id, points_earned')
         .eq('user_id', user.id)
         .eq('module_id', moduleId)
         .single();
+
+      const currentPoints = existingProgress?.points_earned || 0;
+      const newPoints = currentPoints + (isCorrect ? currentQ.points : 0);
 
       if (existingProgress) {
         // Mettre à jour la progression existante
@@ -69,7 +91,7 @@ const TrainingModuleDetails = () => {
           .from('user_progress')
           .update({
             progress: newProgress,
-            points_earned: isCorrect ? currentQ.points : 0,
+            points_earned: newPoints,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingProgress.id);

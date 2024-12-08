@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Book, Award } from 'lucide-react';
+import { Award, Book, Clock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import type { TrainingModule, UserProgress } from '../../types/training';
-import { getTrainingModules, getUserProgress } from '../../lib/queries/training';
+import { getTrainingModules, getUserProgress, updateAllProgressPercentages } from '../../lib/queries/training';
 import TrainingModuleCard from './TrainingModuleCard';
+import TrainingHistory from './TrainingHistory';
 
 const TrainingPage = () => {
   const { user } = useAuth();
@@ -12,34 +13,41 @@ const TrainingPage = () => {
   const [modules, setModules] = useState<TrainingModule[]>([]);
   const [progress, setProgress] = useState<UserProgress[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'modules' | 'history'>('modules');
 
   useEffect(() => {
-    const loadData = async () => {
+    if (!user) return;
+
+    const fetchData = async () => {
       try {
+        // Mettre à jour tous les pourcentages
+        await updateAllProgressPercentages(user.id);
+        
+        // Récupérer les modules et la progression
         const [modulesData, progressData] = await Promise.all([
           getTrainingModules(),
-          user ? getUserProgress(user.id) : Promise.resolve([])
+          getUserProgress(user.id)
         ]);
 
         setModules(modulesData);
         setProgress(progressData);
       } catch (error) {
-        console.error('Error loading training data:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadData();
+    fetchData();
   }, [user]);
 
   const getModuleProgress = (moduleId: string): number => {
-    const moduleProgress = progress.find(p => p.moduleId === moduleId);
+    const moduleProgress = progress.find(p => p.module_id === moduleId);
     return moduleProgress?.progress || 0;
   };
 
   const getTotalPoints = (): number => {
-    return progress.reduce((total, p) => total + (p.pointsEarned || 0), 0);
+    return progress.reduce((total, p) => total + (p.points_earned || 0), 0);
   };
 
   const handleModuleClick = (moduleId: string) => {
@@ -88,16 +96,45 @@ const TrainingPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {modules.map(module => (
-          <TrainingModuleCard
-            key={module.id}
-            module={module}
-            progress={getModuleProgress(module.id)}
-            onClick={() => handleModuleClick(module.id)}
-          />
-        ))}
+      <div className="mb-6 border-b border-slate-200">
+        <div className="flex space-x-8">
+          <button
+            onClick={() => setActiveTab('modules')}
+            className={`py-2 px-1 -mb-px text-sm font-medium ${
+              activeTab === 'modules'
+                ? 'text-sky-600 border-b-2 border-sky-600'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Modules
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`py-2 px-1 -mb-px text-sm font-medium ${
+              activeTab === 'history'
+                ? 'text-sky-600 border-b-2 border-sky-600'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Historique
+          </button>
+        </div>
       </div>
+
+      {activeTab === 'modules' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {modules.map(module => (
+            <TrainingModuleCard
+              key={module.id}
+              module={module}
+              progress={getModuleProgress(module.id)}
+              onClick={() => handleModuleClick(module.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <TrainingHistory />
+      )}
     </div>
   );
 };
