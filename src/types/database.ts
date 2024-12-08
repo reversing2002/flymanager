@@ -138,6 +138,8 @@ export interface AccountingCategory {
   is_default: boolean;
   display_order: number;
   is_club_paid: boolean;
+  club_id: string | null;
+  is_system: boolean;
 }
 
 export interface FlightType {

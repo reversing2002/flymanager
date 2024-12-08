@@ -3,6 +3,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { Star, Edit2 } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface AccountingCategory {
   id: string;
@@ -11,6 +12,8 @@ interface AccountingCategory {
   is_default: boolean;
   display_order: number;
   is_club_paid: boolean;
+  club_id: string;
+  is_system: boolean;
 }
 
 interface EditModalProps {
@@ -101,6 +104,7 @@ const EditModal: React.FC<EditModalProps> = ({ category, isOpen, onClose, onSave
 };
 
 const AccountingCategoryManager = () => {
+  const { user } = useAuth();
   const [categories, setCategories] = useState<AccountingCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +171,7 @@ const AccountingCategoryManager = () => {
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCategory.name.trim()) return;
+    if (!newCategory.name.trim() || !user.club) return;
 
     try {
       if (newCategory.is_default) {
@@ -186,6 +190,8 @@ const AccountingCategoryManager = () => {
           is_default: newCategory.is_default,
           is_club_paid: newCategory.is_club_paid,
           display_order: categories.length,
+          club_id: user.club.id,
+          is_system: false,
         },
       ]);
 
