@@ -152,29 +152,37 @@ const LoginPage = () => {
           </button>
         </form>
 
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowTestAccounts(!showTestAccounts)}
-            className="w-full flex items-center justify-center space-x-2 text-gray-400 text-sm hover:text-gray-300"
+        <div className="text-center space-y-2">
+          <a
+            href="/create-club"
+            className="block text-sm text-blue-400 hover:text-blue-300"
           >
-            <span>Comptes de test</span>
-            <ChevronDown className={`w-4 h-4 transform transition-transform ${showTestAccounts ? 'rotate-180' : ''}`} />
-          </button>
+            Créer un nouveau club
+          </a>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowTestAccounts(!showTestAccounts)}
+              className="w-full flex items-center justify-center space-x-2 text-gray-400 text-sm hover:text-gray-300"
+            >
+              <span>Comptes de test</span>
+              <ChevronDown className={`w-4 h-4 transform transition-transform ${showTestAccounts ? 'rotate-180' : ''}`} />
+            </button>
 
-          {showTestAccounts && (
-            <div className="absolute w-full mt-2 py-2 bg-[#2a2e33] border border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
-              {testAccounts.map((account, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleTestAccountSelect(account)}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700"
-                >
-                  {account.title}
-                </button>
-              ))}
-            </div>
-          )}
+            {showTestAccounts && (
+              <div className="absolute w-full mt-2 py-2 bg-[#2a2e33] border border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {testAccounts.map((account, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleTestAccountSelect(account)}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700"
+                  >
+                    {account.title}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

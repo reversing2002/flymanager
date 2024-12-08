@@ -5,6 +5,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import MainLayout from "./components/layout/MainLayout";
 import LoginPage from "./components/auth/LoginPage";
+import CreateClubPage from "./components/auth/CreateClubPage";
 import Dashboard from "./components/Dashboard";
 import ProfilePage from "./components/profile/ProfilePage";
 import MemberList from "./components/members/MemberList";
@@ -57,6 +58,7 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/create-club" element={<CreateClubPage />} />
             <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
             <Route path="/discovery/qr2" element={<EnhancedDiscoveryPage />} />
             <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
