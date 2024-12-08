@@ -143,7 +143,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
           }
           // Sinon, utiliser le type par défaut pour les nouvelles réservations
           else if (!existingReservation) {
-            const defaultType = flightTypesData.find(t => !t.requires_instructor);
+            const defaultType = flightTypesData.find(t => t.is_default);
             if (defaultType) {
               setFormData(prev => ({
                 ...prev,
