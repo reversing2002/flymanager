@@ -17,7 +17,7 @@ interface NewFlightFormProps {
   users?: User[];
   initialData?: {
     date?: string;
-    pilotId?: string;
+    userId?: string;
     instructorId?: string;
     aircraftId?: string;
     flightTypeId?: string;
@@ -54,8 +54,7 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
 
     return {
       id: uuidv4(),
-      userId: initialData?.pilotId || currentUser?.id || "",
-      pilotId: initialData?.pilotId || currentUser?.id || "",
+      userId: initialData?.userId || currentUser?.id || "",
       aircraftId: initialData?.aircraftId || "",
       flightTypeId: "",  // Sera mis à jour une fois les types de vol chargés
       instructorId: initialData?.instructorId || null,
@@ -69,6 +68,7 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
       instructor_cost: 0,
       comments: "",
       isValidated: false,
+      // Définir ACCOUNT comme valeur par défaut pour le mode de paiement
       paymentMethod: "ACCOUNT",
       accountingCategory: "LOCAL",
       clubId: currentUser?.club?.id,

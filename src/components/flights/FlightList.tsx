@@ -32,7 +32,6 @@ const FlightList = () => {
     aircraftIds: [],
     flightTypes: [],
     validated: "all",
-    paymentMethods: [],
     accountingCategories: [],
   });
 

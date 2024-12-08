@@ -21,7 +21,6 @@ export interface FlightFilters {
   flightTypes: string[];
   accountingCategories: string[];
   validated: 'all' | 'yes' | 'no';
-  paymentMethods: string[];
 }
 
 const FlightFilters: React.FC<FlightFiltersProps> = ({
@@ -168,55 +167,25 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
           </div>
         </div>
 
-        {/* Validation et paiement */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Validation
-            </label>
-            <select
-              value={filters.validated}
-              onChange={(e) =>
-                onFiltersChange({
-                  ...filters,
-                  validated: e.target.value as FlightFilters['validated'],
-                })
-              }
-              className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-            >
-              <option value="all">Tous</option>
-              <option value="yes">Validés</option>
-              <option value="no">Non validés</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Mode de paiement
-            </label>
-            <div className="space-y-2">
-              {['ACCOUNT', 'CARD', 'CASH', 'TRANSFER'].map((method) => (
-                <label key={method} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={filters.paymentMethods.includes(method)}
-                    onChange={(e) => {
-                      const newMethods = e.target.checked
-                        ? [...filters.paymentMethods, method]
-                        : filters.paymentMethods.filter((m) => m !== method);
-                      onFiltersChange({ ...filters, paymentMethods: newMethods });
-                    }}
-                    className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                  />
-                  <span className="ml-2 text-sm text-slate-600">
-                    {method === 'ACCOUNT' ? 'Compte' :
-                     method === 'CARD' ? 'Carte' :
-                     method === 'CASH' ? 'Espèces' : 'Virement'}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
+        {/* Validation */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Validation
+          </label>
+          <select
+            value={filters.validated}
+            onChange={(e) =>
+              onFiltersChange({
+                ...filters,
+                validated: e.target.value as FlightFilters['validated'],
+              })
+            }
+            className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+          >
+            <option value="all">Tous</option>
+            <option value="yes">Validés</option>
+            <option value="no">Non validés</option>
+          </select>
         </div>
       </div>
     </div>

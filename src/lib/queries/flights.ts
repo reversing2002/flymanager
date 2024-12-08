@@ -34,7 +34,6 @@ export async function getFlights(): Promise<Flight[]> {
     destination: flight.destination,
     hourlyRate: flight.hourly_rate,
     cost: flight.cost,
-    instructorCost: flight.instructor_cost,
     paymentMethod: flight.payment_method,
     isValidated: flight.is_validated,
     accountingCategory: flight.flight_type?.accounting_category?.name,
@@ -119,7 +118,6 @@ export async function updateFlight(
     aircraft_id: data.aircraftId,
     flight_type_id: data.flightTypeId,
     instructor_id: data.instructorId === "" ? null : data.instructorId,
-    pilot_id: data.pilotId === "" ? null : data.pilotId,
     date: data.date,
     duration: data.duration,
     destination: data.destination,
@@ -279,13 +277,41 @@ export async function validateFlight(id: string): Promise<void> {
 
   if (updateFlightError) throw updateFlightError;
 
-  // Find and validate the corresponding account entry
+  // Find and validate all corresponding account entries (both flight cost and instructor fees)
   const { error: accountError } = await supabase
     .from("account_entries")
     .update({ is_validated: true })
     .eq("flight_id", id);
 
   if (accountError) throw accountError;
+
+  // If there's an instructor fee, create and validate the instructor payment entry
+  if (flight.instructor_id && flight.instructor_fee) {
+    const { data: entryTypes, error: entryTypesError } = await supabase
+      .from("account_entry_types")
+      .select("id")
+      .eq("code", "INSTRUCTOR_PAYMENT")
+      .single();
+
+    if (entryTypesError) throw entryTypesError;
+
+    const { error: instructorEntryError } = await supabase
+      .from("account_entries")
+      .insert({
+        user_id: flight.instructor_id,
+        assigned_to_id: flight.instructor_id,
+        flight_id: flight.id,
+        date: flight.date,
+        entry_type_id: entryTypes.id,
+        amount: flight.instructor_fee,
+        payment_method: flight.payment_method,
+        description: `Instruction vol ${flight.aircraft_id} - ${flight.duration}min`,
+        is_validated: true,
+        is_club_paid: false
+      });
+
+    if (instructorEntryError) throw instructorEntryError;
+  }
 }
 
 export async function deleteFlight(id: string): Promise<void> {

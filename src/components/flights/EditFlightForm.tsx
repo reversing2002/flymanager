@@ -36,6 +36,8 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
     date: new Date(flight.date).toISOString().split("T")[0],
     start_hour_meter: flight.start_hour_meter,
     end_hour_meter: flight.end_hour_meter,
+    // Forcer le mode de paiement à ACCOUNT
+    paymentMethod: "ACCOUNT"
   });
   const [hourMeterInputs, setHourMeterInputs] = useState({
     start: '',
@@ -69,7 +71,7 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
       setFormData(prevData => ({
         ...prevData,
         // Préselectionner l'utilisateur courant comme pilote si ce n'est pas un admin/instructeur
-        pilotId: !isAdminOrInstructor ? currentUser.id : flight.pilotId,
+        userId: !isAdminOrInstructor ? currentUser.id : flight.userId,
       }));
     }
   }, [currentUser, flight]);
@@ -359,8 +361,8 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
             Pilote
           </label>
           <select
-            name="pilotId"
-            value={formData.pilotId || ""}
+            name="userId"
+            value={formData.userId || ""}
             onChange={handleInputChange}
             className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
             required
@@ -490,26 +492,6 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
             className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
             placeholder="LFXX ou Local"
           />
-        </div>
-
-        {/* Mode de paiement */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Mode de paiement
-          </label>
-          <select
-            value={formData.paymentMethod}
-            onChange={(e) =>
-              setFormData({ ...formData, paymentMethod: e.target.value })
-            }
-            className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-            required
-          >
-            <option value="ACCOUNT">Compte</option>
-            <option value="CARD">Carte</option>
-            <option value="CASH">Espèces</option>
-            <option value="TRANSFER">Virement</option>
-          </select>
         </div>
 
         {/* Tarif horaire (en lecture seule) */}
