@@ -7,6 +7,7 @@ import {
   updateAccountEntryType,
   deleteAccountEntryType,
 } from "../../lib/queries/accountTypes";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function AccountTypesSettings() {
   const [types, setTypes] = useState<AccountEntryType[]>([]);
@@ -14,10 +15,15 @@ export default function AccountTypesSettings() {
   const [error, setError] = useState<string | null>(null);
   const [editingType, setEditingType] = useState<AccountEntryType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { user } = useAuth();
+
+  const clubId = user?.club?.id;
 
   useEffect(() => {
-    loadTypes();
-  }, []);
+    if (clubId) {
+      loadTypes();
+    }
+  }, [clubId]);
 
   const loadTypes = async () => {
     try {
@@ -36,6 +42,11 @@ export default function AccountTypesSettings() {
     setError(null);
     const formData = new FormData(e.currentTarget);
     
+    if (!clubId) {
+      setError("Erreur: Club non trouvé");
+      return;
+    }
+    
     try {
       if (editingType) {
         await updateAccountEntryType(editingType.id, {
@@ -49,6 +60,7 @@ export default function AccountTypesSettings() {
           name: formData.get("name") as string,
           description: formData.get("description") as string,
           is_credit: formData.get("is_credit") === "true",
+          club_id: clubId,
         });
       }
       await loadTypes();

@@ -7,6 +7,7 @@ export interface AccountEntryType {
   is_system: boolean;
   created_at?: string;
   updated_at?: string;
+  club_id?: string;
 }
 
 export interface NewAccountEntryType {
@@ -14,4 +15,5 @@ export interface NewAccountEntryType {
   name: string;
   description?: string;
   is_credit: boolean;
+  club_id: string;
 }

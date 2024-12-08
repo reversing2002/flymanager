@@ -20,6 +20,7 @@ export async function createAccountEntryType(data: NewAccountEntryType): Promise
       description: data.description,
       is_credit: data.is_credit,
       is_system: false,
+      club_id: data.club_id,
     });
 
   if (error) throw error;
