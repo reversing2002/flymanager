@@ -33,17 +33,6 @@ export interface UserProgress {
   updatedAt: string;
 }
 
-export interface DailyChallenge {
-  id: string;
-  userId: string;
-  questionId: string;
-  challengeDate: string;
-  status: "PENDING" | "COMPLETED" | "FAILED";
-  pointsEarned: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface UserBadge {
   id: string;
   userId: string;

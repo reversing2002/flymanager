@@ -9,7 +9,6 @@ import { Plus, Upload, Download, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import DailyChallengeManager from './DailyChallengeManager';
 
 const TrainingAdmin = () => {
   const [modules, setModules] = useState<TrainingModule[]>([]);
@@ -19,7 +18,6 @@ const TrainingAdmin = () => {
   const [editingQuestion, setEditingQuestion] = useState<TrainingQuestion | null>(null);
   const [showModuleForm, setShowModuleForm] = useState(false);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
-  const [showChallengeManager, setShowChallengeManager] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -153,34 +151,30 @@ const TrainingAdmin = () => {
       for (const moduleData of importData) {
         const { questions, ...moduleInfo } = moduleData;
         
-        const newModuleId = uuidv4();
+        // Utiliser l'ID existant du module
         const { error: moduleError } = await supabase
           .from('training_modules')
-          .insert([{
-            id: newModuleId,
+          .upsert({
             ...moduleInfo,
-            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          }]);
+          }, {
+            onConflict: 'id'
+          });
 
         if (moduleError) throw moduleError;
 
         if (questions && questions.length > 0) {
-          const questionsToInsert = questions.map((q: any) => ({
-            id: uuidv4(),
-            module_id: newModuleId,
-            question: q.question,
-            choices: q.choices,
-            correct_answer: q.correct_answer,
-            explanation: q.explanation,
-            points: q.points,
-            created_at: new Date().toISOString(),
+          const questionsToUpsert = questions.map((q: any) => ({
+            ...q, // Garder l'ID existant et toutes les autres propriétés
+            module_id: moduleInfo.id,
             updated_at: new Date().toISOString(),
           }));
 
           const { error: questionsError } = await supabase
             .from('training_questions')
-            .insert(questionsToInsert);
+            .upsert(questionsToUpsert, {
+              onConflict: 'id'
+            });
 
           if (questionsError) throw questionsError;
         }
@@ -210,12 +204,9 @@ const TrainingAdmin = () => {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Administration Formation</h1>
-            <p className="text-slate-600">Gérez les modules et questions</p>
-          </div>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-semibold">Gestion des modules d'entraînement</h1>
           <div className="flex items-center gap-4">
             <input
               type="file"
@@ -230,7 +221,7 @@ const TrainingAdmin = () => {
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer"
             >
               <Upload className="h-4 w-4" />
-              <span>{importing ? 'Import en cours...' : 'Importer'}</span>
+              <span>{importing ? "Import en cours..." : "Importer"}</span>
             </label>
             <button
               onClick={handleExport}
@@ -239,95 +230,91 @@ const TrainingAdmin = () => {
               <Download className="h-4 w-4" />
               <span>Exporter</span>
             </button>
-            <button
-              onClick={() => setShowChallengeManager(true)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Créer des défis</span>
-            </button>
           </div>
         </div>
-      </div>
 
-      {selectedModule ? (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between bg-white rounded-xl shadow-sm p-6">
-            <div>
-              <h2 className="text-xl font-semibold">{selectedModule.title}</h2>
-              <p className="text-slate-600">{selectedModule.description}</p>
-            </div>
-            <div className="flex gap-4">
+        {error && (
+          <div className="p-4 bg-red-50 text-red-800 rounded-lg flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            <p>{error}</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium">Modules</h2>
               <button
-                onClick={() => setSelectedModule(null)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
-              >
-                Retour aux modules
-              </button>
-              <button
-                onClick={() => setShowQuestionForm(true)}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg"
+                onClick={() => {
+                  setEditingModule(null);
+                  setShowModuleForm(true);
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
               >
                 <Plus className="h-4 w-4" />
-                Ajouter une question
+                <span>Nouveau module</span>
               </button>
             </div>
+
+            <ModuleList
+              modules={modules}
+              onEdit={handleEditModule}
+              onDelete={handleDeleteModule}
+              onManageQuestions={handleManageQuestions}
+              selectedModuleId={selectedModule?.id}
+            />
           </div>
 
-          <QuestionList
-            questions={questions}
-            onEdit={(question) => {
-              setEditingQuestion(question);
-              setShowQuestionForm(true);
-            }}
-            onDelete={handleDeleteQuestion}
-          />
+          {selectedModule && (
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-medium">
+                  Questions du module : {selectedModule.title}
+                </h2>
+                <button
+                  onClick={() => {
+                    setEditingQuestion(null);
+                    setShowQuestionForm(true);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Nouvelle question</span>
+                </button>
+              </div>
+
+              <QuestionList
+                questions={questions}
+                onEdit={setEditingQuestion}
+                onDelete={handleDeleteQuestion}
+              />
+            </div>
+          )}
         </div>
-      ) : (
-        <ModuleList
-          modules={modules}
-          onEdit={handleEditModule}
-          onManageQuestions={handleManageQuestions}
-          onAdd={() => setShowModuleForm(true)}
-        />
-      )}
 
-      {showModuleForm && (
-        <ModuleForm
-          module={editingModule}
-          onClose={() => {
-            setShowModuleForm(false);
-            setEditingModule(null);
-          }}
-          onSuccess={() => {
-            setShowModuleForm(false);
-            setEditingModule(null);
-            loadModules();
-          }}
-        />
-      )}
+        {showModuleForm && (
+          <ModuleForm
+            module={editingModule}
+            onClose={() => setShowModuleForm(false)}
+            onSuccess={() => {
+              setShowModuleForm(false);
+              loadModules();
+            }}
+          />
+        )}
 
-      {showQuestionForm && selectedModule && (
-        <QuestionForm
-          moduleId={selectedModule.id}
-          question={editingQuestion}
-          onClose={() => {
-            setShowQuestionForm(false);
-            setEditingQuestion(null);
-          }}
-          onSuccess={() => {
-            setShowQuestionForm(false);
-            setEditingQuestion(null);
-            loadQuestions(selectedModule.id);
-          }}
-        />
-      )}
-
-      {showChallengeManager && (
-        <DailyChallengeManager
-          onClose={() => setShowChallengeManager(false)}
-        />
-      )}
+        {showQuestionForm && selectedModule && (
+          <QuestionForm
+            question={editingQuestion}
+            moduleId={selectedModule.id}
+            onClose={() => setShowQuestionForm(false)}
+            onSuccess={() => {
+              setShowQuestionForm(false);
+              loadQuestions(selectedModule.id);
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 };

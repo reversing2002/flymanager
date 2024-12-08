@@ -2,31 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Book, Award } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import type { TrainingModule, UserProgress, DailyChallenge as DailyChallengeType } from '../../types/training';
-import { getTrainingModules, getUserProgress, getDailyChallenge } from '../../lib/queries/training';
+import type { TrainingModule, UserProgress } from '../../types/training';
+import { getTrainingModules, getUserProgress } from '../../lib/queries/training';
 import TrainingModuleCard from './TrainingModuleCard';
-import DailyChallenge from './DailyChallenge';
 
 const TrainingPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [modules, setModules] = useState<TrainingModule[]>([]);
   const [progress, setProgress] = useState<UserProgress[]>([]);
-  const [dailyChallenge, setDailyChallenge] = useState<DailyChallengeType | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [modulesData, progressData, challengeData] = await Promise.all([
+        const [modulesData, progressData] = await Promise.all([
           getTrainingModules(),
-          user ? getUserProgress(user.id) : Promise.resolve([]),
-          user ? getDailyChallenge(user.id) : Promise.resolve(null)
+          user ? getUserProgress(user.id) : Promise.resolve([])
         ]);
 
         setModules(modulesData);
         setProgress(progressData);
-        setDailyChallenge(challengeData);
       } catch (error) {
         console.error('Error loading training data:', error);
       } finally {
@@ -91,15 +87,6 @@ const TrainingPage = () => {
           </div>
         </div>
       </div>
-
-      {dailyChallenge && (
-        <div className="mb-6">
-          <DailyChallenge 
-            challenge={dailyChallenge}
-            onComplete={() => setDailyChallenge(null)}
-          />
-        </div>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {modules.map(module => (

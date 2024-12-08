@@ -6,7 +6,6 @@ import {
   getReservations,
   getFlights,
   getMemberBalance,
-  getDailyChallenge,
 } from "../lib/queries/index";
 
 import type {
@@ -20,7 +19,6 @@ import { useAuth } from "../contexts/AuthContext";
 import ReservationModal from "./reservations/ReservationModal";
 import AnnouncementBanner from "./announcements/AnnouncementBanner";
 import { supabase } from "../lib/supabase";
-import type { DailyChallenge } from "../types/training";
 import UpcomingEvents from "./events/UpcomingEvents";
 import { hasAnyGroup } from "../lib/permissions";
 import { Link } from "react-router-dom";
@@ -316,7 +314,6 @@ const Dashboard = () => {
     validated: number;
     pending: number;
   } | null>(null);
-  const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge | null>(null);
   const [sunTimes, setSunTimes] = useState<{
     sunrise: Date;
     sunset: Date;
@@ -358,10 +355,6 @@ const Dashboard = () => {
       // Load balance
       const balanceData = await getMemberBalance(user.id);
       setBalance(balanceData);
-
-      // Load daily challenge
-      const challengeData = await getDailyChallenge(user.id);
-      setDailyChallenge(challengeData);
 
       // Load club coordinates and calculate sun times
       const { data: clubData } = await supabase
@@ -542,12 +535,6 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {dailyChallenge && (
-          <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl p-6 shadow-sm border border-slate-100">
-            <h2 className="text-xl font-semibold text-slate-800">Défi du jour</h2>
-            <p className="text-sm text-slate-600">{dailyChallenge.description}</p>
-          </div>
-        )}
         {/* Prochaines réservations */}
         <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl p-6 shadow-sm border border-slate-100">
           <h2 className="text-xl font-semibold text-slate-800">Mes prochaines réservations</h2>

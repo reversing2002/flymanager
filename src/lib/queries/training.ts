@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import type { TrainingModule, TrainingQuestion, UserProgress, DailyChallenge } from '../../types/training';
+import type { TrainingModule, TrainingQuestion, UserProgress } from '../../types/training';
 
 // Training Modules
 export async function getTrainingModules(): Promise<TrainingModule[]> {
@@ -45,24 +45,30 @@ export async function getModuleQuestions(moduleId: string): Promise<TrainingQues
 export async function getUserProgress(userId: string): Promise<UserProgress[]> {
   const { data, error } = await supabase
     .from('user_progress')
-    .select(`
-      *,
-      module:module_id (
-        id,
-        title,
-        description,
-        level,
-        category,
-        points
-      )
-    `)
+    .select('*')
     .eq('user_id', userId);
 
-  if (error) {
-    console.error('Error fetching user progress:', error);
-    throw new Error('Erreur lors du chargement de la progression');
-  }
+  if (error) throw error;
   return data || [];
+}
+
+export async function saveUserProgress(
+  userId: string,
+  questionId: string,
+  success: boolean,
+  points: number
+): Promise<void> {
+  const { error } = await supabase.from('user_progress').insert([
+    {
+      user_id: userId,
+      question_id: questionId,
+      success,
+      points,
+      created_at: new Date().toISOString(),
+    },
+  ]);
+
+  if (error) throw error;
 }
 
 export async function updateUserProgress(
@@ -194,88 +200,5 @@ export async function deleteQuestion(id: string): Promise<void> {
   if (error) {
     console.error('Error deleting question:', error);
     throw new Error('Erreur lors de la suppression de la question');
-  }
-}
-
-// Daily Challenges
-export async function getDailyChallenge(userId: string): Promise<DailyChallenge | null> {
-  const today = new Date().toISOString().split('T')[0];
-  
-  const { data, error } = await supabase
-    .from('daily_challenges')
-    .select(`
-      *,
-      question:question_id (
-        id,
-        question,
-        choices,
-        correct_answer,
-        explanation,
-        points
-      )
-    `)
-    .eq('user_id', userId)
-    .eq('challenge_date', today)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null; // No challenge found
-    console.error('Error fetching daily challenge:', error);
-    throw new Error('Erreur lors du chargement du défi quotidien');
-  }
-  
-  return data;
-}
-
-export async function createDailyChallenge(questionId: string): Promise<void> {
-  const today = new Date().toISOString().split('T')[0];
-  
-  // Get all users
-  const { data: users, error: usersError } = await supabase
-    .from('users')
-    .select('id')
-    .in('role', ['PILOT', 'INSTRUCTOR']);
-
-  if (usersError) {
-    console.error('Error fetching users:', usersError);
-    throw new Error('Erreur lors de la récupération des utilisateurs');
-  }
-
-  // Create challenge for each user
-  const challenges = users.map(user => ({
-    user_id: user.id,
-    question_id: questionId,
-    challenge_date: today,
-    status: 'PENDING',
-    points_earned: 0
-  }));
-
-  const { error: insertError } = await supabase
-    .from('daily_challenges')
-    .insert(challenges);
-
-  if (insertError) {
-    console.error('Error creating challenges:', insertError);
-    throw new Error('Erreur lors de la création des défis');
-  }
-}
-
-export async function completeDailyChallenge(
-  challengeId: string,
-  success: boolean,
-  pointsEarned: number
-): Promise<void> {
-  const { error } = await supabase
-    .from('daily_challenges')
-    .update({
-      status: success ? 'COMPLETED' : 'FAILED',
-      points_earned: pointsEarned,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', challengeId);
-
-  if (error) {
-    console.error('Error completing challenge:', error);
-    throw new Error('Erreur lors de la validation du défi');
   }
 }
