@@ -63,7 +63,7 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
     });
   };
 
-  const handleValidateSkill = async (progressionId: string, skillId: string) => {
+  const handleValidateSkill = async (progressionId: string, skillId: string, status: 'vu' | 'guidé' | 'validé' = 'validé') => {
     try {
       if (!user?.id) {
         toast.error('Vous devez être connecté pour valider une compétence');
@@ -74,7 +74,8 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
         progression_id: progressionId,
         skill_id: skillId,
         instructor_id: user.id,
-        comments: null
+        comments: null,
+        status: status
       });
       await loadProgressions();
       toast.success('Compétence validée avec succès');
@@ -236,28 +237,30 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
                                   {validation ? (
                                     <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded">
                                       <Check className="h-4 w-4" />
-                                      <span className="text-sm">Validée</span>
+                                      <span className="text-sm">{validation.status}</span>
                                     </div>
-                                  ) : (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (isInstructor) {
-                                          handleValidateSkill(progression.id, skill.id);
-                                        }
-                                      }}
-                                      disabled={!isInstructor}
-                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                        isInstructor
-                                          ? 'border-sky-500 hover:bg-sky-50 cursor-pointer'
-                                          : 'border-slate-200 cursor-not-allowed'
-                                      }`}
-                                    >
-                                      {isInstructor && (
-                                        <Check className="h-4 w-4 text-sky-500" />
-                                      )}
-                                    </button>
-                                  )}
+                                  ) : isInstructor ? (
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={() => handleValidateSkill(progression.id, skill.id, 'vu')}
+                                        className="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1 rounded text-sm transition-colors"
+                                      >
+                                        Vu
+                                      </button>
+                                      <button
+                                        onClick={() => handleValidateSkill(progression.id, skill.id, 'guidé')}
+                                        className="bg-purple-50 hover:bg-purple-100 text-purple-600 px-3 py-1 rounded text-sm transition-colors"
+                                      >
+                                        Guidé
+                                      </button>
+                                      <button
+                                        onClick={() => handleValidateSkill(progression.id, skill.id, 'validé')}
+                                        className="bg-green-50 hover:bg-green-100 text-green-600 px-3 py-1 rounded text-sm transition-colors"
+                                      >
+                                        Validé
+                                      </button>
+                                    </div>
+                                  ) : null}
                                 </div>
                               </div>
                             );

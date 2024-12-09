@@ -45,6 +45,7 @@ export interface SkillValidation {
   skill_id: string;
   instructor_id: string | null;
   validated_at: string;
+  status: 'vu' | 'guidé' | 'validé';
   comments: string | null;
   created_at: string;
   updated_at: string;
@@ -117,4 +118,10 @@ export interface UpdateProgressionSkill {
 export type CreateStudentProgression = Omit<StudentProgression, 'id' | 'created_at' | 'updated_at' | 'completed_at'>;
 export type UpdateStudentProgression = { completed_at: string | null };
 
-export type CreateSkillValidation = Omit<SkillValidation, 'id' | 'created_at' | 'updated_at' | 'instructor' | 'skill'>;
+export interface CreateSkillValidation {
+  progression_id: string;
+  skill_id: string;
+  instructor_id: string;
+  comments: string | null;
+  status: 'vu' | 'guidé' | 'validé';
+}

@@ -256,6 +256,12 @@ export async function leaveStudentProgression(progressionId: string): Promise<vo
 
 // Skill Validations
 export async function validateSkill(data: CreateSkillValidation): Promise<SkillValidation> {
+  // Ensure status is one of the valid values
+  console.log(data);
+  const validStatus = data.status === 'vu' || data.status === 'guidé' || data.status === 'validé' 
+    ? data.status 
+    : 'validé';
+
   const { data: validation, error } = await supabase
     .from('skill_validations')
     .insert([{
@@ -263,6 +269,7 @@ export async function validateSkill(data: CreateSkillValidation): Promise<SkillV
       skill_id: data.skill_id,
       instructor_id: data.instructor_id,
       comments: data.comments,
+      status: validStatus,
       validated_at: new Date().toISOString()
     }])
     .select()
@@ -311,6 +318,7 @@ export async function toggleSkillValidation(
     }
   } else {
     // Si aucune validation n'existe, on en crée une
+
     const { error } = await supabase
       .from('skill_validations')
       .insert({

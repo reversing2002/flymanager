@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { Checkbox } from '../ui/checkbox';
 import type { StudentProgressionWithDetails, ProgressionSkill, SkillValidation } from '../../types/progression';
 import { useQueryClient } from '@tanstack/react-query';
-import { validateSkill, removeSkillValidation, leaveStudentProgression } from '../../lib/queries/progression';
 import { useUser } from '../../hooks/useUser';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
-import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Eye, BookOpen, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface StudentProgressionViewProps {
   progressions: StudentProgressionWithDetails[];
@@ -22,59 +20,80 @@ interface SkillRowProps {
   skill: ProgressionSkill;
   validation?: SkillValidation;
   progressionId: string;
-  onValidationToggle: (skillId: string, validated: boolean) => void;
   canValidate?: boolean;
 }
 
-function SkillRow({ skill, validation, progressionId, onValidationToggle, canValidate }: SkillRowProps) {
+function SkillRow({ skill, validation, progressionId, canValidate }: SkillRowProps) {
+  const getStatusIcon = () => {
+    if (!validation) return null;
+    
+    switch (validation.status) {
+      case 'validé':
+        return <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-1" />;
+      case 'vu':
+        return <Eye className="h-5 w-5 text-blue-500 flex-shrink-0 mt-1" />;
+      case 'guidé':
+        return <BookOpen className="h-5 w-5 text-amber-500 flex-shrink-0 mt-1" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusLabel = () => {
+    if (!validation) return '';
+    
+    switch (validation.status) {
+      case 'validé':
+        return 'Validé';
+      case 'vu':
+        return 'Vu';
+      case 'guidé':
+        return 'Guidé';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-2 py-3 px-2 hover:bg-gray-50 rounded-lg transition-colors">
       <div className="flex items-start space-x-3 flex-1">
-        {canValidate ? (
-          <Checkbox
-            checked={!!validation}
-            onCheckedChange={(checked) => onValidationToggle(skill.id, !!checked)}
-            disabled={!canValidate}
-            className="mt-1"
-          />
-        ) : validation && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-1" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Validé par {validation.instructor?.first_name} {validation.instructor?.last_name}</p>
-                <p>Le {format(new Date(validation.validated_at), 'dd MMMM yyyy', { locale: fr })}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-slate-900">{skill.title}</div>
+        <div className="flex-1">
+          <div className="font-medium flex items-center gap-2">
+            {skill.title}
+            {skill.code && (
+              <span className="text-sm text-slate-500">({skill.code})</span>
+            )}
+          </div>
           {skill.description && (
-            <div className="text-sm text-slate-500 mt-0.5">{skill.description}</div>
+            <p className="text-sm text-slate-600 mt-1">{skill.description}</p>
           )}
         </div>
-      </div>
-      {validation && (
-        <div className="text-sm text-slate-500 pl-8 sm:pl-0">
-          <div>Validé le {format(new Date(validation.validated_at), 'dd MMMM yyyy', { locale: fr })}</div>
-          {validation.instructor && (
-            <div className="text-slate-400">
-              par {validation.instructor.first_name} {validation.instructor.last_name}
+        {validation && (
+          <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-1 px-2 py-1 rounded ${
+              validation.status === 'validé' ? 'text-green-600 bg-green-50' :
+              validation.status === 'vu' ? 'text-blue-600 bg-blue-50' :
+              'text-amber-600 bg-amber-50'
+            }`}>
+              {getStatusIcon()}
+              <span className="text-sm">{getStatusLabel()}</span>
+              {validation.instructor && (
+                <span className="text-sm text-slate-500 ml-1">
+                  par {validation.instructor.first_name} {validation.instructor.last_name}
+                </span>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function ModuleSection({ module, validations, progressionId, onValidationToggle, canValidate }) {
+function ModuleSection({ module, validations, progressionId, canValidate }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const validatedSkills = module.skills.filter(skill => 
-    validations?.some(v => v.skill_id === skill.id)
+    validations?.some(v => v.skill_id === skill.id && v.status === 'validé')
   ).length;
   
   return (
@@ -111,7 +130,6 @@ function ModuleSection({ module, validations, progressionId, onValidationToggle,
                 (v) => v.skill_id === skill.id
               )}
               progressionId={progressionId}
-              onValidationToggle={onValidationToggle}
               canValidate={canValidate}
             />
           ))}
@@ -128,50 +146,6 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
   // Filter out left formations
   const activeProgressions = progressions.filter(p => !p.left_at);
   const [selectedProgressionId, setSelectedProgressionId] = useState<string>(activeProgressions?.[0]?.id || '');
-
-  const handleValidationToggle = async (progressionId: string, skillId: string, validated: boolean) => {
-    try {
-      if (!user?.id) {
-        toast.error('Vous devez être connecté pour valider une compétence');
-        return;
-      }
-      
-      if (validated) {
-        await validateSkill({
-          progression_id: progressionId,
-          skill_id: skillId,
-          instructor_id: user.id,
-          comments: null,
-        });
-      } else {
-        const progression = activeProgressions.find(p => p.id === progressionId);
-        const existingValidation = progression?.validations?.find(v => v.skill_id === skillId);
-        if (existingValidation) {
-          await removeSkillValidation(existingValidation.id);
-        }
-      }
-      
-      toast.success(validated ? 'Compétence validée' : 'Validation supprimée');
-      queryClient.invalidateQueries(['studentProgressions']);
-    } catch (error) {
-      console.error('Erreur lors de la validation:', error);
-      toast.error('Une erreur est survenue lors de la validation');
-    }
-  };
-
-  const handleLeaveProgression = async (progressionId: string) => {
-    try {
-      if (!confirm('Êtes-vous sûr de vouloir quitter cette formation ? Votre progression restera enregistrée.')) {
-        return;
-      }
-      await leaveStudentProgression(progressionId);
-      toast.success('Formation quittée avec succès');
-      queryClient.invalidateQueries(['studentProgressions']);
-    } catch (error) {
-      console.error('Error leaving progression:', error);
-      toast.error('Erreur lors de la sortie de la formation');
-    }
-  };
 
   if (isLoading) {
     return (
@@ -219,7 +193,10 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
             (sum, module) => sum + module.skills.length,
             0
           );
-          const validatedSkills = progression.validations?.length || 0;
+          const validatedSkills = progression.validations?.filter(v => v.status === 'validé').length || 0;
+          const progressPercent = totalSkills > 0
+            ? Math.round((validatedSkills / totalSkills) * 100)
+            : 0;
           
           return (
             <div key={progression.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -252,12 +229,6 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
                           Terminé le {format(new Date(progression.completed_at), 'dd MMMM yyyy', { locale: fr })}
                         </div>
                       )}
-                      <button
-                        onClick={() => handleLeaveProgression(progression.id)}
-                        className="text-sm px-3 py-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                      >
-                        Quitter la formation
-                      </button>
                     </div>
                   </div>
                   
@@ -265,13 +236,13 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-slate-700">Progression globale</span>
                       <span className="text-sm font-medium text-slate-700">
-                        {Math.round((validatedSkills / totalSkills) * 100)}%
+                        {progressPercent}%
                       </span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-2.5">
                       <div
                         className="bg-sky-600 h-2.5 rounded-full transition-all"
-                        style={{ width: `${(validatedSkills / totalSkills) * 100}%` }}
+                        style={{ width: `${progressPercent}%` }}
                       />
                     </div>
                   </div>
@@ -285,9 +256,6 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
                     module={module}
                     validations={progression.validations}
                     progressionId={progression.id}
-                    onValidationToggle={(skillId, validated) =>
-                      handleValidationToggle(progression.id, skillId, validated)
-                    }
                     canValidate={canValidate}
                   />
                 ))}
