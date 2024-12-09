@@ -325,6 +325,17 @@ const FlightList = () => {
                   (u) => u.id === flight.instructorId
                 );
 
+                console.log('Flight details:', {
+                  id: flight.id,
+                  date: flight.date,
+                  pilot: pilot ? `${pilot.first_name} ${pilot.last_name}` : 'N/A',
+                  instructor: instructor ? `${instructor.first_name} ${instructor.last_name}` : 'N/A',
+                  cost: flight.cost,
+                  instructorCost: flight.instructorCost,
+                  instructorId: flight.instructorId,
+                  flightType: flight.flightType,
+                });
+
                 return (
                   <tr
                     key={flight.id}
@@ -354,7 +365,7 @@ const FlightList = () => {
                       {formatDuration(flight.duration)}
                     </td>
                     <td className="p-4 text-right">
-                      {flight.cost ? flight.cost.toFixed(2) : "-"}
+                      {flight.cost ? (flight.cost + (flight.instructorCost || 0)).toFixed(2) : "-"}
                     </td>
                     <td className="p-4 text-right">
                       {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
@@ -573,6 +584,17 @@ const FlightList = () => {
                           (u) => u.id === flight.instructorId
                         );
 
+                        console.log('Personal Flight details:', {
+                          id: flight.id,
+                          date: flight.date,
+                          pilot: pilot ? `${pilot.first_name} ${pilot.last_name}` : 'N/A',
+                          instructor: instructor ? `${instructor.first_name} ${instructor.last_name}` : 'N/A',
+                          cost: flight.cost,
+                          instructorCost: flight.instructorCost,
+                          instructorId: flight.instructorId,
+                          flightType: flight.flightType,
+                        });
+
                         return (
                           <tr
                             key={flight.id}
@@ -602,7 +624,7 @@ const FlightList = () => {
                               {formatDuration(flight.duration)}
                             </td>
                             <td className="p-4 text-right">
-                              {flight.cost ? flight.cost.toFixed(2) : "-"}
+                              {flight.cost ? (flight.cost + (flight.instructorCost || 0)).toFixed(2) : "-"}
                             </td>
                             <td className="p-4 text-right">
                               {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
@@ -709,6 +731,17 @@ const FlightList = () => {
                         (u) => u.id === flight.instructorId
                       );
 
+                      console.log('Personal Flight details:', {
+                        id: flight.id,
+                        date: flight.date,
+                        pilot: pilot ? `${pilot.first_name} ${pilot.last_name}` : 'N/A',
+                        instructor: instructor ? `${instructor.first_name} ${instructor.last_name}` : 'N/A',
+                        cost: flight.cost,
+                        instructorCost: flight.instructorCost,
+                        instructorId: flight.instructorId,
+                        flightType: flight.flightType,
+                      });
+
                       return (
                         <tr
                           key={flight.id}
@@ -738,7 +771,7 @@ const FlightList = () => {
                             {formatDuration(flight.duration)}
                           </td>
                           <td className="p-4 text-right">
-                            {flight.cost ? flight.cost.toFixed(2) : "-"}
+                            {flight.cost ? (flight.cost + (flight.instructorCost || 0)).toFixed(2) : "-"}
                           </td>
                           <td className="p-4 text-right">
                             {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}

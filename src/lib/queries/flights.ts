@@ -41,6 +41,8 @@ export async function getFlights(): Promise<Flight[]> {
     updatedAt: flight.updated_at,
     start_hour_meter: flight.start_hour_meter !== null ? flight.start_hour_meter : null,
     end_hour_meter: flight.end_hour_meter !== null ? flight.end_hour_meter : null,
+    instructorCost: flight.instructor_cost,
+    flightType: flight.flight_type
   }));
 }
 

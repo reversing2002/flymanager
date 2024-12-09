@@ -252,7 +252,7 @@ const Navbar = () => {
               {canAccessFlights && (
                 <Link to="/flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                   <ClipboardList className="w-5 h-5 mr-3" />
-                  <span>Carnet de route</span>
+                  <span>Mes vols</span>
                 </Link>
               )}
               {canAccessAccounts && (
@@ -275,7 +275,7 @@ const Navbar = () => {
                     </Link>
                     <Link to="/instructor-flights" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                       <ClipboardList className="w-5 h-5 mr-3" />
-                      <span>Vols d'instruction</span>
+                      <span>Facturation</span>
                     </Link>
                   </>
                 )}
