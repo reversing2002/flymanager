@@ -445,6 +445,47 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     return ((hour - 7) * 4) + Math.floor(minutes / 15);
   };
 
+  const CELL_WIDTH = 32; // Largeur d'une cellule en pixels (w-8 = 32px)
+  const START_HOUR = 7; // Heure de début du planning
+
+  const CurrentTimeLine = ({ selectedDate }: { selectedDate: Date }) => {
+    const [position, setPosition] = useState<number>(0);
+
+    useEffect(() => {
+      const updatePosition = () => {
+        const now = new Date();
+        if (!isToday(selectedDate)) return;
+
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        
+        // Calculer la position en pixels
+        const hoursSinceStart = currentHour - START_HOUR;
+        const minutePercentage = currentMinute / 60;
+        const position = (hoursSinceStart + minutePercentage) * (CELL_WIDTH * 4); // 4 cellules par heure
+
+        setPosition(position);
+      };
+
+      updatePosition();
+      const interval = setInterval(updatePosition, 60000); // Mise à jour toutes les minutes
+
+      return () => clearInterval(interval);
+    }, [selectedDate]);
+
+    if (!isToday(selectedDate)) return null;
+
+    return (
+      <div 
+        className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-20 pointer-events-none"
+        style={{ 
+          left: `${position}px`,
+          opacity: 0.75
+        }}
+      />
+    );
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header avec la date */}
@@ -505,107 +546,85 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
       </div>
 
       {/* Grille des réservations */}
-      <div className="flex-1 overflow-auto">
-        <div className="relative min-w-full">
-          {/* En-tête des heures */}
-          <div className="sticky top-0 z-10 flex border-b bg-white">
-            <div className="w-20 min-w-[5rem] shrink-0 border-r bg-white" />
-            <div className="flex">
-              {TIME_SLOTS.map(({ hour, minutes }) => (
+      <div className="relative flex-1 overflow-hidden">
+        <div className="flex h-full">
+          {/* Colonne fixe avec les noms des appareils */}
+          <div className="sticky left-0 z-10 bg-white border-r border-gray-200 shadow-sm">
+            <div className="h-8" /> {/* Espace pour aligner avec l'en-tête des heures */}
+            <div className="flex flex-col">
+              {sortedAircraft.map((a) => (
                 <div
-                  key={`${hour}-${minutes}`}
-                  className={cn(
-                    "w-6 h-8 border-r flex items-center justify-center",
-                    {
-                      "border-r-2 border-r-gray-200": shouldShowBorder(hour, minutes),
-                      "border-r-gray-100": !shouldShowBorder(hour, minutes),
-                      "bg-gray-50": isNightTime(hour, minutes),
-                    }
-                  )}
+                  key={a.id}
+                  className="flex items-center h-12 px-2 border-b border-gray-200 bg-white"
+                  style={{ minWidth: "120px", width: "120px" }}
                 >
-                  {shouldShowTime(hour, minutes) && (
-                    <span className="text-xs text-gray-500">{formatHour(hour)}</span>
-                  )}
-                  {isFirstNightSlot(hour, minutes) && (
-                    <div className="absolute -top-2 left-0 w-full flex items-center justify-center">
-                      <Moon className="w-3 h-3 text-gray-400" />
-                    </div>
-                  )}
+                  <span className="font-medium truncate">{a.registration}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Corps de la grille */}
-          <div className="relative">
-            {sortedAircraft.map((aircraft) => (
-              <div key={aircraft.id} className="flex border-b">
-                <div className="w-20 min-w-[5rem] shrink-0 border-r p-2">
-                  <div className="text-sm font-medium">{aircraft.registration}</div>
-                </div>
-                <div className="relative flex-1">
-                  <div className="flex">
-                    {TIME_SLOTS.map(({ hour, minutes }) => (
+          {/* Grille scrollable */}
+          <div className="flex-1 overflow-x-auto">
+            <div className="relative">
+              {/* En-tête des heures */}
+              <div className="flex h-8 border-b border-gray-200">
+                {TIME_SLOTS.map(({ hour, minutes }, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "flex-shrink-0 w-8 border-r border-gray-200 text-xs text-center",
+                      minutes === 0 && "font-medium"
+                    )}
+                  >
+                    {minutes === 0 && hour}
+                  </div>
+                ))}
+              </div>
+
+              {/* Ligne de l'heure actuelle */}
+              <CurrentTimeLine selectedDate={selectedDate} />
+
+              {/* Grille des réservations */}
+              <div className="relative">
+                {sortedAircraft.map((a) => (
+                  <div
+                    key={a.id}
+                    className="flex h-12 border-b border-gray-200"
+                  >
+                    {TIME_SLOTS.map(({ hour, minutes }, index) => (
                       <div
-                        key={`${hour}-${minutes}`}
-                        className={cn(
-                          "w-6 h-12 border-r relative cursor-pointer",
-                          {
-                            "border-r-2 border-r-gray-200": shouldShowBorder(hour, minutes),
-                            "border-r-gray-100": !shouldShowBorder(hour, minutes),
-                            "bg-gray-100": isNightTime(hour, minutes),
-                            "bg-sky-100": isSlotSelected(hour, minutes, aircraft.id),
-                            "hover:bg-slate-50": !isNightTime(hour, minutes) && !isSlotSelected(hour, minutes, aircraft.id),
-                          }
-                        )}
-                        onMouseDown={() => handleMouseDown(hour, minutes, aircraft.id)}
-                        onMouseMove={() => handleMouseMove(hour, minutes)}
+                        key={index}
+                        className="flex-shrink-0 w-8 border-r border-gray-200"
+                        onMouseDown={(e) => handleMouseDown(hour, minutes, a.id)}
+                        onMouseEnter={(e) => handleMouseMove(hour, minutes)}
                         onMouseUp={handleMouseUp}
                       >
-                        {isFirstNightSlot(hour, minutes) && (
-                          <div className="absolute -top-2 left-0 w-full flex items-center justify-center">
-                            <Moon className="w-3 h-3 text-gray-400" />
-                          </div>
-                        )}
-                        {isFirstSelectedSlot(hour, minutes, aircraft.id) && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-xs text-gray-500 bg-white/75 px-1 rounded">
-                              {format(selectedTimeSlot?.start || '', 'HH:mm')} - {format(selectedTimeSlot?.end || '', 'HH:mm')}
-                            </div>
-                          </div>
-                        )}
+                        {/* Contenu des cellules */}
                       </div>
                     ))}
                   </div>
-                  {/* Réservations */}
-                  {getReservationsForAircraft(aircraft.id).map((reservation) => {
-                    const style = calculateReservationStyle(reservation);
-                    if (!style) return null;
-
-                    const status = getReservationStatus(reservation);
-                    const pilot = users.find((u) => u.id === reservation.pilotId);
-
-                    return (
-                      <button
-                        key={reservation.id}
-                        onClick={() => handleReservationClick(reservation)}
-                        className={cn(
-                          "absolute top-0 h-12 rounded px-2 text-xs font-medium transition-colors",
-                          {
-                            "bg-sky-100 hover:bg-sky-200": status === "future",
-                            "bg-gray-100 hover:bg-gray-200": status === "past",
-                            "bg-green-100 hover:bg-green-200": status === "current",
-                          }
-                        )}
-                        style={style}
-                      >
-                        {pilot?.firstName} {pilot?.lastName}
-                      </button>
-                    );
-                  })}
-                </div>
+                ))}
+                {/* Réservations */}
+                {filteredReservations.map((reservation) => (
+                  <button
+                    key={reservation.id}
+                    onClick={() => handleReservationClick(reservation)}
+                    className={cn(
+                      "absolute top-0 h-12 rounded px-2 text-xs font-medium transition-colors",
+                      {
+                        "bg-sky-100 hover:bg-sky-200": getReservationStatus(reservation) === "future",
+                        "bg-gray-100 hover:bg-gray-200": getReservationStatus(reservation) === "past",
+                        "bg-green-100 hover:bg-green-200": getReservationStatus(reservation) === "current",
+                      }
+                    )}
+                    style={calculateReservationStyle(reservation)}
+                  >
+                    {users.find((u) => u.id === reservation.pilotId)?.firstName} {users.find((u) => u.id === reservation.pilotId)?.lastName}
+                  </button>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </div>
