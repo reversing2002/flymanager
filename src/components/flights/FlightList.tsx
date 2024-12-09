@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, Plus, X, Trash2, Check, Edit, CheckCircle2 } from "lucide-react";
+import { Filter, Plus, X, Trash2, Check, Edit, CheckCircle2, GraduationCap } from "lucide-react";
 import { getFlights, getAircraft, getUsers, validateFlight, deleteFlight } from "../../lib/queries";
 import type { Aircraft, User, Flight } from "../../types/database";
 import { useAuth } from "../../contexts/AuthContext";
@@ -10,6 +10,7 @@ import FlightTotals from "./FlightTotals";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { hasAnyGroup } from "../../lib/permissions";
+import CompetenciesModal from "../progression/CompetenciesModal";
 
 const FlightList = () => {
   const { user } = useAuth();
@@ -23,6 +24,8 @@ const FlightList = () => {
   const [flightTypes, setFlightTypes] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCompetenciesModal, setShowCompetenciesModal] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   const [filters, setFilters] = useState({
     dateRange: "all",
@@ -256,6 +259,164 @@ const FlightList = () => {
             <Trash2 size={20} />
           </button>
         )}
+      </div>
+    );
+  };
+
+  const renderStudentFlights = () => {
+    if (!studentFlights.length) return null;
+    return (
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">
+          Vols de vos élèves
+        </h2>
+        <div className="mb-4 text-slate-600">
+          Temps total d'instruction:{" "}
+          {formatDuration(
+            studentFlights.reduce(
+              (acc, flight) => acc + flight.duration,
+              0
+            )
+          )}
+        </div>
+        <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
+          <table className="w-full text-sm whitespace-nowrap">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left p-4 font-medium text-slate-600">
+                  Nom
+                </th>
+                <th className="text-left p-4 font-medium text-slate-600">
+                  Date du vol
+                </th>
+                <th className="text-left p-4 font-medium text-slate-600">
+                  Appareil
+                </th>
+                <th className="text-left p-4 font-medium text-slate-600">
+                  Type de vol
+                </th>
+                <th className="text-left p-4 font-medium text-slate-600">
+                  Instructeur
+                </th>
+                <th className="text-left p-4 font-medium text-slate-600">
+                  Durée
+                </th>
+                <th className="text-right p-4 font-medium text-slate-600">
+                  Coût total
+                </th>
+                <th className="text-right p-4 font-medium text-slate-600">
+                  Dont instruction
+                </th>
+                <th className="text-center p-4 font-medium text-slate-600">
+                  Validé
+                </th>
+                <th className="text-center p-4 font-medium text-slate-600">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {studentFlights.map((flight) => {
+                const aircraft = aircraftList.find(
+                  (a) => a.id === flight.aircraftId
+                );
+                const pilot = users.find((u) => u.id === flight.userId);
+                const instructor = users.find(
+                  (u) => u.id === flight.instructorId
+                );
+
+                return (
+                  <tr
+                    key={flight.id}
+                    className="border-b border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="p-4">
+                      {pilot
+                        ? `${pilot.first_name} ${pilot.last_name}`
+                        : "N/A"}
+                    </td>
+                    <td className="p-4">
+                      {new Date(flight.date).toLocaleDateString()}
+                    </td>
+                    <td className="p-4">
+                      {aircraft?.registration || "N/A"}
+                    </td>
+                    <td className="p-4">
+                      {flightTypes[flight.flightTypeId] ||
+                        flight.flightTypeId}
+                    </td>
+                    <td className="p-4">
+                      {instructor
+                        ? `${instructor.first_name} ${instructor.last_name}`
+                        : "-"}
+                    </td>
+                    <td className="p-4">
+                      {formatDuration(flight.duration)}
+                    </td>
+                    <td className="p-4 text-right">
+                      {flight.cost ? flight.cost.toFixed(2) : "-"}
+                    </td>
+                    <td className="p-4 text-right">
+                      {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
+                    </td>
+                    <td className="p-4 text-center">
+                      {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
+                        <button
+                          onClick={() => handleValidateFlight(flight)}
+                          className="text-green-600 hover:text-green-800"
+                          title="Valider"
+                        >
+                          <Check size={20} />
+                        </button>
+                      ) : flight.isValidated ? (
+                        <span className="text-green-600" title="Vol validé">
+                          <CheckCircle2 size={20} />
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="p-4 flex justify-center gap-2">
+                      {!flight.isValidated && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSelectedStudentId(flight.userId);
+                              setShowCompetenciesModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Gérer les compétences"
+                          >
+                            <GraduationCap size={20} />
+                          </button>
+                          <button
+                            onClick={() => setEditingFlight(flight)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Modifier"
+                          >
+                            <Edit size={20} />
+                          </button>
+                          {(hasAnyGroup(user, ["ADMIN"]) || 
+                            (!flight.isValidated && (
+                              flight.userId === user?.id || // Le pilote du vol
+                              (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id) // L'instructeur du vol
+                            ))
+                          ) && (
+                            <button
+                              onClick={() => handleDeleteFlight(flight)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Supprimer"
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   };
@@ -496,148 +657,7 @@ const FlightList = () => {
                 </div>
               </div>
 
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">
-                  Vols de vos élèves
-                </h2>
-                <div className="mb-4 text-slate-600">
-                  Temps total d'instruction:{" "}
-                  {formatDuration(
-                    studentFlights.reduce(
-                      (acc, flight) => acc + flight.duration,
-                      0
-                    )
-                  )}
-                </div>
-                <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
-                  <table className="w-full text-sm whitespace-nowrap">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="text-left p-4 font-medium text-slate-600">
-                          Nom
-                        </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
-                          Date du vol
-                        </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
-                          Appareil
-                        </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
-                          Type de vol
-                        </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
-                          Instructeur
-                        </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
-                          Durée
-                        </th>
-                        <th className="text-right p-4 font-medium text-slate-600">
-                          Coût total
-                        </th>
-                        <th className="text-right p-4 font-medium text-slate-600">
-                          Dont instruction
-                        </th>
-                        <th className="text-center p-4 font-medium text-slate-600">
-                          Validé
-                        </th>
-                        <th className="text-center p-4 font-medium text-slate-600">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {studentFlights.map((flight) => {
-                        const aircraft = aircraftList.find(
-                          (a) => a.id === flight.aircraftId
-                        );
-                        const pilot = users.find((u) => u.id === flight.userId);
-                        const instructor = users.find(
-                          (u) => u.id === flight.instructorId
-                        );
-
-                        return (
-                          <tr
-                            key={flight.id}
-                            className="border-b border-slate-100 hover:bg-slate-50"
-                          >
-                            <td className="p-4">
-                              {pilot
-                                ? `${pilot.first_name} ${pilot.last_name}`
-                                : "N/A"}
-                            </td>
-                            <td className="p-4">
-                              {new Date(flight.date).toLocaleDateString()}
-                            </td>
-                            <td className="p-4">
-                              {aircraft?.registration || "N/A"}
-                            </td>
-                            <td className="p-4">
-                              {flightTypes[flight.flightTypeId] ||
-                                flight.flightTypeId}
-                            </td>
-                            <td className="p-4">
-                              {instructor
-                                ? `${instructor.first_name} ${instructor.last_name}`
-                                : "-"}
-                            </td>
-                            <td className="p-4">
-                              {formatDuration(flight.duration)}
-                            </td>
-                            <td className="p-4 text-right">
-                              {flight.cost ? flight.cost.toFixed(2) : "-"}
-                            </td>
-                            <td className="p-4 text-right">
-                              {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
-                            </td>
-                            <td className="p-4 text-center">
-                              {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
-                                <button
-                                  onClick={() => handleValidateFlight(flight)}
-                                  className="text-green-600 hover:text-green-800"
-                                  title="Valider"
-                                >
-                                  <Check size={20} />
-                                </button>
-                              ) : flight.isValidated ? (
-                                <span className="text-green-600" title="Vol validé">
-                                  <CheckCircle2 size={20} />
-                                </span>
-                              ) : null}
-                            </td>
-                            <td className="p-4 flex justify-center gap-2">
-                              {!flight.isValidated && (
-                                <>
-                                  <button
-                                    onClick={() => setEditingFlight(flight)}
-                                    className="text-blue-600 hover:text-blue-800"
-                                    title="Modifier"
-                                  >
-                                    <Edit size={20} />
-                                  </button>
-                                  {(hasAnyGroup(user, ["ADMIN"]) || 
-                                    (!flight.isValidated && (
-                                      flight.userId === user?.id || // Le pilote du vol
-                                      (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id) // L'instructeur du vol
-                                    ))
-                                  ) && (
-                                    <button
-                                      onClick={() => handleDeleteFlight(flight)}
-                                      className="text-red-600 hover:text-red-800"
-                                      title="Supprimer"
-                                    >
-                                      <Trash2 size={20} />
-                                    </button>
-                                  )}
-                                </>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              {renderStudentFlights()}
             </>
           ) : (
             <>
@@ -774,6 +794,15 @@ const FlightList = () => {
             </>
           )}
         </>
+      )}
+      {showCompetenciesModal && selectedStudentId && (
+        <CompetenciesModal
+          studentId={selectedStudentId}
+          onClose={() => {
+            setShowCompetenciesModal(false);
+            setSelectedStudentId(null);
+          }}
+        />
       )}
     </div>
   );
