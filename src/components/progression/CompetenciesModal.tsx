@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, AlertTriangle, Search } from 'lucide-react';
-import { getStudentProgressions } from '../../lib/queries/progression';
+import { X, Check, AlertTriangle, Search, ChevronRight, ChevronDown } from 'lucide-react';
+import { getStudentProgressions, validateSkill } from '../../lib/queries/progression';
 import type { StudentProgressionWithDetails } from '../../types/progression';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -21,6 +21,7 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [showValidated, setShowValidated] = useState<'all' | 'validated' | 'pending'>('all');
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadProgressions();
@@ -44,17 +45,43 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
     }
   };
 
+  const toggleModule = (moduleId: string) => {
+    setExpandedModules(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(moduleId)) {
+        newSet.delete(moduleId);
+      } else {
+        newSet.add(moduleId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleValidateSkill = async (progressionId: string, skillId: string) => {
+    try {
+      await validateSkill(progressionId, skillId);
+      await loadProgressions(); // Recharger les données
+      toast.success('Compétence validée avec succès');
+    } catch (err) {
+      console.error('Error validating skill:', err);
+      toast.error('Erreur lors de la validation');
+    }
+  };
+
   const filteredProgressions = progressions
     .filter(progression => !selectedTemplate || progression.template.id === selectedTemplate)
     .map(progression => {
-      // Filter modules and skills based on search and validation status
       const filteredModules = progression.template.modules.map(module => ({
         ...module,
         skills: module.skills.filter(skill => {
           const validation = progression.validations.find(v => v.skill_id === skill.id);
           const matchesSearch = searchQuery === '' || 
-            skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            module.name.toLowerCase().includes(searchQuery.toLowerCase());
+            skill.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            module.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            skill.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            module.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (skill.code?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+            (module.code?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
           const matchesValidation = 
             showValidated === 'all' ||
             (showValidated === 'validated' && validation) ||
@@ -86,7 +113,6 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
         </div>
 
         <div className="p-4 border-b space-y-4">
-          {/* Search and filters */}
           <div className="flex gap-4 flex-wrap">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
@@ -100,89 +126,123 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
                 />
               </div>
             </div>
-
             <select
               value={selectedTemplate || ''}
               onChange={(e) => setSelectedTemplate(e.target.value || null)}
-              className="px-3 py-2 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+              className="px-4 py-2 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-sky-500"
             >
               {progressions.map(p => (
                 <option key={p.template.id} value={p.template.id}>
-                  {p.template.name}
+                  {p.template.title}
                 </option>
               ))}
             </select>
-
             <select
               value={showValidated}
               onChange={(e) => setShowValidated(e.target.value as 'all' | 'validated' | 'pending')}
-              className="px-3 py-2 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+              className="px-4 py-2 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-sky-500"
             >
-              <option value="all">Tous</option>
-              <option value="validated">Validés</option>
+              <option value="all">Toutes</option>
+              <option value="validated">Validées</option>
               <option value="pending">En attente</option>
             </select>
           </div>
         </div>
 
-        <div className="p-4 overflow-y-auto">
-          {error && (
-            <div className="p-4 mb-6 bg-red-50 text-red-800 rounded-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              <p>{error}</p>
-            </div>
-          )}
-
+        <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto" />
-              <p className="mt-2 text-sm text-slate-600">Chargement...</p>
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-32 text-red-500 gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              <span>{error}</span>
             </div>
           ) : filteredProgressions.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-slate-600">Aucune progression trouvée</p>
+            <div className="text-center text-slate-500 py-8">
+              Aucune progression trouvée
             </div>
           ) : (
             <div className="space-y-6">
-              {filteredProgressions.map((progression) => (
-                <div key={progression.id}>
-                  <div className="space-y-4">
-                    {progression.template.modules.map((module) => (
-                      <div key={module.id} className="space-y-2">
-                        <h4 className="font-medium text-slate-900">{module.name}</h4>
-                        
-                        <div className="grid gap-2">
-                          {module.skills.map((skill) => {
+              {filteredProgressions.map(progression => (
+                <div key={progression.id} className="space-y-4">
+                  {progression.template.modules.map(module => (
+                    <div key={module.id} className="border rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => toggleModule(module.id)}
+                        className="w-full bg-slate-50 p-4 flex items-center justify-between hover:bg-slate-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          {expandedModules.has(module.id) ? (
+                            <ChevronDown className="h-5 w-5 text-slate-500" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5 text-slate-500" />
+                          )}
+                          <div className="text-left">
+                            <h3 className="font-medium flex items-center gap-2">
+                              {module.title}
+                              {module.code && (
+                                <span className="text-sm text-slate-500">({module.code})</span>
+                              )}
+                            </h3>
+                            {module.description && (
+                              <p className="text-sm text-slate-600 mt-1">{module.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                      {expandedModules.has(module.id) && (
+                        <div className="divide-y">
+                          {module.skills.map(skill => {
                             const validation = progression.validations.find(
-                              (v) => v.skill_id === skill.id
+                              v => v.skill_id === skill.id
                             );
-                            
                             return (
                               <div
                                 key={skill.id}
-                                className="flex items-center justify-between p-2 rounded-lg border hover:bg-slate-50 transition-colors"
+                                className="p-4 flex items-start justify-between gap-4 hover:bg-slate-50"
                               >
-                                <div>
-                                  <p className="font-medium text-sm">{skill.name}</p>
-                                  {validation?.instructor && (
-                                    <p className="text-xs text-slate-500">
-                                      Validé par {validation.instructor.first_name} {validation.instructor.last_name}
+                                <div className="flex-1">
+                                  <div className="font-medium flex items-center gap-2">
+                                    {skill.title}
+                                    {skill.code && (
+                                      <span className="text-sm text-slate-500">({skill.code})</span>
+                                    )}
+                                  </div>
+                                  {skill.description && (
+                                    <p className="text-sm text-slate-600 mt-1">
+                                      {skill.description}
                                     </p>
                                   )}
                                 </div>
-                                
-                                {validation ? (
-                                  <Check className="h-4 w-4 text-green-500 shrink-0" />
-                                ) : (
-                                  <div className="h-4 w-4 rounded-full border-2 border-slate-200 shrink-0" />
-                                )}
+                                <div className="flex items-center gap-2">
+                                  {validation ? (
+                                    <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded">
+                                      <Check className="h-4 w-4" />
+                                      <span className="text-sm">Validée</span>
+                                    </div>
+                                  ) : user?.role === 'instructor' ? (
+                                    <button
+                                      onClick={() => handleValidateSkill(progression.id, skill.id)}
+                                      className="flex items-center gap-1 text-sky-600 bg-sky-50 px-2 py-1 rounded hover:bg-sky-100 transition-colors"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                      <span className="text-sm">Valider</span>
+                                    </button>
+                                  ) : (
+                                    <div className="flex items-center gap-1 text-slate-600 bg-slate-50 px-2 py-1 rounded">
+                                      <span className="text-sm">En attente</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
