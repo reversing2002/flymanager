@@ -1,15 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  setMinutes,
-  setHours,
-  addMinutes,
-  differenceInMinutes,
-  format,
-} from "date-fns";
+import { setMinutes, setHours, differenceInMinutes, format } from "date-fns";
 import { Aircraft, Reservation, User } from "../../types/database";
 import { useAuth } from "../../contexts/AuthContext";
 import { Plane, Moon } from "lucide-react";
-import { toast } from "react-hot-toast";
 import ReservationModal from "./ReservationModal";
 import { getSunTimes } from "../../lib/sunTimes";
 import { supabase } from "../../lib/supabase";
@@ -26,6 +19,7 @@ interface TimeGridProps {
   users: User[];
   flights: { reservationId: string }[];
   onDateChange?: (date: Date) => void;
+  nightFlightsEnabled: boolean;
 }
 
 const TimeGrid: React.FC<TimeGridProps> = ({
@@ -40,18 +34,22 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   users,
   flights,
   onDateChange,
+  nightFlightsEnabled,
 }) => {
   const { user } = useAuth();
-  const [clubCoordinates, setClubCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [clubCoordinates, setClubCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   useEffect(() => {
     const loadClubCoordinates = async () => {
       if (!user?.club?.id) return;
 
       const { data: clubData } = await supabase
-        .from('clubs')
-        .select('latitude, longitude')
-        .eq('id', user.club.id)
+        .from("clubs")
+        .select("latitude, longitude")
+        .eq("id", user.club.id)
         .single();
 
       if (clubData?.latitude && clubData?.longitude) {
@@ -85,12 +83,62 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   const startHour = 7;
   const endHour = 21;
 
-  // Générer les créneaux horaires de manière optimisée
-  const TIME_SLOTS = Array.from({ length: (endHour - startHour) * 4 }, (_, i) => {
-    const hour = Math.floor(i / 4) + startHour;
-    const minute = (i % 4) * 15;
-    return { hour, minute };
-  });
+  // Modifier la génération des créneaux horaires en fonction des heures aéronautiques
+  const generateTimeSlots = () => {
+    if (!clubCoordinates) {
+      // Valeurs par défaut si pas de coordonnées
+      const defaultStartHour = 7;
+      const defaultEndHour = nightFlightsEnabled ? 21 : 18;
+      return generateSlotsForHours(defaultStartHour, defaultEndHour);
+    }
+
+    const sunTimes = getSunTimes(
+      selectedDate,
+      clubCoordinates.latitude,
+      clubCoordinates.longitude
+    );
+
+    // Utiliser les minutes pour plus de précision
+    const startMinutes =
+      sunTimes.aeroStart.getHours() * 60 + sunTimes.aeroStart.getMinutes();
+    const endMinutes =
+      sunTimes.aeroEnd.getHours() * 60 + sunTimes.aeroEnd.getMinutes();
+
+    // Arrondir au quart d'heure inférieur pour le début
+    const roundedStartMinutes = Math.floor(startMinutes / 15) * 15;
+    // Arrondir au quart d'heure supérieur pour la fin
+    const roundedEndMinutes = Math.ceil(endMinutes / 15) * 15;
+
+    const startHour = Math.floor(roundedStartMinutes / 60);
+    const endHour = Math.ceil(roundedEndMinutes / 60);
+
+    console.log("=== Debug Time Slots Generation ===");
+    console.log("Aero start:", sunTimes.aeroStart.toLocaleTimeString());
+    console.log("Aero end:", sunTimes.aeroEnd.toLocaleTimeString());
+    console.log("Rounded start hour:", startHour);
+    console.log("Rounded end hour:", endHour);
+
+    return generateSlotsForHours(
+      startHour,
+      nightFlightsEnabled ? endHour + 1 : endHour
+    );
+  };
+
+  const generateSlotsForHours = (startHour: number, endHour: number) => {
+    return Array.from({ length: (endHour - startHour) * 4 }, (_, i) => {
+      const hour = Math.floor(i / 4) + startHour;
+      const minute = (i % 4) * 15;
+      return { hour, minute };
+    });
+  };
+
+  // Remplacer la constante TIME_SLOTS par un state
+  const [timeSlots, setTimeSlots] = useState(generateTimeSlots());
+
+  // Mettre à jour les créneaux quand les dépendances changent
+  useEffect(() => {
+    setTimeSlots(generateTimeSlots());
+  }, [selectedDate, clubCoordinates, nightFlightsEnabled]);
 
   // Filter only available aircraft
   const availableAircraft = aircraft.filter((a) => a.status === "AVAILABLE");
@@ -148,7 +196,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
         // Ajouter 15 minutes à l'heure de fin (qui était l'heure de début)
         const adjustedEnd = new Date(start);
         adjustedEnd.setMinutes(adjustedEnd.getMinutes() + 15);
-        
+
         onTimeSlotClick(adjustedStart, adjustedEnd, selectionStart.aircraftId);
       }
 
@@ -158,11 +206,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     }
   };
 
-  const isSlotSelected = (
-    hour: number,
-    minute: number,
-    aircraftId: string
-  ) => {
+  const isSlotSelected = (hour: number, minute: number, aircraftId: string) => {
     if (!selectionStart || !selectionEnd) return false;
 
     const startMinutes = selectionStart.hour * 60 + selectionStart.minute;
@@ -171,7 +215,8 @@ const TimeGrid: React.FC<TimeGridProps> = ({
 
     return (
       aircraftId === selectionStart.aircraftId &&
-      (slotMinutes >= startMinutes && slotMinutes <= endMinutes)
+      slotMinutes >= startMinutes &&
+      slotMinutes <= endMinutes
     );
   };
 
@@ -198,8 +243,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     const duration = differenceInMinutes(endTime, startTime);
     const height = (duration / 15) * 1;
     const top =
-      ((startTime.getHours() - startHour) * 4 +
-        startTime.getMinutes() / 15) *
+      ((startTime.getHours() - startHour) * 4 + startTime.getMinutes() / 15) *
       1;
 
     const pilot = users.find((u) => u.id === reservation.pilotId);
@@ -241,7 +285,8 @@ const TimeGrid: React.FC<TimeGridProps> = ({
             {reservation.instructorId && (
               <>
                 {" + "}
-                {users.find((u) => u.id === reservation.instructorId)?.first_name || "Instructeur inconnu"}
+                {users.find((u) => u.id === reservation.instructorId)
+                  ?.first_name || "Instructeur inconnu"}
               </>
             )}
           </div>
@@ -255,7 +300,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
 
     let startHour = selectionStart.hour;
     let startMinute = selectionStart.minute;
-    
+
     const endMinutes = selectionEnd.hour * 60 + selectionEnd.minute;
     const roundedEndMinutes = Math.ceil(endMinutes / 15) * 15 + 15;
     const endHour = Math.floor(roundedEndMinutes / 60);
@@ -270,28 +315,47 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     }
 
     return {
-      startTime: `${startHour}h${startMinute > 0 ? startMinute : ''}`,
-      endTime: `${endHour}h${endMinute > 0 ? endMinute : ''}`
+      startTime: `${startHour}h${startMinute > 0 ? startMinute : ""}`,
+      endTime: `${endHour}h${endMinute > 0 ? endMinute : ""}`,
     };
   };
 
   const isNightTime = (hour: number, minute: number) => {
     if (!clubCoordinates) return false;
-    
+
     const slotTime = setMinutes(setHours(new Date(selectedDate), hour), minute);
-    const sunTimes = getSunTimes(selectedDate, clubCoordinates.latitude, clubCoordinates.longitude);
-    return slotTime < sunTimes.aeroStart || slotTime > sunTimes.aeroEnd;
+    const sunTimes = getSunTimes(
+      selectedDate,
+      clubCoordinates.latitude,
+      clubCoordinates.longitude
+    );
+
+    // Convertir en minutes pour une comparaison plus précise
+    const slotMinutes = hour * 60 + minute;
+    const aeroStartMinutes =
+      sunTimes.aeroStart.getHours() * 60 + sunTimes.aeroStart.getMinutes();
+    const aeroEndMinutes =
+      sunTimes.aeroEnd.getHours() * 60 + sunTimes.aeroEnd.getMinutes();
+
+    return slotMinutes < aeroStartMinutes || slotMinutes > aeroEndMinutes;
   };
 
   const isFirstNightSlot = (hour: number, minute: number) => {
     if (!clubCoordinates) return false;
-    
-    const slotTime = setMinutes(setHours(new Date(selectedDate), hour), minute);
-    const prevSlotTime = new Date(slotTime);
-    prevSlotTime.setMinutes(prevSlotTime.getMinutes() - 15);
-    
-    const sunTimes = getSunTimes(selectedDate, clubCoordinates.latitude, clubCoordinates.longitude);
-    return slotTime > sunTimes.aeroEnd && prevSlotTime <= sunTimes.aeroEnd;
+
+    const slotMinutes = hour * 60 + minute;
+    const prevSlotMinutes = slotMinutes - 15;
+
+    const sunTimes = getSunTimes(
+      selectedDate,
+      clubCoordinates.latitude,
+      clubCoordinates.longitude
+    );
+
+    const aeroEndMinutes =
+      sunTimes.aeroEnd.getHours() * 60 + sunTimes.aeroEnd.getMinutes();
+
+    return slotMinutes > aeroEndMinutes && prevSlotMinutes <= aeroEndMinutes;
   };
 
   // Synchroniser le défilement
@@ -305,9 +369,9 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       hoursColumn.scrollTop = gridContainer.scrollTop;
     };
 
-    gridContainer.addEventListener('scroll', handleScroll);
+    gridContainer.addEventListener("scroll", handleScroll);
     return () => {
-      gridContainer.removeEventListener('scroll', handleScroll);
+      gridContainer.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -317,12 +381,12 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       <div className="absolute left-0 top-0 w-20 h-[40px] bg-white z-20 border-r border-b border-slate-200" />
 
       {/* Colonne des heures */}
-      <div 
+      <div
         ref={hoursColumnRef}
         className="absolute left-0 top-[40px] bottom-0 w-20 bg-white z-10 border-r border-slate-200 overflow-hidden"
       >
         <div className="h-full">
-          {TIME_SLOTS.map(({ hour, minute }, index) => (
+          {timeSlots.map(({ hour, minute }, index) => (
             <div
               key={`time-${hour}-${minute}`}
               className="h-4 flex items-center justify-end pr-2 text-xs text-slate-500"
@@ -336,10 +400,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       </div>
 
       {/* Container principal avec scroll */}
-      <div 
-        ref={gridContainerRef}
-        className="h-full overflow-auto ml-20"
-      >
+      <div ref={gridContainerRef} className="h-full overflow-auto ml-20">
         <div className="min-w-full">
           {/* En-tête des avions (fixe en vertical) */}
           <div
@@ -370,7 +431,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
           >
             {sortedAircraft.map((aircraft) => (
               <div key={`grid-${aircraft.id}`} className="relative">
-                {TIME_SLOTS.map(({ hour, minute }, index) => (
+                {timeSlots.map(({ hour, minute }, index) => (
                   <div
                     key={`${hour}-${minute}`}
                     className={`h-4 border-b border-slate-100 relative group ${
@@ -379,10 +440,12 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                       isSlotSelected(hour, minute, aircraft.id)
                         ? "bg-sky-100"
                         : isNightTime(hour, minute)
-                          ? "bg-gray-100"
-                          : "bg-white hover:bg-slate-50"
+                        ? "bg-gray-100"
+                        : "bg-white hover:bg-slate-50"
                     }`}
-                    onMouseDown={(e) => handleMouseDown(hour, minute, aircraft.id)}
+                    onMouseDown={(e) =>
+                      handleMouseDown(hour, minute, aircraft.id)
+                    }
                     onMouseMove={(e) => handleMouseMove(hour, minute)}
                     onMouseUp={handleMouseUp}
                   >
@@ -392,14 +455,16 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                       </div>
                     )}
                     <div className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {isSlotSelected(hour, minute, aircraft.id) ? (
-                        (() => {
-                          const times = getSelectionTimes();
-                          return times ? `${times.startTime} à ${times.endTime}` : '';
-                        })()
-                      ) : (
-                        `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
-                      )}
+                      {isSlotSelected(hour, minute, aircraft.id)
+                        ? (() => {
+                            const times = getSelectionTimes();
+                            return times
+                              ? `${times.startTime} à ${times.endTime}`
+                              : "";
+                          })()
+                        : `${hour.toString().padStart(2, "0")}:${minute
+                            .toString()
+                            .padStart(2, "0")}`}
                     </div>
                   </div>
                 ))}

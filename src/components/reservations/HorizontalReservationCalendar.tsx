@@ -7,16 +7,18 @@ import {
   isThisWeek,
   isBefore,
   isAfter,
-  addHours,
   setHours,
   setMinutes,
   addMinutes,
-  parse,
   subDays,
   addDays,
 } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Moon } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import type { Aircraft, Reservation, User } from "../../types/database";
@@ -26,32 +28,95 @@ import {
   getUsers,
   updateReservation,
 } from "../../lib/queries";
-import { getAircraftOrder, updateAircraftOrder } from "../../services/aircraft";
+import { getAircraftOrder } from "../../services/aircraft";
 import ReservationModal from "./ReservationModal";
 import { toast } from "react-hot-toast";
-import { validateReservation } from "../../lib/reservationValidation";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
 import { cn } from "../../lib/utils";
 import SunTimesDisplay from "../common/SunTimesDisplay";
 import { getSunTimes } from "../../lib/sunTimes";
+import { FilterState } from "./FilterPanel";
 
-// Générer les intervalles de 15 minutes de 7h à 21h
-const TIME_SLOTS = Array.from({ length: 57 }, (_, i) => {
-  const hour = Math.floor(i / 4) + 7;
-  const minutes = (i % 4) * 15;
-  return { hour, minutes };
-});
+// Générer les intervalles de 15 minutes
+const generateTimeSlots = (
+  date: Date,
+  nightFlightsEnabled: boolean,
+  coordinates: { latitude: number; longitude: number } | null
+) => {
+  const sunTimes = coordinates
+    ? getSunTimes(date, coordinates.latitude, coordinates.longitude)
+    : null;
+
+  let startMinutes, endMinutes;
+
+  if (sunTimes) {
+    // Convertir en minutes pour plus de précision
+    startMinutes =
+      sunTimes.aeroStart.getHours() * 60 + sunTimes.aeroStart.getMinutes();
+    endMinutes =
+      sunTimes.aeroEnd.getHours() * 60 + sunTimes.aeroEnd.getMinutes();
+
+    // Arrondir au quart d'heure inférieur pour le début
+    startMinutes = Math.floor(startMinutes / 15) * 15;
+    // Arrondir au quart d'heure supérieur pour la fin
+    endMinutes = Math.ceil(endMinutes / 15) * 15;
+  } else {
+    // Valeurs par défaut si pas de coordonnées
+    startMinutes = 7 * 60; // 7h00
+    endMinutes = nightFlightsEnabled ? 21 * 60 : 18 * 60; // 21h00 ou 18h00
+  }
+
+  const startHour = Math.floor(startMinutes / 60);
+  const endHour = Math.ceil(endMinutes / 60);
+
+  console.log("=== Debug Time Slots Generation ===");
+  console.log("Date:", date);
+  console.log("Night flights enabled:", nightFlightsEnabled);
+  console.log("Club coordinates:", coordinates);
+  console.log("Sun times:", sunTimes);
+  console.log(
+    "Start minutes:",
+    startMinutes,
+    "(",
+    Math.floor(startMinutes / 60),
+    "h",
+    startMinutes % 60,
+    ")"
+  );
+  console.log(
+    "End minutes:",
+    endMinutes,
+    "(",
+    Math.floor(endMinutes / 60),
+    "h",
+    endMinutes % 60,
+    ")"
+  );
+
+  const slots = [];
+  for (let minutes = startMinutes; minutes <= endMinutes; minutes += 15) {
+    const hour = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    slots.push({ hour, minutes: minute });
+  }
+
+  return slots;
+};
 
 interface HorizontalReservationCalendarProps {
   filters: FilterState;
 }
 
-const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalendarProps) => {
+const HorizontalReservationCalendar = ({
+  filters,
+}: HorizontalReservationCalendarProps) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    startOfDay(new Date())
+  );
   const [currentDate, setCurrentDate] = useState<Date>(startOfDay(new Date()));
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{
@@ -59,12 +124,17 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     end: Date;
     aircraftId?: string;
   } | null>(null);
-  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [selectedReservation, setSelectedReservation] =
+    useState<Reservation | null>(null);
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([]);
+  const [filteredReservations, setFilteredReservations] = useState<
+    Reservation[]
+  >([]);
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
-  const [aircraftOrder, setAircraftOrder] = useState<{ [key: string]: number }>({});
+  const [aircraftOrder, setAircraftOrder] = useState<{ [key: string]: number }>(
+    {}
+  );
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -79,18 +149,79 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     minute: number;
   } | null>(null);
 
-  const [clubCoordinates, setClubCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [clubCoordinates, setClubCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [clubSettings, setClubSettings] = useState<{
+    night_flights_enabled: boolean;
+  } | null>(null);
+  const [timeSlots, setTimeSlots] = useState<
+    { hour: number; minutes: number }[]
+  >([]);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  useEffect(() => {
+    const loadClubSettings = async () => {
+      if (!currentUser?.club?.id) {
+        console.log("No club ID found");
+        return;
+      }
+
+      console.log("=== Debug Club Settings Load ===");
+      console.log("Club ID:", currentUser.club.id);
+
+      const { data: clubData, error } = await supabase
+        .from("clubs")
+        .select("night_flights_enabled, latitude, longitude")
+        .eq("id", currentUser.club.id)
+        .single();
+
+      if (error) {
+        console.error("Error loading club settings:", error);
+        return;
+      }
+
+      console.log("Club data:", clubData);
+
+      if (clubData) {
+        console.log("Setting club settings:", clubData);
+        setClubSettings(clubData);
+        setClubCoordinates({
+          latitude: clubData.latitude,
+          longitude: clubData.longitude,
+        });
+        const slots = generateTimeSlots(
+          selectedDate,
+          clubData.night_flights_enabled,
+          { latitude: clubData.latitude, longitude: clubData.longitude }
+        );
+        console.log("Setting time slots:", slots);
+        setTimeSlots(slots);
+      }
+    };
+
+    loadClubSettings();
+  }, [currentUser?.club?.id, selectedDate]);
+
+  // Fallback aux créneaux par défaut si aucun créneau n'est chargé
+  useEffect(() => {
+    if (timeSlots.length === 0) {
+      console.log("No time slots loaded, using default slots");
+      const defaultSlots = generateTimeSlots(true, null);
+      setTimeSlots(defaultSlots);
+    }
+  }, [timeSlots]);
 
   useEffect(() => {
     const loadClubCoordinates = async () => {
       if (!currentUser?.club?.id) return;
 
       const { data: clubData } = await supabase
-        .from('clubs')
-        .select('latitude, longitude')
-        .eq('id', currentUser.club.id)
+        .from("clubs")
+        .select("latitude, longitude")
+        .eq("id", currentUser.club.id)
         .single();
 
       if (clubData?.latitude && clubData?.longitude) {
@@ -111,13 +242,13 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     let filtered = [...reservations];
 
     // Filtrer les réservations pour la journée sélectionnée
-    filtered = filtered.filter(r => {
+    filtered = filtered.filter((r) => {
       const start = new Date(r.startTime);
       const end = new Date(r.endTime);
       const dayStart = startOfDay(selectedDate);
       const dayEnd = new Date(dayStart);
       dayEnd.setDate(dayEnd.getDate() + 1);
-      
+
       return (
         (start >= dayStart && start < dayEnd) || // Commence ce jour
         (end > dayStart && end <= dayEnd) || // Finit ce jour
@@ -126,40 +257,47 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     });
 
     // Filter reservations based on user role
-    if (hasAnyGroup(currentUser, ['PILOT']) && !hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR', 'MECHANIC'])) {
-      filtered = filtered.filter(r => r.userId === currentUser.id);
+    if (
+      hasAnyGroup(currentUser, ["PILOT"]) &&
+      !hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR", "MECHANIC"])
+    ) {
+      filtered = filtered.filter((r) => r.userId === currentUser.id);
     }
 
     // Apply filters
     if (filters.aircraftTypes.length > 0) {
-      filtered = filtered.filter(r => {
-        const aircraftType = aircraft.find(a => a.id === r.aircraftId)?.type;
-        return filters.aircraftTypes.includes(aircraftType || '');
+      filtered = filtered.filter((r) => {
+        const aircraftType = aircraft.find((a) => a.id === r.aircraftId)?.type;
+        return filters.aircraftTypes.includes(aircraftType || "");
       });
     }
 
     if (filters.instructors.length > 0) {
-      filtered = filtered.filter(r => filters.instructors.includes(r.instructorId || ''));
+      filtered = filtered.filter((r) =>
+        filters.instructors.includes(r.instructorId || "")
+      );
     }
 
-    if (filters.status !== 'all') {
-      filtered = filtered.filter(r => r.status === filters.status);
+    if (filters.status !== "all") {
+      filtered = filtered.filter((r) => r.status === filters.status);
     }
 
-    if (filters.availability !== 'all') {
+    if (filters.availability !== "all") {
       switch (filters.availability) {
-        case 'available':
-          filtered = filtered.filter(r => {
+        case "available":
+          filtered = filtered.filter((r) => {
             const start = new Date(r.startTime);
             const end = new Date(r.endTime);
             return !isBefore(start, new Date()) && !isAfter(end, new Date());
           });
           break;
-        case 'today':
-          filtered = filtered.filter(r => isToday(new Date(r.startTime)));
+        case "today":
+          filtered = filtered.filter((r) => isToday(new Date(r.startTime)));
           break;
-        case 'week':
-          filtered = filtered.filter(r => isThisWeek(new Date(r.startTime), { locale: fr }));
+        case "week":
+          filtered = filtered.filter((r) =>
+            isThisWeek(new Date(r.startTime), { locale: fr })
+          );
           break;
       }
     }
@@ -187,7 +325,7 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
       setReservations(reservationsData);
 
       const usersData = await getUsers();
-      console.log('Loaded users:', usersData);
+      console.log("Loaded users:", usersData);
       setUsers(usersData);
     } catch (error) {
       console.error("Error loading initial data:", error);
@@ -213,7 +351,7 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     const start = setMinutes(setHours(selectedDate, startHour), startMinutes);
     let end;
 
-    if (typeof endHour === 'number' && typeof endMinutes === 'number') {
+    if (typeof endHour === "number" && typeof endMinutes === "number") {
       end = setMinutes(setHours(selectedDate, endHour), endMinutes);
       // Si la fin est avant le début, on ajoute 15 minutes au début
       if (end <= start) {
@@ -243,7 +381,7 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
   });
 
   const getReservationsForAircraft = (aircraftId: string) => {
-    return filteredReservations.filter(r => r.aircraftId === aircraftId);
+    return filteredReservations.filter((r) => r.aircraftId === aircraftId);
   };
 
   const SLOT_WIDTH = 1.5; // rem
@@ -251,28 +389,28 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
   const calculateReservationStyle = (reservation: Reservation) => {
     const start = new Date(reservation.startTime);
     const end = new Date(reservation.endTime);
-    
-    const startSlotIndex = TIME_SLOTS.findIndex(
-      ({ hour, minutes }) => 
-        hour === start.getHours() && 
-        minutes <= start.getMinutes() && 
+
+    const startSlotIndex = timeSlots.findIndex(
+      ({ hour, minutes }) =>
+        hour === start.getHours() &&
+        minutes <= start.getMinutes() &&
         minutes + 15 > start.getMinutes()
     );
-    
-    const endSlotIndex = TIME_SLOTS.findIndex(
-      ({ hour, minutes }) => 
-        hour === end.getHours() && 
-        minutes <= end.getMinutes() && 
+
+    const endSlotIndex = timeSlots.findIndex(
+      ({ hour, minutes }) =>
+        hour === end.getHours() &&
+        minutes <= end.getMinutes() &&
         minutes + 15 > end.getMinutes()
     );
-    
+
     if (startSlotIndex === -1 || endSlotIndex === -1) {
       return null;
     }
-    
+
     const width = (endSlotIndex - startSlotIndex + 1) * SLOT_WIDTH;
     const left = startSlotIndex * SLOT_WIDTH;
-    
+
     return {
       left: `${left}rem`,
       width: `${width}rem`,
@@ -303,30 +441,43 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
   // Fonction pour déterminer si on doit afficher la bordure pour ce créneau
   const shouldShowBorder = (hour: number, minutes: number) => {
     // Afficher une bordure plus marquée au début de chaque heure pleine
-    return minutes === 45;  // La bordure sera sur le slot précédent celui de l'heure pleine
+    return minutes === 45; // La bordure sera sur le slot précédent celui de l'heure pleine
   };
 
   const isNightTime = (hour: number, minute: number) => {
     if (!clubCoordinates) return false;
-    
+
     const slotTime = setMinutes(setHours(new Date(selectedDate), hour), minute);
-    const sunTimes = getSunTimes(selectedDate, clubCoordinates.latitude, clubCoordinates.longitude);
+    const sunTimes = getSunTimes(
+      selectedDate,
+      clubCoordinates.latitude,
+      clubCoordinates.longitude
+    );
     return slotTime < sunTimes.aeroStart || slotTime > sunTimes.aeroEnd;
   };
 
   const isFirstNightSlot = (hour: number, minute: number) => {
     if (!clubCoordinates) return false;
-    
+
     const slotTime = setMinutes(setHours(new Date(selectedDate), hour), minute);
     const prevSlotTime = new Date(slotTime);
     prevSlotTime.setMinutes(prevSlotTime.getMinutes() - 15);
-    
-    const sunTimes = getSunTimes(selectedDate, clubCoordinates.latitude, clubCoordinates.longitude);
+
+    const sunTimes = getSunTimes(
+      selectedDate,
+      clubCoordinates.latitude,
+      clubCoordinates.longitude
+    );
     return slotTime > sunTimes.aeroEnd && prevSlotTime <= sunTimes.aeroEnd;
   };
 
-  const isFirstSelectedSlot = (hour: number, minutes: number, aircraftId: string) => {
-    if (!selectedTimeSlot || selectedTimeSlot.aircraftId !== aircraftId) return false;
+  const isFirstSelectedSlot = (
+    hour: number,
+    minutes: number,
+    aircraftId: string
+  ) => {
+    if (!selectedTimeSlot || selectedTimeSlot.aircraftId !== aircraftId)
+      return false;
 
     const slotTime = new Date(selectedDate);
     slotTime.setHours(hour, minutes, 0, 0);
@@ -346,7 +497,9 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     // Calculer la durée en minutes
     const start = new Date(reservation.startTime);
     const end = new Date(reservation.endTime);
-    const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+    const duration = Math.round(
+      (end.getTime() - start.getTime()) / (1000 * 60)
+    );
 
     navigate("/flights/create", {
       state: {
@@ -371,7 +524,22 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     }
   };
 
-  const handleMouseDown = (hour: number, minutes: number, aircraftId: string) => {
+  const handleMouseDown = (
+    hour: number,
+    minutes: number,
+    aircraftId: string
+  ) => {
+    // Vérifier si une réservation existe déjà à cet emplacement
+    const existingReservation = filteredReservations.find((r) => {
+      const slotTime = setMinutes(setHours(selectedDate, hour), minutes);
+      const start = new Date(r.startTime);
+      const end = new Date(r.endTime);
+      return slotTime >= start && slotTime < end && r.aircraftId === aircraftId;
+    });
+
+    // Ne pas démarrer la sélection s'il y a déjà une réservation
+    if (existingReservation) return;
+
     const start = setMinutes(setHours(selectedDate, hour), minutes);
     setIsSelecting(true);
     setSelectionStart({
@@ -390,27 +558,35 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
   const handleMouseMove = (hour: number, minutes: number) => {
     if (!isSelecting || !selectionStart) return;
 
+    // Vérifier si on est toujours sur le même avion
+    const currentSlot = document.elementFromPoint(
+      event?.clientX || 0,
+      event?.clientY || 0
+    );
+    const aircraftRow = currentSlot?.closest("[data-aircraft-id]");
+    if (
+      !aircraftRow ||
+      aircraftRow.getAttribute("data-aircraft-id") !== selectionStart.aircraftId
+    ) {
+      return;
+    }
+
     setSelectionEnd({ hour, minute: minutes });
 
     // Calculer le début et la fin de la sélection
-    const startTime = new Date(selectedDate);
-    startTime.setHours(
-      Math.min(selectionStart.hour, hour),
-      Math.min(selectionStart.minute, minutes),
-      0,
-      0
-    );
+    let startTime = new Date(selectedDate);
+    let endTime = new Date(selectedDate);
 
-    const endTime = new Date(selectedDate);
-    endTime.setHours(
-      Math.max(selectionStart.hour, hour),
-      Math.max(selectionStart.minute, minutes),
-      0,
-      0
-    );
-
-    // Ajouter 15 minutes à la fin pour inclure le dernier créneau
-    endTime.setMinutes(endTime.getMinutes() + 15);
+    if (
+      hour < selectionStart.hour ||
+      (hour === selectionStart.hour && minutes < selectionStart.minute)
+    ) {
+      startTime.setHours(hour, minutes, 0, 0);
+      endTime.setHours(selectionStart.hour, selectionStart.minute + 15, 0, 0);
+    } else {
+      startTime.setHours(selectionStart.hour, selectionStart.minute, 0, 0);
+      endTime.setHours(hour, minutes + 15, 0, 0);
+    }
 
     setSelectedTimeSlot({
       start: startTime,
@@ -428,21 +604,25 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
     setSelectionEnd(null);
   };
 
-  const isSlotSelected = (hour: number, minutes: number, aircraftId: string) => {
-    if (!selectedTimeSlot || selectedTimeSlot.aircraftId !== aircraftId) return false;
+  const isSlotSelected = (
+    hour: number,
+    minutes: number,
+    aircraftId: string
+  ) => {
+    if (!selectedTimeSlot || selectedTimeSlot.aircraftId !== aircraftId)
+      return false;
 
     const slotTime = new Date(selectedDate);
     slotTime.setHours(hour, minutes, 0, 0);
 
     return (
-      slotTime >= selectedTimeSlot.start &&
-      slotTime < selectedTimeSlot.end
+      slotTime >= selectedTimeSlot.start && slotTime < selectedTimeSlot.end
     );
   };
 
   // Fonction utilitaire pour trouver l'index du créneau horaire
   const findTimeSlotIndex = (hour: number, minutes: number) => {
-    return ((hour - 7) * 4) + Math.floor(minutes / 15);
+    return (hour - 7) * 4 + Math.floor(minutes / 15);
   };
 
   const CELL_WIDTH = 32; // Largeur d'une cellule en pixels (w-8 = 32px)
@@ -450,6 +630,7 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
 
   const CurrentTimeLine = ({ selectedDate }: { selectedDate: Date }) => {
     const [position, setPosition] = useState<number>(0);
+    const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
       const updatePosition = () => {
@@ -458,29 +639,59 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
 
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
-        
+        const currentTime = currentHour * 60 + currentMinute; // Temps en minutes
+
+        // Obtenir les heures aéronautiques précises
+        const sunTimes = clubCoordinates
+          ? getSunTimes(
+              selectedDate,
+              clubCoordinates.latitude,
+              clubCoordinates.longitude
+            )
+          : null;
+
+        if (!sunTimes) {
+          setIsVisible(false);
+          return;
+        }
+
+        // Convertir les heures aéronautiques en minutes pour une comparaison précise
+        const aeroStartMinutes =
+          sunTimes.aeroStart.getHours() * 60 + sunTimes.aeroStart.getMinutes();
+        const aeroEndMinutes =
+          sunTimes.aeroEnd.getHours() * 60 + sunTimes.aeroEnd.getMinutes();
+
+        // Masquer la ligne si hors limites de la journée aéronautique
+        if (currentTime < aeroStartMinutes || currentTime > aeroEndMinutes) {
+          setIsVisible(false);
+          return;
+        }
+
+        setIsVisible(true);
+
         // Calculer la position en pixels
         const hoursSinceStart = currentHour - START_HOUR;
         const minutePercentage = currentMinute / 60;
-        const position = (hoursSinceStart + minutePercentage) * (CELL_WIDTH * 4); // 4 cellules par heure
+        const position =
+          (hoursSinceStart + minutePercentage) * (CELL_WIDTH * 4);
 
         setPosition(position);
       };
 
       updatePosition();
-      const interval = setInterval(updatePosition, 60000); // Mise à jour toutes les minutes
+      const interval = setInterval(updatePosition, 60000);
 
       return () => clearInterval(interval);
-    }, [selectedDate]);
+    }, [selectedDate, clubCoordinates]);
 
-    if (!isToday(selectedDate)) return null;
+    if (!isToday(selectedDate) || !isVisible) return null;
 
     return (
-      <div 
+      <div
         className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-20 pointer-events-none"
-        style={{ 
+        style={{
           left: `${position}px`,
-          opacity: 0.75
+          opacity: 0.75,
         }}
       />
     );
@@ -492,7 +703,10 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-4">
           <div className="flex items-center">
-            <button onClick={handlePreviousDay} className="p-2 hover:bg-slate-100 rounded-lg">
+            <button
+              onClick={handlePreviousDay}
+              className="p-2 hover:bg-slate-100 rounded-lg"
+            >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <div className="relative">
@@ -522,12 +736,15 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
                 </div>
               )}
             </div>
-            <button onClick={handleNextDay} className="p-2 hover:bg-slate-100 rounded-lg">
+            <button
+              onClick={handleNextDay}
+              className="p-2 hover:bg-slate-100 rounded-lg"
+            >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
-          <SunTimesDisplay 
-            date={selectedDate} 
+          <SunTimesDisplay
+            date={selectedDate}
             className="text-sm text-gray-600 bg-white/50 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm"
           />
         </div>
@@ -550,7 +767,8 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
         <div className="flex h-full">
           {/* Colonne fixe avec les noms des appareils */}
           <div className="sticky left-0 z-10 bg-white border-r border-gray-200 shadow-sm">
-            <div className="h-8" /> {/* Espace pour aligner avec l'en-tête des heures */}
+            <div className="h-8" />{" "}
+            {/* Espace pour aligner avec l'en-tête des heures */}
             <div className="flex flex-col">
               {sortedAircraft.map((a) => (
                 <div
@@ -569,7 +787,7 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
             <div className="relative">
               {/* En-tête des heures */}
               <div className="flex h-8 border-b border-gray-200">
-                {TIME_SLOTS.map(({ hour, minutes }, index) => (
+                {timeSlots.map(({ hour, minutes }, index) => (
                   <div
                     key={index}
                     className={cn(
@@ -591,38 +809,78 @@ const HorizontalReservationCalendar = ({ filters }: HorizontalReservationCalenda
                   <div
                     key={a.id}
                     className="flex h-12 border-b border-gray-200"
+                    data-aircraft-id={a.id}
                   >
-                    {TIME_SLOTS.map(({ hour, minutes }, index) => (
+                    {timeSlots.map(({ hour, minutes }, index) => (
                       <div
                         key={index}
-                        className="flex-shrink-0 w-8 border-r border-gray-200"
-                        onMouseDown={(e) => handleMouseDown(hour, minutes, a.id)}
-                        onMouseEnter={(e) => handleMouseMove(hour, minutes)}
+                        className={cn(
+                          "flex-shrink-0 w-8 border-r border-gray-200",
+                          isSlotSelected(hour, minutes, a.id) && "bg-blue-100",
+                          isNightTime(hour, minutes) && "bg-gray-50"
+                        )}
+                        onMouseDown={() => handleMouseDown(hour, minutes, a.id)}
+                        onMouseEnter={() => handleMouseMove(hour, minutes)}
                         onMouseUp={handleMouseUp}
-                      >
-                        {/* Contenu des cellules */}
-                      </div>
+                      />
                     ))}
                   </div>
                 ))}
                 {/* Réservations */}
-                {filteredReservations.map((reservation) => (
-                  <button
-                    key={reservation.id}
-                    onClick={() => handleReservationClick(reservation)}
-                    className={cn(
-                      "absolute top-0 h-12 rounded px-2 text-xs font-medium transition-colors",
-                      {
-                        "bg-sky-100 hover:bg-sky-200": getReservationStatus(reservation) === "future",
-                        "bg-gray-100 hover:bg-gray-200": getReservationStatus(reservation) === "past",
-                        "bg-green-100 hover:bg-green-200": getReservationStatus(reservation) === "current",
-                      }
-                    )}
-                    style={calculateReservationStyle(reservation)}
-                  >
-                    {users.find((u) => u.id === reservation.pilotId)?.firstName} {users.find((u) => u.id === reservation.pilotId)?.lastName}
-                  </button>
-                ))}
+                {filteredReservations.map((reservation) => {
+                  const pilot = users.find((u) => u.id === reservation.pilotId);
+                  const instructor = reservation.instructorId
+                    ? users.find((u) => u.id === reservation.instructorId)
+                    : null;
+                  const start = new Date(reservation.startTime);
+                  const end = new Date(reservation.endTime);
+
+                  // Déterminer les couleurs en fonction du type de réservation
+                  let bgColor, textColor, borderColor;
+                  if (reservation.hasAssociatedFlight) {
+                    bgColor = "bg-emerald-100";
+                    textColor = "text-emerald-900";
+                    borderColor = "border-emerald-200";
+                  } else if (reservation.instructorId) {
+                    bgColor = "bg-amber-100";
+                    textColor = "text-amber-900";
+                    borderColor = "border-amber-200";
+                  } else {
+                    bgColor = "bg-sky-100";
+                    textColor = "text-sky-900";
+                    borderColor = "border-sky-200";
+                  }
+
+                  return (
+                    <button
+                      key={reservation.id}
+                      onClick={() => handleReservationClick(reservation)}
+                      className={cn(
+                        "absolute top-0 h-12 rounded px-2 text-xs font-medium transition-all shadow-sm border",
+                        bgColor,
+                        textColor,
+                        borderColor,
+                        "hover:shadow-md hover:scale-[1.02]"
+                      )}
+                      style={calculateReservationStyle(reservation)}
+                    >
+                      <div className="p-1">
+                        <div className="font-medium">
+                          {format(start, "H'h'")} - {format(end, "H'h'")}
+                        </div>
+                        <div className="mt-1 line-clamp-2">
+                          {pilot?.first_name || "Pilote inconnu"}
+                          {instructor && (
+                            <>
+                              {" + "}
+                              {instructor.first_name || "Instructeur inconnu"}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

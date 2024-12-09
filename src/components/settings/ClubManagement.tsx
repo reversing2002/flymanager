@@ -11,6 +11,7 @@ interface ClubData {
   email: string;
   latitude: number | null;
   longitude: number | null;
+  night_flights_enabled: boolean;
 }
 
 const ClubManagement = () => {
@@ -64,6 +65,7 @@ const ClubManagement = () => {
       email: formData.get('email') as string,
       latitude: formData.get('latitude') ? Number(formData.get('latitude')) : null,
       longitude: formData.get('longitude') ? Number(formData.get('longitude')) : null,
+      night_flights_enabled: formData.get('night_flights_enabled') === 'on',
       updated_at: new Date().toISOString(),
     };
 
@@ -202,6 +204,24 @@ const ClubManagement = () => {
                 defaultValue={clubData.longitude || ''}
                 className="w-full rounded-lg border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Vols de nuit
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="night_flights_enabled"
+                id="night_flights_enabled"
+                defaultChecked={clubData.night_flights_enabled}
+                className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+              />
+              <label htmlFor="night_flights_enabled" className="text-sm text-slate-600">
+                Activer les vols de nuit dans le planning
+              </label>
             </div>
           </div>
 
