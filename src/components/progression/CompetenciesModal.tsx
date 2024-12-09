@@ -24,6 +24,8 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    console.log('Current user:', user);
+    console.log('User roles:', user?.roles);
     loadProgressions();
   }, [studentId]);
 
@@ -32,9 +34,11 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
       setLoading(true);
       setError(null);
       const data = await getStudentProgressions(studentId);
-      setProgressions(data);
-      if (data.length > 0) {
-        setSelectedTemplate(data[0].template.id);
+      // Filter out left formations
+      const activeProgressions = data.filter(p => !p.left_at);
+      setProgressions(activeProgressions);
+      if (activeProgressions.length > 0) {
+        setSelectedTemplate(activeProgressions[0].template.id);
       }
     } catch (err) {
       console.error('Error loading progressions:', err);
@@ -44,6 +48,8 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
       setLoading(false);
     }
   };
+
+  const isInstructor = user?.roles?.some(role => role.toUpperCase() === 'INSTRUCTOR');
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules(prev => {
@@ -59,8 +65,18 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
 
   const handleValidateSkill = async (progressionId: string, skillId: string) => {
     try {
-      await validateSkill(progressionId, skillId);
-      await loadProgressions(); // Recharger les données
+      if (!user?.id) {
+        toast.error('Vous devez être connecté pour valider une compétence');
+        return;
+      }
+
+      await validateSkill({
+        progression_id: progressionId,
+        skill_id: skillId,
+        instructor_id: user.id,
+        comments: null
+      });
+      await loadProgressions();
       toast.success('Compétence validée avec succès');
     } catch (err) {
       console.error('Error validating skill:', err);
@@ -222,18 +238,25 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
                                       <Check className="h-4 w-4" />
                                       <span className="text-sm">Validée</span>
                                     </div>
-                                  ) : user?.role === 'instructor' ? (
-                                    <button
-                                      onClick={() => handleValidateSkill(progression.id, skill.id)}
-                                      className="flex items-center gap-1 text-sky-600 bg-sky-50 px-2 py-1 rounded hover:bg-sky-100 transition-colors"
-                                    >
-                                      <Check className="h-4 w-4" />
-                                      <span className="text-sm">Valider</span>
-                                    </button>
                                   ) : (
-                                    <div className="flex items-center gap-1 text-slate-600 bg-slate-50 px-2 py-1 rounded">
-                                      <span className="text-sm">En attente</span>
-                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isInstructor) {
+                                          handleValidateSkill(progression.id, skill.id);
+                                        }
+                                      }}
+                                      disabled={!isInstructor}
+                                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                        isInstructor
+                                          ? 'border-sky-500 hover:bg-sky-50 cursor-pointer'
+                                          : 'border-slate-200 cursor-not-allowed'
+                                      }`}
+                                    >
+                                      {isInstructor && (
+                                        <Check className="h-4 w-4 text-sky-500" />
+                                      )}
+                                    </button>
                                   )}
                                 </div>
                               </div>

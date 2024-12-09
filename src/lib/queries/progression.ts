@@ -202,6 +202,28 @@ export async function getStudentProgressions(studentId: string): Promise<Student
 }
 
 export async function createStudentProgression(data: CreateStudentProgression): Promise<StudentProgression> {
+  // Check if a progression already exists for this student and template
+  const { data: existingProgression } = await supabase
+    .from('student_progressions')
+    .select()
+    .eq('student_id', data.student_id)
+    .eq('template_id', data.template_id)
+    .single();
+
+  if (existingProgression) {
+    // If it exists, reactivate it by setting left_at to null
+    const { data: reactivatedProgression, error: updateError } = await supabase
+      .from('student_progressions')
+      .update({ left_at: null })
+      .eq('id', existingProgression.id)
+      .select()
+      .single();
+
+    if (updateError) throw new Error('Erreur lors de la réactivation de la progression');
+    return reactivatedProgression;
+  }
+
+  // If no existing progression, create a new one
   const { data: progression, error } = await supabase
     .from('student_progressions')
     .insert([data])
@@ -221,6 +243,15 @@ export async function completeStudentProgression(id: string, completed: boolean)
     .eq('id', id);
 
   if (error) throw new Error('Erreur lors de la mise à jour de la progression');
+}
+
+export async function leaveStudentProgression(progressionId: string): Promise<void> {
+  const { error } = await supabase
+    .from('student_progressions')
+    .update({ left_at: new Date().toISOString() })
+    .eq('id', progressionId);
+
+  if (error) throw new Error('Erreur lors de la sortie de la formation');
 }
 
 // Skill Validations
