@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Search, Filter, AlertTriangle, User, Book, Award, Calendar, AlertCircle, Phone } from 'lucide-react';
+import { Search, Filter, AlertTriangle, User, Book, Award, Calendar, AlertCircle, Phone, PlusCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { format, isAfter, addMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -9,7 +9,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import StudentPerformanceStats from '../training/StudentPerformanceStats';
 import { Box, Tabs, TabList, TabPanels, TabPanel, Tab } from '@chakra-ui/react';
 import StudentProgressionView from '../progression/StudentProgressionView';
-import { getStudentProgressions } from '../../lib/queries/progression';
+import { getStudentProgressions, getProgressionTemplates, createStudentProgression } from '../../lib/queries/progression';
+import { toast } from 'react-hot-toast';
 
 interface Student {
   id: string;
@@ -40,6 +41,7 @@ interface Student {
 
 const InstructorStudentsPage = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
@@ -49,6 +51,7 @@ const InstructorStudentsPage = () => {
     progressionStatus: 'all',
   });
   const [activeView, setActiveView] = useState('qcm');
+  const [showTemplateSelect, setShowTemplateSelect] = useState(false);
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ['instructorStudents', user?.id],
@@ -170,6 +173,35 @@ const InstructorStudentsPage = () => {
     },
     enabled: !!user?.id,
   });
+
+  const { data: templates, isLoading: loadingTemplates } = useQuery({
+    queryKey: ['progressionTemplates'],
+    queryFn: () => getProgressionTemplates(),
+  });
+
+  const { data: progressions, isLoading: loadingProgressions } = useQuery({
+    queryKey: ['studentProgressions', selectedStudent],
+    queryFn: () => selectedStudent ? getStudentProgressions(selectedStudent) : Promise.resolve([]),
+    enabled: !!selectedStudent,
+  });
+
+  const handleCreateProgression = async (templateId: string) => {
+    if (!selectedStudent) return;
+
+    try {
+      await createStudentProgression({
+        student_id: selectedStudent,
+        template_id: templateId,
+        start_date: new Date().toISOString()
+      });
+      await queryClient.invalidateQueries(['instructorStudents', user?.id]);
+      toast.success('Formation assignée avec succès');
+      setShowTemplateSelect(false);
+    } catch (error) {
+      console.error('Erreur lors de l\'assignation de la formation:', error);
+      toast.error('Erreur lors de l\'assignation de la formation');
+    }
+  };
 
   const filteredStudents = students.filter(student => {
     // Search filter
@@ -353,6 +385,46 @@ const InstructorStudentsPage = () => {
                     )}
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  {selectedStudent === student.id && showTemplateSelect ? (
+                    <div className="flex items-center gap-2">
+                      <select
+                        className="rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+                        onChange={(e) => handleCreateProgression(e.target.value)}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>
+                          Sélectionner une formation
+                        </option>
+                        {templates?.map((template) => (
+                          <option key={template.id} value={template.id}>
+                            {template.title}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => {
+                          setSelectedStudent(null);
+                          setShowTemplateSelect(false);
+                        }}
+                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setSelectedStudent(student.id);
+                        setShowTemplateSelect(true);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-sky-600 hover:bg-sky-50 rounded-lg"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      <span>Assigner une formation</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -483,7 +555,11 @@ const InstructorStudentsPage = () => {
                 {activeView === 'qcm' ? (
                   <StudentPerformanceStats userId={selectedStudent} />
                 ) : (
-                  <StudentProgressionQuery studentId={selectedStudent} />
+                  <StudentProgressionView 
+                    progressions={progressions || []} 
+                    isLoading={loadingProgressions}
+                    canValidate={true}
+                  />
                 )}
               </div>
             </div>
@@ -497,20 +573,5 @@ const InstructorStudentsPage = () => {
     </div>
   );
 };
-
-function StudentProgressionQuery({ studentId }: { studentId: string }) {
-  const { data: progressions, isLoading } = useQuery({
-    queryKey: ['student-progressions', studentId],
-    queryFn: () => getStudentProgressions(studentId)
-  });
-
-  return (
-    <StudentProgressionView 
-      progressions={progressions || []} 
-      isLoading={isLoading}
-      canValidate={true}
-    />
-  );
-}
 
 export default InstructorStudentsPage;

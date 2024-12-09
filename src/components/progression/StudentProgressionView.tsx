@@ -8,6 +8,7 @@ import { fr } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
 import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Eye, BookOpen, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { leaveStudentProgression } from '../../lib/queries/progression';
 import {
   Select,
   SelectContent,
@@ -153,6 +154,17 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
   // Use all progressions instead of filtering out left ones
   const [selectedProgressionId, setSelectedProgressionId] = useState<string>(progressions?.[0]?.id || '');
 
+  const handleLeaveProgression = async (progressionId: string) => {
+    try {
+      await leaveStudentProgression(progressionId);
+      await queryClient.invalidateQueries(['studentProgressions']);
+      toast.success('Formation désassignée avec succès');
+    } catch (error) {
+      console.error('Erreur lors de la désassignation:', error);
+      toast.error('Erreur lors de la désassignation de la formation');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-48">
@@ -222,6 +234,15 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
+                      {canValidate && !progression.left_at && !progression.completed_at && (
+                        <button
+                          onClick={() => handleLeaveProgression(progression.id)}
+                          className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+                        >
+                          <X className="h-4 w-4" />
+                          <span>Désassigner</span>
+                        </button>
+                      )}
                       {membershipStatus === 'expired' && (
                         <TooltipProvider>
                           <Tooltip>

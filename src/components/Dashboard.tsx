@@ -526,7 +526,7 @@ const Dashboard = () => {
         <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl p-6 shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-slate-800">Événements à venir</h2>
-            <Link to="/calendar" className="text-sm text-slate-600 hover:text-slate-800">
+            <Link to="/events" className="text-sm text-slate-600 hover:text-slate-800">
               Voir tout
             </Link>
           </div>
