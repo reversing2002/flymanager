@@ -135,17 +135,18 @@ export function validatePilotOverlap(
     const reservationStart = new Date(reservation.startTime);
     const reservationEnd = new Date(reservation.endTime);
 
-    // Vérifier le chevauchement
+    // Vérifier le chevauchement, même si c'est sur un avion différent
     return (
-      (startTime >= reservationStart && startTime < reservationEnd) || // Le début est pendant une autre réservation
-      (endTime > reservationStart && endTime <= reservationEnd) || // La fin est pendant une autre réservation
-      (startTime <= reservationStart && endTime >= reservationEnd) // La réservation englobe une autre
+      (startTime >= reservationStart && startTime < reservationEnd) ||
+      (endTime > reservationStart && endTime <= reservationEnd) ||
+      (startTime <= reservationStart && endTime >= reservationEnd)
     );
   });
 
   if (overlappingReservation) {
     return {
-      message: "Le pilote a déjà une réservation sur cette période",
+      message:
+        "Un pilote ne peut pas avoir plusieurs réservations simultanées, même sur des avions différents",
       code: "PILOT_OVERLAP",
     };
   }
