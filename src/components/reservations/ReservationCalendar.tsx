@@ -30,6 +30,8 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
 import SunTimesDisplay from "../common/SunTimesDisplay";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 
 interface ReservationCalendarProps {
   filters: FilterState;
@@ -55,6 +57,7 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
   const [flights, setFlights] = useState<{ reservationId: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Charger les données initiales
   useEffect(() => {
@@ -337,11 +340,32 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
             <button onClick={handlePreviousDay} className="p-2 hover:bg-slate-100 rounded-lg">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <div className="flex items-center gap-2 w-[16rem] justify-center">
-              <CalendarIcon className="h-4 w-4" />
-              <span className="font-medium">
-                {format(selectedDate, "EEEE d MMMM", { locale: fr })}
-              </span>
+            <div className="relative">
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="flex items-center gap-2 px-3 py-2 hover:bg-slate-100 rounded-lg"
+              >
+                <CalendarIcon className="h-4 w-4" />
+                <span className="font-medium">
+                  {format(selectedDate, "EEEE d MMMM", { locale: fr })}
+                </span>
+              </button>
+              {showDatePicker && (
+                <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50">
+                  <DayPicker
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setSelectedDate(startOfDay(date));
+                        setShowDatePicker(false);
+                      }
+                    }}
+                    locale={fr}
+                    className="p-3"
+                  />
+                </div>
+              )}
             </div>
             <button onClick={handleNextDay} className="p-2 hover:bg-slate-100 rounded-lg">
               <ChevronRight className="h-4 w-4" />
