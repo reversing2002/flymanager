@@ -7,11 +7,13 @@ import { toast } from 'react-hot-toast';
 
 interface CompetenciesModalProps {
   studentId: string;
+  flightId?: string;
   onClose: () => void;
 }
 
 const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
   studentId,
+  flightId,
   onClose,
 }) => {
   const { user } = useAuth();
@@ -70,10 +72,19 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
         return;
       }
 
+      console.log('Validating skill with data:', {
+        progression_id: progressionId,
+        skill_id: skillId,
+        instructor_id: user.id,
+        flight_id: flightId,
+        status: status
+      });
+
       await validateSkill({
         progression_id: progressionId,
         skill_id: skillId,
         instructor_id: user.id,
+        flight_id: flightId || null,
         comments: null,
         status: status
       });
@@ -232,14 +243,28 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
                                       {skill.description}
                                     </p>
                                   )}
+                                  {/* Display validation history */}
+                                  {progression.validations
+                                    .filter(v => v.skill_id === skill.id)
+                                    .sort((a, b) => new Date(b.validated_at).getTime() - new Date(a.validated_at).getTime())
+                                    .map((validation, index) => (
+                                      <div key={validation.id} className="mt-2 text-sm text-slate-600">
+                                        <span className={`${index === 0 ? 'font-medium' : ''}`}>
+                                          {new Date(validation.validated_at).toLocaleDateString()} - {validation.status}
+                                        </span>
+                                        {validation.instructor && (
+                                          <span className="ml-1">
+                                            par {validation.instructor.first_name} {validation.instructor.last_name}
+                                          </span>
+                                        )}
+                                        {validation.comments && (
+                                          <p className="text-sm text-slate-500 mt-1">{validation.comments}</p>
+                                        )}
+                                      </div>
+                                    ))}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  {validation ? (
-                                    <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded">
-                                      <Check className="h-4 w-4" />
-                                      <span className="text-sm">{validation.status}</span>
-                                    </div>
-                                  ) : isInstructor ? (
+                                  {isInstructor && (
                                     <div className="flex items-center gap-2">
                                       <button
                                         onClick={() => handleValidateSkill(progression.id, skill.id, 'vu')}
@@ -260,7 +285,7 @@ const CompetenciesModal: React.FC<CompetenciesModalProps> = ({
                                         Validé
                                       </button>
                                     </div>
-                                  ) : null}
+                                  )}
                                 </div>
                               </div>
                             );

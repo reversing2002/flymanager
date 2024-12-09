@@ -44,6 +44,7 @@ export interface SkillValidation {
   progression_id: string;
   skill_id: string;
   instructor_id: string | null;
+  flight_id: string | null;
   validated_at: string;
   status: 'vu' | 'guidé' | 'validé';
   comments: string | null;
@@ -122,6 +123,7 @@ export interface CreateSkillValidation {
   progression_id: string;
   skill_id: string;
   instructor_id: string;
+  flight_id?: string | null;
   comments: string | null;
   status: 'vu' | 'guidé' | 'validé';
 }

@@ -257,7 +257,7 @@ export async function leaveStudentProgression(progressionId: string): Promise<vo
 // Skill Validations
 export async function validateSkill(data: CreateSkillValidation): Promise<SkillValidation> {
   // Ensure status is one of the valid values
-  console.log(data);
+  console.log('Validation data:', data);
   const validStatus = data.status === 'vu' || data.status === 'guidé' || data.status === 'validé' 
     ? data.status 
     : 'validé';
@@ -268,6 +268,7 @@ export async function validateSkill(data: CreateSkillValidation): Promise<SkillV
       progression_id: data.progression_id,
       skill_id: data.skill_id,
       instructor_id: data.instructor_id,
+      flight_id: data.flight_id,
       comments: data.comments,
       status: validStatus,
       validated_at: new Date().toISOString()

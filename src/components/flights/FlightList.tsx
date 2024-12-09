@@ -26,6 +26,7 @@ const FlightList = () => {
   const [error, setError] = useState<string | null>(null);
   const [showCompetenciesModal, setShowCompetenciesModal] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
 
   const [filters, setFilters] = useState({
     dateRange: "all",
@@ -391,6 +392,7 @@ const FlightList = () => {
                           <button
                             onClick={() => {
                               setSelectedStudentId(flight.userId);
+                              setSelectedFlightId(flight.id);
                               setShowCompetenciesModal(true);
                             }}
                             className="text-blue-600 hover:text-blue-800"
@@ -831,9 +833,11 @@ const FlightList = () => {
       {showCompetenciesModal && selectedStudentId && (
         <CompetenciesModal
           studentId={selectedStudentId}
+          flightId={selectedFlightId}
           onClose={() => {
             setShowCompetenciesModal(false);
             setSelectedStudentId(null);
+            setSelectedFlightId(null);
           }}
         />
       )}
