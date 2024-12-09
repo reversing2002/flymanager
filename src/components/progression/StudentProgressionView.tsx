@@ -8,6 +8,13 @@ import { fr } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
 import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Eye, BookOpen, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 interface StudentProgressionViewProps {
   progressions: StudentProgressionWithDetails[];
@@ -143,9 +150,8 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
   const { user } = useUser();
   const queryClient = useQueryClient();
   
-  // Filter out left formations
-  const activeProgressions = progressions.filter(p => !p.left_at);
-  const [selectedProgressionId, setSelectedProgressionId] = useState<string>(activeProgressions?.[0]?.id || '');
+  // Use all progressions instead of filtering out left ones
+  const [selectedProgressionId, setSelectedProgressionId] = useState<string>(progressions?.[0]?.id || '');
 
   if (isLoading) {
     return (
@@ -155,7 +161,7 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
     );
   }
 
-  if (!activeProgressions || activeProgressions.length === 0) {
+  if (!progressions || progressions.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
         <h3 className="text-lg font-medium text-slate-900">
@@ -168,25 +174,29 @@ export default function StudentProgressionView({ progressions, isLoading, canVal
     );
   }
 
+  const selectedProgression = progressions.find(p => p.id === selectedProgressionId);
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
-      {activeProgressions.length > 1 && (
+      {progressions.length > 1 && (
         <div className="w-full max-w-xs">
           <Select value={selectedProgressionId} onValueChange={setSelectedProgressionId}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Choisir une formation" />
             </SelectTrigger>
             <SelectContent>
-              {activeProgressions.map((progression) => (
+              {progressions.map((progression) => (
                 <SelectItem key={progression.id} value={progression.id}>
                   {progression.template.title}
+                  {progression.left_at && " (Quittée)"}
+                  {progression.completed_at && " (Terminée)"}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       )}
-      {activeProgressions
+      {progressions
         .filter((progression) => progression.id === selectedProgressionId)
         .map((progression) => {
           const totalSkills = progression.template.modules.reduce(

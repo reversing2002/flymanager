@@ -7,6 +7,9 @@ import { format, isAfter, addMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuth } from '../../contexts/AuthContext';
 import StudentPerformanceStats from '../training/StudentPerformanceStats';
+import { Box, Tabs, TabList, TabPanels, TabPanel, Tab } from '@chakra-ui/react';
+import StudentProgressionView from '../progression/StudentProgressionView';
+import { getStudentProgressions } from '../../lib/queries/progression';
 
 interface Student {
   id: string;
@@ -19,9 +22,9 @@ interface Student {
     valid_until: string;
   }[];
   membership_expiry: string;
-  progressions: {
+  student_progressions: {
     id: string;
-    template: {
+    progression_templates: {
       title: string;
     };
     completed_at: string | null;
@@ -45,6 +48,7 @@ const InstructorStudentsPage = () => {
     membershipStatus: 'all',
     progressionStatus: 'all',
   });
+  const [activeView, setActiveView] = useState('qcm');
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ['instructorStudents', user?.id],
@@ -449,8 +453,39 @@ const InstructorStudentsPage = () => {
         <div className="border rounded-lg p-4">
           {selectedStudent ? (
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Performance détaillée</h2>
-              <StudentPerformanceStats userId={selectedStudent} />
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Performance détaillée</h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setActiveView('qcm')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      activeView === 'qcm'
+                        ? 'bg-sky-100 text-sky-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    QCM
+                  </button>
+                  <button
+                    onClick={() => setActiveView('formation')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      activeView === 'formation'
+                        ? 'bg-sky-100 text-sky-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Formation
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                {activeView === 'qcm' ? (
+                  <StudentPerformanceStats userId={selectedStudent} />
+                ) : (
+                  <StudentProgressionQuery studentId={selectedStudent} />
+                )}
+              </div>
             </div>
           ) : (
             <div className="text-center text-gray-500 py-8">
@@ -462,5 +497,20 @@ const InstructorStudentsPage = () => {
     </div>
   );
 };
+
+function StudentProgressionQuery({ studentId }: { studentId: string }) {
+  const { data: progressions, isLoading } = useQuery({
+    queryKey: ['student-progressions', studentId],
+    queryFn: () => getStudentProgressions(studentId)
+  });
+
+  return (
+    <StudentProgressionView 
+      progressions={progressions || []} 
+      isLoading={isLoading}
+      canValidate={true}
+    />
+  );
+}
 
 export default InstructorStudentsPage;
