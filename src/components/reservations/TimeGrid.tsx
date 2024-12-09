@@ -358,123 +358,109 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     return slotMinutes > aeroEndMinutes && prevSlotMinutes <= aeroEndMinutes;
   };
 
-  // Synchroniser le défilement
-  useEffect(() => {
-    const gridContainer = gridContainerRef.current;
-    const hoursColumn = hoursColumnRef.current;
-
-    if (!gridContainer || !hoursColumn) return;
-
-    const handleScroll = () => {
-      hoursColumn.scrollTop = gridContainer.scrollTop;
-    };
-
-    gridContainer.addEventListener("scroll", handleScroll);
-    return () => {
-      gridContainer.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
   return (
     <div ref={timeGridRef} className="relative h-full">
-      {/* Coin supérieur gauche fixe */}
-      <div className="absolute left-0 top-0 w-20 h-[40px] bg-white z-20 border-r border-b border-slate-200" />
-
-      {/* Colonne des heures */}
-      <div
-        ref={hoursColumnRef}
-        className="absolute left-0 top-[40px] bottom-0 w-20 bg-white z-10 border-r border-slate-200 overflow-hidden"
-      >
-        <div className="h-full">
-          {timeSlots.map(({ hour, minute }, index) => (
-            <div
-              key={`time-${hour}-${minute}`}
-              className="h-4 flex items-center justify-end pr-2 text-xs text-slate-500"
-            >
-              {minute === 0 && (
-                <span className="font-semibold">{`${hour}h`}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Container principal avec scroll */}
-      <div ref={gridContainerRef} className="h-full overflow-auto ml-20">
-        <div className="min-w-full">
-          {/* En-tête des avions (fixe en vertical) */}
+      <div className="h-full overflow-auto">
+        <div className="inline-flex min-w-full">
+          {/* Colonne des heures - sticky left uniquement */}
           <div
-            className="sticky top-0 bg-white z-10 grid"
-            style={{
-              gridTemplateColumns: `repeat(${sortedAircraft.length}, minmax(200px, 1fr))`,
-            }}
+            ref={hoursColumnRef}
+            className="sticky left-0 w-20 bg-white border-r border-slate-200 z-20"
           >
-            {sortedAircraft.map((aircraft) => (
-              <div
-                key={`header-${aircraft.id}`}
-                className="p-2 text-center border-b border-slate-200"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Plane className="h-4 w-4" />
-                  <span className="font-medium">{aircraft.registration}</span>
+            {/* En-tête vide pour aligner avec les avions */}
+            <div className="h-[40px] bg-white border-b border-slate-200" />
+
+            {/* Les heures */}
+            <div>
+              {timeSlots.map(({ hour, minute }, index) => (
+                <div
+                  key={`time-${hour}-${minute}`}
+                  className="h-4 flex items-center justify-end pr-2 text-xs text-slate-500"
+                >
+                  {minute === 0 && (
+                    <span className="font-semibold">{`${hour}h`}</span>
+                  )}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          {/* Grille des créneaux */}
-          <div
-            className="grid"
-            style={{
-              gridTemplateColumns: `repeat(${sortedAircraft.length}, minmax(200px, 1fr))`,
-            }}
-          >
-            {sortedAircraft.map((aircraft) => (
-              <div key={`grid-${aircraft.id}`} className="relative">
-                {timeSlots.map(({ hour, minute }, index) => (
-                  <div
-                    key={`${hour}-${minute}`}
-                    className={`h-4 border-b border-slate-100 relative group ${
-                      minute === 45 ? "border-b-2 border-b-slate-200" : ""
-                    } ${
-                      isSlotSelected(hour, minute, aircraft.id)
-                        ? "bg-sky-100"
-                        : isNightTime(hour, minute)
-                        ? "bg-gray-100"
-                        : "bg-white hover:bg-slate-50"
-                    }`}
-                    onMouseDown={(e) =>
-                      handleMouseDown(hour, minute, aircraft.id)
-                    }
-                    onMouseMove={(e) => handleMouseMove(hour, minute)}
-                    onMouseUp={handleMouseUp}
-                  >
-                    {isFirstNightSlot(hour, minute) && (
-                      <div className="absolute -top-1 left-0 w-full flex items-center justify-center">
-                        <Moon className="w-3 h-3 text-gray-400" />
-                      </div>
-                    )}
-                    <div className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {isSlotSelected(hour, minute, aircraft.id)
-                        ? (() => {
-                            const times = getSelectionTimes();
-                            return times
-                              ? `${times.startTime} à ${times.endTime}`
-                              : "";
-                          })()
-                        : `${hour.toString().padStart(2, "0")}:${minute
-                            .toString()
-                            .padStart(2, "0")}`}
-                    </div>
+          {/* Contenu principal */}
+          <div className="flex-1">
+            {/* En-tête des avions */}
+            <div
+              className="sticky top-0 bg-white z-10 grid"
+              style={{
+                gridTemplateColumns: `repeat(${sortedAircraft.length}, minmax(200px, 1fr))`,
+              }}
+            >
+              {sortedAircraft.map((aircraft) => (
+                <div
+                  key={`header-${aircraft.id}`}
+                  className="p-2 text-center border-b border-slate-200"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Plane className="h-4 w-4" />
+                    <span className="font-medium">{aircraft.registration}</span>
                   </div>
-                ))}
+                </div>
+              ))}
+            </div>
 
-                {/* Reservations */}
-                {getReservationsForAircraft(aircraft.id).map((reservation) =>
-                  renderReservation(reservation)
-                )}
-              </div>
-            ))}
+            {/* Grille des créneaux */}
+            <div
+              className="grid"
+              style={{
+                gridTemplateColumns: `repeat(${sortedAircraft.length}, minmax(200px, 1fr))`,
+              }}
+            >
+              {sortedAircraft.map((aircraft) => (
+                <div key={`grid-${aircraft.id}`} className="relative">
+                  {timeSlots.map(({ hour, minute }, index) => (
+                    <div
+                      key={`${hour}-${minute}`}
+                      className={`h-4 border-b border-slate-100 relative group ${
+                        minute === 45 ? "border-b-2 border-b-slate-200" : ""
+                      } ${
+                        isSlotSelected(hour, minute, aircraft.id)
+                          ? "bg-sky-100"
+                          : isNightTime(hour, minute)
+                          ? "bg-gray-100"
+                          : "bg-white hover:bg-slate-50"
+                      }`}
+                      onMouseDown={(e) =>
+                        handleMouseDown(hour, minute, aircraft.id)
+                      }
+                      onMouseMove={(e) => handleMouseMove(hour, minute)}
+                      onMouseUp={handleMouseUp}
+                    >
+                      {isFirstNightSlot(hour, minute) && (
+                        <div className="absolute -top-1 left-0 w-full flex items-center justify-center">
+                          <Moon className="w-3 h-3 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {isSlotSelected(hour, minute, aircraft.id)
+                          ? (() => {
+                              const times = getSelectionTimes();
+                              return times
+                                ? `${times.startTime} à ${times.endTime}`
+                                : "";
+                            })()
+                          : `${hour.toString().padStart(2, "0")}:${minute
+                              .toString()
+                              .padStart(2, "0")}`}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Reservations */}
+                  {getReservationsForAircraft(aircraft.id).map((reservation) =>
+                    renderReservation(reservation)
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

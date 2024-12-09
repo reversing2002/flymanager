@@ -288,15 +288,23 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
-    try {
-      // Vérifier si le vol est validé
-      if (flight.isValidated) {
-        throw new Error("Impossible de modifier un vol validé");
-      }
+    // Vérifier que la date n'est pas dans le futur
+    const selectedDate = new Date(formData.date);
+    const today = new Date();
+    if (selectedDate > today) {
+      setError("La date du vol ne peut pas être dans le futur");
+      return;
+    }
 
+    // Vérifier si le vol est validé
+    if (flight.isValidated) {
+      throw new Error("Impossible de modifier un vol validé");
+    }
+
+    setLoading(true);
+    try {
       const aircraft = aircraftList.find((a) => a.id === formData.aircraftId);
       const instructor = formData.instructorId ? users.find(u => u.id === formData.instructorId) : undefined;
       const duration = calculateDurationFromHourMeter(formData.start_hour_meter, formData.end_hour_meter);

@@ -159,7 +159,7 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
       setReservations(reservationsData);
 
       // Charger l'ordre des avions
-      const order = await getAircraftOrder();
+      const order = await getAircraftOrder(currentUser?.club?.id || "");
       setAircraftOrder(order);
     } catch (error) {
       console.error("Error loading data:", error);

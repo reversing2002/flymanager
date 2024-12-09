@@ -1,5 +1,5 @@
 import { Reservation } from "../types/database";
-import { areIntervalsOverlapping, isFuture } from "date-fns";
+import { isFuture } from "date-fns";
 
 export interface ValidationError {
   message: string;
@@ -59,13 +59,15 @@ export function validateReservationOverlap(
       return false;
     }
 
-    // Vérifier le chevauchement des intervalles
-    return areIntervalsOverlapping(
-      {
-        start: new Date(reservation.startTime),
-        end: new Date(reservation.endTime),
-      },
-      { start: startTime, end: endTime }
+    // Convertir les dates de string en Date
+    const reservationStart = new Date(reservation.startTime);
+    const reservationEnd = new Date(reservation.endTime);
+
+    // Vérifier le chevauchement
+    return (
+      (startTime >= reservationStart && startTime < reservationEnd) || // Le début est pendant une autre réservation
+      (endTime > reservationStart && endTime <= reservationEnd) || // La fin est pendant une autre réservation
+      (startTime <= reservationStart && endTime >= reservationEnd) // La réservation englobe une autre
     );
   });
 
@@ -111,61 +113,146 @@ export function validateReservationHours(
   return null;
 }
 
-export const validateReservation = (
+export function validatePilotOverlap(
   startTime: Date,
   endTime: Date,
-  aircraftId: string,
-  reservations: Reservation[],
-  currentReservationId?: string
-) => {
-  console.log("Début de validation pour la réservation:", currentReservationId);
+  pilotId: string,
+  existingReservations: Reservation[],
+  excludeReservationId?: string
+): ValidationError | null {
+  const overlappingReservation = existingReservations.find((reservation) => {
+    // Ignorer la réservation en cours de modification
+    if (excludeReservationId && reservation.id === excludeReservationId) {
+      return false;
+    }
 
-  if (startTime >= endTime) {
+    // Vérifier si le pilote est impliqué dans une autre réservation
+    if (reservation.pilotId !== pilotId) {
+      return false;
+    }
+
+    // Convertir les dates de string en Date
+    const reservationStart = new Date(reservation.startTime);
+    const reservationEnd = new Date(reservation.endTime);
+
+    // Vérifier le chevauchement
+    return (
+      (startTime >= reservationStart && startTime < reservationEnd) || // Le début est pendant une autre réservation
+      (endTime > reservationStart && endTime <= reservationEnd) || // La fin est pendant une autre réservation
+      (startTime <= reservationStart && endTime >= reservationEnd) // La réservation englobe une autre
+    );
+  });
+
+  if (overlappingReservation) {
     return {
-      message: "La date de fin doit être postérieure à la date de début",
+      message: "Le pilote a déjà une réservation sur cette période",
+      code: "PILOT_OVERLAP",
     };
   }
 
-  // Filtrer d'abord les réservations pertinentes
-  const relevantReservations = reservations.filter((reservation) => {
-    // Exclure la réservation en cours de modification
-    if (currentReservationId && reservation.id === currentReservationId) {
-      console.log("Exclusion de la réservation courante:", reservation.id);
+  return null;
+}
+
+export function validateInstructorOverlap(
+  startTime: Date,
+  endTime: Date,
+  instructorId: string | null,
+  existingReservations: Reservation[],
+  excludeReservationId?: string
+): ValidationError | null {
+  if (!instructorId) return null;
+
+  const overlappingReservation = existingReservations.find((reservation) => {
+    // Ignorer la réservation en cours de modification
+    if (excludeReservationId && reservation.id === excludeReservationId) {
       return false;
     }
 
-    // Ne garder que les réservations pour le même appareil
-    if (reservation.aircraftId !== aircraftId) {
-      console.log("Exclusion d'un appareil différent:", reservation.aircraftId);
+    // Vérifier si l'instructeur est impliqué dans une autre réservation
+    if (reservation.instructorId !== instructorId) {
       return false;
     }
 
-    return true;
+    // Convertir les dates de string en Date
+    const reservationStart = new Date(reservation.startTime);
+    const reservationEnd = new Date(reservation.endTime);
+
+    // Vérifier le chevauchement
+    return (
+      (startTime >= reservationStart && startTime < reservationEnd) || // Le début est pendant une autre réservation
+      (endTime > reservationStart && endTime <= reservationEnd) || // La fin est pendant une autre réservation
+      (startTime <= reservationStart && endTime >= reservationEnd) // La réservation englobe une autre
+    );
   });
 
-  console.log("Réservations à vérifier après filtrage:", relevantReservations);
-
-  // Vérifier les chevauchements
-  for (const reservation of relevantReservations) {
-    const existingStart = new Date(reservation.startTime);
-    const existingEnd = new Date(reservation.endTime);
-
-    const hasOverlap =
-      (startTime >= existingStart && startTime < existingEnd) ||
-      (endTime > existingStart && endTime <= existingEnd) ||
-      (startTime <= existingStart && endTime >= existingEnd);
-
-    if (hasOverlap) {
-      console.log("Chevauchement trouvé avec:", {
-        reservationId: reservation.id,
-        period: `${existingStart.toISOString()} - ${existingEnd.toISOString()}`,
-      });
-      return {
-        message:
-          "Cette période chevauche une réservation existante pour cet appareil",
-      };
-    }
+  if (overlappingReservation) {
+    return {
+      message: "L'instructeur a déjà une réservation sur cette période",
+      code: "INSTRUCTOR_OVERLAP",
+    };
   }
 
   return null;
-};
+}
+
+export function validateReservation(
+  startTime: Date,
+  endTime: Date,
+  aircraftId: string,
+  pilotId: string,
+  instructorId: string | null,
+  reservations: Reservation[],
+  currentReservationId?: string
+): ValidationError | null {
+  // Vérifier que le pilote est spécifié
+  if (!pilotId) {
+    return {
+      message: "Un pilote doit être spécifié",
+      code: "MISSING_PILOT",
+    };
+  }
+
+  // Vérifier que la réservation est dans le futur
+  const futureError = validateReservationInFuture(startTime);
+  if (futureError) return futureError;
+
+  // Vérifier les horaires de la réservation
+  const timeError = validateReservationTimes(startTime, endTime);
+  if (timeError) return timeError;
+
+  // Vérifier les heures d'ouverture
+  const hoursError = validateReservationHours(startTime, endTime);
+  if (hoursError) return hoursError;
+
+  // Vérifier le chevauchement avec d'autres réservations pour l'avion
+  const overlapError = validateReservationOverlap(
+    startTime,
+    endTime,
+    aircraftId,
+    reservations,
+    currentReservationId
+  );
+  if (overlapError) return overlapError;
+
+  // Vérifier le chevauchement avec d'autres réservations pour le pilote
+  const pilotOverlapError = validatePilotOverlap(
+    startTime,
+    endTime,
+    pilotId,
+    reservations,
+    currentReservationId
+  );
+  if (pilotOverlapError) return pilotOverlapError;
+
+  // Vérifier le chevauchement avec d'autres réservations pour l'instructeur
+  const instructorOverlapError = validateInstructorOverlap(
+    startTime,
+    endTime,
+    instructorId,
+    reservations,
+    currentReservationId
+  );
+  if (instructorOverlapError) return instructorOverlapError;
+
+  return null;
+}

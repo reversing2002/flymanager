@@ -2,13 +2,18 @@ import React, { useState, useEffect, useMemo } from "react";
 import { setMinutes, getMinutes } from "date-fns";
 import { X, AlertTriangle } from "lucide-react";
 import type { Aircraft, User, Reservation } from "../../types/database";
-import { createReservation, updateReservation, deleteReservation } from "../../lib/queries/reservations";
+import {
+  createReservation,
+  updateReservation,
+  deleteReservation,
+} from "../../lib/queries/reservations";
 import { validateReservation } from "../../lib/reservationValidation";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { hasAnyGroup } from "../../lib/permissions";
-import NewFlightForm from '../flights/NewFlightForm'; // Import the NewFlightForm component
+import NewFlightForm from "../flights/NewFlightForm"; // Import the NewFlightForm component
+import { useNavigate } from "react-router-dom";
 
 interface ReservationModalProps {
   startTime: Date;
@@ -38,6 +43,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   comments,
 }) => {
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [flightTypes, setFlightTypes] = useState<any[]>([]);
@@ -45,6 +51,9 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   const [aircraft, setAircraft] = useState<Aircraft[]>(propAircraft || []);
   const [showNewFlightForm, setShowNewFlightForm] = useState(false);
   const [hasExistingFlight, setHasExistingFlight] = useState(false);
+  const [existingReservations, setExistingReservations] = useState<
+    Reservation[]
+  >([]);
 
   const isAdmin = hasAnyGroup(currentUser, ["ADMIN"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
@@ -58,57 +67,84 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   const formatDateForInput = (date: Date): string => {
     const roundedDate = roundToQuarterHour(date);
     // Format la date en YYYY-MM-DDTHH:mm sans conversion UTC
-    return roundedDate.getFullYear() +
-      '-' + String(roundedDate.getMonth() + 1).padStart(2, '0') +
-      '-' + String(roundedDate.getDate()).padStart(2, '0') +
-      'T' + String(roundedDate.getHours()).padStart(2, '0') +
-      ':' + String(roundedDate.getMinutes()).padStart(2, '0');
+    return (
+      roundedDate.getFullYear() +
+      "-" +
+      String(roundedDate.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(roundedDate.getDate()).padStart(2, "0") +
+      "T" +
+      String(roundedDate.getHours()).padStart(2, "0") +
+      ":" +
+      String(roundedDate.getMinutes()).padStart(2, "0")
+    );
   };
 
   const [formData, setFormData] = useState({
     userId: existingReservation?.userId || currentUser?.id || "",
     pilotId: existingReservation?.pilotId || currentUser?.id || "",
-    aircraftId: preselectedAircraftId || existingReservation?.aircraftId || propAircraft?.[0]?.id || "",
+    aircraftId:
+      preselectedAircraftId ||
+      existingReservation?.aircraftId ||
+      propAircraft?.[0]?.id ||
+      "",
     startTime: formatDateForInput(startTime),
     endTime: formatDateForInput(endTime),
     instructorId: existingReservation?.instructorId || "",
     comments: comments || existingReservation?.comments || "",
-    flightTypeId: preselectedFlightTypeId || existingReservation?.flightTypeId || "",
+    flightTypeId:
+      preselectedFlightTypeId || existingReservation?.flightTypeId || "",
     withInstructor: existingReservation?.instructorId ? true : false,
   });
 
   const canModifyReservation = () => {
     if (!currentUser) return false;
     if (hasAnyGroup(currentUser, ["ADMIN"])) return true;
-    
+
     // Si c'est une nouvelle réservation
     if (!existingReservation) return true;
-    
+
     // Accès total si on est impliqué dans la réservation
-    return existingReservation.userId === currentUser.id || 
-           existingReservation.pilotId === currentUser.id ||
-           existingReservation.instructorId === currentUser.id;
+    return (
+      existingReservation.userId === currentUser.id ||
+      existingReservation.pilotId === currentUser.id ||
+      existingReservation.instructorId === currentUser.id
+    );
   };
 
   const canTransformToFlight = useMemo(() => {
     if (!currentUser || !existingReservation) return false;
-    
+
     const userRoles = currentUser.roles || [];
     const isAdmin = userRoles.includes("ADMIN");
     const isOwner = currentUser.id === existingReservation.userId;
     const isInstructor = currentUser.id === existingReservation.instructorId;
-    
+
     return isAdmin || isOwner || isInstructor;
   }, [currentUser, existingReservation]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Charger les réservations existantes
+        const { data: reservationsData, error: reservationsError } =
+          await supabase
+            .from("reservations")
+            .select("*")
+            .gte("end_time", new Date().toISOString());
+
+        if (reservationsError) throw reservationsError;
+        setExistingReservations(reservationsData || []);
+
         // Vérifier si un vol existe déjà pour cette réservation
         if (existingReservation) {
           const { data: flightData, error: flightError } = await supabase
@@ -124,28 +160,28 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         }
 
         // Load flight types
-        const { data: flightTypesData, error: flightTypesError } = await supabase
-          .from("flight_types")
-          .select("*")
-          .order("name");
+        const { data: flightTypesData, error: flightTypesError } =
+          await supabase.from("flight_types").select("*").order("name");
 
         if (flightTypesError) throw flightTypesError;
         if (flightTypesData) {
           setFlightTypes(flightTypesData);
-          
+
           // Si un type est présélectionné, l'utiliser
           if (preselectedFlightTypeId) {
-            setFormData(prev => ({
+            setFormData((prev) => ({
               ...prev,
               flightTypeId: preselectedFlightTypeId,
-              withInstructor: flightTypesData.find(t => t.id === preselectedFlightTypeId)?.requires_instructor || false,
+              withInstructor:
+                flightTypesData.find((t) => t.id === preselectedFlightTypeId)
+                  ?.requires_instructor || false,
             }));
           }
           // Sinon, utiliser le type par défaut pour les nouvelles réservations
           else if (!existingReservation) {
-            const defaultType = flightTypesData.find(t => t.is_default);
+            const defaultType = flightTypesData.find((t) => t.is_default);
             if (defaultType) {
-              setFormData(prev => ({
+              setFormData((prev) => ({
                 ...prev,
                 flightTypeId: defaultType.id,
                 withInstructor: defaultType.requires_instructor,
@@ -157,20 +193,25 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         // Charger les utilisateurs avec leurs rôles
         const { data: usersData, error: usersError } = await supabase
           .from("users")
-          .select(`
+          .select(
+            `
             *,
             user_group_memberships (
               group:user_groups(name)
             )
-          `)
+          `
+          )
           .order("last_name");
 
         if (usersError) throw usersError;
         if (usersData) {
           // Transformer les données pour inclure les rôles
-          const usersWithRoles = usersData.map(user => ({
+          const usersWithRoles = usersData.map((user) => ({
             ...user,
-            roles: user.user_group_memberships?.map(membership => membership.group.name) || []
+            roles:
+              user.user_group_memberships?.map(
+                (membership) => membership.group.name
+              ) || [],
           }));
           setUsers(usersWithRoles);
         }
@@ -204,7 +245,11 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       setFormData({
         userId: existingReservation.userId || currentUser?.id || "",
         pilotId: existingReservation.pilotId || currentUser?.id || "",
-        aircraftId: existingReservation.aircraftId || preselectedAircraftId || propAircraft?.[0]?.id || "",
+        aircraftId:
+          existingReservation.aircraftId ||
+          preselectedAircraftId ||
+          propAircraft?.[0]?.id ||
+          "",
         startTime: formatDateForInput(new Date(existingReservation.startTime)),
         endTime: formatDateForInput(new Date(existingReservation.endTime)),
         instructorId: existingReservation.instructorId || "",
@@ -213,12 +258,17 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         withInstructor: Boolean(existingReservation.instructorId),
       });
     }
-  }, [existingReservation, currentUser?.id, preselectedAircraftId, propAircraft]);
+  }, [
+    existingReservation,
+    currentUser?.id,
+    preselectedAircraftId,
+    propAircraft,
+  ]);
 
   // Get all pilots and instructors
   const allPilots = useMemo(() => {
-    return users.filter(u => {
-      return u.roles?.some(role => ["PILOT", "INSTRUCTOR"].includes(role));
+    return users.filter((u) => {
+      return u.roles?.some((role) => ["PILOT", "INSTRUCTOR"].includes(role));
     });
   }, [users]);
 
@@ -231,31 +281,29 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     }
 
     // Pour les autres cas, montrer uniquement l'utilisateur courant
-    return allPilots.filter(pilot => pilot.id === currentUser.id);
+    return allPilots.filter((pilot) => pilot.id === currentUser.id);
   }, [allPilots, currentUser]);
 
   const instructors = useMemo(() => {
-    return users.filter(u => u.roles?.some(role => ["INSTRUCTOR"].includes(role)));
+    return users.filter((u) =>
+      u.roles?.some((role) => ["INSTRUCTOR"].includes(role))
+    );
   }, [users]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canModifyReservation()) {
-      toast.error("Vous n'avez pas les droits pour modifier cette réservation");
-      return;
-    }
-    setLoading(true);
     setError(null);
+    setLoading(true);
 
     try {
-      const startTime = new Date(formData.startTime);
-      const endTime = new Date(formData.endTime);
-
       const validationError = validateReservation(
-        startTime,
-        endTime,
+        new Date(formData.startTime),
+        new Date(formData.endTime),
         formData.aircraftId,
-        existingReservation ? [existingReservation.id] : []
+        formData.pilotId,
+        formData.instructorId || null,
+        existingReservations || [],
+        existingReservation?.id
       );
 
       if (validationError) {
@@ -263,30 +311,25 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         return;
       }
 
+      // Créer ou mettre à jour la réservation
       if (existingReservation) {
-        // Mettre à jour la réservation existante
         await updateReservation(existingReservation.id, {
           ...formData,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
+          instructorId: formData.instructorId || null,
         });
-        toast.success("Réservation mise à jour");
       } else {
-        // Créer une nouvelle réservation
         await createReservation({
           ...formData,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
+          instructorId: formData.instructorId || null,
         });
-        toast.success("Réservation créée");
       }
 
       onSuccess();
-      onClose();
-    } catch (err) {
-      console.error("Error saving reservation:", err);
-      setError("Erreur lors de la sauvegarde de la réservation");
-      toast.error("Erreur lors de la sauvegarde de la réservation");
+    } catch (error: any) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      setError(
+        error.message || "Une erreur est survenue lors de la sauvegarde"
+      );
     } finally {
       setLoading(false);
     }
@@ -294,7 +337,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
   const handleDelete = async () => {
     if (!existingReservation || !canModifyReservation()) return;
-    
+
     try {
       setLoading(true);
       await deleteReservation(existingReservation.id);
@@ -320,6 +363,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     setShowNewFlightForm(false);
     onSuccess();
     onClose();
+    navigate("/flights"); // Redirection vers la liste des vols
   };
 
   const calculateDuration = (start: string, end: string) => {
@@ -329,7 +373,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   };
 
   if (showNewFlightForm && existingReservation) {
-    const duration = calculateDuration(existingReservation.startTime, existingReservation.endTime);
+    const duration = calculateDuration(
+      existingReservation.startTime,
+      existingReservation.endTime
+    );
 
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -349,8 +396,9 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
             onSuccess={handleNewFlightSuccess}
             onCancel={() => setShowNewFlightForm(false)}
             initialData={{
-              date: existingReservation.startTime.split('T')[0],
-              pilotId: existingReservation.pilotId || existingReservation.userId,
+              date: existingReservation.startTime.split("T")[0],
+              pilotId:
+                existingReservation.pilotId || existingReservation.userId,
               instructorId: existingReservation.instructorId,
               aircraftId: existingReservation.aircraftId,
               flightTypeId: existingReservation.flightTypeId,
@@ -366,8 +414,11 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-full items-center justify-center p-4 text-center">
-        <div className="fixed inset-0 bg-black bg-opacity-25" onClick={onClose} />
-        
+        <div
+          className="fixed inset-0 bg-black bg-opacity-25"
+          onClick={onClose}
+        />
+
         <div className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all relative">
           <div className="absolute top-4 right-4">
             <button
@@ -379,7 +430,9 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
           </div>
 
           <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
-            {existingReservation ? "Modifier la réservation" : "Nouvelle réservation"}
+            {existingReservation
+              ? "Modifier la réservation"
+              : "Nouvelle réservation"}
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -547,31 +600,43 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                     onClick={handleDelete}
                     disabled={loading}
                     className={`rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2
-                      ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 focus:ring-red-500"}`}
+                      ${
+                        loading
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                      }`}
                   >
                     {loading ? "En cours..." : "Supprimer"}
                   </button>
                 )}
-                {existingReservation && onCreateFlight && canTransformToFlight && !hasExistingFlight && (
-                  <button
-                    type="button"
-                    onClick={() => setShowNewFlightForm(true)}
-                    className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                  >
-                    Transformer en vol
-                  </button>
-                )}
+                {existingReservation &&
+                  onCreateFlight &&
+                  canTransformToFlight &&
+                  !hasExistingFlight && (
+                    <button
+                      type="button"
+                      onClick={() => setShowNewFlightForm(true)}
+                      className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                    >
+                      Transformer en vol
+                    </button>
+                  )}
               </div>
               <button
                 type="submit"
                 disabled={loading || !canModifyReservation()}
                 className={`rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2
-                  ${loading || !canModifyReservation()
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+                  ${
+                    loading || !canModifyReservation()
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
                   }`}
               >
-                {loading ? "En cours..." : existingReservation ? "Modifier" : "Créer"}
+                {loading
+                  ? "En cours..."
+                  : existingReservation
+                  ? "Modifier"
+                  : "Créer"}
               </button>
             </div>
           </form>

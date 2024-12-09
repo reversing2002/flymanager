@@ -19,7 +19,8 @@ export async function getFlights(): Promise<Flight[]> {
         *,
         accounting_category:accounting_categories!accounting_category_id(*)
       )
-    `);
+    `)
+    .order('date', { ascending: false });
 
   if (error) throw error;
   return data.map((flight) => ({

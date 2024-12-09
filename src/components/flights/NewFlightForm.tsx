@@ -321,9 +321,17 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
+    // Vérifier que la date n'est pas dans le futur
+    const selectedDate = new Date(formData.date);
+    const today = new Date();
+    if (selectedDate > today) {
+      setError("La date du vol ne peut pas être dans le futur");
+      return;
+    }
+
+    setLoading(true);
     try {
       if (!formData.userId || !formData.aircraftId) {
         throw new Error("Veuillez remplir tous les champs obligatoires");
