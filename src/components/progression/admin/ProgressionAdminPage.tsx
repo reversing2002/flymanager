@@ -117,6 +117,7 @@ export default function ProgressionAdminPage() {
               await updateProgressionModule(module.id, {
                 title: module.title,
                 description: module.description || null,
+                code: module.code || '',
                 order_index: moduleIndex,
               });
               moduleId = module.id;
@@ -143,6 +144,7 @@ export default function ProgressionAdminPage() {
               template_id: templateId,
               title: module.title,
               description: module.description || null,
+              code: module.code || '',
               order_index: moduleIndex,
             });
             moduleId = newModule.id;
@@ -153,6 +155,7 @@ export default function ProgressionAdminPage() {
             template_id: templateId,
             title: module.title,
             description: module.description || null,
+            code: module.code || '',
             order_index: moduleIndex,
           });
           moduleId = newModule.id;
@@ -175,6 +178,7 @@ export default function ProgressionAdminPage() {
                   await updateProgressionSkill(skill.id, {
                     title: skill.title,
                     description: skill.description || null,
+                    code: skill.code || '',
                     order_index: skillIndex,
                   });
                 } else {
@@ -186,6 +190,7 @@ export default function ProgressionAdminPage() {
                   module_id: moduleId,
                   title: skill.title,
                   description: skill.description || null,
+                  code: skill.code || '',
                   order_index: skillIndex,
                 });
               }
@@ -195,6 +200,7 @@ export default function ProgressionAdminPage() {
                 module_id: moduleId,
                 title: skill.title,
                 description: skill.description || null,
+                code: skill.code || '',
                 order_index: skillIndex,
               });
             }
@@ -278,10 +284,12 @@ export default function ProgressionAdminPage() {
                     {
                       title: "",
                       description: "",
+                      code: "",
                       skills: [
                         {
                           title: "",
-                          description: ""
+                          description: "",
+                          code: ""
                         }
                       ]
                     }
@@ -345,10 +353,12 @@ export default function ProgressionAdminPage() {
                           id: module.id,
                           title: module.title,
                           description: module.description,
+                          code: module.code,
                           skills: module.skills.map(skill => ({
                             id: skill.id,
                             title: skill.title,
-                            description: skill.description
+                            description: skill.description,
+                            code: skill.code
                           }))
                         }))
                       };

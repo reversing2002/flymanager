@@ -71,6 +71,7 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
           await updateProgressionModule(moduleId, {
             title: module.title,
             description: module.description,
+            code: module.code,
             order_index: moduleIndex,
           });
         } else {
@@ -79,6 +80,7 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
             template_id: templateId!,
             title: module.title,
             description: module.description,
+            code: module.code,
             order_index: moduleIndex,
           });
           moduleId = newModule.id;
@@ -91,6 +93,7 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
             await updateProgressionSkill(skill.id, {
               title: skill.title,
               description: skill.description,
+              code: skill.code,
               order_index: skillIndex,
             });
           } else {
@@ -99,6 +102,7 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
               module_id: moduleId!,
               title: skill.title,
               description: skill.description,
+              code: skill.code,
               order_index: skillIndex,
             });
           }
@@ -137,6 +141,7 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
           template_id: template?.id || '',
           title: '',
           description: '',
+          code: '',
           order_index: formData.modules.length,
           skills: [],
           created_at: '',
@@ -153,6 +158,7 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
       module_id: newModules[moduleIndex].id,
       title: '',
       description: '',
+      code: '',
       order_index: newModules[moduleIndex].skills.length,
       created_at: '',
       updated_at: '',
@@ -291,6 +297,24 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
                       </div>
 
                       <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                          Code du module
+                        </label>
+                        <input
+                          type="text"
+                          value={module.code}
+                          onChange={(e) => {
+                            const newModules = [...formData.modules];
+                            newModules[moduleIndex].code = e.target.value;
+                            setFormData({ ...formData, modules: newModules });
+                          }}
+                          placeholder="ex: PHASE-1"
+                          className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+                          required
+                        />
+                      </div>
+
+                      <div>
                         <div className="flex items-center justify-between mb-2">
                           <label className="text-sm font-medium text-slate-700">
                             Compétences
@@ -346,6 +370,28 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
                                   placeholder="Description de la compétence"
                                   rows={1}
                                 />
+                                <div>
+                                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    Code de la compétence
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={skill.code}
+                                    onChange={(e) => {
+                                      const newModules = [...formData.modules];
+                                      newModules[moduleIndex].skills[
+                                        skillIndex
+                                      ].code = e.target.value;
+                                      setFormData({
+                                        ...formData,
+                                        modules: newModules,
+                                      });
+                                    }}
+                                    placeholder="ex: MANIA-1"
+                                    className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+                                    required
+                                  />
+                                </div>
                               </div>
                               <button
                                 type="button"

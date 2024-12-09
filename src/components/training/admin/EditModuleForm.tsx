@@ -18,6 +18,7 @@ const EditModuleForm: React.FC<EditModuleFormProps> = ({
   const [formData, setFormData] = useState({
     title: module?.title || '',
     description: module?.description || '',
+    code: module?.code || '',
     level: module?.level || 'BEGINNER',
     category: module?.category || '',
     points: module?.points || 100,
@@ -107,6 +108,24 @@ const EditModuleForm: React.FC<EditModuleFormProps> = ({
               rows={3}
               className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
               required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="code" className="block text-sm font-medium text-gray-700">
+              Code
+            </label>
+            <input
+              type="text"
+              id="code"
+              name="code"
+              value={formData.code}
+              onChange={(e) =>
+                setFormData({ ...formData, code: e.target.value })
+              }
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+              required
+              placeholder="ex: PHASE-1"
             />
           </div>
 

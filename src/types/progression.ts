@@ -12,6 +12,7 @@ export interface ProgressionModule {
   template_id: string;
   title: string;
   description: string | null;
+  code: string;
   order_index: number;
   created_at: string;
   updated_at: string;
@@ -22,6 +23,7 @@ export interface ProgressionSkill {
   module_id: string;
   title: string;
   description: string | null;
+  code: string;
   order_index: number;
   created_at: string;
   updated_at: string;
@@ -82,11 +84,35 @@ export interface StudentProgressionWithDetails extends StudentProgression {
 export type CreateProgressionTemplate = Omit<ProgressionTemplate, 'id' | 'created_at' | 'updated_at'>;
 export type UpdateProgressionTemplate = Partial<CreateProgressionTemplate>;
 
-export type CreateProgressionModule = Omit<ProgressionModule, 'id' | 'created_at' | 'updated_at'>;
-export type UpdateProgressionModule = Partial<CreateProgressionModule>;
+export interface CreateProgressionModule {
+  template_id: string;
+  title: string;
+  description: string | null;
+  code: string;
+  order_index: number;
+}
 
-export type CreateProgressionSkill = Omit<ProgressionSkill, 'id' | 'created_at' | 'updated_at'>;
-export type UpdateProgressionSkill = Partial<CreateProgressionSkill>;
+export interface UpdateProgressionModule {
+  title?: string;
+  description?: string | null;
+  code?: string;
+  order_index?: number;
+}
+
+export interface CreateProgressionSkill {
+  module_id: string;
+  title: string;
+  description: string | null;
+  code: string;
+  order_index: number;
+}
+
+export interface UpdateProgressionSkill {
+  title?: string;
+  description?: string | null;
+  code?: string;
+  order_index?: number;
+}
 
 export type CreateStudentProgression = Omit<StudentProgression, 'id' | 'created_at' | 'updated_at' | 'completed_at'>;
 export type UpdateStudentProgression = { completed_at: string | null };
