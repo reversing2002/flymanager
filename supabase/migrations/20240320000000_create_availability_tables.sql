@@ -1,3 +1,7 @@
+-- Drop existing tables and types if they exist
+DROP TABLE IF EXISTS availabilities CASCADE;
+DROP TYPE IF EXISTS recurrence_frequency CASCADE;
+
 -- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -7,7 +11,7 @@ CREATE TYPE recurrence_frequency AS ENUM ('DAILY', 'WEEKLY', 'MONTHLY');
 -- Create availability table
 CREATE TABLE availabilities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES auth.users(id),
+    user_id UUID REFERENCES public.users(id),
     aircraft_id UUID REFERENCES aircraft(id),
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,

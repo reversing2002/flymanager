@@ -346,59 +346,6 @@
             ]
         },
         {
-            "name": "instructor_invoice_details",
-            "columns": [
-                {
-                    "name": "id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": "uuid_generate_v4()"
-                },
-                {
-                    "name": "invoice_id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": null
-                },
-                {
-                    "name": "flight_id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": null
-                },
-                {
-                    "name": "amount",
-                    "type": "numeric",
-                    "nullable": false,
-                    "default_value": null
-                },
-                {
-                    "name": "created_at",
-                    "type": "timestamp with time zone",
-                    "nullable": false,
-                    "default_value": "timezone('utc'::text, now())"
-                },
-                {
-                    "name": "updated_at",
-                    "type": "timestamp with time zone",
-                    "nullable": false,
-                    "default_value": "timezone('utc'::text, now())"
-                }
-            ],
-            "constraints": [
-                "instructor_invoice_details_flight_id_fkey",
-                "instructor_invoice_details_flight_id_key",
-                "instructor_invoice_details_invoice_id_fkey",
-                "instructor_invoice_details_pkey",
-                "2200_85864_1_not_null",
-                "2200_85864_2_not_null",
-                "2200_85864_3_not_null",
-                "2200_85864_4_not_null",
-                "2200_85864_5_not_null",
-                "2200_85864_6_not_null"
-            ]
-        },
-        {
             "name": "medical_certifications",
             "columns": [
                 {
@@ -520,6 +467,99 @@
                 "2200_83718_2_not_null",
                 "2200_83718_6_not_null",
                 "2200_83718_8_not_null"
+            ]
+        },
+        {
+            "name": "availabilities",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "aircraft_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "start_time",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "end_time",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "is_recurring",
+                    "type": "boolean",
+                    "nullable": false,
+                    "default_value": "false"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "club_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "recurrence_end_date",
+                    "type": "date",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "recurrence_pattern",
+                    "type": "text",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "reason",
+                    "type": "text",
+                    "nullable": true,
+                    "default_value": null
+                }
+            ],
+            "constraints": [
+                "availabilities_aircraft_id_fkey",
+                "availabilities_club_id_fkey",
+                "availabilities_pkey",
+                "availabilities_user_id_fkey",
+                "availability_entity_check",
+                "availability_recurrence_check",
+                "availability_time_check",
+                "2200_97469_1_not_null",
+                "2200_97469_4_not_null",
+                "2200_97469_5_not_null",
+                "2200_97469_6_not_null",
+                "2200_97469_10_not_null",
+                "2200_97469_11_not_null",
+                "2200_97469_12_not_null"
             ]
         },
         {
@@ -914,16 +954,10 @@
             "name": "clubs",
             "columns": [
                 {
-                    "name": "id",
-                    "type": "uuid",
+                    "name": "night_flights_enabled",
+                    "type": "boolean",
                     "nullable": false,
-                    "default_value": "uuid_generate_v4()"
-                },
-                {
-                    "name": "settings",
-                    "type": "jsonb",
-                    "nullable": true,
-                    "default_value": "'{}'::jsonb"
+                    "default_value": "false"
                 },
                 {
                     "name": "created_at",
@@ -948,6 +982,18 @@
                     "type": "numeric",
                     "nullable": true,
                     "default_value": null
+                },
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "settings",
+                    "type": "jsonb",
+                    "nullable": true,
+                    "default_value": "'{}'::jsonb"
                 },
                 {
                     "name": "name",
@@ -985,7 +1031,8 @@
                 "clubs_pkey",
                 "2200_44846_1_not_null",
                 "2200_44846_2_not_null",
-                "2200_44846_3_not_null"
+                "2200_44846_3_not_null",
+                "2200_44846_12_not_null"
             ]
         },
         {
@@ -2525,6 +2572,24 @@
             "name": "progression_modules",
             "columns": [
                 {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "template_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "order_index",
+                    "type": "integer",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
                     "name": "created_at",
                     "type": "timestamp with time zone",
                     "nullable": true,
@@ -2537,20 +2602,8 @@
                     "default_value": "now()"
                 },
                 {
-                    "name": "template_id",
-                    "type": "uuid",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": "uuid_generate_v4()"
-                },
-                {
-                    "name": "order_index",
-                    "type": "integer",
+                    "name": "title",
+                    "type": "character varying",
                     "nullable": false,
                     "default_value": null
                 },
@@ -2561,9 +2614,9 @@
                     "default_value": null
                 },
                 {
-                    "name": "title",
-                    "type": "character varying",
-                    "nullable": false,
+                    "name": "code",
+                    "type": "text",
+                    "nullable": true,
                     "default_value": null
                 }
             ],
@@ -2580,6 +2633,24 @@
             "name": "progression_skills",
             "columns": [
                 {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "module_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "order_index",
+                    "type": "integer",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
                     "name": "created_at",
                     "type": "timestamp with time zone",
                     "nullable": true,
@@ -2592,20 +2663,8 @@
                     "default_value": "now()"
                 },
                 {
-                    "name": "module_id",
-                    "type": "uuid",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": "uuid_generate_v4()"
-                },
-                {
-                    "name": "order_index",
-                    "type": "integer",
+                    "name": "title",
+                    "type": "character varying",
                     "nullable": false,
                     "default_value": null
                 },
@@ -2616,9 +2675,9 @@
                     "default_value": null
                 },
                 {
-                    "name": "title",
-                    "type": "character varying",
-                    "nullable": false,
+                    "name": "code",
+                    "type": "text",
+                    "nullable": true,
                     "default_value": null
                 }
             ],
@@ -2675,6 +2734,12 @@
                     "type": "timestamp with time zone",
                     "nullable": true,
                     "default_value": "now()"
+                },
+                {
+                    "name": "left_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": null
                 }
             ],
             "constraints": [
@@ -2690,10 +2755,10 @@
             "name": "skill_validations",
             "columns": [
                 {
-                    "name": "updated_at",
-                    "type": "timestamp with time zone",
-                    "nullable": true,
-                    "default_value": "now()"
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
                 },
                 {
                     "name": "progression_id",
@@ -2720,16 +2785,28 @@
                     "default_value": "now()"
                 },
                 {
-                    "name": "id",
+                    "name": "flight_id",
                     "type": "uuid",
-                    "nullable": false,
-                    "default_value": "uuid_generate_v4()"
+                    "nullable": true,
+                    "default_value": null
                 },
                 {
                     "name": "created_at",
                     "type": "timestamp with time zone",
                     "nullable": true,
                     "default_value": "now()"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "status",
+                    "type": "USER-DEFINED",
+                    "nullable": true,
+                    "default_value": "'validé'::skill_validation_status"
                 },
                 {
                     "name": "comments",
@@ -2740,10 +2817,11 @@
             ],
             "constraints": [
                 "fk_skill_validations_instructor",
+                "skill_validations_flight_id_fkey",
                 "skill_validations_instructor_id_fkey",
                 "skill_validations_pkey",
                 "skill_validations_progression_id_fkey",
-                "skill_validations_progression_id_skill_id_key",
+                "skill_validations_progression_skill_flight_key",
                 "skill_validations_skill_id_fkey",
                 "2200_64053_1_not_null"
             ]
@@ -3278,6 +3356,73 @@
             ]
         },
         {
+            "name": "training_history",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "module_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "question_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "answer_index",
+                    "type": "integer",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "is_correct",
+                    "type": "boolean",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "points_earned",
+                    "type": "integer",
+                    "nullable": false,
+                    "default_value": "0"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": "now()"
+                }
+            ],
+            "constraints": [
+                "training_history_module_id_fkey",
+                "training_history_pkey",
+                "training_history_question_id_fkey",
+                "training_history_user_id_fkey",
+                "2200_93886_1_not_null",
+                "2200_93886_2_not_null",
+                "2200_93886_3_not_null",
+                "2200_93886_4_not_null",
+                "2200_93886_5_not_null",
+                "2200_93886_6_not_null",
+                "2200_93886_7_not_null",
+                "2200_93886_8_not_null"
+            ]
+        },
+        {
             "name": "maintenance_types",
             "columns": [
                 {
@@ -3494,6 +3639,59 @@
                 "maintenance_history_pkey",
                 "2200_42267_1_not_null",
                 "2200_42267_4_not_null"
+            ]
+        },
+        {
+            "name": "instructor_invoice_details",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "invoice_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "flight_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "amount",
+                    "type": "numeric",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": "timezone('utc'::text, now())"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": "timezone('utc'::text, now())"
+                }
+            ],
+            "constraints": [
+                "instructor_invoice_details_flight_id_fkey",
+                "instructor_invoice_details_flight_id_key",
+                "instructor_invoice_details_invoice_id_fkey",
+                "instructor_invoice_details_pkey",
+                "2200_85864_1_not_null",
+                "2200_85864_2_not_null",
+                "2200_85864_3_not_null",
+                "2200_85864_4_not_null",
+                "2200_85864_5_not_null",
+                "2200_85864_6_not_null"
             ]
         },
         {
@@ -3885,39 +4083,75 @@
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Users can create their own invoice details",
+            "name": "delete_own_invoices",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "instructor_invoices",
+            "command": "DELETE",
+            "definition": "(auth.uid() IN ( SELECT users.auth_id\n   FROM users\n  WHERE (users.id = instructor_invoices.instructor_id)))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "update_own_invoices",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "instructor_invoices",
+            "command": "UPDATE",
+            "definition": "(auth.uid() IN ( SELECT users.auth_id\n   FROM users\n  WHERE (users.id = instructor_invoices.instructor_id)))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Create availabilities",
             "roles": [
                 [
                     "public"
                 ]
             ],
-            "table": "instructor_invoice_details",
+            "table": "availabilities",
             "command": "INSERT",
             "definition": null,
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Users can update their own invoice details",
+            "name": "Delete availabilities",
             "roles": [
                 [
                     "public"
                 ]
             ],
-            "table": "instructor_invoice_details",
-            "command": "UPDATE",
-            "definition": "(invoice_id IN ( SELECT instructor_invoices.id\n   FROM instructor_invoices\n  WHERE ((instructor_invoices.instructor_id = auth.uid()) AND (instructor_invoices.status = 'DRAFT'::text))))",
+            "table": "availabilities",
+            "command": "DELETE",
+            "definition": "((EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'ADMIN'::text)))) OR ((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'INSTRUCTOR'::text))))) OR ((aircraft_id IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'MECHANIC'::text))))))",
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Users can view their own invoice details",
+            "name": "Update availabilities",
             "roles": [
                 [
                     "public"
                 ]
             ],
-            "table": "instructor_invoice_details",
+            "table": "availabilities",
+            "command": "UPDATE",
+            "definition": "((EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'ADMIN'::text)))) OR ((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'INSTRUCTOR'::text))))) OR ((aircraft_id IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'MECHANIC'::text))))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "View availabilities",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "availabilities",
             "command": "SELECT",
-            "definition": "((invoice_id IN ( SELECT instructor_invoices.id\n   FROM instructor_invoices\n  WHERE (instructor_invoices.instructor_id = auth.uid()))) OR (auth.uid() IN ( SELECT user_group_memberships.user_id\n   FROM user_group_memberships\n  WHERE (user_group_memberships.group_id IN ( SELECT user_groups.id\n           FROM user_groups\n          WHERE ((user_groups.name)::text = 'ADMIN'::text))))))",
+            "definition": "(club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid())))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4185,30 +4419,6 @@
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Allow all access to admins for memberships",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "user_group_memberships",
-            "command": "ALL",
-            "definition": "(EXISTS ( SELECT 1\n   FROM user_group_memberships ugm\n  WHERE ((ugm.user_id = auth.uid()) AND (ugm.group_id IN ( SELECT user_groups.id\n           FROM user_groups\n          WHERE ((user_groups.name)::text = 'Administrateurs'::text)))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Allow read access to all authenticated users for memberships",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "user_group_memberships",
-            "command": "SELECT",
-            "definition": "true",
-            "permissive": "PERMISSIVE"
-        },
-        {
             "name": "Everyone can view clubs",
             "roles": [
                 [
@@ -4242,6 +4452,30 @@
             "table": "clubs",
             "command": "INSERT",
             "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow all access to admins for memberships",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "user_group_memberships",
+            "command": "ALL",
+            "definition": "(EXISTS ( SELECT 1\n   FROM user_group_memberships ugm\n  WHERE ((ugm.user_id = auth.uid()) AND (ugm.group_id IN ( SELECT user_groups.id\n           FROM user_groups\n          WHERE ((user_groups.name)::text = 'Administrateurs'::text))))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Allow read access to all authenticated users for memberships",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "user_group_memberships",
+            "command": "SELECT",
+            "definition": "true",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4493,7 +4727,7 @@
             ],
             "table": "users",
             "command": "UPDATE",
-            "definition": "((auth.uid() = id) OR (has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text]) AND (EXISTS ( SELECT 1\n   FROM club_members cm1\n  WHERE ((cm1.user_id = auth.uid()) AND (cm1.club_id IN ( SELECT cm2.club_id\n           FROM club_members cm2\n          WHERE (cm2.user_id = users.id)))))))",
+            "definition": "((auth.uid() = id) OR (has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text]) AND (EXISTS ( SELECT 1\n   FROM club_members cm1\n  WHERE ((cm1.user_id = auth.uid()) AND (cm1.club_id IN ( SELECT cm2.club_id\n           FROM club_members cm2\n          WHERE (cm2.user_id = users.id))))))))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4785,6 +5019,30 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Pilots can manage their availabilities",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "pilot_availabilities",
+            "command": "ALL",
+            "definition": "(pilot_id = auth.uid())",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Pilots can view their availabilities",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "pilot_availabilities",
+            "command": "SELECT",
+            "definition": "(pilot_id = auth.uid())",
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Enable flight creation for club members",
             "roles": [
                 [
@@ -4845,90 +5103,6 @@
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Pilots can manage their availabilities",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "pilot_availabilities",
-            "command": "ALL",
-            "definition": "(pilot_id = auth.uid())",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Pilots can view their availabilities",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "pilot_availabilities",
-            "command": "SELECT",
-            "definition": "(pilot_id = auth.uid())",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable delete for instructors and admins",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "student_progressions",
-            "command": "DELETE",
-            "definition": "has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text])",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable read access for own progressions and instructors/admins",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "student_progressions",
-            "command": "SELECT",
-            "definition": "((student_id = auth.uid()) OR has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text]))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable read access for student progressions",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "student_progressions",
-            "command": "SELECT",
-            "definition": "(EXISTS ( SELECT 1\n   FROM club_members viewer\n  WHERE ((viewer.user_id = auth.uid()) AND (EXISTS ( SELECT 1\n           FROM club_members student\n          WHERE ((student.club_id = viewer.club_id) AND (student.user_id = student_progressions.student_id)))))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable write access for instructors and admins",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "student_progressions",
-            "command": "INSERT",
-            "definition": null,
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "student_progressions_update",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "student_progressions",
-            "command": "UPDATE",
-            "definition": "has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text])",
-            "permissive": "PERMISSIVE"
-        },
-        {
             "name": "Enable delete for instructors and admins",
             "roles": [
                 [
@@ -4974,6 +5148,150 @@
             "table": "progression_templates",
             "command": "UPDATE",
             "definition": "has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text])",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Admins and instructors can insert entries",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Admins can delete entries",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "DELETE",
+            "definition": "((auth.uid() IN ( SELECT u.auth_id\n   FROM ((users u\n     JOIN user_group_memberships m ON ((u.id = m.user_id)))\n     JOIN user_groups g ON ((m.group_id = g.id)))\n  WHERE ((g.name)::text = ANY (ARRAY[('ADMIN'::character varying)::text])))) AND (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid()))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable admin deletions",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "DELETE",
+            "definition": "has_any_group(auth.uid(), ARRAY['ADMIN'::text])",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable admin modifications",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "UPDATE",
+            "definition": "has_any_group(auth.uid(), ARRAY['ADMIN'::text])",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable club member view for admins ",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "SELECT",
+            "definition": "((auth.uid() IN ( SELECT u.auth_id\n   FROM ((users u\n     JOIN user_group_memberships m ON ((u.id = m.user_id)))\n     JOIN user_groups g ON ((m.group_id = g.id)))\n  WHERE ((g.name)::text = ANY (ARRAY[('ADMIN'::character varying)::text])))) AND (EXISTS ( SELECT 1\n   FROM (club_members cm1\n     JOIN club_members cm2 ON ((cm1.club_id = cm2.club_id)))\n  WHERE ((cm1.user_id = auth.uid()) AND (cm2.user_id = account_entries.user_id)))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable insert for validated payments",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable user insert",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Service can manage all entries",
+            "roles": [
+                [
+                    "service_role"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "ALL",
+            "definition": "true",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "delete_own_entries",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "DELETE",
+            "definition": "((auth.uid() = user_id) AND (NOT is_validated))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "insert_own_entries",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "read_own_entries",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "SELECT",
+            "definition": "((auth.uid() = user_id) OR (auth.uid() = assigned_to_id))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "update_own_entries",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "account_entries",
+            "command": "UPDATE",
+            "definition": "((auth.uid() = user_id) AND (NOT is_validated))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -5097,135 +5415,63 @@
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Admins and instructors can delete entries",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "account_entries",
-            "command": "DELETE",
-            "definition": "((auth.uid() IN ( SELECT u.auth_id\n   FROM ((users u\n     JOIN user_group_memberships m ON ((u.id = m.user_id)))\n     JOIN user_groups g ON ((m.group_id = g.id)))\n  WHERE ((g.name)::text = ANY ((ARRAY['ADMIN'::character varying, 'INSTRUCTOR'::character varying])::text[])))) AND (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid()))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Admins and instructors can insert entries",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "account_entries",
-            "command": "INSERT",
-            "definition": null,
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable admin deletions",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "account_entries",
-            "command": "DELETE",
-            "definition": "has_any_group(auth.uid(), ARRAY['ADMIN'::text])",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable admin modifications",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "account_entries",
-            "command": "UPDATE",
-            "definition": "has_any_group(auth.uid(), ARRAY['ADMIN'::text])",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable insert for validated payments",
+            "name": "Enable delete for instructors and admins",
             "roles": [
                 [
                     "authenticated"
                 ]
             ],
-            "table": "account_entries",
-            "command": "INSERT",
-            "definition": null,
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable user insert",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "account_entries",
-            "command": "INSERT",
-            "definition": null,
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Service can manage all entries",
-            "roles": [
-                [
-                    "service_role"
-                ]
-            ],
-            "table": "account_entries",
-            "command": "ALL",
-            "definition": "true",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "delete_own_entries",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "account_entries",
+            "table": "student_progressions",
             "command": "DELETE",
-            "definition": "((auth.uid() = user_id) AND (NOT is_validated))",
+            "definition": "has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text])",
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "insert_own_entries",
+            "name": "Enable read access for own progressions and instructors/admins",
             "roles": [
                 [
-                    "public"
+                    "authenticated"
                 ]
             ],
-            "table": "account_entries",
+            "table": "student_progressions",
+            "command": "SELECT",
+            "definition": "((student_id = auth.uid()) OR has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text]))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable read access for student progressions",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "student_progressions",
+            "command": "SELECT",
+            "definition": "(EXISTS ( SELECT 1\n   FROM club_members viewer\n  WHERE ((viewer.user_id = auth.uid()) AND (EXISTS ( SELECT 1\n           FROM club_members student\n          WHERE ((student.club_id = viewer.club_id) AND (student.user_id = student_progressions.student_id)))))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable write access for instructors and admins",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "student_progressions",
             "command": "INSERT",
             "definition": null,
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "read_own_entries",
+            "name": "student_progressions_update",
             "roles": [
                 [
                     "public"
                 ]
             ],
-            "table": "account_entries",
-            "command": "SELECT",
-            "definition": "((auth.uid() = user_id) OR (auth.uid() = assigned_to_id))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "update_own_entries",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "account_entries",
+            "table": "student_progressions",
             "command": "UPDATE",
-            "definition": "((auth.uid() = user_id) AND (NOT is_validated))",
+            "definition": "has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text])",
             "permissive": "PERMISSIVE"
         },
         {
@@ -5577,6 +5823,54 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Users can create their own invoice details",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "instructor_invoice_details",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Users can update their own invoice details",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "instructor_invoice_details",
+            "command": "UPDATE",
+            "definition": "(invoice_id IN ( SELECT instructor_invoices.id\n   FROM instructor_invoices\n  WHERE ((instructor_invoices.instructor_id = auth.uid()) AND (instructor_invoices.status = 'DRAFT'::text))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Users can view their own invoice details",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "instructor_invoice_details",
+            "command": "SELECT",
+            "definition": "((invoice_id IN ( SELECT instructor_invoices.id\n   FROM instructor_invoices\n  WHERE (instructor_invoices.instructor_id = auth.uid()))) OR (auth.uid() IN ( SELECT user_group_memberships.user_id\n   FROM user_group_memberships\n  WHERE (user_group_memberships.group_id IN ( SELECT user_groups.id\n           FROM user_groups\n          WHERE ((user_groups.name)::text = 'ADMIN'::text))))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "delete_own_invoice_details",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "instructor_invoice_details",
+            "command": "DELETE",
+            "definition": "(EXISTS ( SELECT 1\n   FROM (instructor_invoices i\n     JOIN users u ON ((u.id = i.instructor_id)))\n  WHERE ((i.id = instructor_invoice_details.invoice_id) AND (u.auth_id = auth.uid()))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Admins can manage maintenance types",
             "roles": [
                 [
@@ -5621,7 +5915,7 @@
             ],
             "table": "discovery_notes",
             "command": "SELECT",
-            "definition": "(EXISTS ( SELECT 1\n   FROM user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = ANY ((ARRAY['ADMIN'::character varying, 'DISCOVERY_PILOT'::character varying])::text[]))))",
+            "definition": "(EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = ANY ((ARRAY['ADMIN'::character varying, 'DISCOVERY_PILOT'::character varying])::text[])))))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -5743,14 +6037,6 @@
             "command": "ALL",
             "definition": "true",
             "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable club member view for admins and instructors",
-            "roles": [["public"]],
-            "table": "account_entries",
-            "command": "SELECT",
-            "definition": "(auth.uid() IN (SELECT u.auth_id FROM users u JOIN user_group_memberships m ON u.id = m.user_id JOIN user_groups g ON m.group_id = g.id WHERE g.name IN ('ADMIN', 'INSTRUCTOR')) AND EXISTS (SELECT 1 FROM club_members cm1 JOIN club_members cm2 ON cm1.club_id = cm2.club_id WHERE cm1.user_id = auth.uid() AND cm2.user_id = account_entries.user_id))",
-            "permissive": "PERMISSIVE"
         }
     ],
     "functions": [
@@ -5771,6 +6057,12 @@
             "arguments": "",
             "definition": "CREATE OR REPLACE FUNCTION public.check_auth_tables()\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nbegin\n  return exists (\n    select from information_schema.tables \n    where table_schema = 'auth' \n    and table_name = 'users'\n  );\nend;\n$function$\n",
             "return_type": "bool"
+        },
+        {
+            "name": "check_availability_conflicts",
+            "arguments": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.check_availability_conflicts()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    -- Check for overlapping availabilities\n    IF EXISTS (\n        SELECT 1 FROM availabilities\n        WHERE id != COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000')\n        AND (\n            (NEW.user_id IS NOT NULL AND user_id = NEW.user_id) OR\n            (NEW.aircraft_id IS NOT NULL AND aircraft_id = NEW.aircraft_id)\n        )\n        AND (\n            (NEW.start_time, NEW.end_time) OVERLAPS (start_time, end_time)\n        )\n    ) THEN\n        RAISE EXCEPTION 'Availability conflict detected';\n    END IF;\n    \n    RETURN NEW;\nEND;\n$function$\n",
+            "return_type": "trigger"
         },
         {
             "name": "check_pilot_availability",
@@ -5849,6 +6141,12 @@
             "arguments": "query text",
             "definition": "CREATE OR REPLACE FUNCTION public.execute_sql(query text)\n RETURNS json\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n  result json;\n  current_user_id uuid;\nbegin\n  -- Récupérer l'ID de l'utilisateur courant\n  current_user_id := auth.uid();\n  \n  -- Log pour debug\n  raise notice 'Current user ID: %', current_user_id;\n  \n  -- Remplacer les occurrences de auth.uid() dans la requête\n  query := replace(query, 'auth.uid()', '''' || current_user_id || '''::uuid');\n  \n  -- Exécuter la requête modifiée\n  execute format('select json_agg(t) from (%s) t', query) into result;\n  \n  return coalesce(result, '[]'::json);\nexception when others then\n  return json_build_object(\n    'error', SQLERRM,\n    'detail', SQLSTATE,\n    'query', query,\n    'user_id', current_user_id\n  );\nend;\n$function$\n",
             "return_type": "json"
+        },
+        {
+            "name": "generate_instructor_invoice",
+            "arguments": "instructor_id uuid, start_date date, end_date date",
+            "definition": "CREATE OR REPLACE FUNCTION public.generate_instructor_invoice(instructor_id uuid, start_date date, end_date date)\n RETURNS uuid\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    v_invoice_id uuid;\nBEGIN\n    -- Créer la facture\n    INSERT INTO instructor_invoices (\n        instructor_id,\n        start_date,\n        end_date,\n        status,\n        created_at,\n        updated_at\n    )\n    VALUES (\n        instructor_id,\n        start_date,\n        end_date,\n        'DRAFT',\n        NOW(),\n        NOW()\n    )\n    RETURNING id INTO v_invoice_id;\n\n    -- Insérer les détails de la facture\n    -- Ne prendre que les vols qui n'ont pas de facture ou dont la facture n'est pas validée\n    INSERT INTO instructor_invoice_details (\n        invoice_id,\n        flight_id,\n        amount,\n        created_at,\n        updated_at\n    )\n    SELECT \n        v_invoice_id,\n        f.id,\n        f.cost * 0.5, -- 50% du coût du vol pour l'instructeur\n        NOW(),\n        NOW()\n    FROM flights f\n    LEFT JOIN instructor_invoice_details iid ON f.id = iid.flight_id\n    LEFT JOIN instructor_invoices ii ON iid.invoice_id = ii.id\n    WHERE \n        f.instructor_id = instructor_id\n        AND f.date BETWEEN start_date AND end_date\n        AND (\n            iid.id IS NULL -- Vol pas encore facturé\n            OR (\n                ii.status != 'VALIDATED' -- Ou facture existante non validée\n                AND ii.id != v_invoice_id -- Éviter de dupliquer les vols de la facture en cours\n            )\n        );\n\n    RETURN v_invoice_id;\nEND;\n$function$\n",
+            "return_type": "uuid"
         },
         {
             "name": "get_auth_user_id",
@@ -5973,7 +6271,7 @@
         {
             "name": "notify_mechanics_about_remark",
             "arguments": "",
-            "definition": "CREATE OR REPLACE FUNCTION public.notify_mechanics_about_remark()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    mechanic_id uuid;\nBEGIN\n    -- Create a chat room for the remark if it doesn't exist\n    INSERT INTO chat_rooms (name, type)\n    VALUES (\n        'Remarque ' || NEW.id,\n        'MECHANIC_REMARK'\n    )\n    RETURNING id INTO room_id;\n\n    -- Add the remark creator to the room\n    INSERT INTO chat_room_members (room_id, user_id)\n    VALUES (room_id, NEW.user_id);\n\n    -- Add all mechanics to the room\n    FOR mechanic_id IN\n        SELECT id FROM users WHERE role = 'MECHANIC'\n    LOOP\n        INSERT INTO chat_room_members (room_id, user_id)\n        VALUES (room_id, mechanic_id);\n    END LOOP;\n\n    -- Create initial message\n    INSERT INTO chat_messages (room_id, user_id, content)\n    VALUES (\n        room_id,\n        NEW.user_id,\n        'Nouvelle remarque sur ' || (SELECT registration FROM aircraft WHERE id = NEW.aircraft_id) || ': ' || NEW.content\n    );\n\n    RETURN NEW;\nEND;\n$function$\n",
+            "definition": "CREATE OR REPLACE FUNCTION public.notify_mechanics_about_remark()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    mechanic_id uuid;\n    room_id uuid;\nBEGIN\n    -- Create a chat room for the remark if it doesn't exist\n    INSERT INTO chat_rooms (name, type)\n    VALUES (\n        'Remarque ' || NEW.id,\n        'MECHANIC_REMARK'\n    )\n    RETURNING id INTO room_id;\n\n    -- Add the remark creator to the room\n    INSERT INTO chat_room_members (room_id, user_id)\n    VALUES (room_id, NEW.user_id);\n\n    -- Add all mechanics to the room\n    FOR mechanic_id IN\n        SELECT id FROM users WHERE role = 'MECHANIC'\n    LOOP\n        INSERT INTO chat_room_members (room_id, user_id)\n        VALUES (room_id, mechanic_id);\n    END LOOP;\n\n    -- Create initial message\n    INSERT INTO chat_messages (room_id, user_id, content)\n    VALUES (\n        room_id,\n        NEW.user_id,\n        'Nouvelle remarque sur ' || (SELECT registration FROM aircraft WHERE id = NEW.aircraft_id) || ': ' || NEW.content\n    );\n\n    RETURN NEW;\nEND;\n$function$\n",
             "return_type": "trigger"
         },
         {
@@ -5985,3 +6283,50 @@
         {
             "name": "reset_database",
             "arguments": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.reset_database()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n  -- Delete all data from tables\n  DELETE FROM daily_challenges;\n  DELETE FROM user_progress;\n  DELETE FROM training_questions;\n  DELETE FROM training_modules;\n  DELETE FROM account_entries;\n  DELETE FROM flights;\n  DELETE FROM reservations;\n  DELETE FROM flight_types;\n  DELETE FROM aircraft;\n  DELETE FROM users;\n\n  -- Insert test users\n  INSERT INTO users (id, first_name, last_name, email, role, login, password, balance) VALUES\n    (gen_random_uuid(), 'Admin', 'System', 'admin@flymanager.com', 'ADMIN', 'admin', 'admin123', 0),\n    (gen_random_uuid(), 'Marie', 'Martin', 'instructor@flymanager.com', 'INSTRUCTOR', 'instructor', 'instructor123', 500),\n    (gen_random_uuid(), 'Jean', 'Dupont', 'pilot@flymanager.com', 'PILOT', 'pilot', 'pilot123', 1000),\n    (gen_random_uuid(), 'Pierre', 'Dubois', 'mechanic@flymanager.com', 'MECHANIC', 'mechanic', 'mechanic123', 0);\n\n  -- Insert test aircraft\n  INSERT INTO aircraft (id, name, type, registration, capacity, hourly_rate, hours_before_maintenance, status) VALUES\n    (gen_random_uuid(), 'DR400-120', 'PLANE', 'F-GBQA', 4, 150, 45, 'AVAILABLE'),\n    (gen_random_uuid(), 'DR400-140', 'PLANE', 'F-GBQB', 4, 180, 30, 'AVAILABLE'),\n    (gen_random_uuid(), 'PA-28', 'PLANE', 'F-GXYZ', 4, 160, 15, 'AVAILABLE'),\n    (gen_random_uuid(), 'C152', 'PLANE', 'F-ABCD', 2, 130, 8, 'MAINTENANCE');\n\n  -- Insert flight types\n  INSERT INTO flight_types (id, name, description, requires_instructor) VALUES\n    ('local', 'Vol Local', 'Vol local sans instruction', false),\n    ('instruction', 'Instruction', 'Vol d''instruction avec instructeur', true),\n    ('navigation', 'Navigation', 'Vol de navigation', false),\n    ('discovery', 'Vol Découverte', 'Vol découverte pour le public', true);\n\n  -- Insert training modules\n  INSERT INTO training_modules (id, title, description, level, category, points) VALUES\n    (gen_random_uuid(), 'Réglementation aérienne', 'Règles de l''air et procédures opérationnelles', 'BEGINNER', 'REGULATIONS', 100),\n    (gen_random_uuid(), 'Navigation', 'Principes de navigation et planification', 'INTERMEDIATE', 'NAVIGATION', 150),\n    (gen_random_uuid(), 'Météorologie', 'Interprétation des données météo', 'BEGINNER', 'WEATHER', 100),\n    (gen_random_uuid(), 'Performance humaine', 'Facteurs humains en aviation', 'INTERMEDIATE', 'HUMAN_FACTORS', 120);\n\n  -- Insert test questions\n  WITH module_ids AS (SELECT id FROM training_modules)\n  INSERT INTO training_questions (id, module_id, question, choices, correct_answer, explanation, points)\n  SELECT \n    gen_random_uuid(),\n    id,\n    'Quelle est l''altitude de transition en France ?',\n    '[\"3000 ft\", \"5000 ft\", \"6000 ft\", \"FL 50\"]'::jsonb,\n    1,\n    'L''altitude de transition en France métropolitaine est généralement fixée à 5000 ft.',\n    10\n  FROM module_ids\n  LIMIT 1;\n\n  -- Insert test reservations and flights\n\n-- Insert flight types if not exists\nINSERT INTO flight_types (id, name, description, requires_instructor) VALUES\n  ('local', 'Vol Local', 'Vol local sans instruction', false),\n  ('instruction', 'Instruction', 'Vol d''instruction avec instructeur', true),\n  ('navigation', 'Navigation', 'Vol de navigation', false),\n  ('discovery', 'Vol Découverte', 'Vol découverte pour le public', true)\nON CONFLICT (id) DO NOTHING;\n\n-- Insert test reservations for the next few days\nWITH aircraft_ids AS (SELECT id FROM aircraft WHERE status = 'AVAILABLE'),\n     pilot_ids AS (SELECT id FROM users WHERE role IN ('PILOT', 'INSTRUCTOR')),\n     flight_type_ids AS (SELECT id FROM flight_types)\nINSERT INTO reservations (\n  id, \n  user_id, \n  aircraft_id, \n  flight_type_id,\n  start_time, \n  end_time, \n  with_instructor,\n  status\n)\nSELECT\n  gen_random_uuid(),\n  pilot_id,\n  aircraft_id,\n  flight_type_id,\n  start_time,\n  start_time + interval '2 hours',\n  CASE WHEN ft.requires_instructor THEN true ELSE false END,\n  'ACTIVE'\nFROM (\n  SELECT \n    p.pilot_id,\n    a.aircraft_id,\n    ft.id as flight_type_id,\n    ft.requires_instructor,\n    (CURRENT_DATE + (n || ' days')::interval)::timestamp + '10:00'::time AS start_time\n  FROM \n    (SELECT id AS pilot_id FROM pilot_ids) p\n    CROSS JOIN (SELECT id AS aircraft_id FROM aircraft_ids) a\n    CROSS JOIN (SELECT id, requires_instructor FROM flight_types) ft\n    CROSS JOIN generate_series(1, 5) n\n  LIMIT 10\n) AS reservations(pilot_id, aircraft_id, flight_type_id, requires_instructor, start_time)\nJOIN flight_types ft ON ft.id = flight_type_id;\n\n-- Insert test flights\nWITH pilot_ids AS (SELECT id FROM users WHERE role IN ('PILOT', 'INSTRUCTOR')),\n     aircraft_ids AS (SELECT id FROM aircraft WHERE status = 'AVAILABLE'),\n     flight_type_ids AS (SELECT id FROM flight_types)\nINSERT INTO flights (\n  id, \n  user_id, \n  aircraft_id, \n  flight_type_id,\n  date, \n  duration, \n  cost, \n  payment_method, \n  is_validated\n)\nSELECT\n  gen_random_uuid(),\n  pilot_id,\n  aircraft_id,\n  flight_type_id,\n  flight_date,\n  duration,\n  cost,\n  payment_method,\n  is_validated\nFROM (\n  SELECT \n    pilot_id,\n    aircraft_id,\n    (SELECT id FROM flight_types ORDER BY random() LIMIT 1) as flight_type_id,\n    CURRENT_DATE - (n || ' days')::interval AS flight_date,\n    60 * (1 + random()::int) AS duration,\n    150 * (1 + random()::int) AS cost,\n    CASE (random() * 3)::int\n      WHEN 0 THEN 'ACCOUNT'\n      WHEN 1 THEN 'CARD'\n      ELSE 'CASH'\n    END AS payment_method,\n    random() > 0.3 AS is_validated\n  FROM \n    (SELECT id AS pilot_id FROM pilot_ids) p\n    CROSS JOIN (SELECT id AS aircraft_id FROM aircraft_ids) a\n    CROSS JOIN generate_series(1, 10) n\n  LIMIT 20\n) AS flights(pilot_id, aircraft_id, flight_type_id, flight_date, duration, cost, payment_method, is_validated);\n\n-- Insert account entries for flights\nINSERT INTO account_entries (id, user_id, date, type, amount, payment_method, description, is_validated)\nSELECT\n  gen_random_uuid(),\n  user_id,\n  date,\n  'FLIGHT',\n  -cost,\n  payment_method,\n  'Vol du ' || to_char(date, 'DD/MM/YYYY'),\n  is_validated\nFROM flights;\n  -- Return success\n  RETURN;\nEND;\n$function$\n",
+            "return_type": "void"
+        },
+        {
+            "name": "set_current_timestamp_updated_at",
+            "arguments": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.set_current_timestamp_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    NEW.updated_at = now();\n    RETURN NEW;\nEND;\n$function$\n",
+            "return_type": "trigger"
+        },
+        {
+            "name": "trigger_set_updated_at",
+            "arguments": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.trigger_set_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    NEW.updated_at = CURRENT_TIMESTAMP;\n    RETURN NEW;\nEND;\n$function$\n",
+            "return_type": "trigger"
+        },
+        {
+            "name": "update_auth_user_id",
+            "arguments": "user_email text, new_id text",
+            "definition": "CREATE OR REPLACE FUNCTION public.update_auth_user_id(user_email text, new_id text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\ndeclare\n  old_id text;\nbegin\n  -- Récupérer l'ancien ID\n  select id::text into old_id from auth.users where email = user_email;\n  \n  -- Mettre à jour l'ID dans auth.identities\n  update auth.identities\n  set user_id = new_id::uuid\n  where user_id::text = old_id;\n  \n  -- Mettre à jour l'ID dans auth.sessions\n  update auth.sessions\n  set user_id = new_id::uuid\n  where user_id::text = old_id;\n  \n  -- Mettre à jour l'ID dans auth.mfa_factors\n  update auth.mfa_factors\n  set user_id = new_id::uuid\n  where user_id::text = old_id;\n  \n  -- Mettre à jour l'ID dans auth.refresh_tokens\n  update auth.refresh_tokens\n  set user_id = new_id::uuid\n  where user_id::text = old_id;\n  \n  -- Finalement, mettre à jour l'ID dans auth.users\n  update auth.users\n  set id = new_id::uuid\n  where email = user_email;\nend;\n$function$\n",
+            "return_type": "void"
+        },
+        {
+            "name": "update_discovery_flight_prices_updated_at",
+            "arguments": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.update_discovery_flight_prices_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    NEW.updated_at = timezone('utc'::text, now());\n    RETURN NEW;\nEND;\n$function$\n",
+            "return_type": "trigger"
+        },
+        {
+            "name": "update_updated_at_column",
+            "arguments": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.update_updated_at_column()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    NEW.updated_at = NOW();\n    RETURN NEW;\nEND;\n$function$\n",
+            "return_type": "trigger"
+        },
+        {
+            "name": "update_user_groups",
+            "arguments": "p_user_id uuid, p_groups text[]",
+            "definition": "CREATE OR REPLACE FUNCTION public.update_user_groups(p_user_id uuid, p_groups text[])\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    group_name text;\n    group_id uuid;\nBEGIN\n    -- Supprimer toutes les associations existantes pour cet utilisateur\n    DELETE FROM public.user_group_memberships\n    WHERE user_id = p_user_id;\n\n    -- Pour chaque groupe fourni\n    FOREACH group_name IN ARRAY p_groups\n    LOOP\n        -- Récupérer l'ID du groupe\n        SELECT id INTO group_id\n        FROM public.user_groups\n        WHERE name = group_name;\n\n        -- Si le groupe existe\n        IF group_id IS NOT NULL THEN\n            -- Insérer la nouvelle association\n            INSERT INTO public.user_group_memberships (user_id, group_id)\n            VALUES (p_user_id, group_id);\n        ELSE\n            -- Créer le groupe s'il n'existe pas\n            INSERT INTO public.user_groups (name, description)\n            VALUES (group_name, 'Automatically created group')\n            RETURNING id INTO group_id;\n\n            -- Puis créer l'association\n            INSERT INTO public.user_group_memberships (user_id, group_id)\n            VALUES (p_user_id, group_id);\n        END IF;\n    END LOOP;\nEND;\n$function$\n",
+            "return_type": "void"
+        },
+        {
+            "name": "validate_flight_and_account",
+            "arguments": "flight_id uuid",
+            "definition": "CREATE OR REPLACE FUNCTION public.validate_flight_and_account(flight_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n  -- Update flight validation status\n  UPDATE flights \n  SET is_validated = true,\n      updated_at = NOW()\n  WHERE id = flight_id;\n\n  -- Update corresponding account entry\n  UPDATE account_entries\n  SET is_validated = true,\n      updated_at = NOW()\n  WHERE flight_id = flight_id;\nEND;\n$function$\n",
+            "return_type": "void"
+        }
+    ]
+}

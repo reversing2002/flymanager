@@ -23,8 +23,7 @@ export async function getAvailabilitiesForPeriod(
         name
       )
     `)
-    .gte('start_time', startDate)
-    .lte('end_time', endDate);
+    .or(`and(start_time.gte.${startDate},end_time.lte.${endDate}),and(is_recurring.eq.true,or(recurrence_end_date.gte.${startDate},recurrence_end_date.is.null))`);
 
   if (userId) {
     query = query.eq('user_id', userId);

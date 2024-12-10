@@ -1,8 +1,8 @@
 // src/components/availability/AvailabilityCalendar.tsx
 import React, { useState, useEffect } from 'react';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, isWithinInterval, parseISO, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Clock, RotateCcw } from 'lucide-react';
 import { getAvailabilitiesForPeriod } from '../../lib/queries/availability';
 import type { Availability } from '../../types/availability';
 import AvailabilityModal from './AvailabilityModal';
@@ -59,15 +59,55 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     end: endOfWeek(currentDate, { locale: fr }),
   });
 
+  const getRecurringDays = (pattern: string): string[] => {
+    const match = pattern.match(/BYDAY=([A-Z,]+)/);
+    return match ? match[1].split(',') : [];
+  };
+
+  const dayToNumber: { [key: string]: number } = {
+    'MO': 1, 'TU': 2, 'WE': 3, 'TH': 4, 'FR': 5, 'SA': 6, 'SU': 0
+  };
+
   const getAvailabilitiesForDay = (date: Date) => {
     return availabilities.filter(availability => {
-      const availabilityStart = new Date(availability.start_time);
-      const availabilityEnd = new Date(availability.end_time);
-      return (
-        availabilityStart.toDateString() === date.toDateString() ||
-        availabilityEnd.toDateString() === date.toDateString()
-      );
+      const startTime = parseISO(availability.start_time);
+      const endTime = parseISO(availability.end_time);
+
+      if (availability.is_recurring) {
+        const recurringDays = getRecurringDays(availability.recurrence_pattern);
+        const dayNumber = date.getDay();
+        const dayMatches = recurringDays.some(day => dayToNumber[day] === dayNumber);
+        const recurrenceEndDate = availability.recurrence_end_date ? parseISO(availability.recurrence_end_date) : null;
+        
+        // Vérifier si la date est dans la plage de récurrence
+        const isAfterStart = date >= startOfWeek(startTime);
+        const isBeforeEnd = recurrenceEndDate ? date <= recurrenceEndDate : true;
+        
+        return dayMatches && isAfterStart && isBeforeEnd;
+      } else {
+        // Pour les disponibilités non récurrentes, vérifier si la date est dans l'intervalle
+        return isWithinInterval(date, { 
+          start: startOfWeek(startTime), 
+          end: endOfWeek(endTime) 
+        });
+      }
     });
+  };
+
+  const formatAvailabilityTime = (availability: Availability) => {
+    const start = parseISO(availability.start_time);
+    const end = parseISO(availability.end_time);
+
+    if (availability.is_recurring) {
+      return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')} (Récurrent)`;
+    } else {
+      const isSameStartEnd = isSameDay(start, end);
+      if (isSameStartEnd) {
+        return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
+      } else {
+        return `Du ${format(start, 'dd/MM HH:mm')} au ${format(end, 'dd/MM HH:mm')}`;
+      }
+    }
   };
 
   return (
@@ -101,10 +141,10 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
       </div>
 
       <div className="grid grid-cols-7 gap-4">
-        {days.map((day) => (
+        {days.map((day, index) => (
           <div key={day.toISOString()} className="space-y-2">
             <div className="text-center">
-              <div className="font-medium">
+              <div className="text-sm font-medium text-slate-900">
                 {format(day, 'EEEE', { locale: fr })}
               </div>
               <div className="text-sm text-slate-500">
@@ -112,20 +152,36 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
               </div>
             </div>
 
-            <div className="min-h-[100px] bg-white rounded-lg border p-2 space-y-1">
+            <div className="min-h-[150px] bg-slate-50 rounded-lg p-2 space-y-2">
               {getAvailabilitiesForDay(day).map((availability) => (
                 <button
                   key={availability.id}
-                  onClick={() => setSelectedAvailability(availability)}
-                  className="w-full text-left p-2 text-sm rounded bg-red-50 text-red-800 hover:bg-red-100"
+                  onClick={() => {
+                    setSelectedAvailability(availability);
+                    setShowModal(true);
+                  }}
+                  className="w-full text-left p-2 rounded bg-red-50 hover:bg-red-100 border border-red-200 transition-colors group"
                 >
-                  <div className="font-medium">
-                    {format(new Date(availability.start_time), 'HH:mm')} -{' '}
-                    {format(new Date(availability.end_time), 'HH:mm')}
+                  <div className="flex items-start gap-2">
+                    {availability.is_recurring ? (
+                      <RotateCcw className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <Clock className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-red-900 truncate">
+                        {availability.users?.first_name} {availability.users?.last_name}
+                      </div>
+                      <div className="text-xs text-red-700">
+                        {formatAvailabilityTime(availability)}
+                      </div>
+                      {availability.reason && (
+                        <div className="text-xs text-red-600 truncate mt-1">
+                          {availability.reason}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  {availability.reason && (
-                    <div className="text-xs truncate">{availability.reason}</div>
-                  )}
                 </button>
               ))}
             </div>
@@ -133,7 +189,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
         ))}
       </div>
 
-      {(showModal || selectedAvailability) && (
+      {showModal && (
         <AvailabilityModal
           userId={userId}
           aircraftId={aircraftId}
