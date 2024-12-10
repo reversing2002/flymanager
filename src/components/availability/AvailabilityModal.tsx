@@ -1,10 +1,10 @@
 // src/components/availability/AvailabilityModal.tsx
 import React, { useState, useEffect } from 'react';
-import { X, AlertTriangle, Calendar, RotateCcw, Clock } from 'lucide-react';
+import { X, AlertTriangle, Calendar, RotateCcw, Clock, Trash2 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
-import { createAvailability, updateAvailability } from '../../lib/queries/availability';
+import { createAvailability, updateAvailability, deleteAvailability } from '../../lib/queries/availability';
 import type { Availability } from '../../types/availability';
 
 type AvailabilityType = 'recurring' | 'period';
@@ -106,6 +106,30 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
       console.error('Error saving availability:', err);
       setError('Erreur lors de l\'enregistrement');
       toast.error('Erreur lors de l\'enregistrement');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!availability?.id) return;
+    
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette indisponibilité ?')) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await deleteAvailability(availability.id);
+      toast.success('Indisponibilité supprimée');
+      onSuccess();
+      onClose();
+    } catch (err) {
+      console.error('Error deleting availability:', err);
+      setError('Erreur lors de la suppression');
+      toast.error('Erreur lors de la suppression');
     } finally {
       setLoading(false);
     }
@@ -319,21 +343,41 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-              disabled={loading}
-            >
-              Annuler
-            </button>
+          <div className="flex items-center justify-between mt-8">
+            <div className="flex items-center gap-4">
+              {availability && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Supprimer</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-700"
+              >
+                Annuler
+              </button>
+            </div>
+            
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 rounded-lg transition-colors disabled:opacity-50"
               disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg disabled:opacity-50"
             >
-              {loading ? 'Enregistrement...' : 'Enregistrer'}
+              {loading ? (
+                <>
+                  <span className="animate-spin">⌛</span>
+                  <span>En cours...</span>
+                </>
+              ) : (
+                <span>Enregistrer</span>
+              )}
             </button>
           </div>
         </form>
