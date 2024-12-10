@@ -1,0 +1,12 @@
+{
+    "name": "Enable aircraft remarks updates for mechanics and admins",
+    "roles": [
+        [
+            "public"
+        ]
+    ],
+    "table": "aircraft_remarks",
+    "command": "UPDATE", 
+    "definition": "(has_any_group(auth.uid(), ARRAY['MECHANIC'::text, 'ADMIN'::text]) AND EXISTS (SELECT 1 FROM club_members WHERE club_members.user_id = auth.uid() AND club_members.club_id IN (SELECT club_id FROM aircraft WHERE id = aircraft_remarks.aircraft_id)))",
+    "permissive": "PERMISSIVE"
+}
