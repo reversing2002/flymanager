@@ -25,6 +25,8 @@ import { Link } from "react-router-dom";
 import SunCalc from "suncalc";
 import { format } from "date-fns";
 import SunTimesDisplay from "./common/SunTimesDisplay";
+import AircraftRemarks from "./remarks/AircraftRemarks";
+import PendingDiscoveryFlights from "./discovery/PendingDiscoveryFlights";
 
 const StatCard = ({
   icon,
@@ -301,19 +303,23 @@ const RecentMessages = () => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState({
+    aircraft: 0,
+    users: 0,
+    reservations: 0,
+    flights: 0,
+  });
+  const [balance, setBalance] = useState<number | null>(null);
+  const [showReservationModal, setShowReservationModal] = useState(false);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [flights, setFlights] = useState<Flight[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
-  const [balance, setBalance] = useState<{
-    validated: number;
-    pending: number;
-  } | null>(null);
   const [sunTimes, setSunTimes] = useState<{
     sunrise: Date;
     sunset: Date;
@@ -455,44 +461,38 @@ const Dashboard = () => {
   const nextReservations = futureReservations.slice(0, 5);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {Array.isArray(announcements) &&
-        announcements
-          .filter((a) => !dismissedAnnouncements.includes(a.id))
-          .map((announcement) => (
-            <div key={announcement.id} className="mb-4">
-              <AnnouncementBanner
-                announcement={announcement}
-                onDismiss={handleDismissAnnouncement}
-              />
-            </div>
-          ))}
+    <div className="space-y-6">
+      {/* Annonces */}
+      {announcements.map((announcement) => (
+        <AnnouncementBanner key={announcement.id} announcement={announcement} onDismiss={handleDismissAnnouncement} />
+      ))}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* <StatCard
-          icon={<Users className="w-6 h-6" />}
-          title="Membres actifs"
-          value={users?.length.toString() || "0"}
-          description="Nombre total de membres"
-          color="bg-gradient-to-br from-sky-400 to-sky-600"
-        /> */}
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          icon={<Plane className="w-6 h-6" />}
+          icon={<Plane className="h-6 w-6" />}
           title="Avions"
-          value={aircraft?.length.toString() || "0"}
+          value={aircraft.length.toString()}
           description="Flotte disponible"
-          color="bg-gradient-to-br from-emerald-400 to-emerald-600"
+          color="blue"
         />
         <StatCard
-          icon={<Calendar className="w-6 h-6" />}
+          icon={<Users className="h-6 w-6" />}
+          title="Membres"
+          value={users.length.toString()}
+          description="Membres actifs"
+          color="green"
+        />
+        <StatCard
+          icon={<Calendar className="h-6 w-6" />}
           title="Réservations"
           value={futureReservations.length.toString()}
-          description="Réservations à venir"
-          color="bg-gradient-to-br from-amber-400 to-amber-600"
+          description="Réservations en cours"
+          color="purple"
         />
         {balance && (
           <StatCard
-            icon={<CreditCard className="w-6 h-6" />}
+            icon={<CreditCard className="h-6 w-6" />}
             title="Solde"
             value={`${balance.validated.toFixed(2)}€`}
             description={
@@ -500,78 +500,88 @@ const Dashboard = () => {
                 ? `${balance.pending.toFixed(2)}€ en attente`
                 : "Solde validé"
             }
-            color="bg-gradient-to-br from-sky-400 to-sky-600"
+            color="yellow"
           />
         )}
-        <StatCard
-          icon={<Sun className="w-6 h-6" />}
-          title="Horaires du soleil"
-          value={sunTimes ? `${format(sunTimes.sunrise, 'HH:mm')} - ${format(sunTimes.sunset, 'HH:mm')}` : "--:-- - --:--"}
-          description={sunTimes ? `Journée aéro: ${format(sunTimes.aeroStart, 'HH:mm')} - ${format(sunTimes.aeroEnd, 'HH:mm')}` : "Chargement..."}
-          color="bg-gradient-to-br from-emerald-400 to-emerald-600"
-        />
       </div>
 
+      {/* Grille 2 colonnes pour les vols découverte et remarques avions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl p-6 shadow-sm border border-slate-100">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-slate-800">Messages récents</h2>
-            <Link to="/messages" className="text-sm text-slate-600 hover:text-slate-800">
+        {/* Vols découverte */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+          <PendingDiscoveryFlights />
+        </div>
+
+        {/* Remarques avions */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">Remarques avions</h2>
+            <Link 
+              to="/aircraft"
+              className="text-sm text-sky-600 hover:text-sky-700"
+            >
               Voir tout
             </Link>
           </div>
+          <AircraftRemarks limit={5} />
+        </div>
+      </div>
+
+      {/* Autres sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Messages récents */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
           <RecentMessages />
         </div>
 
-        <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl p-6 shadow-sm border border-slate-100">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-slate-800">Événements à venir</h2>
-            <Link to="/events" className="text-sm text-slate-600 hover:text-slate-800">
-              Voir tout
-            </Link>
-          </div>
+        {/* Événements à venir */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
           <UpcomingEvents />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Prochaines réservations */}
-        <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl p-6 shadow-sm border border-slate-100">
-          <h2 className="text-xl font-semibold text-slate-800">Mes prochaines réservations</h2>
-          <div className="space-y-4">
-            {nextReservations.map((reservation) => {
-              const aircraftItem = aircraft.find(
-                (a) => a.id === reservation.aircraftId
-              );
-              return (
-                <div
-                  key={reservation.id}
-                  className="flex items-center justify-between p-4 bg-slate-50 rounded-lg"
-                >
-                  <div>
-                    <div className="font-medium">
-                      {aircraftItem?.registration || "Avion inconnu"}
-                    </div>
-                    <div className="text-sm text-slate-600">
-                      {new Date(reservation.startTime).toLocaleDateString()}
-                    </div>
+      {/* Heures de lever/coucher du soleil */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+        <SunTimesDisplay />
+      </div>
+
+      {/* Prochaines réservations */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+        <h2 className="text-lg font-semibold text-slate-900">Mes prochaines réservations</h2>
+        <div className="space-y-4">
+          {nextReservations.map((reservation) => {
+            const aircraftItem = aircraft.find(
+              (a) => a.id === reservation.aircraftId
+            );
+            return (
+              <div
+                key={reservation.id}
+                className="flex items-center justify-between p-4 bg-slate-50 rounded-lg"
+              >
+                <div>
+                  <div className="font-medium">
+                    {aircraftItem?.registration || "Avion inconnu"}
                   </div>
-                  <div className="text-sm">
-                    {new Date(reservation.startTime).toLocaleTimeString()} -{" "}
-                    {new Date(reservation.endTime).toLocaleTimeString()}
+                  <div className="text-sm text-slate-600">
+                    {new Date(reservation.startTime).toLocaleDateString()}
                   </div>
                 </div>
-              );
-            })}
-            {nextReservations.length === 0 && (
-              <p className="text-center text-slate-500">
-                Aucune réservation à venir
-              </p>
-            )}
-          </div>
+                <div className="text-sm">
+                  {new Date(reservation.startTime).toLocaleTimeString()} -{" "}
+                  {new Date(reservation.endTime).toLocaleTimeString()}
+                </div>
+              </div>
+            );
+          })}
+          {nextReservations.length === 0 && (
+            <p className="text-center text-slate-500">
+              Aucune réservation à venir
+            </p>
+          )}
         </div>
       </div>
 
+      {/* Modal de réservation */}
       {selectedReservation && (
         <ReservationModal
           startTime={new Date(selectedReservation.startTime)}
