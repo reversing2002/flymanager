@@ -7,6 +7,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
 import { useToast } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
+import ReservationModal from "../reservations/ReservationModal";
 
 interface DiscoveryFlight {
   id: string;
@@ -36,8 +37,30 @@ interface Props {
 export default function PendingDiscoveryFlights({ className }: Props) {
   const [flights, setFlights] = useState<DiscoveryFlight[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showReservationModal, setShowReservationModal] = useState(false);
+  const [selectedFlight, setSelectedFlight] = useState<DiscoveryFlight | null>(null);
+  const [discoveryFlightTypeId, setDiscoveryFlightTypeId] = useState<string | null>(null);
   const { user } = useAuth();
   const toast = useToast();
+
+  const fetchFlightTypes = async () => {
+    const { data, error } = await supabase
+      .from("flight_types")
+      .select("id")
+      .eq("name", "Vol Découverte")
+      .single();
+
+    if (error) {
+      console.error("Error fetching flight type:", error);
+      return;
+    }
+
+    setDiscoveryFlightTypeId(data.id);
+  };
+
+  useEffect(() => {
+    fetchFlightTypes();
+  }, []);
 
   const fetchFlights = async () => {
     if (!user) return;
@@ -75,36 +98,9 @@ export default function PendingDiscoveryFlights({ className }: Props) {
     fetchFlights();
   }, [user]);
 
-  const handleAssignFlight = async (flightId: string) => {
-    try {
-      const { error } = await supabase
-        .from("discovery_flights")
-        .update({ 
-          pilot_id: user?.id,
-          status: 'CONFIRMED'
-        })
-        .eq("id", flightId);
-
-      if (error) throw error;
-
-      fetchFlights();
-      toast({
-        title: "Vol attribué",
-        description: "Vous êtes maintenant le pilote de ce vol découverte",
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (error) {
-      console.error("Erreur lors de l'attribution du vol:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'attribuer le vol",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
-    }
+  const handleAssignFlight = async (flight: DiscoveryFlight) => {
+    setSelectedFlight(flight);
+    setShowReservationModal(true);
   };
 
   if (loading) {
@@ -180,7 +176,7 @@ export default function PendingDiscoveryFlights({ className }: Props) {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleAssignFlight(flight.id)}
+                  onClick={() => handleAssignFlight(flight)}
                   className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
                 >
                   Devenir pilote
@@ -189,6 +185,62 @@ export default function PendingDiscoveryFlights({ className }: Props) {
             </div>
           ))}
         </div>
+      )}
+      {/* Modal de réservation */}
+      {showReservationModal && selectedFlight && (
+        <ReservationModal
+          startTime={selectedFlight.start_time ? new Date(`2000-01-01T${selectedFlight.start_time}`) : new Date()}
+          endTime={selectedFlight.end_time ? new Date(`2000-01-01T${selectedFlight.end_time}`) : new Date()}
+          onClose={() => {
+            setShowReservationModal(false);
+            setSelectedFlight(null);
+          }}
+          onSuccess={async (reservation) => {
+            try {
+              const { error } = await supabase
+                .from("discovery_flights")
+                .update({ 
+                  pilot_id: user?.id,
+                  status: 'CONFIRMED',
+                  date: reservation.startTime,
+                  start_time: format(new Date(reservation.startTime), 'HH:mm:ss'),
+                  end_time: format(new Date(reservation.endTime), 'HH:mm:ss'),
+                  aircraft_id: reservation.aircraftId
+                })
+                .eq("id", selectedFlight.id);
+
+              if (error) throw error;
+
+              fetchFlights();
+              toast({
+                title: "Vol attribué",
+                description: "Vous êtes maintenant le pilote de ce vol découverte",
+                status: "success",
+                duration: 5000,
+                isClosable: true,
+              });
+            } catch (error) {
+              console.error("Erreur lors de l'attribution du vol:", error);
+              toast({
+                title: "Erreur",
+                description: "Impossible d'attribuer le vol",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+              });
+            } finally {
+              setShowReservationModal(false);
+              setSelectedFlight(null);
+            }
+          }}
+          aircraft={[]}
+          users={[]}
+          comments={`Vol découverte - ${selectedFlight.passenger_count} passager(s)
+Contact: ${selectedFlight.contact_email} / ${selectedFlight.contact_phone}
+Poids total: ${selectedFlight.total_weight}kg
+${selectedFlight.comments ? `Commentaires: ${selectedFlight.comments}` : ''}`}
+          preselectedFlightTypeId={discoveryFlightTypeId || undefined}
+        />
       )}
     </div>
   );
