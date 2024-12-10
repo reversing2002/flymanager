@@ -1,6 +1,6 @@
 // src/components/availability/AvailabilityCalendar.tsx
 import React, { useState, useEffect } from 'react';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, isWithinInterval, parseISO, addDays } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, isWithinInterval, parseISO, addDays, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Clock, RotateCcw } from 'lucide-react';
 import { getAvailabilitiesForPeriod } from '../../lib/queries/availability';
@@ -80,16 +80,13 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
         const recurrenceEndDate = availability.recurrence_end_date ? parseISO(availability.recurrence_end_date) : null;
         
         // Vérifier si la date est dans la plage de récurrence
-        const isAfterStart = date >= startOfWeek(startTime);
+        const isAfterStart = date >= startTime;
         const isBeforeEnd = recurrenceEndDate ? date <= recurrenceEndDate : true;
         
         return dayMatches && isAfterStart && isBeforeEnd;
       } else {
-        // Pour les disponibilités non récurrentes, vérifier si la date est dans l'intervalle
-        return isWithinInterval(date, { 
-          start: startOfWeek(startTime), 
-          end: endOfWeek(endTime) 
-        });
+        // Pour les disponibilités non récurrentes, vérifier si la date est dans l'intervalle exact
+        return date >= startOfDay(startTime) && date <= endOfDay(endTime);
       }
     });
   };
