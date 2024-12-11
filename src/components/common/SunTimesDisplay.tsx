@@ -59,18 +59,18 @@ export default function SunTimesDisplay({ date, className }: SunTimesDisplayProp
 
   return (
     <div className={cn(
-      "flex flex-col gap-1",
+      "flex flex-col sm:flex-row gap-1 sm:gap-4 text-sm",
       className
     )}>
-      <div className="flex items-center gap-2">
-        <Sun className="w-4 h-4" />
-        <span>
-          Soleil: {format(sunTimes.sunrise, 'HH:mm')} - {format(sunTimes.sunset, 'HH:mm')}
+      <div className="flex items-center gap-1">
+        <Sun className="w-3.5 h-3.5" />
+        <span className="whitespace-nowrap">
+          {format(sunTimes.sunrise, 'HH:mm')} - {format(sunTimes.sunset, 'HH:mm')}
         </span>
       </div>
-      <div className="flex items-center gap-2 opacity-80">
-        <span>
-          Journée aéro: {format(sunTimes.aeroStart, 'HH:mm')} - {format(sunTimes.aeroEnd, 'HH:mm')}
+      <div className="flex items-center gap-1 opacity-80">
+        <span className="whitespace-nowrap text-xs">
+          Aéro: {format(sunTimes.aeroStart, 'HH:mm')} - {format(sunTimes.aeroEnd, 'HH:mm')}
         </span>
       </div>
     </div>
