@@ -1,7 +1,6 @@
 import { supabase } from "../supabase";
 import { adminClient } from "../supabase/adminClient";
 import type { User } from "../../types/database";
-import { hasAnyGroup } from "../permissions";
 
 export async function updateUser(
   data: Partial<User> & { id: string }
@@ -20,6 +19,7 @@ export async function updateUser(
       birth_date: data.birth_date || null,
       image_url: data.image_url || null,
       instructor_rate: data.instructor_rate !== undefined ? data.instructor_rate : undefined,
+      instructor_fee: data.instructor_fee !== undefined ? data.instructor_fee : undefined,
       updated_at: new Date().toISOString(),
     };
 
@@ -171,6 +171,7 @@ export async function getUsers(): Promise<User[]> {
     password: user.password,
     balance: user.balance,
     instructor_rate: user.instructor_rate,
+    instructor_fee: user.instructor_fee,
     created_at: user.created_at,
     updated_at: user.updated_at,
     club: user.club,

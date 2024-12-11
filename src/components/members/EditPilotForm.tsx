@@ -32,6 +32,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     roles: [] as string[],
     image_url: pilot.image_url || "",
     instructor_rate: pilot.instructor_rate || null,
+    instructor_fee: pilot.instructor_fee || null,
   });
 
   const [loading, setLoading] = useState(false);
@@ -72,7 +73,14 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Gestion spéciale pour les champs numériques
+    if (name === 'instructor_rate' || name === 'instructor_fee') {
+      const numericValue = value === '' ? null : parseFloat(value);
+      setFormData(prev => ({ ...prev, [name]: numericValue }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleRoleChange = (role: string) => {
@@ -106,7 +114,8 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
         gender: formData.gender,
         birth_date: formData.birth_date || null,
         image_url: formData.image_url,
-        instructor_rate: formData.instructor_rate || null
+        instructor_rate: formData.instructor_rate || null,
+        instructor_fee: formData.instructor_fee || null
       };
 
       console.log("[EditPilotForm] ====== SUBMIT DEBUG ======");
@@ -290,49 +299,57 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
           )}
 
           {formData.roles.includes("INSTRUCTOR") && (
-            <div>
-              <label htmlFor="instructor_rate" className="block text-sm font-medium text-gray-700">
-                Tarif horaire d'instruction
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">€</span>
-                </div>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  name="instructor_rate"
-                  id="instructor_rate"
-                  className="block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0.00"
-                  value={formData.instructor_rate ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const numericValue = value === "" ? null : Math.max(0, parseFloat(value));
-                    console.log("[EditPilotForm] Input value:", value);
-                    console.log("[EditPilotForm] Parsed numeric value:", numericValue);
-                    setFormData(prev => {
-                      const newFormData = { 
-                        ...prev, 
-                        instructor_rate: numericValue 
-                      };
-                      console.log("[EditPilotForm] Updated form data:", newFormData);
-                      return newFormData;
-                    });
-                  }}
-                  disabled={!isAdmin && pilot.id !== currentUser?.id}
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">/h</span>
+            <>
+              <div>
+                <label htmlFor="instructor_rate" className="block text-sm font-medium text-gray-700">
+                  Tarif horaire d'instruction
+                </label>
+                <div className="mt-1 relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">€</span>
+                  </div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="instructor_rate"
+                    id="instructor_rate"
+                    value={formData.instructor_rate ?? ''}
+                    onChange={handleChange}
+                    className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                    placeholder="0.00"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">/heure</span>
+                  </div>
                 </div>
               </div>
-              {!isAdmin && pilot.id !== currentUser?.id && (
-                <p className="mt-1 text-sm text-gray-500">
-                  Seuls les administrateurs peuvent modifier ce taux horaire
-                </p>
-              )}
-            </div>
+
+              <div>
+                <label htmlFor="instructor_fee" className="block text-sm font-medium text-gray-700">
+                  Rémunération horaire instructeur
+                </label>
+                <div className="mt-1 relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">€</span>
+                  </div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="instructor_fee"
+                    id="instructor_fee"
+                    value={formData.instructor_fee ?? ''}
+                    onChange={handleChange}
+                    className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                    placeholder="0.00"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">/heure</span>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
           <div>

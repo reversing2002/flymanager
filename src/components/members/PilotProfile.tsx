@@ -76,6 +76,7 @@ const PilotProfile = () => {
         birth_date: formData.birth_date,
         image_url: formData.image_url,
         instructor_rate: formData.instructor_rate,
+        instructor_fee: formData.instructor_fee,
         roles: formData.roles,
       };
 

@@ -121,6 +121,7 @@ const MemberProfile = () => {
         image_url: formData.image_url,
         default_schedule: formData.default_schedule,
         instructor_rate: formData.instructor_rate,
+        instructor_fee: formData.instructor_fee,
         role: formData.role,
       });
 

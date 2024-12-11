@@ -14,6 +14,7 @@ export interface User {
   license?: License;
   qualifications?: Qualification[];
   instructor_rate?: string;
+  instructor_fee?: string;  // Taux horaire à reverser à l'instructeur
   created_at: string;
   updated_at: string;
   club?: {
@@ -123,7 +124,8 @@ export interface Flight {
   destination?: string;
   hourly_rate: number;
   cost: number;
-  instructorCost?: number;
+  instructor_cost?: number;  // Coût total de l'instruction pour ce vol
+  instructor_fee?: number;   // Taux horaire de l'instructeur appliqué pour ce vol
   payment_method: PaymentMethod;
   is_validated: boolean;
   accounting_category: string;
