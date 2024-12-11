@@ -20,34 +20,35 @@ const MemberList = () => {
   const [loading, setLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 
+  const loadMembers = async () => {
+    try {
+      const data = await getMembersWithBalance();
+      
+      // Charger les cotisations pour chaque membre
+      const membersWithContributions = await Promise.all(
+        data.map(async (member) => {
+          try {
+            const contributions = await getContributionsByUserId(member.id);
+            return {
+              ...member,
+              contributions
+            };
+          } catch (error) {
+            console.error(`Error loading contributions for member ${member.id}:`, error);
+            return member;
+          }
+        })
+      );
+      
+      setMembers(membersWithContributions);
+    } catch (error) {
+      console.error("Error loading members:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadMembers = async () => {
-      try {
-        const data = await getMembersWithBalance();
-        
-        // Charger les cotisations pour chaque membre
-        const membersWithContributions = await Promise.all(
-          data.map(async (member) => {
-            try {
-              const contributions = await getContributionsByUserId(member.id);
-              return {
-                ...member,
-                contributions
-              };
-            } catch (error) {
-              console.error(`Error loading contributions for member ${member.id}:`, error);
-              return member;
-            }
-          })
-        );
-        
-        setMembers(membersWithContributions);
-      } catch (error) {
-        console.error("Error loading members:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadMembers();
   }, []);
 
@@ -99,99 +100,74 @@ const MemberList = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Membres</h1>
-        {hasAnyGroup(user, ["ADMIN"]) && (
-          <button 
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <h1 className="text-2xl font-semibold text-slate-900 mb-4 sm:mb-0">Membres</h1>
+        {hasAnyGroup(user, ["ADMIN", "INSTRUCTOR"]) && (
+          <button
             onClick={() => setIsAddMemberOpen(true)}
-            className="btn btn-primary flex items-center space-x-2"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            <Plus className="h-4 w-4" />
-            <span>Ajouter un membre</span>
+            <Plus className="h-5 w-5 mr-2" />
+            Ajouter un membre
           </button>
         )}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-grow">
             <input
               type="text"
               placeholder="Rechercher un membre..."
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             />
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
           </div>
-          <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="inline-flex items-center px-4 py-2 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <Filter className="h-5 w-5 mr-2" />
+            Filtres
+          </button>
+        </div>
+
+        {showFilters && (
+          <div className="mt-4 flex flex-col sm:flex-row gap-4">
             <select
+              className="form-select block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
-              className="rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             >
               <option value="all">Tous les rôles</option>
-              <option value="pilot">Pilotes</option>
-              <option value="instructor">Instructeurs</option>
               <option value="admin">Administrateurs</option>
-              <option value="mechanic">Mécaniciens</option>
+              <option value="instructor">Instructeurs</option>
+              <option value="pilot">Pilotes</option>
               <option value="student">Élèves</option>
             </select>
 
             <select
+              className="form-select block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
               value={selectedMembershipStatus}
               onChange={(e) => setSelectedMembershipStatus(e.target.value)}
-              className="rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             >
               <option value="all">Toutes les cotisations</option>
               <option value="valid">Cotisations valides</option>
               <option value="expired">Cotisations expirées</option>
             </select>
           </div>
-        </div>
-
-        {showFilters && (
-          <div className="mt-4 p-4 bg-slate-50 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Statut de licence
-                </label>
-                <select className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500">
-                  <option value="all">Tous</option>
-                  <option value="valid">Valide</option>
-                  <option value="expired">Expirée</option>
-                  <option value="expiring">Expire bientôt</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Cotisation
-                </label>
-                <select className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500">
-                  <option value="all">Tous</option>
-                  <option value="paid">À jour</option>
-                  <option value="unpaid">Non payée</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Type d'appareil
-                </label>
-                <select className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500">
-                  <option value="all">Tous</option>
-                  <option value="plane">Avion</option>
-                  <option value="ulm">ULM</option>
-                </select>
-              </div>
-            </div>
-          </div>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredMembers.map((member) => (
-          <MemberCard key={member.id} member={member} />
+          <MemberCard 
+            key={member.id} 
+            member={member}
+            onDelete={loadMembers}
+          />
         ))}
       </div>
 
@@ -199,8 +175,8 @@ const MemberList = () => {
         isOpen={isAddMemberOpen}
         onClose={() => setIsAddMemberOpen(false)}
         onSuccess={() => {
-          // Recharger la liste des membres
-          getMembersWithBalance().then(setMembers);
+          setIsAddMemberOpen(false);
+          loadMembers();
         }}
       />
     </div>

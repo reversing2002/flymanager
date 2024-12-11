@@ -1,4 +1,5 @@
 import { supabase } from "../supabase";
+import { adminClient } from "../supabase/adminClient";
 import type { User } from "../../types/database";
 import { hasAnyGroup } from "../permissions";
 
@@ -307,24 +308,17 @@ export async function createMember(data: {
   roles: string[];
 }): Promise<{ password: string }> {
   try {
-    // Vérifier si l'email existe déjà
-    const { data: existingUser } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", data.email)
-      .single();
+    const { firstName, lastName, email, roles } = data;
+    const login = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const password = generateRandomPassword();
 
-    if (existingUser) {
-      throw new Error("Un utilisateur avec cet email existe déjà");
-    }
-
-    // Récupérer le club de l'administrateur connecté
+    // Get current user's club
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error("Utilisateur non connecté");
     }
 
-    const { data: adminClub, error: clubError } = await supabase
+    const { data: adminClub, error: clubError } = await adminClient
       .from("club_members")
       .select("club_id")
       .eq("user_id", user.id)
@@ -334,62 +328,59 @@ export async function createMember(data: {
       throw clubError;
     }
 
-    // Générer un login à partir du prénom et du nom
-    const login = `${data.firstName.toLowerCase()}.${data.lastName.toLowerCase()}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    
-    // Générer un mot de passe aléatoire
-    const password = generateRandomPassword();
-
-    // 1. Créer l'utilisateur dans public.users
-    const { data: newUser, error: userError } = await supabase
+    // First create the user in public.users
+    const { data: newUser, error: createError } = await adminClient
       .from("users")
       .insert({
-        first_name: data.firstName,
-        last_name: data.lastName,
-        email: data.email,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
         login: login,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
       .select()
       .single();
 
-    if (userError) {
-      throw userError;
+    if (createError) {
+      console.error("Error creating user:", createError);
+      throw createError;
     }
 
-    // 2. Créer l'utilisateur dans auth.users via la fonction RPC en utilisant le même ID
-    const { error: authError } = await supabase.rpc("create_auth_user", {
-      p_email: data.email,
+    // Create the auth user using the custom RPC function
+    const { error: authError } = await adminClient.rpc("create_auth_user", {
+      p_email: email,
       p_password: password,
       p_login: login,
-      p_role: data.roles[0], // On utilise le premier rôle comme rôle principal pour les métadonnées
-      p_user_id: newUser.id  // Passer l'ID de public.users
+      p_role: roles[0], // Use first role as primary role
+      p_user_id: newUser.id
     });
 
     if (authError) {
-      // En cas d'erreur, supprimer l'utilisateur de public.users
-      await supabase.from("users").delete().eq("id", newUser.id);
+      console.error("Error creating auth user:", authError);
+      // Cleanup the created user if auth fails
+      await adminClient.from("users").delete().eq("id", newUser.id);
       throw authError;
     }
 
-    // 3. Attribuer les rôles via les groupes
-    if (data.roles.length > 0) {
-      const { error: rolesError } = await supabase
+    // Update user roles using the RPC function
+    if (roles.length > 0) {
+      const { error: rolesError } = await adminClient
         .rpc('update_user_groups', {
           p_user_id: newUser.id,
-          p_groups: data.roles
+          p_groups: roles
         });
 
       if (rolesError) {
-        // En cas d'erreur avec les rôles, supprimer l'utilisateur
-        await supabase.from("users").delete().eq("id", newUser.id);
+        console.error("Error updating user roles:", rolesError);
+        // Cleanup if role assignment fails
+        await adminClient.from("users").delete().eq("id", newUser.id);
         throw rolesError;
       }
     }
 
-    // 4. Ajouter l'utilisateur à la table club_members avec le club de l'admin
-    const { error: clubMemberError } = await supabase
+    // Add user to club_members
+    const { error: clubMemberError } = await adminClient
       .from("club_members")
       .insert({
         user_id: newUser.id,
@@ -398,14 +389,15 @@ export async function createMember(data: {
       });
 
     if (clubMemberError) {
-      // En cas d'erreur, supprimer l'utilisateur
-      await supabase.from("users").delete().eq("id", newUser.id);
+      console.error("Error adding user to club:", clubMemberError);
+      // Cleanup everything if club member creation fails
+      await adminClient.from("users").delete().eq("id", newUser.id);
       throw clubMemberError;
     }
 
     return { password };
   } catch (error) {
-    console.error("[createMember] Error:", error);
+    console.error("Error in createMember:", error);
     throw error;
   }
 }
