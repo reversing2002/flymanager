@@ -30,6 +30,12 @@ interface DiscoveryFlight {
   };
 }
 
+interface Aircraft {
+  id: string;
+  registration: string;
+  name: string;
+}
+
 interface Props {
   className?: string;
 }
@@ -40,6 +46,7 @@ export default function PendingDiscoveryFlights({ className }: Props) {
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<DiscoveryFlight | null>(null);
   const [discoveryFlightTypeId, setDiscoveryFlightTypeId] = useState<string | null>(null);
+  const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
   const { user } = useAuth();
   const toast = useToast();
 
@@ -56,6 +63,21 @@ export default function PendingDiscoveryFlights({ className }: Props) {
     }
 
     setDiscoveryFlightTypeId(data.id);
+  };
+
+  const fetchAircraft = async (passengerCount: number) => {
+    const { data, error } = await supabase
+      .from("aircraft")
+      .select("*")
+      .eq("status", "AVAILABLE")
+      .gte("capacity", passengerCount + 1); // +1 pour le pilote
+
+    if (error) {
+      console.error("Error fetching aircraft:", error);
+      return;
+    }
+
+    setAircraftList(data || []);
   };
 
   useEffect(() => {
@@ -100,6 +122,7 @@ export default function PendingDiscoveryFlights({ className }: Props) {
 
   const handleAssignFlight = async (flight: DiscoveryFlight) => {
     setSelectedFlight(flight);
+    await fetchAircraft(flight.passenger_count);
     setShowReservationModal(true);
   };
 
@@ -233,7 +256,7 @@ export default function PendingDiscoveryFlights({ className }: Props) {
               setSelectedFlight(null);
             }
           }}
-          aircraft={[]}
+          aircraft={aircraftList}
           users={[]}
           comments={`Vol découverte - ${selectedFlight.passenger_count} passager(s)
 Contact: ${selectedFlight.contact_email} / ${selectedFlight.contact_phone}
