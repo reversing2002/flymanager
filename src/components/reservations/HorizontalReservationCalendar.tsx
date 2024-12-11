@@ -319,8 +319,12 @@ const HorizontalReservationCalendar = ({
         setAircraftOrder(order);
       }
 
-      const startTime = setMinutes(setHours(selectedDate, 7), 0);
-      const endTime = setMinutes(setHours(selectedDate, 22), 0);
+      // Ajuster les heures pour la requête en UTC
+      const startTime = new Date(selectedDate);
+      startTime.setHours(7, 0, 0, 0);
+      const endTime = new Date(selectedDate);
+      endTime.setHours(22, 0, 0, 0);
+
       const reservationsData = await getReservations(startTime, endTime);
       setReservations(reservationsData);
 
@@ -387,33 +391,46 @@ const HorizontalReservationCalendar = ({
   const SLOT_WIDTH = 1.5; // rem
 
   const calculateReservationStyle = (reservation: Reservation) => {
+    // Convertir explicitement les dates UTC en local
     const start = new Date(reservation.startTime);
     const end = new Date(reservation.endTime);
+    
+    // Obtenir les heures locales
+    const startHour = start.getHours();
+    const startMinutes = start.getMinutes();
+    const endHour = end.getHours();
+    const endMinutes = end.getMinutes();
 
-    const startSlotIndex = timeSlots.findIndex(
-      ({ hour, minutes }) =>
-        hour === start.getHours() &&
-        minutes <= start.getMinutes() &&
-        minutes + 15 > start.getMinutes()
-    );
-
-    const endSlotIndex = timeSlots.findIndex(
-      ({ hour, minutes }) =>
-        hour === end.getHours() &&
-        minutes <= end.getMinutes() &&
-        minutes + 15 > end.getMinutes()
-    );
-
-    if (startSlotIndex === -1 || endSlotIndex === -1) {
+    // Debug
+    console.log('Reservation time debug:', {
+      startUTC: reservation.startTime,
+      endUTC: reservation.endTime,
+      startLocal: start.toLocaleString(),
+      endLocal: end.toLocaleString(),
+      startHour,
+      startMinutes,
+      endHour,
+      endMinutes
+    });
+    
+    // Calculer le nombre de créneaux depuis le début de la journée (7h)
+    const startSlots = (startHour - 7) * 4 + Math.floor(startMinutes / 15);
+    const endSlots = (endHour - 7) * 4 + Math.ceil(endMinutes / 15);
+    
+    if (startSlots < 0) {
       return null;
     }
 
-    const width = (endSlotIndex - startSlotIndex + 1) * SLOT_WIDTH;
-    const left = startSlotIndex * SLOT_WIDTH;
+    // Calculer la position et la largeur en rem
+    const left = startSlots * SLOT_WIDTH;
+    const width = Math.max((endSlots - startSlots) * SLOT_WIDTH, SLOT_WIDTH); // Au moins un créneau de large
 
     return {
       left: `${left}rem`,
       width: `${width}rem`,
+      position: 'absolute',
+      height: '2.5rem',
+      top: '0.25rem',
     };
   };
 
@@ -805,82 +822,93 @@ const HorizontalReservationCalendar = ({
 
               {/* Grille des réservations */}
               <div className="relative">
-                {sortedAircraft.map((a) => (
+                {sortedAircraft.map((aircraft, aircraftIndex) => (
                   <div
-                    key={a.id}
-                    className="flex h-12 border-b border-gray-200"
-                    data-aircraft-id={a.id}
+                    key={aircraft.id}
+                    className="relative flex h-12 border-b border-gray-200"
+                    data-aircraft-id={aircraft.id}
                   >
+                    {/* Créneaux horaires */}
                     {timeSlots.map(({ hour, minutes }, index) => (
                       <div
                         key={index}
                         className={cn(
                           "flex-shrink-0 w-8 border-r border-gray-200",
-                          isSlotSelected(hour, minutes, a.id) && "bg-blue-100",
+                          isSlotSelected(hour, minutes, aircraft.id) && "bg-blue-100",
                           isNightTime(hour, minutes) && "bg-gray-50"
                         )}
-                        onMouseDown={() => handleMouseDown(hour, minutes, a.id)}
+                        onMouseDown={() => handleMouseDown(hour, minutes, aircraft.id)}
                         onMouseEnter={() => handleMouseMove(hour, minutes)}
                         onMouseUp={handleMouseUp}
                       />
                     ))}
+
+                    {/* Réservations pour cet avion */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      {filteredReservations
+                        .filter((r) => r.aircraftId === aircraft.id)
+                        .map((reservation) => {
+                          const pilot = users.find((u) => u.id === reservation.pilotId);
+                          const instructor = reservation.instructorId
+                            ? users.find((u) => u.id === reservation.instructorId)
+                            : null;
+
+                          // Déterminer les couleurs en fonction du type de réservation
+                          let bgColor, textColor, borderColor;
+                          if (reservation.hasAssociatedFlight) {
+                            bgColor = "bg-emerald-100";
+                            textColor = "text-emerald-900";
+                            borderColor = "border-emerald-200";
+                          } else if (reservation.instructorId) {
+                            bgColor = "bg-amber-100";
+                            textColor = "text-amber-900";
+                            borderColor = "border-amber-200";
+                          } else {
+                            bgColor = "bg-sky-100";
+                            textColor = "text-sky-900";
+                            borderColor = "border-sky-200";
+                          }
+
+                          const style = calculateReservationStyle(reservation);
+                          if (!style) return null;
+
+                          return (
+                            <button
+                              key={reservation.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReservationClick(reservation);
+                              }}
+                              className={cn(
+                                "absolute h-10 rounded px-2 text-xs font-medium transition-all shadow-sm border pointer-events-auto",
+                                bgColor,
+                                textColor,
+                                borderColor,
+                                "hover:shadow-md hover:scale-[1.02]"
+                              )}
+                              style={style}
+                            >
+                              <div className="p-1">
+                                <div className="font-medium">
+                                  {format(new Date(reservation.startTime), "H'h'")} -{" "}
+                                  {format(new Date(reservation.endTime), "H'h'")}
+                                </div>
+                                <div className="mt-1 line-clamp-2">
+                                  {pilot?.first_name || "Pilote inconnu"}
+                                  {instructor && (
+                                    <>
+                                      {" + "}
+                                      {instructor.first_name || "Instructeur inconnu"}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                    </div>
                   </div>
                 ))}
-                {/* Réservations */}
-                {filteredReservations.map((reservation) => {
-                  const pilot = users.find((u) => u.id === reservation.pilotId);
-                  const instructor = reservation.instructorId
-                    ? users.find((u) => u.id === reservation.instructorId)
-                    : null;
-                  const start = new Date(reservation.startTime);
-                  const end = new Date(reservation.endTime);
-
-                  // Déterminer les couleurs en fonction du type de réservation
-                  let bgColor, textColor, borderColor;
-                  if (reservation.hasAssociatedFlight) {
-                    bgColor = "bg-emerald-100";
-                    textColor = "text-emerald-900";
-                    borderColor = "border-emerald-200";
-                  } else if (reservation.instructorId) {
-                    bgColor = "bg-amber-100";
-                    textColor = "text-amber-900";
-                    borderColor = "border-amber-200";
-                  } else {
-                    bgColor = "bg-sky-100";
-                    textColor = "text-sky-900";
-                    borderColor = "border-sky-200";
-                  }
-
-                  return (
-                    <button
-                      key={reservation.id}
-                      onClick={() => handleReservationClick(reservation)}
-                      className={cn(
-                        "absolute top-0 h-12 rounded px-2 text-xs font-medium transition-all shadow-sm border",
-                        bgColor,
-                        textColor,
-                        borderColor,
-                        "hover:shadow-md hover:scale-[1.02]"
-                      )}
-                      style={calculateReservationStyle(reservation)}
-                    >
-                      <div className="p-1">
-                        <div className="font-medium">
-                          {format(start, "H'h'")} - {format(end, "H'h'")}
-                        </div>
-                        <div className="mt-1 line-clamp-2">
-                          {pilot?.first_name || "Pilote inconnu"}
-                          {instructor && (
-                            <>
-                              {" + "}
-                              {instructor.first_name || "Instructeur inconnu"}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
               </div>
             </div>
           </div>

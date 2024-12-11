@@ -15,6 +15,196 @@ import { hasAnyGroup } from "../../lib/permissions";
 import NewFlightForm from "../flights/NewFlightForm"; // Import the NewFlightForm component
 import { useNavigate } from "react-router-dom";
 
+// Utility functions
+const toUTC = (localDateStr: string): string => {
+  const date = new Date(localDateStr);
+  return date.toISOString();
+};
+
+const roundToQuarterHour = (date: Date): Date => {
+  const minutes = date.getMinutes();
+  const roundedMinutes = Math.round(minutes / 15) * 15;
+  const newDate = new Date(date);
+  newDate.setMinutes(roundedMinutes);
+  newDate.setSeconds(0);
+  newDate.setMilliseconds(0);
+  return newDate;
+};
+
+const formatDateForInput = (date: Date): string => {
+  // Utiliser toISOString().slice(0, 16) pour obtenir le format YYYY-MM-DDTHH:mm
+  // et ajuster pour le fuseau horaire local
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+  return localDate.toISOString().slice(0, 16);
+};
+
+const parseLocalDateTime = (dateStr: string): Date => {
+  // Utiliser directement new Date() avec la chaîne ISO qui préserve le fuseau horaire
+  return new Date(dateStr);
+};
+
+interface TimeControlProps {
+  value: string;
+  onChange: (value: string) => void;
+  label: string;
+  disabled?: boolean;
+}
+
+const TimeControl: React.FC<TimeControlProps> = ({ value, onChange, label, disabled }) => {
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  
+  // Fonction pour s'assurer qu'on a une date valide
+  const getValidDate = (dateStr: string): Date => {
+    return parseLocalDateTime(dateStr);
+  };
+
+  const timeString = useMemo(() => {
+    const date = getValidDate(value);
+    return date.toLocaleTimeString('fr-FR', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+    });
+  }, [value]);
+
+  const dateString = useMemo(() => {
+    const date = getValidDate(value);
+    return date.toLocaleDateString('fr-FR', { 
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    });
+  }, [value]);
+
+  const adjustTime = (minutes: number) => {
+    const date = getValidDate(value);
+    date.setMinutes(date.getMinutes() + minutes);
+    const roundedDate = roundToQuarterHour(date);
+    onChange(formatDateForInput(roundedDate));
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const currentDate = getValidDate(value);
+    const [year, month, day] = e.target.value.split('-').map(Number);
+    
+    const newDate = new Date(currentDate);
+    newDate.setFullYear(year);
+    newDate.setMonth(month - 1);
+    newDate.setDate(day);
+    
+    onChange(formatDateForInput(newDate));
+  };
+
+  // Générer les options d'heures par palier de 15 minutes
+  const timeOptions = useMemo(() => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        options.push(timeStr);
+      }
+    }
+    return options;
+  }, []);
+
+  const handleTimeSelect = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const date = getValidDate(value);
+    date.setHours(hours);
+    date.setMinutes(minutes);
+    onChange(formatDateForInput(date));
+    setShowTimePicker(false);
+  };
+
+  return (
+    <div className="flex flex-col space-y-2">
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <div className="flex flex-col space-y-2">
+        <div className="flex items-center space-x-2">
+          <div className="flex-1 flex space-x-2">
+            <button
+              type="button"
+              onClick={() => !disabled && setShowDatePicker(!showDatePicker)}
+              className={`flex-1 rounded-md border px-3 py-2 text-left text-sm ${
+                disabled
+                  ? "border-gray-200 bg-gray-50 text-gray-500"
+                  : "border-gray-300 hover:border-blue-500"
+              }`}
+            >
+              <span className="text-gray-500">{dateString}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => !disabled && setShowTimePicker(!showTimePicker)}
+              className={`rounded-md border px-3 py-2 text-sm ${
+                disabled
+                  ? "border-gray-200 bg-gray-50 text-gray-500"
+                  : "border-gray-300 hover:border-blue-500"
+              }`}
+            >
+              <span className="font-medium">{timeString}</span>
+            </button>
+          </div>
+          <div className="flex space-x-1">
+            <button
+              type="button"
+              onClick={() => !disabled && adjustTime(-15)}
+              disabled={disabled}
+              className={`rounded-md p-2 text-sm ${
+                disabled
+                  ? "bg-gray-100 text-gray-400"
+                  : "bg-gray-100 hover:bg-gray-200 active:bg-gray-300"
+              }`}
+            >
+              -15m
+            </button>
+            <button
+              type="button"
+              onClick={() => !disabled && adjustTime(15)}
+              disabled={disabled}
+              className={`rounded-md p-2 text-sm ${
+                disabled
+                  ? "bg-gray-100 text-gray-400"
+                  : "bg-gray-100 hover:bg-gray-200 active:bg-gray-300"
+              }`}
+            >
+              +15m
+            </button>
+          </div>
+        </div>
+
+        {showDatePicker && (
+          <input
+            type="date"
+            value={value.split('T')[0]}
+            onChange={handleDateChange}
+            disabled={disabled}
+            className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+              disabled ? "bg-gray-100" : ""
+            }`}
+          />
+        )}
+
+        {showTimePicker && (
+          <div className="absolute z-10 mt-1 max-h-60 w-48 overflow-auto rounded-md border border-gray-300 bg-white shadow-lg">
+            {timeOptions.map((timeStr) => (
+              <button
+                key={timeStr}
+                type="button"
+                onClick={() => handleTimeSelect(timeStr)}
+                className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+              >
+                {timeStr}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 interface ReservationModalProps {
   startTime: Date;
   endTime: Date;
@@ -57,45 +247,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
   const isAdmin = hasAnyGroup(currentUser, ["ADMIN"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
-
-  const roundToQuarterHour = (date: Date): Date => {
-    const minutes = getMinutes(date);
-    const roundedMinutes = Math.round(minutes / 15) * 15;
-    return setMinutes(date, roundedMinutes);
-  };
-
-  const formatDateForInput = (date: Date): string => {
-    const roundedDate = roundToQuarterHour(date);
-    // Format la date en YYYY-MM-DDTHH:mm sans conversion UTC
-    return (
-      roundedDate.getFullYear() +
-      "-" +
-      String(roundedDate.getMonth() + 1).padStart(2, "0") +
-      "-" +
-      String(roundedDate.getDate()).padStart(2, "0") +
-      "T" +
-      String(roundedDate.getHours()).padStart(2, "0") +
-      ":" +
-      String(roundedDate.getMinutes()).padStart(2, "0")
-    );
-  };
-
-  const [formData, setFormData] = useState({
-    userId: existingReservation?.userId || currentUser?.id || "",
-    pilotId: existingReservation?.pilotId || currentUser?.id || "",
-    aircraftId:
-      preselectedAircraftId ||
-      existingReservation?.aircraftId ||
-      propAircraft?.[0]?.id ||
-      "",
-    startTime: formatDateForInput(startTime),
-    endTime: formatDateForInput(endTime),
-    instructorId: existingReservation?.instructorId || "",
-    comments: comments || existingReservation?.comments || "",
-    flightTypeId:
-      preselectedFlightTypeId || existingReservation?.flightTypeId || "",
-    withInstructor: existingReservation?.instructorId ? true : false,
-  });
 
   const canModifyReservation = () => {
     if (!currentUser) return false;
@@ -290,6 +441,23 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     );
   }, [users]);
 
+  const [formData, setFormData] = useState({
+    userId: existingReservation?.userId || currentUser?.id || "",
+    pilotId: existingReservation?.pilotId || currentUser?.id || "",
+    aircraftId:
+      preselectedAircraftId ||
+      existingReservation?.aircraftId ||
+      propAircraft?.[0]?.id ||
+      "",
+    startTime: formatDateForInput(startTime),
+    endTime: formatDateForInput(endTime),
+    instructorId: existingReservation?.instructorId || "",
+    comments: comments || existingReservation?.comments || "",
+    flightTypeId:
+      preselectedFlightTypeId || existingReservation?.flightTypeId || "",
+    withInstructor: existingReservation?.instructorId ? true : false,
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -311,17 +479,19 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         return;
       }
 
-      // Créer ou mettre à jour la réservation
+      // Convert local times to UTC before sending to the database
+      const reservationData = {
+        ...formData,
+        startTime: toUTC(formData.startTime),
+        endTime: toUTC(formData.endTime),
+        instructorId: formData.instructorId || null,
+      };
+
+      // Create or update the reservation
       if (existingReservation) {
-        await updateReservation(existingReservation.id, {
-          ...formData,
-          instructorId: formData.instructorId || null,
-        });
+        await updateReservation(existingReservation.id, reservationData);
       } else {
-        await createReservation({
-          ...formData,
-          instructorId: formData.instructorId || null,
-        });
+        await createReservation(reservationData);
       }
 
       onSuccess();
@@ -371,6 +541,21 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     const startDate = new Date(start);
     const endDate = new Date(end);
     return Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)); // Durée en minutes
+  };
+
+  const validateTimeSlot = (time: string): boolean => {
+    const date = new Date(time);
+    const minutes = date.getMinutes();
+    return minutes % 15 === 0;
+  };
+
+  const handleTimeChange = (field: 'startTime' | 'endTime', value: string) => {
+    const date = new Date(value);
+    const roundedDate = roundToQuarterHour(date);
+    setFormData(prev => ({
+      ...prev,
+      [field]: formatDateForInput(roundedDate)
+    }));
   };
 
   if (showNewFlightForm && existingReservation) {
@@ -437,38 +622,28 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-4">
-              {/* Champs de date/heure */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Début
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="startTime"
-                    value={formData.startTime}
-                    onChange={handleInputChange}
-                    disabled={!canModifyReservation()}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm
-                      ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                  />
+            <div className="space-y-4 p-4">
+              {error && (
+                <div className="mb-4 flex items-center rounded-md bg-red-50 p-3 text-red-700">
+                  <AlertTriangle className="mr-2 h-5 w-5" />
+                  {error}
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Fin
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="endTime"
-                    value={formData.endTime}
-                    onChange={handleInputChange}
-                    disabled={!canModifyReservation()}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm
-                      ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                  />
-                </div>
+              <div className="space-y-4">
+                <TimeControl
+                  label="Début"
+                  value={formData.startTime}
+                  onChange={(value) => handleTimeChange('startTime', value)}
+                  disabled={!canModifyReservation()}
+                />
+                
+                <TimeControl
+                  label="Fin"
+                  value={formData.endTime}
+                  onChange={(value) => handleTimeChange('endTime', value)}
+                  disabled={!canModifyReservation()}
+                />
               </div>
 
               {/* Sélection de l'avion */}
@@ -481,7 +656,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                   value={formData.aircraftId}
                   onChange={handleInputChange}
                   disabled={!canModifyReservation()}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
                     ${!canModifyReservation() ? "bg-gray-100" : ""}`}
                 >
                   {aircraft
@@ -504,7 +679,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                   value={formData.flightTypeId}
                   onChange={handleInputChange}
                   disabled={!canModifyReservation()}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
                     ${!canModifyReservation() ? "bg-gray-100" : ""}`}
                 >
                   <option value="">Sélectionnez un type de vol</option>
@@ -526,7 +701,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                   value={formData.pilotId}
                   onChange={handleInputChange}
                   disabled={!canModifyReservation()}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
                     ${!canModifyReservation() ? "bg-gray-100" : ""}`}
                   required
                 >
@@ -549,7 +724,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                   value={formData.instructorId}
                   onChange={handleInputChange}
                   disabled={!canModifyReservation()}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
                     ${!canModifyReservation() ? "bg-gray-100" : ""}`}
                 >
                   <option value="">Aucun</option>
@@ -572,26 +747,11 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                   onChange={handleInputChange}
                   disabled={!canModifyReservation()}
                   rows={2}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
                     ${!canModifyReservation() ? "bg-gray-100" : ""}`}
                 />
               </div>
             </div>
-
-            {error && (
-              <div className="rounded-md bg-red-50 p-4 mt-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <AlertTriangle className="h-5 w-5 text-red-400" />
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">
-                      {error}
-                    </h3>
-                  </div>
-                </div>
-              </div>
-            )}
 
             <div className="mt-6 flex justify-between space-x-3">
               <div className="flex space-x-3">
