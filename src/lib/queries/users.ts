@@ -312,6 +312,7 @@ export async function createMember(data: {
     const { firstName, lastName, email, roles } = data;
     const login = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const password = generateRandomPassword();
+    console.log("Generated password:", password);
 
     // Get current user's club
     const { data: { user } } = await supabase.auth.getUser();
@@ -329,7 +330,7 @@ export async function createMember(data: {
       throw clubError;
     }
 
-    // First create the user in public.users
+    // First create the user in public.users to get the database ID
     const { data: newUser, error: createError } = await adminClient
       .from("users")
       .insert({
@@ -348,13 +349,22 @@ export async function createMember(data: {
       throw createError;
     }
 
-    // Create the auth user using the custom RPC function
+    // Create the auth user using the custom RPC function that handles the ID mapping
     const { error: authError } = await adminClient.rpc("create_auth_user", {
       p_email: email,
       p_password: password,
       p_login: login,
-      p_role: roles[0], // Use first role as primary role
-      p_user_id: newUser.id
+      p_role: 'authenticated',  // Force role to authenticated
+      p_user_id: newUser.id,
+      p_user_metadata: {
+        login: login,
+        password: password,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        full_name: `${firstName} ${lastName}`,
+        app_url: window.location.origin  // Pour les liens dans l'email
+      }
     });
 
     if (authError) {
@@ -396,6 +406,7 @@ export async function createMember(data: {
       throw clubMemberError;
     }
 
+    // Return the generated password
     return { password };
   } catch (error) {
     console.error("Error in createMember:", error);

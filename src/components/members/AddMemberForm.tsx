@@ -23,10 +23,15 @@ const AddMemberForm = ({ isOpen, onClose, onSuccess }: AddMemberFormProps) => {
     setLoading(true);
     try {
       const result = await createMember(formData);
-      setGeneratedPassword(result.password);
-      onSuccess();
+      if (result && result.password) {
+        setGeneratedPassword(result.password);
+      } else {
+        console.error("No password returned from createMember");
+        throw new Error("No password generated");
+      }
     } catch (error) {
       console.error("Error creating member:", error);
+      // TODO: Add error notification here
     } finally {
       setLoading(false);
     }
@@ -59,6 +64,7 @@ const AddMemberForm = ({ isOpen, onClose, onSuccess }: AddMemberFormProps) => {
           <div className="space-y-4">
             <p>Le membre a été créé avec succès. Voici les informations de connexion :</p>
             <div className="bg-slate-50 p-4 rounded-lg">
+              <p><strong>Email :</strong> {formData.email}</p>
               <p><strong>Login :</strong> {formData.firstName.toLowerCase()}.{formData.lastName.toLowerCase()}</p>
               <p><strong>Mot de passe :</strong> {generatedPassword}</p>
             </div>
@@ -83,7 +89,11 @@ const AddMemberForm = ({ isOpen, onClose, onSuccess }: AddMemberFormProps) => {
       <div className="bg-white rounded-xl p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">Ajouter un membre</h2>
-          <button onClick={handleClose} className="text-slate-400 hover:text-slate-600">
+          <button 
+            onClick={handleClose} 
+            disabled={loading}
+            className="text-slate-400 hover:text-slate-600 disabled:opacity-50"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -99,6 +109,7 @@ const AddMemberForm = ({ isOpen, onClose, onSuccess }: AddMemberFormProps) => {
               value={formData.firstName}
               onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
               className="w-full rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+              disabled={loading}
               required
             />
           </div>
@@ -113,6 +124,7 @@ const AddMemberForm = ({ isOpen, onClose, onSuccess }: AddMemberFormProps) => {
               value={formData.lastName}
               onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
               className="w-full rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+              disabled={loading}
               required
             />
           </div>
@@ -127,46 +139,44 @@ const AddMemberForm = ({ isOpen, onClose, onSuccess }: AddMemberFormProps) => {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+              disabled={loading}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Rôles</label>
-            <div className="space-y-2">
-              {["PILOT", "INSTRUCTOR", "MECHANIC"].map((role) => (
-                <label key={role} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.roles.includes(role)}
-                    onChange={(e) => {
-                      const newRoles = e.target.checked
-                        ? [...formData.roles, role]
-                        : formData.roles.filter((r) => r !== role);
-                      setFormData({ ...formData, roles: newRoles });
-                    }}
-                    className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                  />
-                  <span className="text-sm text-slate-700">{role.charAt(0) + role.slice(1).toLowerCase()}</span>
-                </label>
-              ))}
-            </div>
+            <label htmlFor="roles" className="block text-sm font-medium text-slate-700 mb-1">
+              Rôles
+            </label>
+            <select
+              id="roles"
+              value={formData.roles[0] || ""}
+              onChange={(e) => setFormData({ ...formData, roles: [e.target.value] })}
+              className="w-full rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+              disabled={loading}
+              required
+            >
+              <option value="">Sélectionner un rôle</option>
+              <option value="PILOT">Pilote</option>
+              <option value="STUDENT">Élève</option>
+              <option value="INSTRUCTOR">Instructeur</option>
+              <option value="ADMIN">Administrateur</option>
+            </select>
           </div>
 
-          <div className="flex justify-end space-x-3 mt-6">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300"
-            >
-              Annuler
-            </button>
+          <div className="flex justify-end mt-6">
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 rounded-lg disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
             >
-              {loading ? "Création..." : "Ajouter"}
+              {loading && (
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
+              {loading ? "Création en cours..." : "Créer le membre"}
             </button>
           </div>
         </form>

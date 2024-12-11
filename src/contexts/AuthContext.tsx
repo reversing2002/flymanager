@@ -281,13 +281,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
+      console.log("🔍 Tentative de connexion pour:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        console.error("❌ Erreur de connexion:", error);
+        console.error("❌ Erreur de connexion détaillée:", {
+          message: error.message,
+          name: error.name,
+          status: error.status,
+          stack: error.stack
+        });
         if (error.message.includes("Invalid login credentials")) {
           setError(AUTH_ERRORS.INVALID_CREDENTIALS);
         } else if (error.message.includes("User not found")) {
@@ -295,11 +301,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else if (error.message.includes("NetworkError")) {
           setError(AUTH_ERRORS.NETWORK_ERROR);
         } else {
-          setError(AUTH_ERRORS.UNKNOWN_ERROR);
+          setError(`${AUTH_ERRORS.UNKNOWN_ERROR}: ${error.message}`);
         }
         return;
       }
 
+      console.log("✅ Connexion réussie, données:", data);
       if (data.user) {
         console.log("✅ Connexion réussie:", data.user.email);
       }
