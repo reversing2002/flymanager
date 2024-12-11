@@ -462,6 +462,9 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Heures de lever/coucher du soleil */}
+      <SunTimesDisplay sunTimes={sunTimes} />
+
       {/* Annonces */}
       {announcements.map((announcement) => (
         <AnnouncementBanner key={announcement.id} announcement={announcement} onDismiss={handleDismissAnnouncement} />
@@ -538,11 +541,6 @@ const Dashboard = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
           <UpcomingEvents />
         </div>
-      </div>
-
-      {/* Heures de lever/coucher du soleil */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-        <SunTimesDisplay />
       </div>
 
       {/* Prochaines réservations */}

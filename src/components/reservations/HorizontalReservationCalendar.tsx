@@ -782,7 +782,14 @@ const HorizontalReservationCalendar = ({
             </button>
           </div>
           <SunTimesDisplay
-            date={selectedDate}
+            sunTimes={clubCoordinates
+              ? getSunTimes(
+                  selectedDate,
+                  clubCoordinates.latitude,
+                  clubCoordinates.longitude
+                )
+              : null}
+            variant="compact"
             className="text-sm text-gray-600 bg-white/50 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm"
           />
         </div>

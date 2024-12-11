@@ -35,6 +35,7 @@ import { hasAnyGroup } from "../../lib/permissions";
 import SunTimesDisplay from "../common/SunTimesDisplay";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
+import { getSunTimes } from "../../lib/sunTimes";
 
 interface ReservationCalendarProps {
   filters: FilterState;
@@ -68,6 +69,10 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [clubSettings, setClubSettings] = useState<{
     night_flights_enabled: boolean;
+  } | null>(null);
+  const [clubCoordinates, setClubCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
   } | null>(null);
 
   // Charger les données initiales
@@ -322,6 +327,28 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
     }
   };
 
+  // Charger les coordonnées du club
+  useEffect(() => {
+    const loadClubCoordinates = async () => {
+      if (!currentUser?.club?.id) return;
+
+      const { data: clubData } = await supabase
+        .from('clubs')
+        .select('latitude, longitude')
+        .eq('id', currentUser.club.id)
+        .single();
+
+      if (clubData?.latitude && clubData?.longitude) {
+        setClubCoordinates({
+          latitude: clubData.latitude,
+          longitude: clubData.longitude
+        });
+      }
+    };
+
+    loadClubCoordinates();
+  }, [currentUser?.club?.id]);
+
   // Filtrer les appareils selon les critères
   const filteredAircraft = aircraft.filter((a) => {
     // Filtre par type d'appareil
@@ -439,7 +466,8 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
             </button>
           </div>
           <SunTimesDisplay
-            date={selectedDate}
+            sunTimes={clubCoordinates ? getSunTimes(selectedDate, clubCoordinates.latitude, clubCoordinates.longitude) : null}
+            variant="compact"
             className="text-sm text-gray-600 bg-white/50 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm"
           />
         </div>

@@ -1,11 +1,8 @@
-import { Sun } from "lucide-react";
+import { Sun, Sunrise, Sunset, Moon } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import SunCalc from "suncalc";
-import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase";
-import { useAuth } from "../../contexts/AuthContext";
 import { cn } from "../../lib/utils";
+import { useState, useEffect } from "react";
 
 interface SunTimes {
   sunrise: Date;
@@ -15,63 +12,125 @@ interface SunTimes {
 }
 
 interface SunTimesDisplayProps {
-  date: Date;
+  sunTimes: SunTimes | null;
   className?: string;
+  variant?: 'default' | 'compact';
 }
 
-export default function SunTimesDisplay({ date, className }: SunTimesDisplayProps) {
-  const [sunTimes, setSunTimes] = useState<SunTimes | null>(null);
-  const { user } = useAuth();
+export default function SunTimesDisplay({ sunTimes, className, variant = 'default' }: SunTimesDisplayProps) {
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    const loadSunTimes = async () => {
-      if (!user?.club?.id) return;
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
 
-      const { data: clubData } = await supabase
-        .from('clubs')
-        .select('latitude, longitude')
-        .eq('id', user.club.id)
-        .single();
-
-      if (clubData?.latitude && clubData?.longitude) {
-        const times = SunCalc.getTimes(date, clubData.latitude, clubData.longitude);
-        const aeroStart = new Date(times.sunrise);
-        const aeroEnd = new Date(times.sunset);
-        
-        // La journée aéronautique commence 30 minutes avant le lever du soleil
-        aeroStart.setMinutes(aeroStart.getMinutes() - 30);
-        // Et se termine 30 minutes après le coucher du soleil
-        aeroEnd.setMinutes(aeroEnd.getMinutes() + 30);
-
-        setSunTimes({
-          sunrise: times.sunrise,
-          sunset: times.sunset,
-          aeroStart,
-          aeroEnd
-        });
-      }
-    };
-
-    loadSunTimes();
-  }, [user?.club?.id, date]);
+    return () => clearInterval(timer);
+  }, []);
 
   if (!sunTimes) return null;
 
+  const now = currentTime;
+  const isDayTime = now >= sunTimes.sunrise && now <= sunTimes.sunset;
+  const isAeroTime = now >= sunTimes.aeroStart && now <= sunTimes.aeroEnd;
+  
+  // Calculer le pourcentage de la journée écoulé
+  const dayProgress = (() => {
+    const total = sunTimes.sunset.getTime() - sunTimes.sunrise.getTime();
+    const current = now.getTime() - sunTimes.sunrise.getTime();
+    return Math.max(0, Math.min(100, (current / total) * 100));
+  })();
+
+  if (variant === 'compact') {
+    return (
+      <div className={cn(
+        "flex flex-col sm:flex-row gap-1 sm:gap-4 text-sm",
+        className
+      )}>
+        <div className="flex items-center gap-1">
+          <Sun className="w-3.5 h-3.5" />
+          <span className="whitespace-nowrap">
+            {format(sunTimes.sunrise, 'HH:mm')} - {format(sunTimes.sunset, 'HH:mm')}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 opacity-80">
+          <span className="whitespace-nowrap text-xs">
+            Aéro: {format(sunTimes.aeroStart, 'HH:mm')} - {format(sunTimes.aeroEnd, 'HH:mm')}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn(
-      "flex flex-col sm:flex-row gap-1 sm:gap-4 text-sm",
+      "relative overflow-hidden",
+      isDayTime ? "bg-gradient-to-r from-sky-100 to-blue-50" : "bg-gradient-to-r from-slate-900 to-blue-900",
+      "rounded-xl p-4 sm:p-6 shadow-sm border",
+      isDayTime ? "border-sky-100" : "border-slate-800",
       className
     )}>
-      <div className="flex items-center gap-1">
-        <Sun className="w-3.5 h-3.5" />
-        <span className="whitespace-nowrap">
-          {format(sunTimes.sunrise, 'HH:mm')} - {format(sunTimes.sunset, 'HH:mm')}
-        </span>
-      </div>
-      <div className="flex items-center gap-1 opacity-80">
-        <span className="whitespace-nowrap text-xs">
-          Aéro: {format(sunTimes.aeroStart, 'HH:mm')} - {format(sunTimes.aeroEnd, 'HH:mm')}
-        </span>
+      {/* Progress bar */}
+      {isDayTime && (
+        <div className="absolute bottom-0 left-0 h-1 bg-sky-100 w-full">
+          <div 
+            className="h-full bg-sky-500"
+            style={{ width: `${dayProgress}%` }}
+          />
+        </div>
+      )}
+      
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Icône et état actuel */}
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            "p-2 rounded-full",
+            isDayTime ? "bg-sky-100 text-sky-700" : "bg-slate-800 text-slate-200"
+          )}>
+            {isDayTime ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </div>
+          <div>
+            <h3 className={cn(
+              "font-medium",
+              isDayTime ? "text-sky-900" : "text-white"
+            )}>
+              {isDayTime ? "Jour aéronautique" : "Nuit aéronautique"}
+            </h3>
+            <p className={cn(
+              "text-sm",
+              isDayTime ? "text-sky-700" : "text-slate-300"
+            )}>
+              {format(currentTime, "dd MMMM yyyy HH:mm:ss", { locale: fr })}
+            </p>
+          </div>
+        </div>
+
+        {/* Horaires */}
+        <div className="flex gap-6 items-center">
+          <div className={cn(
+            "flex flex-col items-center",
+            isDayTime ? "text-sky-900" : "text-white"
+          )}>
+            <div className="flex items-center gap-1.5 text-sm font-medium">
+              <Sunrise className="w-4 h-4" />
+              <span>Lever</span>
+            </div>
+            <time className="text-lg font-semibold">{format(sunTimes.sunrise, 'HH:mm')}</time>
+            <time className="text-xs opacity-75">Aéro: {format(sunTimes.aeroStart, 'HH:mm')}</time>
+          </div>
+
+          <div className={cn(
+            "flex flex-col items-center",
+            isDayTime ? "text-sky-900" : "text-white"
+          )}>
+            <div className="flex items-center gap-1.5 text-sm font-medium">
+              <Sunset className="w-4 h-4" />
+              <span>Coucher</span>
+            </div>
+            <time className="text-lg font-semibold">{format(sunTimes.sunset, 'HH:mm')}</time>
+            <time className="text-xs opacity-75">Aéro: {format(sunTimes.aeroEnd, 'HH:mm')}</time>
+          </div>
+        </div>
       </div>
     </div>
   );
