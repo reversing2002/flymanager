@@ -9,6 +9,7 @@ import { hasAnyGroup } from "../../lib/permissions";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { Role } from "../../types/roles";
 import { supabase } from '../../lib/supabase';
+import { adminClient } from "../../lib/supabase/adminClient";
 import { toast } from "react-hot-toast";
 
 interface MemberCardProps {
@@ -75,6 +76,34 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
         return;
       }
 
+      // Vérifier si l'utilisateur a des entrées comptables
+      const { data: accountEntries, error: accountEntriesError } = await supabase
+        .from('account_entries')
+        .select('id')
+        .eq('user_id', member.id)
+        .limit(1);
+
+      if (accountEntriesError) throw accountEntriesError;
+
+      if (accountEntries && accountEntries.length > 0) {
+        toast.error('Impossible de supprimer ce membre car il a des entrées comptables');
+        return;
+      }
+
+      // Vérifier si l'utilisateur est assigné à des entrées comptables
+      const { data: assignedEntries, error: assignedEntriesError } = await supabase
+        .from('account_entries')
+        .select('id')
+        .eq('assigned_to_id', member.id)
+        .limit(1);
+
+      if (assignedEntriesError) throw assignedEntriesError;
+
+      if (assignedEntries && assignedEntries.length > 0) {
+        toast.error('Impossible de supprimer ce membre car il est assigné à des entrées comptables');
+        return;
+      }
+
       // 2. Supprimer les données associées dans l'ordre correct
       const deleteOperations = [
         // Suppression des données de communication
@@ -109,7 +138,14 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
       const errors = results.filter(result => result.error);
       if (errors.length > 0) {
         console.error('Erreurs lors de la suppression:', errors);
-        throw new Error('Erreur lors de la suppression des données associées');
+        throw new Error('Erreur lors de la suppression du membre');
+      }
+
+      // Supprimer l'utilisateur de auth.users
+      const { error: authError } = await adminClient.auth.admin.deleteUser(member.id);
+      if (authError) {
+        console.error('Erreur lors de la suppression de auth.users:', authError);
+        throw authError;
       }
 
       toast.success('Membre supprimé avec succès');

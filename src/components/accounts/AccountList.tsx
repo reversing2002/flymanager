@@ -7,6 +7,8 @@ import {
   Plus,
   CheckCircle2,
   CreditCard,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import type { AccountEntry, User } from "../../types/database";
 import { getAccountEntries, getUsers, deleteAccountEntry } from "../../lib/queries/index";
@@ -162,6 +164,7 @@ const AccountList = () => {
           <thead>
             <tr className="border-b border-slate-200">
               <th className="py-3 text-left font-medium text-slate-600">Date</th>
+              <th className="py-3 text-left font-medium text-slate-600">Membre</th>
               <th className="py-3 text-left font-medium text-slate-600">Type</th>
               <th className="py-3 text-left font-medium text-slate-600">Description</th>
               <th className="py-3 text-left font-medium text-slate-600">Montant</th>
@@ -180,6 +183,10 @@ const AccountList = () => {
                 <td className="py-3 text-slate-600">
                   {dateUtils.formatDateTime(entry.date)}
                 </td>
+                <td className="py-3 text-slate-600">
+                  {getUserName(entry.assigned_to_id)}
+                </td>
+                
                 <td className="py-3">
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                     ${entry.account_entry_types?.is_credit 
@@ -225,8 +232,9 @@ const AccountList = () => {
                             handleUpdate(entry);
                           }}
                           className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                          title="Modifier"
                         >
-                          Modifier
+                          <Pencil className="h-4 w-4 text-slate-500" />
                         </button>
                         <button
                           onClick={(e) => {
@@ -234,8 +242,9 @@ const AccountList = () => {
                             handleDelete(entry.id);
                           }}
                           className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                          title="Supprimer"
                         >
-                          Supprimer
+                          <Trash2 className="h-4 w-4 text-slate-500" />
                         </button>
                       </>
                     )}
