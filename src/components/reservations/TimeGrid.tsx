@@ -329,7 +329,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       >
         <div className="p-1 sm:p-2">
           <div className="font-medium">
-            {format(startTime, "H'h'")} - {format(endTime, "H'h'")}
+            {format(startTime, "H'h'mm")} - {format(endTime, "H'h'mm")}
           </div>
           <div className="mt-1 line-clamp-2">
             {pilot ? pilot.first_name : "Pilote inconnu"}

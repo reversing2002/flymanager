@@ -388,7 +388,9 @@ const HorizontalReservationCalendar = ({
     return filteredReservations.filter((r) => r.aircraftId === aircraftId);
   };
 
-  const SLOT_WIDTH = 1.5; // rem
+  // Constantes pour les dimensions de la grille
+  const CELL_WIDTH = 24; // Réduire encore plus la largeur des cellules
+  const START_HOUR = 7;
 
   const calculateReservationStyle = (reservation: Reservation) => {
     // Convertir explicitement les dates UTC en local
@@ -423,13 +425,13 @@ const HorizontalReservationCalendar = ({
       return null;
     }
 
-    // Calculer la position et la largeur en rem
-    const left = (startMinutesSince7am / 15) * SLOT_WIDTH;
-    const width = Math.max(((endMinutesSince7am - startMinutesSince7am) / 15) * SLOT_WIDTH, SLOT_WIDTH);
+    // Ajuster la position en soustrayant une cellule (15 minutes)
+    const left = ((startMinutesSince7am - 15) / 15) * CELL_WIDTH;
+    const width = Math.max(((endMinutesSince7am - startMinutesSince7am) / 15) * CELL_WIDTH, CELL_WIDTH);
 
     return {
-      left: `${left}rem`,
-      width: `${width}rem`,
+      left: `${left}px`,
+      width: `${width}px`,
       position: 'absolute',
       height: '2.5rem',
       top: '0.25rem',
@@ -459,8 +461,8 @@ const HorizontalReservationCalendar = ({
 
   // Fonction pour déterminer si on doit afficher la bordure pour ce créneau
   const shouldShowBorder = (hour: number, minutes: number) => {
-    // Afficher une bordure plus marquée au début de chaque heure pleine
-    return minutes === 45; // La bordure sera sur le slot précédent celui de l'heure pleine
+    // Afficher une bordure plus marquée pour chaque heure pleine
+    return minutes === 0;
   };
 
   const isNightTime = (hour: number, minute: number) => {
@@ -644,8 +646,25 @@ const HorizontalReservationCalendar = ({
     return (hour - 7) * 4 + (minutes / 15);
   };
 
-  const CELL_WIDTH = 32; // Largeur d'une cellule en pixels (w-8 = 32px)
-  const START_HOUR = 7; // Heure de début du planning
+  const timeSlotStyle = (hour: number, minutes: number, aircraftId: string) => {
+    return cn(
+      "h-12 border-r border-gray-200 flex-shrink-0",
+      {
+        "border-r-2 border-r-gray-300": shouldShowBorder(hour, minutes),
+        "bg-gray-50": isNightTime(hour, minutes),
+        "bg-blue-100": isSlotSelected(hour, minutes, aircraftId)
+      },
+      "w-6" // Ajouter une largeur fixe
+    );
+  };
+
+  const hourHeaderStyle = (hour: number, minutes: number) => {
+    return cn(
+      "flex-shrink-0 h-8 border-r border-gray-200 text-xs text-gray-500 flex items-center justify-center",
+      shouldShowBorder(hour, minutes) && "border-r-2 border-r-gray-300",
+      "w-6" // Ajouter une largeur fixe
+    );
+  };
 
   const CurrentTimeLine = ({ selectedDate }: { selectedDate: Date }) => {
     const [position, setPosition] = useState<number>(0);
@@ -809,10 +828,7 @@ const HorizontalReservationCalendar = ({
                 {timeSlots.map(({ hour, minutes }, index) => (
                   <div
                     key={index}
-                    className={cn(
-                      "flex-shrink-0 w-8 border-r border-gray-200 text-xs text-center",
-                      minutes === 0 && "font-medium"
-                    )}
+                    className={hourHeaderStyle(hour, minutes)}
                   >
                     {minutes === 0 && hour}
                   </div>
@@ -834,11 +850,7 @@ const HorizontalReservationCalendar = ({
                     {timeSlots.map(({ hour, minutes }, index) => (
                       <div
                         key={index}
-                        className={cn(
-                          "flex-shrink-0 w-8 border-r border-gray-200",
-                          isSlotSelected(hour, minutes, aircraft.id) && "bg-blue-100",
-                          isNightTime(hour, minutes) && "bg-gray-50"
-                        )}
+                        className={timeSlotStyle(hour, minutes, aircraft.id)}
                         onMouseDown={() => handleMouseDown(hour, minutes, aircraft.id)}
                         onMouseEnter={() => handleMouseMove(hour, minutes)}
                         onMouseUp={handleMouseUp}
@@ -891,16 +903,12 @@ const HorizontalReservationCalendar = ({
                               style={style}
                             >
                               <div className="p-1">
-                                <div className="font-medium">
-                                  {format(new Date(reservation.startTime), "H'h'mm")} -{" "}
-                                  {format(new Date(reservation.endTime), "H'h'mm")}
-                                </div>
-                                <div className="mt-1 line-clamp-2">
-                                  {pilot?.first_name || "Pilote inconnu"}
+                                <div className="mt-1 line-clamp-1">
+                                  {(pilot?.first_name || "Pilote").substring(0, 10)}
                                   {instructor && (
                                     <>
                                       {" + "}
-                                      {instructor.first_name || "Instructeur inconnu"}
+                                      {(instructor.first_name || "Instructeur").substring(0, 10)}
                                     </>
                                   )}
                                 </div>
