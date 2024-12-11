@@ -204,7 +204,7 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
     console.log('Aircraft:', aircraft);
     console.log('Instructor:', instructor);
 
-    const aircraftCost = aircraft ? (aircraft.hourly_rate * duration) / 60 : 0;
+    const aircraftCost = aircraft ? (aircraft.hourlyRate * duration) / 60 : 0;
     let instructorCost = 0;
     let instructorFee = 0;
 
@@ -461,11 +461,11 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
           .insert({
             id: uuidv4(),
             user_id: flightData.instructorId,
-            entry_type_id: accountTypes.id,
+            entry_type_id: "68818f41-b9cb-4f6c-bb5e-c38fae86e82d", // remun instruction
             date: flightData.date,
             amount: Math.abs(flightData.instructor_fee),
             payment_method: flightData.paymentMethod,
-            description: `Vol du ${new Date(flightData.date).toLocaleDateString()} - ${convertMinutesToDecimalHours(flightData.duration)}h`,
+            description: `Instruction vol du ${new Date(flightData.date).toLocaleDateString()} - ${convertMinutesToDecimalHours(flightData.duration)}h`,
             flight_id: flight.id,
             assigned_to_id: flightData.instructorId,
             is_validated: false,

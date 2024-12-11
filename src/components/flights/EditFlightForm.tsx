@@ -81,7 +81,7 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
     const aircraft = aircraftList.find((a) => a.id === flight.aircraftId);
     const instructor = flight.instructorId ? users.find(u => u.id === flight.instructorId) : undefined;
     const duration = calculateDurationFromHourMeter(flight.start_hour_meter, flight.end_hour_meter);
-    const { aircraftCost, instructorCost } = calculateCosts(duration, aircraft, instructor);
+    const { aircraftCost, instructorCost, instructorFee } = calculateCosts(duration, aircraft, instructor);
 
     setFormData(prevData => ({
       ...prevData,
@@ -90,7 +90,8 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
       start_hour_meter: flight.start_hour_meter,
       end_hour_meter: flight.end_hour_meter,
       cost: aircraftCost,
-      instructor_cost: instructorCost
+      instructor_cost: instructorCost,
+      instructor_fee: instructorFee
     }));
   }, [flight, aircraftList, users]);
 
@@ -174,14 +175,25 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
     console.log('Instructor:', instructor);
     
     const aircraftCost = aircraft ? duration * (aircraft.hourlyRate / 60) : 0;
-    // Access instructor_rate directly from the instructor object
-    const instructorRate = instructor?.instructor_rate || 0;
-    console.log('Instructor rate:', instructorRate);
+    let instructorCost = 0;
+    let instructorFee = 0;
 
-    const instructorCost = instructorRate ? duration * (instructorRate / 60) : 0;
-    console.log('Instructor cost calculation:', `${duration} * (${instructorRate} / 60) = ${instructorCost}`);
+    if (instructor && duration > 0) {
+      // Calcul du coût facturé pour l'instruction
+      if (instructor.instructor_rate) {
+        instructorCost = (parseFloat(instructor.instructor_rate) * duration) / 60;
+      }
+      // Calcul du montant à reverser à l'instructeur
+      if (instructor.instructor_fee) {
+        instructorFee = (parseFloat(instructor.instructor_fee) * duration) / 60;
+      }
+    }
 
-    return { aircraftCost, instructorCost };
+    console.log('Aircraft cost:', aircraftCost);
+    console.log('Instructor cost:', instructorCost);
+    console.log('Instructor fee:', instructorFee);
+
+    return { aircraftCost, instructorCost, instructorFee };
   };
 
   const handleAircraftChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -206,14 +218,15 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
     const duration = calculateDurationFromHourMeter(formData.start_hour_meter, formData.end_hour_meter);
     console.log('Current duration:', duration);
     
-    const { aircraftCost, instructorCost } = calculateCosts(duration, aircraft, instructor);
-    console.log('Calculated costs:', { aircraftCost, instructorCost });
+    const { aircraftCost, instructorCost, instructorFee } = calculateCosts(duration, aircraft, instructor);
+    console.log('Calculated costs:', { aircraftCost, instructorCost, instructorFee });
 
     setFormData(prev => {
       const newData = {
         ...prev,
         instructorId,
-        instructor_cost: instructorCost
+        instructor_cost: instructorCost,
+        instructor_fee: instructorFee
       };
       console.log('New form data:', newData);
       return newData;
@@ -272,12 +285,13 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
 
     const aircraft = aircraftList.find(a => a.id === formData.aircraftId);
     const instructor = formData.instructorId ? users.find(u => u.id === formData.instructorId) : undefined;
-    const { aircraftCost, instructorCost } = calculateCosts(updates.duration || 0, aircraft, instructor);
+    const { aircraftCost, instructorCost, instructorFee } = calculateCosts(updates.duration || 0, aircraft, instructor);
 
     setFormData(prev => ({
       ...prev,
       ...updates,
-      instructor_cost: instructorCost
+      instructor_cost: instructorCost,
+      instructor_fee: instructorFee
     }));
   };
 
@@ -308,13 +322,14 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
       const aircraft = aircraftList.find((a) => a.id === formData.aircraftId);
       const instructor = formData.instructorId ? users.find(u => u.id === formData.instructorId) : undefined;
       const duration = calculateDurationFromHourMeter(formData.start_hour_meter, formData.end_hour_meter);
-      const { aircraftCost, instructorCost } = calculateCosts(duration, aircraft, instructor);
+      const { aircraftCost, instructorCost, instructorFee } = calculateCosts(duration, aircraft, instructor);
 
       const updatedData = {
         ...formData,
         hourlyRate: aircraft?.hourlyRate || 0,
         cost: aircraftCost,
         instructor_cost: instructorCost,
+        instructor_fee: instructorFee,
         duration,
         reservationId: formData.reservationId || null,
         instructorId: formData.instructorId || null,
@@ -536,6 +551,19 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
           <input
             type="text"
             value={formData.instructor_cost?.toFixed(2) || "0.00"}
+            readOnly
+            className="w-full rounded-lg bg-slate-50 border-slate-200"
+          />
+        </div>
+
+        {/* Frais d'instruction */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Frais d'instruction
+          </label>
+          <input
+            type="text"
+            value={formData.instructor_fee?.toFixed(2) || "0.00"}
             readOnly
             className="w-full rounded-lg bg-slate-50 border-slate-200"
           />

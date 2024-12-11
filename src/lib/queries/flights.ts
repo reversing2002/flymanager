@@ -206,18 +206,41 @@ export async function updateFlight(
       console.error("Erreur lors de la mise à jour de l'entrée comptable avion", updateError);
       throw updateError;
     }
+  } else {
+    // Créer une nouvelle entrée pour l'avion si elle n'existe pas
+    const { error: insertError } = await supabase
+      .from("account_entries")
+      .insert({
+        id: uuidv4(),
+        user_id: data.userId,
+        entry_type_id: flightTypeId,
+        date: formattedDate,
+        amount: -Math.abs(data.cost || 0),
+        payment_method: data.paymentMethod,
+        description: `Vol ${aircraft.registration} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+        flight_id: id,
+        assigned_to_id: data.userId,
+        is_validated: false,
+        is_club_paid: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+    if (insertError) {
+      console.error("Erreur lors de la création de l'entrée comptable avion", insertError);
+      throw insertError;
+    }
   }
 
-  // Gérer l'entrée pour l'instruction
+  // Gérer l'entrée comptable pour le coût d'instruction
   if (data.instructorId && data.instructor_cost) {
-    // Si il y a un instructeur et un coût d'instruction
     if (instructorEntry) {
       // Mettre à jour l'entrée existante
       const instructorUpdateData = {
         amount: -Math.abs(data.instructor_cost),
         date: formattedDate,
         payment_method: data.paymentMethod,
-        description: `Instruction vol ${aircraft.registration} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+        description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${((data.duration || 0) / 60).toFixed(1)}h`,
         updated_at: new Date().toISOString()
       };
 
@@ -232,35 +255,85 @@ export async function updateFlight(
       }
     } else {
       // Créer une nouvelle entrée pour l'instruction
-      const { error: createError } = await supabase
+      const { error: insertError } = await supabase
         .from("account_entries")
         .insert({
+          id: uuidv4(),
           user_id: data.userId,
-          flight_id: id,
           entry_type_id: instructionTypeId,
-          amount: -Math.abs(data.instructor_cost),
           date: formattedDate,
+          amount: -Math.abs(data.instructor_cost),
           payment_method: data.paymentMethod,
-          description: `Instruction vol ${aircraft.registration} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+          description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+          flight_id: id,
+          assigned_to_id: data.userId,
+          is_validated: false,
+          is_club_paid: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
 
-      if (createError) {
-        console.error("Erreur lors de la création de l'entrée comptable instruction", createError);
-        throw createError;
+      if (insertError) {
+        console.error("Erreur lors de la création de l'entrée comptable instruction", insertError);
+        throw insertError;
       }
     }
-  } else if (instructorEntry) {
-    // Si il n'y a plus d'instructeur mais qu'il y avait une entrée, la supprimer
-    const { error: deleteError } = await supabase
-      .from("account_entries")
-      .delete()
-      .eq("id", instructorEntry.id);
 
-    if (deleteError) {
-      console.error("Erreur lors de la suppression de l'entrée comptable instruction", deleteError);
-      throw deleteError;
+    // Gérer l'entrée comptable pour la rémunération de l'instructeur
+    const { data: instructorFeeEntry, error: searchFeeError } = await supabase
+      .from("account_entries")
+      .select("*")
+      .eq("flight_id", id)
+      .eq("entry_type_id", "68818f41-b9cb-4f6c-bb5e-c38fae86e82d"); // remun instruction
+
+    if (searchFeeError) {
+      console.error("Erreur lors de la recherche de l'entrée de rémunération", searchFeeError);
+      throw searchFeeError;
+    }
+
+    if (instructorFeeEntry && instructorFeeEntry.length > 0) {
+      // Mettre à jour l'entrée existante
+      const feeUpdateData = {
+        amount: Math.abs(data.instructor_fee || 0),
+        date: formattedDate,
+        payment_method: data.paymentMethod,
+        description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error: updateError } = await supabase
+        .from("account_entries")
+        .update(feeUpdateData)
+        .eq("id", instructorFeeEntry[0].id);
+
+      if (updateError) {
+        console.error("Erreur lors de la mise à jour de l'entrée de rémunération", updateError);
+        throw updateError;
+      }
+    } else if (data.instructor_fee) {
+      // Créer une nouvelle entrée pour la rémunération
+      const { error: insertError } = await supabase
+        .from("account_entries")
+        .insert({
+          id: uuidv4(),
+          user_id: data.instructorId,
+          entry_type_id: "68818f41-b9cb-4f6c-bb5e-c38fae86e82d", // remun instruction
+          date: formattedDate,
+          amount: Math.abs(data.instructor_fee),
+          payment_method: data.paymentMethod,
+          description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+          flight_id: id,
+          assigned_to_id: data.instructorId,
+          is_validated: false,
+          is_club_paid: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (insertError) {
+        console.error("Erreur lors de la création de l'entrée de rémunération", insertError);
+        throw insertError;
+      }
     }
   }
 }
@@ -321,10 +394,27 @@ export async function validateFlight(id: string): Promise<void> {
 }
 
 export async function deleteFlight(id: string): Promise<void> {
-  const { error } = await supabase
-    .rpc('delete_flight_with_entries', { p_flight_id: id });
+  // Supprimer d'abord toutes les entrées comptables liées au vol
+  const { error: deleteEntriesError } = await supabase
+    .from("account_entries")
+    .delete()
+    .eq("flight_id", id);
 
-  if (error) throw error;
+  if (deleteEntriesError) {
+    console.error("Erreur lors de la suppression des entrées comptables", deleteEntriesError);
+    throw deleteEntriesError;
+  }
+
+  // Ensuite, supprimer le vol lui-même
+  const { error: deleteFlightError } = await supabase
+    .from("flights")
+    .delete()
+    .eq("id", id);
+
+  if (deleteFlightError) {
+    console.error("Erreur lors de la suppression du vol", deleteFlightError);
+    throw deleteFlightError;
+  }
 }
 
 export async function createFlightAccountEntry(
