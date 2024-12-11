@@ -414,16 +414,18 @@ const HorizontalReservationCalendar = ({
     });
     
     // Calculer le nombre de créneaux depuis le début de la journée (7h)
-    const startSlots = (startHour - 7) * 4 + Math.floor(startMinutes / 15);
-    const endSlots = (endHour - 7) * 4 + Math.ceil(endMinutes / 15);
+    const startMinutesSinceMidnight = startHour * 60 + startMinutes;
+    const endMinutesSinceMidnight = endHour * 60 + endMinutes;
+    const startMinutesSince7am = startMinutesSinceMidnight - (7 * 60);
+    const endMinutesSince7am = endMinutesSinceMidnight - (7 * 60);
     
-    if (startSlots < 0) {
+    if (startMinutesSince7am < 0) {
       return null;
     }
 
     // Calculer la position et la largeur en rem
-    const left = startSlots * SLOT_WIDTH;
-    const width = Math.max((endSlots - startSlots) * SLOT_WIDTH, SLOT_WIDTH); // Au moins un créneau de large
+    const left = (startMinutesSince7am / 15) * SLOT_WIDTH;
+    const width = Math.max(((endMinutesSince7am - startMinutesSince7am) / 15) * SLOT_WIDTH, SLOT_WIDTH);
 
     return {
       left: `${left}rem`,
@@ -446,13 +448,13 @@ const HorizontalReservationCalendar = ({
 
   // Fonction pour déterminer si on doit afficher l'heure pour ce créneau
   const shouldShowTime = (hour: number, minutes: number) => {
-    // Afficher uniquement les heures pleines
-    return minutes === 0;
+    // Afficher les heures pleines et les quarts d'heure
+    return minutes % 15 === 0;
   };
 
   // Fonction pour formater l'heure
-  const formatHour = (hour: number) => {
-    return `${hour}h`;
+  const formatHour = (hour: number, minutes: number) => {
+    return `${hour}h${minutes > 0 ? minutes.toString().padStart(2, '0') : ''}`;
   };
 
   // Fonction pour déterminer si on doit afficher la bordure pour ce créneau
@@ -639,7 +641,7 @@ const HorizontalReservationCalendar = ({
 
   // Fonction utilitaire pour trouver l'index du créneau horaire
   const findTimeSlotIndex = (hour: number, minutes: number) => {
-    return (hour - 7) * 4 + Math.floor(minutes / 15);
+    return (hour - 7) * 4 + (minutes / 15);
   };
 
   const CELL_WIDTH = 32; // Largeur d'une cellule en pixels (w-8 = 32px)
@@ -890,8 +892,8 @@ const HorizontalReservationCalendar = ({
                             >
                               <div className="p-1">
                                 <div className="font-medium">
-                                  {format(new Date(reservation.startTime), "H'h'")} -{" "}
-                                  {format(new Date(reservation.endTime), "H'h'")}
+                                  {format(new Date(reservation.startTime), "H'h'mm")} -{" "}
+                                  {format(new Date(reservation.endTime), "H'h'mm")}
                                 </div>
                                 <div className="mt-1 line-clamp-2">
                                   {pilot?.first_name || "Pilote inconnu"}
