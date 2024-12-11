@@ -153,13 +153,50 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   const cleanSelectedDate = new Date(selectedDate);
   cleanSelectedDate.setHours(0, 0, 0, 0);
 
+  // Ajouter un gestionnaire global pour le mouseup
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setIsSelecting(false);
+      setSelectionStart(null);
+      setSelectionEnd(null);
+    };
+
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, []);
+
+  const handleClick = (hour: number, minute: number, aircraftId: string) => {
+    const start = new Date(selectedDate);
+    start.setHours(hour, minute, 0, 0);
+    
+    const end = new Date(start);
+    end.setMinutes(end.getMinutes() + 60); // Par défaut 1h de réservation
+    
+    onTimeSlotClick(start, end, aircraftId);
+    // Réinitialiser l'état de sélection
+    setIsSelecting(false);
+    setSelectionStart(null);
+    setSelectionEnd(null);
+  };
+
   const handleMouseDown = (
     hour: number,
     minute: number,
-    aircraftId: string
+    aircraftId: string,
+    event: React.MouseEvent
   ) => {
-    setIsSelecting(true);
-    setSelectionStart({ hour, minute, aircraftId });
+    // Si c'est un clic simple, on gère avec handleClick
+    if (event.type === "mousedown") {
+      const handler = setTimeout(() => {
+        setIsSelecting(true);
+        setSelectionStart({ hour, minute, aircraftId });
+      }, 200); // Délai court pour différencier clic et glisser
+
+      // Stocke le handler pour pouvoir l'annuler si besoin
+      return handler;
+    }
   };
 
   const handleMouseMove = (hour: number, minute: number) => {
@@ -168,7 +205,20 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (event: React.MouseEvent, timeoutHandler?: NodeJS.Timeout) => {
+    if (timeoutHandler) {
+      clearTimeout(timeoutHandler);
+    }
+    
+    if (!isSelecting && selectionStart === null) {
+      // C'était un clic simple
+      const target = event.currentTarget as HTMLElement;
+      const [hour, minute] = target.getAttribute("data-time")?.split("-").map(Number) || [0, 0];
+      const aircraftId = target.getAttribute("data-aircraft") || "";
+      handleClick(hour, minute, aircraftId);
+      return;
+    }
+
     if (isSelecting && selectionStart && selectionEnd) {
       const start = new Date(selectedDate);
       start.setHours(selectionStart.hour, selectionStart.minute, 0, 0);
@@ -199,11 +249,12 @@ const TimeGrid: React.FC<TimeGridProps> = ({
 
         onTimeSlotClick(adjustedStart, adjustedEnd, selectionStart.aircraftId);
       }
-
-      setIsSelecting(false);
-      setSelectionStart(null);
-      setSelectionEnd(null);
     }
+
+    // Réinitialiser l'état de sélection dans tous les cas
+    setIsSelecting(false);
+    setSelectionStart(null);
+    setSelectionEnd(null);
   };
 
   const isSlotSelected = (hour: number, minute: number, aircraftId: string) => {
@@ -391,13 +442,13 @@ const TimeGrid: React.FC<TimeGridProps> = ({
             <div
               className="sticky top-0 bg-white z-10 grid"
               style={{
-                gridTemplateColumns: `repeat(${sortedAircraft.length}, minmax(200px, 1fr))`,
+                gridTemplateColumns: `repeat(${sortedAircraft.length}, minmax(${sortedAircraft.length > 1 ? '150px' : '200px'}, 1fr))`,
               }}
             >
               {sortedAircraft.map((aircraft) => (
                 <div
                   key={`header-${aircraft.id}`}
-                  className="p-2 text-center border-b border-slate-200"
+                  className="p-2 text-center border-b border-r border-slate-200"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <Plane className="h-4 w-4" />
@@ -411,11 +462,14 @@ const TimeGrid: React.FC<TimeGridProps> = ({
             <div
               className="grid"
               style={{
-                gridTemplateColumns: `repeat(${sortedAircraft.length}, minmax(200px, 1fr))`,
+                gridTemplateColumns: `repeat(${sortedAircraft.length}, minmax(${sortedAircraft.length > 1 ? '150px' : '200px'}, 1fr))`,
               }}
             >
               {sortedAircraft.map((aircraft) => (
-                <div key={`grid-${aircraft.id}`} className="relative">
+                <div
+                  key={`column-${aircraft.id}`}
+                  className="relative border-r border-slate-200"
+                >
                   {timeSlots.map(({ hour, minute }, index) => (
                     <div
                       key={`${hour}-${minute}`}
@@ -428,11 +482,11 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                           ? "bg-gray-100"
                           : "bg-white hover:bg-slate-50"
                       }`}
-                      onMouseDown={(e) =>
-                        handleMouseDown(hour, minute, aircraft.id)
-                      }
-                      onMouseMove={(e) => handleMouseMove(hour, minute)}
-                      onMouseUp={handleMouseUp}
+                      data-time={`${hour}-${minute}`}
+                      data-aircraft={aircraft.id}
+                      onMouseDown={(e) => handleMouseDown(hour, minute, aircraft.id, e)}
+                      onMouseMove={() => handleMouseMove(hour, minute)}
+                      onMouseUp={(e) => handleMouseUp(e)}
                     >
                       {isFirstNightSlot(hour, minute) && (
                         <div className="absolute -top-1 left-0 w-full flex items-center justify-center">
