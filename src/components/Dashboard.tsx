@@ -463,7 +463,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {/* Heures de lever/coucher du soleil */}
-      <SunTimesDisplay sunTimes={sunTimes} />
+      <SunTimesDisplay sunTimes={sunTimes} pilotName={user?.first_name} />
 
       {/* Annonces */}
       {announcements.map((announcement) => (

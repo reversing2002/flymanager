@@ -15,9 +15,10 @@ interface SunTimesDisplayProps {
   sunTimes: SunTimes | null;
   className?: string;
   variant?: 'default' | 'compact';
+  pilotName?: string;
 }
 
-export default function SunTimesDisplay({ sunTimes, className, variant = 'default' }: SunTimesDisplayProps) {
+export default function SunTimesDisplay({ sunTimes, className, variant = 'default', pilotName }: SunTimesDisplayProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function SunTimesDisplay({ sunTimes, className, variant = 'defaul
   if (!sunTimes) return null;
 
   const now = currentTime;
-  const isDayTime = now >= sunTimes.sunrise && now <= sunTimes.sunset;
+  const isDayTime = now >= sunTimes.aeroStart && now <= sunTimes.sunset;
   const isAeroTime = now >= sunTimes.aeroStart && now <= sunTimes.aeroEnd;
   
   // Calculer le pourcentage de la journée écoulé
@@ -40,6 +41,17 @@ export default function SunTimesDisplay({ sunTimes, className, variant = 'defaul
     const current = now.getTime() - sunTimes.sunrise.getTime();
     return Math.max(0, Math.min(100, (current / total) * 100));
   })();
+
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour >= 5 && hour < 12) {
+      return `Bonjour ${pilotName || ''}`;
+    } else if (hour >= 12 && hour < 18) {
+      return `Bon après-midi ${pilotName || ''}`;
+    } else {
+      return `Bonsoir ${pilotName || ''}`;
+    }
+  };
 
   if (variant === 'compact') {
     return (
@@ -85,20 +97,20 @@ export default function SunTimesDisplay({ sunTimes, className, variant = 'defaul
         <div className="flex items-center gap-3">
           <div className={cn(
             "p-2 rounded-full",
-            isDayTime ? "bg-sky-100 text-sky-700" : "bg-slate-800 text-slate-200"
+            isAeroTime ? "bg-sky-100 text-sky-700" : "bg-slate-800 text-slate-200"
           )}>
-            {isDayTime ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {isAeroTime ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </div>
           <div>
             <h3 className={cn(
               "font-medium",
-              isDayTime ? "text-sky-900" : "text-white"
+              isAeroTime ? "text-sky-900" : "text-white"
             )}>
-              {isDayTime ? "Jour aéronautique" : "Nuit aéronautique"}
+              {pilotName ? getGreeting() : isAeroTime ? "Jour aéronautique" : "Nuit aéronautique"}
             </h3>
             <p className={cn(
               "text-sm",
-              isDayTime ? "text-sky-700" : "text-slate-300"
+              isAeroTime ? "text-sky-700" : "text-slate-300"
             )}>
               {format(currentTime, "dd MMMM yyyy HH:mm:ss", { locale: fr })}
             </p>
@@ -109,7 +121,7 @@ export default function SunTimesDisplay({ sunTimes, className, variant = 'defaul
         <div className="flex gap-6 items-center">
           <div className={cn(
             "flex flex-col items-center",
-            isDayTime ? "text-sky-900" : "text-white"
+            isAeroTime ? "text-sky-900" : "text-white"
           )}>
             <div className="flex items-center gap-1.5 text-sm font-medium">
               <Sunrise className="w-4 h-4" />
@@ -121,7 +133,7 @@ export default function SunTimesDisplay({ sunTimes, className, variant = 'defaul
 
           <div className={cn(
             "flex flex-col items-center",
-            isDayTime ? "text-sky-900" : "text-white"
+            isAeroTime ? "text-sky-900" : "text-white"
           )}>
             <div className="flex items-center gap-1.5 text-sm font-medium">
               <Sunset className="w-4 h-4" />
