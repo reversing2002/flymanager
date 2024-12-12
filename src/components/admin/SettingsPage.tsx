@@ -10,6 +10,7 @@ import {
   Award,
   BookOpen,
   Heart,
+  UserCog,
 } from "lucide-react";
 import AnnouncementList from "../announcements/AnnouncementList";
 import AnnouncementForm from "../announcements/AnnouncementForm";
@@ -18,6 +19,7 @@ import ClubManagement from "../settings/ClubManagement";
 import QualificationTypesSettings from "../settings/QualificationTypesSettings";
 import LicenseTypesSettings from "../settings/LicenseTypesSettings";
 import MedicalTypesSettings from "../settings/MedicalTypesSettings";
+import CustomMemberFieldsSettings from "../settings/CustomMemberFieldsSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -36,6 +38,7 @@ type TabType =
   | "qualifications"
   | "licenses"
   | "medicalTypes"
+  | "memberFields"
   | "api";
 
 const SettingsPage = () => {
@@ -52,12 +55,13 @@ const SettingsPage = () => {
     // Imports
     { id: "imports", label: "Imports", icon: Upload },
     // Configuration
-    { id: "flightTypes", label: "Types vol", icon: ListOrdered },
-    { id: "accountTypes", label: "Types op.", icon: Receipt },
-    { id: "accountingCategories", label: "Cat. compta", icon: Calculator },
+    { id: "flightTypes", label: "Types de vol", icon: ListOrdered },
+    { id: "accountTypes", label: "Types de compte", icon: Receipt },
+    { id: "accountingCategories", label: "Catégories comptables", icon: Calculator },
     { id: "qualifications", label: "Qualifications", icon: Award },
     { id: "licenses", label: "Licences", icon: BookOpen },
-    { id: "medicalTypes", label: "Certificats", icon: Heart },
+    { id: "medicalTypes", label: "Types médicaux", icon: Heart },
+    { id: "memberFields", label: "Champs membres", icon: UserCog },
     { id: "api", label: "API", icon: Terminal },
   ] as const;
 
@@ -173,6 +177,7 @@ const SettingsPage = () => {
           {activeTab === "qualifications" && <QualificationTypesSettings />}
           {activeTab === "licenses" && <LicenseTypesSettings />}
           {activeTab === "medicalTypes" && <MedicalTypesSettings />}
+          {activeTab === "memberFields" && <CustomMemberFieldsSettings />}
           {activeTab === "api" && <ApiExplorer />}
         </div>
       </div>

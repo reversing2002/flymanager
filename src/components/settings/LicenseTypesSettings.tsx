@@ -253,162 +253,164 @@ export default function LicenseTypesSettings() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
-            <div className="p-6 border-b">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b flex-shrink-0">
               <h2 className="text-xl font-semibold">
                 {editingType ? "Modifier le type de licence" : "Ajouter un type de licence"}
               </h2>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  defaultValue={editingType?.name}
-                  className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
-                  required
-                />
-              </div>
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nom
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    defaultValue={editingType?.name}
+                    className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  defaultValue={editingType?.description || ""}
-                  className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
-                  rows={3}
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    defaultValue={editingType?.description || ""}
+                    className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
+                    rows={3}
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Période de validité (en mois)
-                </label>
-                <input
-                  type="number"
-                  name="validity_period"
-                  defaultValue={editingType?.validity_period || ""}
-                  className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-medium text-gray-700">Champs requis</h3>
-                  <button
-                    type="button"
-                    onClick={handleAddField}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Ajouter un champ
-                  </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Période de validité (en mois)
+                  </label>
+                  <input
+                    type="number"
+                    name="validity_period"
+                    defaultValue={editingType?.validity_period || ""}
+                    className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
+                  />
                 </div>
 
                 <div className="space-y-4">
-                  {fields.map((field, index) => (
-                    <div key={index} className="relative p-4 bg-gray-50 rounded-lg">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveField(index)}
-                        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-medium text-gray-700">Champs requis</h3>
+                    <button
+                      type="button"
+                      onClick={handleAddField}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Ajouter un champ
+                    </button>
+                  </div>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Label
-                          </label>
-                          <input
-                            type="text"
-                            value={field.label}
-                            onChange={(e) => handleFieldChange(index, "label", e.target.value)}
-                            className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
-                            placeholder="Ex: Numéro de qualification"
-                            required
-                          />
-                        </div>
+                  <div className="space-y-4">
+                    {fields.map((field, index) => (
+                      <div key={index} className="relative p-4 bg-gray-50 rounded-lg">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveField(index)}
+                          className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Type
-                          </label>
-                          <select
-                            value={field.type}
-                            onChange={(e) => handleFieldChange(index, "type", e.target.value)}
-                            className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
-                          >
-                            <option value="text">Texte</option>
-                            <option value="date">Date</option>
-                            <option value="select">Liste déroulante</option>
-                          </select>
-                        </div>
-
-                        {field.type === "select" && (
-                          <div className="sm:col-span-2">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Options (séparées par des virgules)
+                              Label
                             </label>
                             <input
                               type="text"
-                              value={field.options?.join(", ") || ""}
-                              onChange={(e) =>
-                                handleFieldChange(
-                                  index,
-                                  "options",
-                                  e.target.value.split(",").map((o) => o.trim()).filter(Boolean)
-                                )
-                              }
+                              value={field.label}
+                              onChange={(e) => handleFieldChange(index, "label", e.target.value)}
                               className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
-                              placeholder="Option 1, Option 2, Option 3"
+                              placeholder="Ex: Numéro de qualification"
                               required
                             />
                           </div>
-                        )}
 
-                        <div className="sm:col-span-2">
-                          <label className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={field.required}
-                              onChange={(e) => handleFieldChange(index, "required", e.target.checked)}
-                              className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
-                            />
-                            <span className="text-sm text-gray-700">Champ obligatoire</span>
-                          </label>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Type
+                            </label>
+                            <select
+                              value={field.type}
+                              onChange={(e) => handleFieldChange(index, "type", e.target.value)}
+                              className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
+                            >
+                              <option value="text">Texte</option>
+                              <option value="date">Date</option>
+                              <option value="select">Liste déroulante</option>
+                            </select>
+                          </div>
+
+                          {field.type === "select" && (
+                            <div className="sm:col-span-2">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Options (séparées par des virgules)
+                              </label>
+                              <input
+                                type="text"
+                                value={field.options?.join(", ") || ""}
+                                onChange={(e) =>
+                                  handleFieldChange(
+                                    index,
+                                    "options",
+                                    e.target.value.split(",").map((o) => o.trim()).filter(Boolean)
+                                  )
+                                }
+                                className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
+                                placeholder="Option 1, Option 2, Option 3"
+                                required
+                              />
+                            </div>
+                          )}
+
+                          <div className="sm:col-span-2">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={field.required}
+                                onChange={(e) => handleFieldChange(index, "required", e.target.checked)}
+                                className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                              />
+                              <span className="text-sm text-gray-700">Champ obligatoire</span>
+                            </label>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end gap-2 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setEditingType(null);
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700"
-                >
-                  {editingType ? "Mettre à jour" : "Créer"}
-                </button>
+                <div className="flex justify-end gap-2 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setEditingType(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700"
+                  >
+                    {editingType ? "Mettre à jour" : "Créer"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
