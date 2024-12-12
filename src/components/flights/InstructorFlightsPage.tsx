@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Filter, Download, Calendar, Clock, CreditCard, Plus } from 'lucide-react';
@@ -45,7 +44,7 @@ const InstructorFlightsPage = () => {
           `${flight.student.first_name} ${flight.student.last_name}`,
           flight.aircraft.registration,
           `${Math.floor(flight.duration / 60)}h${flight.duration % 60}`,
-          flight.instructor_cost?.toFixed(2) || '0.00',
+          flight.instructor_fee?.toFixed(2) || '0.00',
           flight.is_validated ? 'Validé' : 'En attente'
         ].join(';'))
       ].join('\n');
@@ -84,15 +83,19 @@ const InstructorFlightsPage = () => {
   const stats = useMemo(() => {
     const validatedFlights = filteredFlights.filter(f => f.is_validated);
     const totalDuration = validatedFlights.reduce((sum, f) => sum + f.duration, 0);
-    const totalAmount = validatedFlights.reduce((sum, f) => sum + (f.instructor_cost || 0), 0);
+    const totalAmount = validatedFlights.reduce((sum, f) => sum + (f.instructor_fee || 0), 0);
     const pendingAmount = filteredFlights
       .filter(f => !f.is_validated)
-      .reduce((sum, f) => sum + (f.instructor_cost || 0), 0);
+      .reduce((sum, f) => sum + (f.instructor_fee || 0), 0);
+    const billableAmount = validatedFlights
+      .filter(f => !f.instructor_invoice_id)
+      .reduce((sum, f) => sum + (f.instructor_fee || 0), 0);
 
     return {
       totalDuration,
       totalAmount,
       pendingAmount,
+      billableAmount,
       flightCount: validatedFlights.length
     };
   }, [filteredFlights]);
@@ -144,7 +147,7 @@ const InstructorFlightsPage = () => {
       {activeTab === 'flights' ? (
         <>
           {/* Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -200,6 +203,20 @@ const InstructorFlightsPage = () => {
                 </div>
               </div>
             </div>
+
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Reste à facturer</p>
+                  <p className="mt-2 text-2xl font-bold text-sky-600">
+                    {stats.billableAmount.toFixed(2)} €
+                  </p>
+                </div>
+                <div className="p-2 bg-sky-50 rounded-lg">
+                  <CreditCard className="h-6 w-6 text-sky-600" />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Filters and search */}
@@ -232,7 +249,12 @@ const InstructorFlightsPage = () => {
                 </button>
                 <button
                   onClick={() => setShowInvoiceModal(true)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
+                  disabled={stats.billableAmount <= 0}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
+                    stats.billableAmount > 0
+                      ? 'bg-sky-600 hover:bg-sky-700'
+                      : 'bg-slate-300 cursor-not-allowed'
+                  }`}
                 >
                   <Plus className="h-4 w-4" />
                   <span>Créer une facture</span>
@@ -343,7 +365,7 @@ const InstructorFlightsPage = () => {
                         {Math.floor(flight.duration / 60)}h{flight.duration % 60}
                       </td>
                       <td className="p-4 text-right font-medium">
-                        {(flight.instructor_cost || 0).toFixed(2)} €
+                        {(flight.instructor_fee || 0).toFixed(2)} €
                       </td>
                       <td className="p-4">
                         <div className="flex justify-center">
