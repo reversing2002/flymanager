@@ -552,6 +552,23 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   const handleTimeChange = (field: 'startTime' | 'endTime', value: string) => {
     const date = new Date(value);
     const roundedDate = roundToQuarterHour(date);
+    
+    if (field === 'startTime') {
+      const currentEndTime = new Date(formData.endTime);
+      if (roundedDate >= currentEndTime) {
+        // Ajouter 30 minutes à l'heure de début pour l'heure de fin
+        const newEndTime = new Date(roundedDate.getTime() + 30 * 60000);
+        const roundedEndTime = roundToQuarterHour(newEndTime);
+        
+        setFormData(prev => ({
+          ...prev,
+          startTime: formatDateForInput(roundedDate),
+          endTime: formatDateForInput(roundedEndTime)
+        }));
+        return;
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [field]: formatDateForInput(roundedDate)
