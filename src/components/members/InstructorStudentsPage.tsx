@@ -18,9 +18,14 @@ interface Student {
   last_name: string;
   email: string;
   phone: string;
-  medical_certifications: {
-    class: 'CLASS_1' | 'CLASS_2';
-    valid_until: string;
+  medicals: {
+    id: string;
+    obtained_at: string;
+    expires_at: string;
+    medical_types: {
+      id: string;
+      name: string;
+    };
   }[];
   membership_expiry: string;
   student_progressions: {
@@ -90,9 +95,11 @@ const InstructorStudentsPage = () => {
           last_name,
           email,
           phone,
-          medical_certifications (
-            class,
-            valid_until
+          medicals!user_id(
+            id,
+            obtained_at,
+            expires_at,
+            medical_types(*)
           )
         `)
         .in('id', studentIds);
@@ -212,11 +219,11 @@ const InstructorStudentsPage = () => {
     // Medical status filter
     let medicalMatch = true;
     if (filters.medicalStatus !== 'all') {
-      const latestMedical = student.medical_certifications?.[0];
+      const latestMedical = student.medicals?.[0];
       if (!latestMedical) {
         medicalMatch = false;
       } else {
-        const expiryDate = new Date(latestMedical.valid_until);
+        const expiryDate = new Date(latestMedical.expires_at);
         const threeMonthsFromNow = addMonths(new Date(), 3);
         
         switch (filters.medicalStatus) {
@@ -430,24 +437,31 @@ const InstructorStudentsPage = () => {
               <div className="space-y-4">
                 <div>
                   <div className="text-sm font-medium text-slate-700 mb-2">Certificat médical</div>
-                  {student.medical_certifications?.[0] ? (
+                  {student.medicals?.[0] ? (
                     <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      isAfter(new Date(student.medical_certifications[0].valid_until), new Date()) ? 
-                        isAfter(new Date(student.medical_certifications[0].valid_until), addMonths(new Date(), 3)) ? 
+                      isAfter(new Date(student.medicals[0].expires_at), new Date()) ? 
+                        isAfter(new Date(student.medicals[0].expires_at), addMonths(new Date(), 3)) ? 
                           'bg-emerald-100 text-emerald-800' : 
                           'bg-amber-100 text-amber-800' : 
                         'bg-red-100 text-red-800'
                     }`}>
-                      {student.medical_certifications[0].class} - {
-                        isAfter(new Date(student.medical_certifications[0].valid_until), new Date()) ? 
-                          isAfter(new Date(student.medical_certifications[0].valid_until), addMonths(new Date(), 3)) ? 
+                      {student.medicals[0].medical_types?.name || 'Type inconnu'} - {
+                        isAfter(new Date(student.medicals[0].expires_at), new Date()) ? 
+                          isAfter(new Date(student.medicals[0].expires_at), addMonths(new Date(), 3)) ? 
                             'Valide' : 
                             'Expire bientôt' : 
                           'Expiré'
                       }
                     </div>
                   ) : (
-                    <span className="text-sm text-slate-500">Non renseigné</span>
+                    <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                      Non renseigné
+                    </div>
+                  )}
+                  {student.medicals?.[0] && (
+                    <div className="mt-1 text-sm text-slate-500">
+                      Expire le {format(new Date(student.medicals[0].expires_at), 'dd MMMM yyyy', { locale: fr })}
+                    </div>
                   )}
                 </div>
 

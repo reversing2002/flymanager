@@ -346,19 +346,13 @@
             ]
         },
         {
-            "name": "medical_certifications",
+            "name": "qualification_types",
             "columns": [
                 {
                     "name": "updated_at",
                     "type": "timestamp with time zone",
                     "nullable": true,
                     "default_value": "now()"
-                },
-                {
-                    "name": "user_id",
-                    "type": "uuid",
-                    "nullable": true,
-                    "default_value": null
                 },
                 {
                     "name": "created_at",
@@ -373,38 +367,128 @@
                     "default_value": "uuid_generate_v4()"
                 },
                 {
-                    "name": "valid_from",
-                    "type": "date",
+                    "name": "validity_period",
+                    "type": "integer",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "requires_instructor_validation",
+                    "type": "boolean",
+                    "nullable": false,
+                    "default_value": "false"
+                },
+                {
+                    "name": "display_order",
+                    "type": "integer",
+                    "nullable": false,
+                    "default_value": "0"
+                },
+                {
+                    "name": "club_id",
+                    "type": "uuid",
                     "nullable": false,
                     "default_value": null
                 },
                 {
-                    "name": "valid_until",
-                    "type": "date",
+                    "name": "is_system",
+                    "type": "boolean",
                     "nullable": false,
-                    "default_value": null
+                    "default_value": "false"
                 },
                 {
-                    "name": "class",
+                    "name": "name",
                     "type": "text",
                     "nullable": false,
                     "default_value": null
                 },
                 {
-                    "name": "document_url",
+                    "name": "description",
                     "type": "text",
                     "nullable": true,
                     "default_value": null
                 }
             ],
             "constraints": [
-                "medical_certifications_class_check",
-                "medical_certifications_pkey",
-                "medical_certifications_user_id_fkey",
-                "2200_61878_1_not_null",
-                "2200_61878_3_not_null",
-                "2200_61878_4_not_null",
-                "2200_61878_5_not_null"
+                "qualification_types_club_id_fkey",
+                "qualification_types_name_club_id_key",
+                "qualification_types_pkey",
+                "2200_103188_1_not_null",
+                "2200_103188_2_not_null",
+                "2200_103188_5_not_null",
+                "2200_103188_6_not_null",
+                "2200_103188_7_not_null",
+                "2200_103188_8_not_null"
+            ]
+        },
+        {
+            "name": "pilot_qualifications",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "pilot_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "qualification_type_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "obtained_at",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "expires_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "validated_by",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "validated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                }
+            ],
+            "constraints": [
+                "pilot_qualifications_pilot_id_fkey",
+                "pilot_qualifications_pilot_id_qualification_type_id_key",
+                "pilot_qualifications_pkey",
+                "pilot_qualifications_qualification_type_id_fkey",
+                "pilot_qualifications_validated_by_fkey",
+                "2200_103208_1_not_null",
+                "2200_103208_2_not_null",
+                "2200_103208_3_not_null",
+                "2200_103208_4_not_null"
             ]
         },
         {
@@ -467,6 +551,84 @@
                 "2200_83718_2_not_null",
                 "2200_83718_6_not_null",
                 "2200_83718_8_not_null"
+            ]
+        },
+        {
+            "name": "account_transactions",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "amount",
+                    "type": "numeric",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "status",
+                    "type": "text",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "stripe_payment_id",
+                    "type": "text",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "type",
+                    "type": "text",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "description",
+                    "type": "text",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "method",
+                    "type": "text",
+                    "nullable": false,
+                    "default_value": null
+                }
+            ],
+            "constraints": [
+                "account_transactions_method_check",
+                "account_transactions_pkey",
+                "account_transactions_status_check",
+                "account_transactions_type_check",
+                "account_transactions_user_id_fkey",
+                "2200_38982_1_not_null",
+                "2200_38982_2_not_null",
+                "2200_38982_3_not_null",
+                "2200_38982_4_not_null",
+                "2200_38982_5_not_null",
+                "2200_38982_6_not_null"
             ]
         },
         {
@@ -553,35 +715,35 @@
                 "availability_entity_check",
                 "availability_recurrence_check",
                 "availability_time_check",
-                "2200_97469_1_not_null",
-                "2200_97469_4_not_null",
-                "2200_97469_5_not_null",
-                "2200_97469_6_not_null",
-                "2200_97469_10_not_null",
-                "2200_97469_11_not_null",
-                "2200_97469_12_not_null"
+                "2200_98129_1_not_null",
+                "2200_98129_4_not_null",
+                "2200_98129_5_not_null",
+                "2200_98129_6_not_null",
+                "2200_98129_10_not_null",
+                "2200_98129_11_not_null",
+                "2200_98129_12_not_null"
             ]
         },
         {
-            "name": "account_transactions",
+            "name": "license_types",
             "columns": [
                 {
-                    "name": "id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": "uuid_generate_v4()"
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
                 },
                 {
-                    "name": "user_id",
-                    "type": "uuid",
+                    "name": "is_system",
+                    "type": "boolean",
                     "nullable": false,
-                    "default_value": null
+                    "default_value": "false"
                 },
                 {
-                    "name": "amount",
-                    "type": "numeric",
+                    "name": "required_fields",
+                    "type": "jsonb",
                     "nullable": false,
-                    "default_value": null
+                    "default_value": "'[]'::jsonb"
                 },
                 {
                     "name": "created_at",
@@ -590,25 +752,31 @@
                     "default_value": "now()"
                 },
                 {
-                    "name": "updated_at",
-                    "type": "timestamp with time zone",
-                    "nullable": true,
-                    "default_value": "now()"
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
                 },
                 {
-                    "name": "status",
-                    "type": "text",
+                    "name": "validity_period",
+                    "type": "integer",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "display_order",
+                    "type": "integer",
+                    "nullable": false,
+                    "default_value": "0"
+                },
+                {
+                    "name": "club_id",
+                    "type": "uuid",
                     "nullable": false,
                     "default_value": null
                 },
                 {
-                    "name": "stripe_payment_id",
-                    "type": "text",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "type",
+                    "name": "name",
                     "type": "text",
                     "nullable": false,
                     "default_value": null
@@ -620,89 +788,29 @@
                     "default_value": null
                 },
                 {
-                    "name": "method",
-                    "type": "text",
-                    "nullable": false,
-                    "default_value": null
-                }
-            ],
-            "constraints": [
-                "account_transactions_method_check",
-                "account_transactions_pkey",
-                "account_transactions_status_check",
-                "account_transactions_type_check",
-                "account_transactions_user_id_fkey",
-                "2200_38982_1_not_null",
-                "2200_38982_2_not_null",
-                "2200_38982_3_not_null",
-                "2200_38982_4_not_null",
-                "2200_38982_5_not_null",
-                "2200_38982_6_not_null"
-            ]
-        },
-        {
-            "name": "pilot_licenses",
-            "columns": [
-                {
-                    "name": "id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": "uuid_generate_v4()"
-                },
-                {
-                    "name": "user_id",
-                    "type": "uuid",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "valid_until",
-                    "type": "timestamp with time zone",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "created_at",
-                    "type": "timestamp with time zone",
-                    "nullable": true,
-                    "default_value": "now()"
-                },
-                {
-                    "name": "updated_at",
-                    "type": "timestamp with time zone",
-                    "nullable": true,
-                    "default_value": "now()"
-                },
-                {
-                    "name": "is_student",
-                    "type": "boolean",
-                    "nullable": true,
-                    "default_value": "false"
-                },
-                {
-                    "name": "type",
+                    "name": "category",
                     "type": "text",
                     "nullable": false,
                     "default_value": null
                 },
                 {
-                    "name": "number",
-                    "type": "text",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "document_url",
+                    "name": "required_medical_class",
                     "type": "text",
                     "nullable": true,
                     "default_value": null
                 }
             ],
             "constraints": [
-                "pilot_licenses_pkey",
-                "pilot_licenses_user_id_fkey",
-                "2200_29424_1_not_null",
-                "2200_29424_3_not_null"
+                "license_types_club_id_fkey",
+                "license_types_name_club_id_key",
+                "license_types_pkey",
+                "2200_103466_1_not_null",
+                "2200_103466_2_not_null",
+                "2200_103466_4_not_null",
+                "2200_103466_7_not_null",
+                "2200_103466_8_not_null",
+                "2200_103466_9_not_null",
+                "2200_103466_10_not_null"
             ]
         },
         {
@@ -1033,6 +1141,90 @@
                 "2200_44846_2_not_null",
                 "2200_44846_3_not_null",
                 "2200_44846_12_not_null"
+            ]
+        },
+        {
+            "name": "pilot_licenses",
+            "columns": [
+                {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "license_type_id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "data",
+                    "type": "jsonb",
+                    "nullable": false,
+                    "default_value": "'{}'::jsonb"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "issued_at",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "expires_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "number",
+                    "type": "text",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "authority",
+                    "type": "text",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "scan_id",
+                    "type": "text",
+                    "nullable": true,
+                    "default_value": null
+                }
+            ],
+            "constraints": [
+                "pilot_licenses_license_type_id_fkey",
+                "pilot_licenses_pkey",
+                "pilot_licenses_user_id_fkey",
+                "pilot_licenses_user_id_license_type_id_key",
+                "2200_103577_1_not_null",
+                "2200_103577_2_not_null",
+                "2200_103577_3_not_null",
+                "2200_103577_4_not_null",
+                "2200_103577_5_not_null",
+                "2200_103577_6_not_null",
+                "2200_103577_8_not_null"
             ]
         },
         {
@@ -1645,12 +1837,6 @@
                     "default_value": "uuid_generate_v4()"
                 },
                 {
-                    "name": "registration_date",
-                    "type": "timestamp without time zone",
-                    "nullable": true,
-                    "default_value": "now()"
-                },
-                {
                     "name": "auth_id",
                     "type": "uuid",
                     "nullable": true,
@@ -1667,6 +1853,12 @@
                     "type": "boolean",
                     "nullable": true,
                     "default_value": "false"
+                },
+                {
+                    "name": "instructor_fee",
+                    "type": "numeric",
+                    "nullable": true,
+                    "default_value": null
                 },
                 {
                     "name": "instance_id",
@@ -1837,6 +2029,12 @@
                     "default_value": null
                 },
                 {
+                    "name": "registration_date",
+                    "type": "timestamp without time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
                     "name": "first_name",
                     "type": "text",
                     "nullable": false,
@@ -1861,7 +2059,7 @@
                     "default_value": null
                 },
                 {
-                    "name": "role",
+                    "name": "aud",
                     "type": "character varying",
                     "nullable": true,
                     "default_value": null
@@ -1870,6 +2068,12 @@
                     "name": "login",
                     "type": "text",
                     "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "role",
+                    "type": "character varying",
+                    "nullable": true,
                     "default_value": null
                 },
                 {
@@ -1885,13 +2089,19 @@
                     "default_value": null
                 },
                 {
+                    "name": "gender",
+                    "type": "text",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
                     "name": "email_change_token_current",
                     "type": "character varying",
                     "nullable": true,
                     "default_value": "''::character varying"
                 },
                 {
-                    "name": "gender",
+                    "name": "default_schedule",
                     "type": "text",
                     "nullable": true,
                     "default_value": null
@@ -1903,25 +2113,13 @@
                     "default_value": "NULL::character varying"
                 },
                 {
-                    "name": "default_schedule",
-                    "type": "text",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "confirmation_token",
-                    "type": "character varying",
-                    "nullable": true,
-                    "default_value": "''::character varying"
-                },
-                {
                     "name": "image_url",
                     "type": "text",
                     "nullable": true,
                     "default_value": null
                 },
                 {
-                    "name": "reauthentication_token",
+                    "name": "confirmation_token",
                     "type": "character varying",
                     "nullable": true,
                     "default_value": "''::character varying"
@@ -1951,6 +2149,12 @@
                     "default_value": null
                 },
                 {
+                    "name": "reauthentication_token",
+                    "type": "character varying",
+                    "nullable": true,
+                    "default_value": "''::character varying"
+                },
+                {
                     "name": "recovery_token",
                     "type": "character varying",
                     "nullable": true,
@@ -1963,16 +2167,16 @@
                     "default_value": "''::text"
                 },
                 {
-                    "name": "email_change_token_new",
-                    "type": "character varying",
-                    "nullable": true,
-                    "default_value": "''::character varying"
-                },
-                {
                     "name": "full_name",
                     "type": "text",
                     "nullable": true,
                     "default_value": null
+                },
+                {
+                    "name": "email_change_token_new",
+                    "type": "character varying",
+                    "nullable": true,
+                    "default_value": "''::character varying"
                 },
                 {
                     "name": "email_change",
@@ -1985,12 +2189,6 @@
                     "type": "character varying",
                     "nullable": true,
                     "default_value": "''::character varying"
-                },
-                {
-                    "name": "aud",
-                    "type": "character varying",
-                    "nullable": true,
-                    "default_value": null
                 }
             ],
             "constraints": [
@@ -2827,86 +3025,6 @@
             ]
         },
         {
-            "name": "pilot_availabilities",
-            "columns": [
-                {
-                    "name": "id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": "uuid_generate_v4()"
-                },
-                {
-                    "name": "pilot_id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": null
-                },
-                {
-                    "name": "day_of_week",
-                    "type": "integer",
-                    "nullable": false,
-                    "default_value": null
-                },
-                {
-                    "name": "start_time",
-                    "type": "time without time zone",
-                    "nullable": false,
-                    "default_value": null
-                },
-                {
-                    "name": "end_time",
-                    "type": "time without time zone",
-                    "nullable": false,
-                    "default_value": null
-                },
-                {
-                    "name": "is_recurring",
-                    "type": "boolean",
-                    "nullable": false,
-                    "default_value": "false"
-                },
-                {
-                    "name": "start_date",
-                    "type": "date",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "end_date",
-                    "type": "date",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "created_at",
-                    "type": "timestamp with time zone",
-                    "nullable": false,
-                    "default_value": "now()"
-                },
-                {
-                    "name": "updated_at",
-                    "type": "timestamp with time zone",
-                    "nullable": false,
-                    "default_value": "now()"
-                }
-            ],
-            "constraints": [
-                "pilot_availabilities_day_of_week_check",
-                "pilot_availabilities_pilot_id_fkey",
-                "pilot_availabilities_pkey",
-                "valid_dates",
-                "valid_times",
-                "2200_79592_1_not_null",
-                "2200_79592_2_not_null",
-                "2200_79592_3_not_null",
-                "2200_79592_4_not_null",
-                "2200_79592_5_not_null",
-                "2200_79592_6_not_null",
-                "2200_79592_9_not_null",
-                "2200_79592_10_not_null"
-            ]
-        },
-        {
             "name": "aircraft_order",
             "columns": [
                 {
@@ -3106,60 +3224,6 @@
             ]
         },
         {
-            "name": "pilot_qualifications",
-            "columns": [
-                {
-                    "name": "created_at",
-                    "type": "timestamp with time zone",
-                    "nullable": true,
-                    "default_value": "now()"
-                },
-                {
-                    "name": "updated_at",
-                    "type": "timestamp with time zone",
-                    "nullable": true,
-                    "default_value": "now()"
-                },
-                {
-                    "name": "user_id",
-                    "type": "uuid",
-                    "nullable": true,
-                    "default_value": null
-                },
-                {
-                    "name": "id",
-                    "type": "uuid",
-                    "nullable": false,
-                    "default_value": "uuid_generate_v4()"
-                },
-                {
-                    "name": "has_qualification",
-                    "type": "boolean",
-                    "nullable": true,
-                    "default_value": "false"
-                },
-                {
-                    "name": "name",
-                    "type": "text",
-                    "nullable": false,
-                    "default_value": null
-                },
-                {
-                    "name": "code",
-                    "type": "text",
-                    "nullable": false,
-                    "default_value": null
-                }
-            ],
-            "constraints": [
-                "pilot_qualifications_pkey",
-                "pilot_qualifications_user_id_fkey",
-                "2200_41917_1_not_null",
-                "2200_41917_3_not_null",
-                "2200_41917_4_not_null"
-            ]
-        },
-        {
             "name": "member_contributions",
             "columns": [
                 {
@@ -3218,6 +3282,137 @@
                 "2200_93173_1_not_null",
                 "2200_93173_3_not_null",
                 "2200_93173_4_not_null"
+            ]
+        },
+        {
+            "name": "medical_types",
+            "columns": [
+                {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "club_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "display_order",
+                    "type": "integer",
+                    "nullable": true,
+                    "default_value": "0"
+                },
+                {
+                    "name": "system_type",
+                    "type": "boolean",
+                    "nullable": true,
+                    "default_value": "false"
+                },
+                {
+                    "name": "validity_period",
+                    "type": "integer",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "requires_end_date",
+                    "type": "boolean",
+                    "nullable": true,
+                    "default_value": "true"
+                },
+                {
+                    "name": "name",
+                    "type": "text",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "description",
+                    "type": "text",
+                    "nullable": true,
+                    "default_value": null
+                }
+            ],
+            "constraints": [
+                "medical_types_club_id_fkey",
+                "medical_types_pkey",
+                "2200_104178_1_not_null",
+                "2200_104178_3_not_null"
+            ]
+        },
+        {
+            "name": "medicals",
+            "columns": [
+                {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "medical_type_id",
+                    "type": "uuid",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "obtained_at",
+                    "type": "timestamp with time zone",
+                    "nullable": false,
+                    "default_value": null
+                },
+                {
+                    "name": "expires_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": null
+                },
+                {
+                    "name": "id",
+                    "type": "uuid",
+                    "nullable": false,
+                    "default_value": "uuid_generate_v4()"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "nullable": true,
+                    "default_value": "now()"
+                },
+                {
+                    "name": "scan_id",
+                    "type": "text",
+                    "nullable": true,
+                    "default_value": null
+                }
+            ],
+            "constraints": [
+                "medicals_medical_type_id_fkey",
+                "medicals_pkey",
+                "medicals_user_id_fkey",
+                "2200_104198_1_not_null",
+                "2200_104198_4_not_null"
             ]
         },
         {
@@ -4107,6 +4302,90 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "Enable read access for all users",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "qualification_types",
+            "command": "SELECT",
+            "definition": "(EXISTS ( SELECT 1\n   FROM club_members cm\n  WHERE ((cm.club_id = qualification_types.club_id) AND (cm.user_id = auth.uid()))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable write access for admins",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "qualification_types",
+            "command": "ALL",
+            "definition": "(EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'ADMIN'::text))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable read access for all users",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "pilot_qualifications",
+            "command": "SELECT",
+            "definition": "(EXISTS ( SELECT 1\n   FROM (qualification_types qt\n     JOIN club_members cm ON ((cm.club_id = qt.club_id)))\n  WHERE ((qt.id = pilot_qualifications.qualification_type_id) AND (cm.user_id = auth.uid()))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable write access for admins and instructors",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "pilot_qualifications",
+            "command": "ALL",
+            "definition": "(EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = ANY ((ARRAY['ADMIN'::character varying, 'INSTRUCTOR'::character varying])::text[])))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable insert for admins",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "accounting_categories",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable update and delete for admins",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "accounting_categories",
+            "command": "ALL",
+            "definition": "(((EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'ADMIN'::text)))) AND (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid())))) OR ((is_system = true) AND (EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'SYSTEM_ADMIN'::text))))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Show system entries and club entries",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "accounting_categories",
+            "command": "SELECT",
+            "definition": "((is_system = true) OR (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid()))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "Create availabilities",
             "roles": [
                 [
@@ -4155,63 +4434,27 @@
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Admins and instructors can manage medical certifications",
+            "name": "Enable read access for all users",
             "roles": [
                 [
                     "public"
                 ]
             ],
-            "table": "medical_certifications",
-            "command": "ALL",
-            "definition": "has_any_group(auth.uid(), ARRAY['ADMIN'::text, 'INSTRUCTOR'::text])",
+            "table": "license_types",
+            "command": "SELECT",
+            "definition": "(EXISTS ( SELECT 1\n   FROM club_members cm\n  WHERE ((cm.club_id = license_types.club_id) AND (cm.user_id = auth.uid()))))",
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "medical_certifications_read_access",
+            "name": "Enable write access for admins",
             "roles": [
                 [
                     "public"
                 ]
             ],
-            "table": "medical_certifications",
-            "command": "SELECT",
-            "definition": "((user_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM (club_members auth_member\n     JOIN club_members target_member ON ((auth_member.club_id = target_member.club_id)))\n  WHERE ((auth_member.user_id = auth.uid()) AND (target_member.user_id = medical_certifications.user_id)))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable insert for admins",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "accounting_categories",
-            "command": "INSERT",
-            "definition": null,
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable update and delete for admins",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "accounting_categories",
+            "table": "license_types",
             "command": "ALL",
-            "definition": "(((EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'ADMIN'::text)))) AND (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid())))) OR ((is_system = true) AND (EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ug.id = ugm.group_id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'SYSTEM_ADMIN'::text))))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Show system entries and club entries",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "accounting_categories",
-            "command": "SELECT",
-            "definition": "((is_system = true) OR (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid()))))",
+            "definition": "(EXISTS ( SELECT 1\n   FROM (user_group_memberships ugm\n     JOIN user_groups ug ON ((ugm.group_id = ug.id)))\n  WHERE ((ugm.user_id = auth.uid()) AND ((ug.name)::text = 'ADMIN'::text))))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4260,54 +4503,6 @@
             "table": "account_entry_types",
             "command": "SELECT",
             "definition": "((is_system = true) OR (club_id IN ( SELECT club_members.club_id\n   FROM club_members\n  WHERE (club_members.user_id = auth.uid()))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Admins can manage qualifications",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "pilot_licenses",
-            "command": "ALL",
-            "definition": "has_any_group(auth.uid(), ARRAY['ADMIN'::text])",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable insert for admins",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "pilot_licenses",
-            "command": "INSERT",
-            "definition": null,
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable read access for all pilot licenses",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "pilot_licenses",
-            "command": "SELECT",
-            "definition": "true",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable update for admins",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "pilot_licenses",
-            "command": "UPDATE",
-            "definition": "true",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4683,27 +4878,51 @@
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Enable insert access for administrators",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "users",
-            "command": "INSERT",
-            "definition": null,
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable member creation for instructors",
+            "name": "Enable read access for club members",
             "roles": [
                 [
                     "public"
                 ]
             ],
-            "table": "users",
+            "table": "reservations",
+            "command": "SELECT",
+            "definition": "(EXISTS ( SELECT 1\n   FROM club_members\n  WHERE ((club_members.user_id = auth.uid()) AND (club_members.club_id = reservations.club_id))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable reservation creation for club members",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "reservations",
             "command": "INSERT",
             "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable reservation deletion for admins and owners",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "reservations",
+            "command": "DELETE",
+            "definition": "((EXISTS ( SELECT 1\n   FROM club_members\n  WHERE ((club_members.user_id = auth.uid()) AND (club_members.club_id = reservations.club_id)))) AND (has_any_group(auth.uid(), ARRAY['ADMIN'::text]) OR (user_id = auth.uid()) OR (instructor_id = auth.uid())))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "Enable reservation updates for admins and owners",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "reservations",
+            "command": "UPDATE",
+            "definition": "((EXISTS ( SELECT 1\n   FROM club_members\n  WHERE ((club_members.user_id = auth.uid()) AND (club_members.club_id = reservations.club_id)))) AND (has_any_group(auth.uid(), ARRAY['ADMIN'::text]) OR (user_id = auth.uid()) OR (instructor_id = auth.uid())))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -4755,6 +4974,18 @@
             "permissive": "PERMISSIVE"
         },
         {
+            "name": "enable_insert_for_admins_and_instructors",
+            "roles": [
+                [
+                    "public"
+                ]
+            ],
+            "table": "users",
+            "command": "INSERT",
+            "definition": null,
+            "permissive": "PERMISSIVE"
+        },
+        {
             "name": "users_read_policy",
             "roles": [
                 [
@@ -4764,54 +4995,6 @@
             "table": "users",
             "command": "SELECT",
             "definition": "((auth.uid() = id) OR (EXISTS ( SELECT 1\n   FROM (club_members auth_member\n     JOIN club_members target_member ON ((auth_member.club_id = target_member.club_id)))\n  WHERE ((auth_member.user_id = auth.uid()) AND (target_member.user_id = users.id)))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable read access for club members",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "reservations",
-            "command": "SELECT",
-            "definition": "(EXISTS ( SELECT 1\n   FROM club_members\n  WHERE ((club_members.user_id = auth.uid()) AND (club_members.club_id = reservations.club_id))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable reservation creation for club members",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "reservations",
-            "command": "INSERT",
-            "definition": null,
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable reservation deletion for admins and owners",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "reservations",
-            "command": "DELETE",
-            "definition": "((EXISTS ( SELECT 1\n   FROM club_members\n  WHERE ((club_members.user_id = auth.uid()) AND (club_members.club_id = reservations.club_id)))) AND (has_any_group(auth.uid(), ARRAY['ADMIN'::text]) OR (user_id = auth.uid()) OR (instructor_id = auth.uid())))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable reservation updates for admins and owners",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "reservations",
-            "command": "UPDATE",
-            "definition": "((EXISTS ( SELECT 1\n   FROM club_members\n  WHERE ((club_members.user_id = auth.uid()) AND (club_members.club_id = reservations.club_id)))) AND (has_any_group(auth.uid(), ARRAY['ADMIN'::text]) OR (user_id = auth.uid()) OR (instructor_id = auth.uid())))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -5016,30 +5199,6 @@
             "table": "skill_validations",
             "command": "UPDATE",
             "definition": "has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text])",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Pilots can manage their availabilities",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "pilot_availabilities",
-            "command": "ALL",
-            "definition": "(pilot_id = auth.uid())",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Pilots can view their availabilities",
-            "roles": [
-                [
-                    "authenticated"
-                ]
-            ],
-            "table": "pilot_availabilities",
-            "command": "SELECT",
-            "definition": "(pilot_id = auth.uid())",
             "permissive": "PERMISSIVE"
         },
         {
@@ -5619,42 +5778,6 @@
             "permissive": "PERMISSIVE"
         },
         {
-            "name": "Admins can manage qualifications",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "pilot_qualifications",
-            "command": "ALL",
-            "definition": "has_any_group(auth.uid(), ARRAY['ADMIN'::text])",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "Enable qualification management",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "pilot_qualifications",
-            "command": "ALL",
-            "definition": "(has_any_group(auth.uid(), ARRAY['INSTRUCTOR'::text, 'ADMIN'::text]) AND (EXISTS ( SELECT 1\n   FROM club_members cm1\n  WHERE ((cm1.user_id = auth.uid()) AND (EXISTS ( SELECT 1\n           FROM club_members cm2\n          WHERE ((cm2.user_id = pilot_qualifications.user_id) AND (cm2.club_id = cm1.club_id))))))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
-            "name": "pilot_qualifications_read_access",
-            "roles": [
-                [
-                    "public"
-                ]
-            ],
-            "table": "pilot_qualifications",
-            "command": "SELECT",
-            "definition": "((user_id = auth.uid()) OR has_any_group(auth.uid(), ARRAY['ADMIN'::text, 'INSTRUCTOR'::text]) OR (EXISTS ( SELECT 1\n   FROM (club_members auth_member\n     JOIN club_members target_member ON ((auth_member.club_id = target_member.club_id)))\n  WHERE ((auth_member.user_id = auth.uid()) AND (target_member.user_id = pilot_qualifications.user_id)))))",
-            "permissive": "PERMISSIVE"
-        },
-        {
             "name": "Admins and instructors can insert contributions",
             "roles": [
                 [
@@ -5700,6 +5823,54 @@
             "table": "member_contributions",
             "command": "SELECT",
             "definition": "(auth.uid() IN ( SELECT users.auth_id\n   FROM users\n  WHERE (users.id = member_contributions.user_id)))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "medical_types_read_policy",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "medical_types",
+            "command": "SELECT",
+            "definition": "true",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "medical_types_write_policy",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "medical_types",
+            "command": "ALL",
+            "definition": "has_any_group(auth.uid(), ARRAY['ADMIN'::text])",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "medicals_read_policy",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "medicals",
+            "command": "SELECT",
+            "definition": "((user_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM club_members viewer\n  WHERE ((viewer.user_id = auth.uid()) AND (EXISTS ( SELECT 1\n           FROM club_members target\n          WHERE ((target.club_id = viewer.club_id) AND (target.user_id = medicals.user_id))))))))",
+            "permissive": "PERMISSIVE"
+        },
+        {
+            "name": "medicals_write_policy",
+            "roles": [
+                [
+                    "authenticated"
+                ]
+            ],
+            "table": "medicals",
+            "command": "ALL",
+            "definition": "((user_id = auth.uid()) OR has_any_group(auth.uid(), ARRAY['ADMIN'::text]))",
             "permissive": "PERMISSIVE"
         },
         {
@@ -6078,21 +6249,9 @@
         },
         {
             "name": "create_auth_user",
-            "arguments": "p_email text, p_password text, p_role text",
-            "definition": "CREATE OR REPLACE FUNCTION public.create_auth_user(p_email text, p_password text, p_role text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\ndeclare\n  v_user_id uuid;\nbegin\n  -- Générer un UUID\n  v_user_id := gen_random_uuid();\n  \n  insert into auth.users (\n    id,  -- Ajout explicite de l'ID\n    instance_id,\n    email,\n    encrypted_password,\n    email_confirmed_at,\n    created_at,\n    updated_at,\n    raw_app_meta_data,\n    raw_user_meta_data,\n    aud\n  )\n  values (\n    v_user_id,  -- Utiliser l'UUID généré\n    '00000000-0000-0000-0000-000000000000',  -- instance_id par défaut\n    p_email,\n    crypt(p_password, gen_salt('bf')),\n    now(),\n    now(),\n    now(),\n    jsonb_build_object('provider', 'email', 'role', p_role),\n    jsonb_build_object('role', p_role),\n    'authenticated'\n  );\n  \n  return v_user_id;\nend;\n$function$\n",
-            "return_type": "uuid"
-        },
-        {
-            "name": "create_auth_user",
-            "arguments": "p_email text, p_password text, p_role text, p_login text",
-            "definition": "CREATE OR REPLACE FUNCTION public.create_auth_user(p_email text, p_password text, p_role text, p_login text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_existing_user RECORD;\n  v_user_id UUID;\n  v_instance_id UUID := '00000000-0000-0000-0000-000000000000';\nBEGIN\n  -- Récupérer l'ID existant\n  SELECT id, email INTO v_existing_user\n  FROM public.users\n  WHERE login = p_login;\n\n  -- Générer un UUID pour auth.users\n  v_user_id := gen_random_uuid();\n\n  -- Insérer dans auth.users\n  INSERT INTO auth.users (\n    id,\n    instance_id,\n    email,\n    encrypted_password,\n    email_confirmed_at,\n    role,\n    aud,\n    created_at,\n    updated_at,\n    is_sso_user,\n    is_anonymous,\n    raw_user_meta_data,\n    raw_app_meta_data\n  )\n  VALUES (\n    v_user_id,\n    v_instance_id,\n    v_existing_user.email,\n    crypt(p_password, gen_salt('bf')),\n    NOW(),\n    'authenticated',\n    'authenticated',\n    NOW(),\n    NOW(),\n    false,\n    false,\n    jsonb_build_object(\n      'login', p_login,\n      'role', p_role\n    ),\n    jsonb_build_object(\n      'provider', 'email',\n      'providers', ARRAY['email']\n    )\n  );\n\n  -- Mettre à jour public.users avec l'auth_id\n  UPDATE public.users\n  SET auth_id = v_user_id\n  WHERE id = v_existing_user.id;\n\n  RETURN v_user_id;\nEND;\n$function$\n",
-            "return_type": "uuid"
-        },
-        {
-            "name": "create_auth_user",
-            "arguments": "p_email text, p_password text, p_role text, p_login text, p_user_id uuid",
-            "definition": "CREATE OR REPLACE FUNCTION public.create_auth_user(p_email text, p_password text, p_role text, p_login text, p_user_id uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  v_existing_user RECORD;\n  v_instance_id UUID := '00000000-0000-0000-0000-000000000000';\nBEGIN\n  -- Récupérer l'utilisateur existant\n  SELECT id, email INTO v_existing_user\n  FROM public.users\n  WHERE id = p_user_id;\n\n  -- Insérer dans auth.users avec l'ID fourni\n  INSERT INTO auth.users (\n    id,\n    instance_id,\n    email,\n    encrypted_password,\n    email_confirmed_at,\n    role,\n    aud,\n    created_at,\n    updated_at,\n    is_sso_user,\n    is_anonymous,\n    raw_user_meta_data,\n    raw_app_meta_data\n  )\n  VALUES (\n    p_user_id,  -- Utiliser l'ID fourni au lieu d'en générer un nouveau\n    v_instance_id,\n    v_existing_user.email,\n    crypt(p_password, gen_salt('bf')),\n    NOW(),\n    'authenticated',\n    'authenticated',\n    NOW(),\n    NOW(),\n    false,\n    false,\n    jsonb_build_object(\n      'login', p_login,\n      'role', p_role\n    ),\n    jsonb_build_object(\n      'provider', 'email',\n      'providers', ARRAY['email']\n    )\n  );\n\n  -- Mettre à jour public.users avec l'auth_id\n  UPDATE public.users\n  SET auth_id = p_user_id  -- Utiliser le même ID\n  WHERE id = v_existing_user.id;\n\n  RETURN p_user_id;\nEND;\n$function$\n",
-            "return_type": "uuid"
+            "arguments": "p_email text, p_login text, p_password text, p_role text, p_user_id uuid, p_user_metadata jsonb DEFAULT '{}'::jsonb",
+            "definition": "CREATE OR REPLACE FUNCTION public.create_auth_user(p_email text, p_login text, p_password text, p_role text, p_user_id uuid, p_user_metadata jsonb DEFAULT '{}'::jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\ndeclare\n    v_uid uuid;\nbegin\n    -- Create the user in auth.users\n    insert into auth.users (\n        instance_id,\n        id,\n        aud,\n        role,\n        email,\n        encrypted_password,\n        email_confirmed_at,\n        recovery_sent_at,\n        last_sign_in_at,\n        raw_app_meta_data,\n        raw_user_meta_data,\n        created_at,\n        updated_at,\n        confirmation_token,\n        email_change,\n        email_change_token_new,\n        recovery_token\n    )\n    values (\n        '00000000-0000-0000-0000-000000000000',\n        p_user_id,\n        'authenticated',\n        'authenticated',\n        p_email,\n        crypt(p_password, gen_salt('bf')),\n        now(),\n        null,\n        now(),\n        jsonb_build_object(\n            'provider', 'email',\n            'providers', array['email']::text[],\n            'role', 'authenticated'\n        ),\n        p_user_metadata,\n        now(),\n        now(),\n        '',\n        '',\n        '',\n        ''\n    )\n    returning id into v_uid;\n\n    -- Insert into auth.identities\n    insert into auth.identities (\n        id,\n        user_id,\n        identity_data,\n        provider,\n        provider_id,\n        last_sign_in_at,\n        created_at,\n        updated_at\n    )\n    values (\n        gen_random_uuid(),\n        v_uid,\n        jsonb_build_object(\n            'sub', v_uid,\n            'email', p_email,\n            'login', p_login,\n            'role', 'authenticated'\n        ),\n        'email',\n        p_email,\n        now(),\n        now(),\n        now()\n    );\n\n    -- Update auth_id in public.users\n    update public.users\n    set auth_id = v_uid\n    where id = p_user_id;\nend;\n$function$\n",
+            "return_type": "void"
         },
         {
             "name": "create_club_with_admin",
@@ -6287,6 +6446,12 @@
             "return_type": "void"
         },
         {
+            "name": "send_welcome_email",
+            "arguments": "p_email text, p_user_metadata jsonb",
+            "definition": "CREATE OR REPLACE FUNCTION public.send_welcome_email(p_email text, p_user_metadata jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nbegin\n    -- Utilise l'API Supabase pour envoyer l'email\n    select net.http_post(\n        url := 'https://jqrijsrbeksztlgnciah.supabase.co/auth/v1/admin/send-email',\n        headers := jsonb_build_object(\n            'Content-Type', 'application/json',\n            'Authorization', current_setting('request.header.apikey')\n        ),\n        body := jsonb_build_object(\n            'email', p_email,\n            'template', 'welcome',  -- Le nom de votre template\n            'data', p_user_metadata\n        )\n    );\nend;\n$function$\n",
+            "return_type": "void"
+        },
+        {
             "name": "set_current_timestamp_updated_at",
             "arguments": "",
             "definition": "CREATE OR REPLACE FUNCTION public.set_current_timestamp_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    NEW.updated_at = now();\n    RETURN NEW;\nEND;\n$function$\n",
@@ -6313,7 +6478,7 @@
         {
             "name": "update_updated_at_column",
             "arguments": "",
-            "definition": "CREATE OR REPLACE FUNCTION public.update_updated_at_column()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    NEW.updated_at = NOW();\n    RETURN NEW;\nEND;\n$function$\n",
+            "definition": "CREATE OR REPLACE FUNCTION public.update_updated_at_column()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n  NEW.updated_at = NOW();\n  RETURN NEW;\nEND;\n$function$\n",
             "return_type": "trigger"
         },
         {
