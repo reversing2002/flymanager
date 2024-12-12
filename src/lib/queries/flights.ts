@@ -363,34 +363,6 @@ export async function validateFlight(id: string): Promise<void> {
     .eq("flight_id", id);
 
   if (accountError) throw accountError;
-
-  // If there's an instructor fee, create and validate the instructor payment entry
-  if (flight.instructor_id && flight.instructor_fee) {
-    const { data: entryTypes, error: entryTypesError } = await supabase
-      .from("account_entry_types")
-      .select("id")
-      .eq("code", "INSTRUCTOR_PAYMENT")
-      .single();
-
-    if (entryTypesError) throw entryTypesError;
-
-    const { error: instructorEntryError } = await supabase
-      .from("account_entries")
-      .insert({
-        user_id: flight.instructor_id,
-        assigned_to_id: flight.instructor_id,
-        flight_id: flight.id,
-        date: flight.date,
-        entry_type_id: entryTypes.id,
-        amount: flight.instructor_fee,
-        payment_method: flight.payment_method,
-        description: `Instruction vol ${flight.aircraft_id} - ${flight.duration}min`,
-        is_validated: true,
-        is_club_paid: false
-      });
-
-    if (instructorEntryError) throw instructorEntryError;
-  }
 }
 
 export async function deleteFlight(id: string): Promise<void> {
