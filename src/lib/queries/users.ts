@@ -80,13 +80,6 @@ export async function getUserById(id: string): Promise<User | null> {
             name
           )
         ),
-        medical_certifications (
-          id,
-          class,
-          valid_from,
-          valid_until,
-          document_url
-        ),
         pilot_licenses (
           id,
           license_type:license_types (
@@ -99,11 +92,9 @@ export async function getUserById(id: string): Promise<User | null> {
           authority,
           issued_at,
           expires_at,
-          data,
           scan_id
         )
-        `
-      )
+      `)
       .eq("id", id)
       .single();
 
@@ -114,6 +105,29 @@ export async function getUserById(id: string): Promise<User | null> {
 
     if (!userData) {
       return null;
+    }
+
+    // Fetch medicals separately
+    const { data: medicalsData, error: medicalsError } = await supabase
+      .from("medicals")
+      .select(`
+        id,
+        medical_type:medical_types (
+          id,
+          name,
+          description,
+          validity_period,
+          requires_end_date
+        ),
+        obtained_at,
+        expires_at,
+        scan_id
+      `)
+      .eq("user_id", userData.auth_id);
+
+    if (medicalsError) {
+      console.error("Error fetching medicals:", medicalsError);
+      throw medicalsError;
     }
 
     // 2. Récupérer les rôles de l'utilisateur
@@ -128,6 +142,7 @@ export async function getUserById(id: string): Promise<User | null> {
     // 3. Transformer les données
     const user: User = {
       ...userData,
+      medicals: medicalsData || [],
       roles: userGroups || [],
       club: userData.club_members?.[0]?.club || null,
       full_name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim()
