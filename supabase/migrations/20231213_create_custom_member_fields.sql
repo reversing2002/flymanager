@@ -44,7 +44,7 @@ create policy "Club admins can manage their club's field definitions"
             inner join user_groups ug on ug.id = ugm.group_id
             where cm.club_id = custom_member_field_definitions.club_id
             and cm.user_id = auth.uid()
-            and ug.name = 'Administrateurs'
+            and ug.name = 'ADMIN'
         )
     )
     with check (
@@ -55,7 +55,7 @@ create policy "Club admins can manage their club's field definitions"
             inner join user_groups ug on ug.id = ugm.group_id
             where cm.club_id = custom_member_field_definitions.club_id
             and cm.user_id = auth.uid()
-            and ug.name = 'Administrateurs'
+            and ug.name = 'ADMIN'
         )
     );
 
@@ -83,7 +83,7 @@ create policy "Club admins can manage field values for their club members"
             inner join user_groups ug on ug.id = ugm.group_id
             where cfd.id = custom_member_field_values.field_id
             and cm.user_id = auth.uid()
-            and ug.name = 'Administrateurs'
+            and ug.name = 'ADMIN'
         )
     )
     with check (
@@ -95,7 +95,7 @@ create policy "Club admins can manage field values for their club members"
             inner join user_groups ug on ug.id = ugm.group_id
             where cfd.id = custom_member_field_values.field_id
             and cm.user_id = auth.uid()
-            and ug.name = 'Administrateurs'
+            and ug.name = 'ADMIN'
         )
     );
 
