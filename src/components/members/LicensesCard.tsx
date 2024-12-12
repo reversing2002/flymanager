@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardBody } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -9,6 +9,7 @@ import EditLicenseForm from './EditLicenseForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { hasAnyGroup } from '../../lib/permissions';
 import { toast } from 'react-hot-toast';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface LicensesCardProps {
   userId: string;
@@ -20,6 +21,32 @@ interface LicensesCardProps {
   onSelectLicense: (license: PilotLicense) => void;
 }
 
+const fetchLicenses = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('pilot_licenses')
+    .select(`
+      id,
+      user_id,
+      license_type_id,
+      number,
+      authority,
+      issued_at,
+      expires_at,
+      scan_id,
+      data,
+      license_types (
+        id,
+        name,
+        description
+      )
+    `)
+    .eq('user_id', userId)
+    .order('issued_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+};
+
 const LicensesCard: React.FC<LicensesCardProps> = ({
   userId,
   onLicensesChange,
@@ -30,61 +57,23 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
   onSelectLicense,
 }) => {
   const { user: currentUser } = useAuth();
-  const [licenses, setLicenses] = useState<PilotLicense[]>([]);
-  const [loading, setLoading] = useState(true);
-
+  const queryClient = useQueryClient();
   const canEdit = hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']);
 
-  const loadLicenses = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('pilot_licenses')
-        .select(`
-          id,
-          user_id,
-          license_type_id,
-          number,
-          authority,
-          issued_at,
-          expires_at,
-          scan_id,
-          data,
-          license_type:license_types(
-            id,
-            name,
-            description,
-            category,
-            validity_period,
-            required_medical_class,
-            required_fields
-          )
-        `)
-        .eq('user_id', userId);
-
-      if (error) throw error;
-      setLicenses(data || []);
-    } catch (err) {
-      console.error('Error loading licenses:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadLicenses();
-  }, [userId]);
+  const { data: licenses = [], isLoading } = useQuery({
+    queryKey: ['licenses', userId],
+    queryFn: () => fetchLicenses(userId),
+  });
 
   const handleEditSuccess = () => {
-    loadLicenses();
+    queryClient.invalidateQueries({ queryKey: ['licenses', userId] });
     if (onLicensesChange) {
       onLicensesChange();
     }
     onCloseEditModal();
   };
 
-  const handleDelete = async (licenseId: string) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette licence ?')) return;
-
+  const handleDeleteLicense = async (licenseId: number) => {
     try {
       const { error } = await supabase
         .from('pilot_licenses')
@@ -93,11 +82,11 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
 
       if (error) throw error;
 
+      // Invalider le cache pour forcer un rafraîchissement
+      queryClient.invalidateQueries({ queryKey: ['licenses', userId] });
       toast.success('Licence supprimée avec succès');
-      loadLicenses();
-      if (onLicensesChange) onLicensesChange();
-    } catch (err) {
-      console.error('Error deleting license:', err);
+    } catch (error) {
+      console.error('Erreur lors de la suppression de la licence:', error);
       toast.error('Erreur lors de la suppression de la licence');
     }
   };
@@ -125,7 +114,7 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="text-center">Chargement...</div>
     );
@@ -140,7 +129,7 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
               <div className="flex items-center space-x-2">
                 <BadgeCheck className="h-5 w-5 text-green-500" />
                 <h4 className="text-sm font-medium text-gray-900">
-                  {license.license_type?.name}
+                  {license.license_types?.name}
                 </h4>
               </div>
               <div className="mt-2 space-y-1 text-sm text-gray-500">
@@ -168,7 +157,7 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
                   <Edit2 className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleDelete(license.id)}
+                  onClick={() => handleDeleteLicense(license.id)}
                   className="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -186,7 +175,7 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
           </div>
         </div>
       ))}
-      {!loading && licenses.length === 0 && (
+      {!isLoading && licenses.length === 0 && (
         <div className="text-center text-gray-500">Aucune licence enregistrée</div>
       )}
       {isEditModalOpen && (

@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import type { PilotLicense, LicenseType } from '../../types/licenses';
 import { useAuth } from '../../contexts/AuthContext';
 import { format } from 'date-fns';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 
 interface EditLicenseFormProps {
   userId: string;
@@ -30,8 +31,8 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
   currentLicense,
 }) => {
   const { user: currentUser } = useAuth();
+  const queryClient = useQueryClient();
   const [licenseTypes, setLicenseTypes] = useState<LicenseType[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState<FormData>(() => ({
@@ -222,49 +223,57 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      const selectedType = licenseTypes.find(lt => lt.id === formData.license_type_id);
-      if (!selectedType) throw new Error('Type de licence invalide');
-
+  const licenseMutation = useMutation({
+    mutationFn: async (data: FormData) => {
       const licenseData = {
         user_id: userId,
-        license_type_id: formData.license_type_id,
-        number: formData.number,
-        authority: formData.authority,
-        issued_at: new Date(formData.issued_at).toISOString(),
-        expires_at: formData.expires_at ? new Date(formData.expires_at).toISOString() : null,
-        data: formData.data,
+        ...data,
       };
 
       if (currentLicense) {
-        const { error: updateError } = await supabase
+        const { data: updatedLicense, error } = await supabase
           .from('pilot_licenses')
           .update(licenseData)
-          .eq('id', currentLicense.id);
+          .eq('id', currentLicense.id)
+          .select()
+          .single();
 
-        if (updateError) throw updateError;
+        if (error) throw error;
+        return updatedLicense;
       } else {
-        const { error: insertError } = await supabase
+        const { data: newLicense, error } = await supabase
           .from('pilot_licenses')
-          .insert([licenseData]);
+          .insert([licenseData])
+          .select()
+          .single();
 
-        if (insertError) throw insertError;
+        if (error) throw error;
+        return newLicense;
       }
-
-      toast.success(currentLicense ? 'Licence mise à jour' : 'Licence ajoutée');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['licenses', userId] });
+      toast.success(currentLicense ? 'Licence mise à jour avec succès' : 'Licence ajoutée avec succès');
       if (onSuccess) onSuccess();
       onClose();
-    } catch (err) {
-      console.error('Error saving license:', err);
-      setError('Erreur lors de l\'enregistrement de la licence');
-    } finally {
-      setLoading(false);
+    },
+    onError: (error) => {
+      console.error('Erreur lors de la sauvegarde de la licence:', error);
+      toast.error('Erreur lors de la sauvegarde de la licence');
+      setError('Une erreur est survenue lors de la sauvegarde de la licence');
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!formData.license_type_id || !formData.number) {
+      setError('Veuillez remplir tous les champs obligatoires');
+      return;
     }
+
+    licenseMutation.mutate(formData);
   };
 
   const renderField = (field: any, value: any, onChange: (value: any) => void) => {
@@ -491,16 +500,14 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
                 type="button"
                 onClick={onClose}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                disabled={loading}
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 className="px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700"
-                disabled={loading}
               >
-                {loading ? 'Enregistrement...' : currentLicense ? 'Mettre à jour' : 'Ajouter'}
+                {currentLicense ? 'Mettre à jour' : 'Ajouter'}
               </button>
             </div>
           </form>
