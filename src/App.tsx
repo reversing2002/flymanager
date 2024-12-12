@@ -42,6 +42,7 @@ import InstructorStudentsPage from "./components/members/InstructorStudentsPage"
 import AvailabilityManagementPage from "./components/availability/AvailabilityManagementPage";
 import InstructorAvailabilityPage from "./components/availability/InstructorAvailabilityPage";
 import AircraftAvailabilityPage from "./components/availability/AircraftAvailabilityPage";
+import InstructorBillingList from "./components/billing/InstructorBillingList";
 
 function App() {
   const queryClient = new QueryClient({
@@ -171,6 +172,14 @@ function App() {
 
               {/* Accounts */}
               <Route path="accounts" element={<AccountList />} />
+              <Route
+                path="instructor-billing"
+                element={
+                  <ProtectedRoute roles={["ADMIN"]}>
+                    <InstructorBillingList />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Chat */}
               <Route

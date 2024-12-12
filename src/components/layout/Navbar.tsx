@@ -150,10 +150,18 @@ const Navbar = () => {
                 </Link>
               )}
               {canAccessAccounts && (
-                <Link to="/accounts" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                  <CreditCard className="w-5 h-5 mr-3" />
-                  <span>Mes comptes</span>
-                </Link>
+                <>
+                  {hasAnyGroup(currentUser, ["ADMIN"]) && (
+                    <Link to="/instructor-billing" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                      <CreditCard className="w-5 h-5 mr-3" />
+                      <span>Facturation instructeurs</span>
+                    </Link>
+                  )}
+                  <Link to="/accounts" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                    <CreditCard className="w-5 h-5 mr-3" />
+                    <span>Mes comptes</span>
+                  </Link>
+                </>
               )}
             </div>
 

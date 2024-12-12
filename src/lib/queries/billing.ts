@@ -92,6 +92,23 @@ export async function getInstructorInvoices(instructorId: string) {
       instructor:instructor_id(
         first_name,
         last_name
+      ),
+      instructor_invoice_details(
+        id,
+        amount,
+        flight:flight_id(
+          id,
+          date,
+          duration,
+          student:user_id(
+            first_name,
+            last_name
+          ),
+          aircraft:aircraft_id(
+            registration,
+            name
+          )
+        )
       )
     `)
     .eq('instructor_id', instructorId)
