@@ -9,6 +9,7 @@ import {
   Upload,
   Award,
   BookOpen,
+  Heart,
 } from "lucide-react";
 import AnnouncementList from "../announcements/AnnouncementList";
 import AnnouncementForm from "../announcements/AnnouncementForm";
@@ -16,6 +17,7 @@ import AccountTypesSettings from "../settings/AccountTypesSettings";
 import ClubManagement from "../settings/ClubManagement";
 import QualificationTypesSettings from "../settings/QualificationTypesSettings";
 import LicenseTypesSettings from "../settings/LicenseTypesSettings";
+import MedicalTypesSettings from "../settings/MedicalTypesSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -33,6 +35,7 @@ type TabType =
   | "accountingCategories"
   | "qualifications"
   | "licenses"
+  | "medicalTypes"
   | "api";
 
 const SettingsPage = () => {
@@ -54,6 +57,7 @@ const SettingsPage = () => {
     { id: "accountingCategories", label: "Cat. compta", icon: Calculator },
     { id: "qualifications", label: "Qualifications", icon: Award },
     { id: "licenses", label: "Licences", icon: BookOpen },
+    { id: "medicalTypes", label: "Certificats", icon: Heart },
     { id: "api", label: "API", icon: Terminal },
   ] as const;
 
@@ -168,6 +172,7 @@ const SettingsPage = () => {
           {activeTab === "accountingCategories" && <AccountingCategoryManager />}
           {activeTab === "qualifications" && <QualificationTypesSettings />}
           {activeTab === "licenses" && <LicenseTypesSettings />}
+          {activeTab === "medicalTypes" && <MedicalTypesSettings />}
           {activeTab === "api" && <ApiExplorer />}
         </div>
       </div>

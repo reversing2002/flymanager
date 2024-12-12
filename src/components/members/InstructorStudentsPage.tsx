@@ -437,30 +437,38 @@ const InstructorStudentsPage = () => {
               <div className="space-y-4">
                 <div>
                   <div className="text-sm font-medium text-slate-700 mb-2">Certificat médical</div>
-                  {student.medicals?.[0] ? (
-                    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      isAfter(new Date(student.medicals[0].expires_at), new Date()) ? 
-                        isAfter(new Date(student.medicals[0].expires_at), addMonths(new Date(), 3)) ? 
-                          'bg-emerald-100 text-emerald-800' : 
-                          'bg-amber-100 text-amber-800' : 
-                        'bg-red-100 text-red-800'
-                    }`}>
-                      {student.medicals[0].medical_types?.name || 'Type inconnu'} - {
-                        isAfter(new Date(student.medicals[0].expires_at), new Date()) ? 
-                          isAfter(new Date(student.medicals[0].expires_at), addMonths(new Date(), 3)) ? 
-                            'Valide' : 
-                            'Expire bientôt' : 
-                          'Expiré'
-                      }
+                  {student.medicals?.length > 0 ? (
+                    <div className="space-y-2">
+                      {student.medicals.map((medical) => (
+                        <div key={medical.id} className="space-y-1">
+                          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            !medical.expires_at ? 'bg-emerald-100 text-emerald-800' :
+                            isAfter(new Date(medical.expires_at), new Date()) ? 
+                              isAfter(new Date(medical.expires_at), addMonths(new Date(), 3)) ? 
+                                'bg-emerald-100 text-emerald-800' : 
+                                'bg-amber-100 text-amber-800' : 
+                              'bg-red-100 text-red-800'
+                          }`}>
+                            {medical.medical_types?.name || 'Type inconnu'} - {
+                              !medical.expires_at ? 'Valide' :
+                              isAfter(new Date(medical.expires_at), new Date()) ? 
+                                isAfter(new Date(medical.expires_at), addMonths(new Date(), 3)) ? 
+                                  'Valide' : 
+                                  'Expire bientôt' : 
+                                'Expiré'
+                            }
+                          </div>
+                          {medical.expires_at && (
+                            <div className="text-sm text-slate-500">
+                              Expire le {format(new Date(medical.expires_at), 'dd MMMM yyyy', { locale: fr })}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
                       Non renseigné
-                    </div>
-                  )}
-                  {student.medicals?.[0] && (
-                    <div className="mt-1 text-sm text-slate-500">
-                      Expire le {format(new Date(student.medicals[0].expires_at), 'dd MMMM yyyy', { locale: fr })}
                     </div>
                   )}
                 </div>

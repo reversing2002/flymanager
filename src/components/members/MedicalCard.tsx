@@ -24,7 +24,7 @@ const MedicalCard: React.FC<MedicalCardProps> = ({ medical, onEdit, canEdit }) =
     );
   }
 
-  const isValid = medical.expires_at ? isFuture(new Date(medical.expires_at)) : true;
+  const isValid = !medical.expires_at || isFuture(new Date(medical.expires_at));
 
   const handleViewDocument = async () => {
     if (!medical.scan_id) return;

@@ -375,14 +375,19 @@ const MemberProfile = () => {
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                       </div>
                     ) : medicals.length > 0 ? (
-                      <MedicalCard
-                        medical={medicals[0]}
-                        onEdit={() => {
-                          setSelectedMedical(medicals[0]);
-                          setIsAddingMedical(true);
-                        }}
-                        canEdit={canEdit}
-                      />
+                      <div className="space-y-4">
+                        {medicals.map((medical) => (
+                          <MedicalCard
+                            key={medical.id}
+                            medical={medical}
+                            onEdit={() => {
+                              setSelectedMedical(medical);
+                              setIsAddingMedical(true);
+                            }}
+                            canEdit={canEdit}
+                          />
+                        ))}
+                      </div>
                     ) : (
                       <div className="text-center text-gray-500">
                         Aucun certificat médical enregistré
