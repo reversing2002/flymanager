@@ -1,4 +1,3 @@
-
 import { supabase } from '../supabase';
 import type { InstructorInvoice, CreateInvoiceDTO } from '../../types/billing';
 import { format } from 'date-fns';
@@ -12,7 +11,7 @@ export async function createInstructorInvoice(data: CreateInvoiceDTO): Promise<I
     // 1. Get all flights for the period
     const { data: flights, error: flightsError } = await supabase
       .from('flights')
-      .select('id, instructor_cost')
+      .select('id, instructor_fee')
       .in('id', data.flight_ids)
       .eq('instructor_id', data.instructor_id)
       .eq('is_validated', true);
@@ -21,7 +20,7 @@ export async function createInstructorInvoice(data: CreateInvoiceDTO): Promise<I
     if (!flights?.length) throw new Error('No validated flights found for this period');
 
     // 2. Calculate total amount
-    const totalAmount = flights.reduce((sum, flight) => sum + (flight.instructor_cost || 0), 0);
+    const totalAmount = flights.reduce((sum, flight) => sum + (flight.instructor_fee || 0), 0);
 
     // 3. Generate invoice number (YYYY-MM-XXX format)
     const year = new Date().getFullYear();
@@ -61,7 +60,7 @@ export async function createInstructorInvoice(data: CreateInvoiceDTO): Promise<I
     const invoiceDetails = flights.map(flight => ({
       invoice_id: invoice.id,
       flight_id: flight.id,
-      amount: flight.instructor_cost || 0,
+      amount: flight.instructor_fee || 0,
     }));
 
     const { error: detailsError } = await supabase
