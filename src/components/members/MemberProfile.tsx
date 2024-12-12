@@ -63,6 +63,7 @@ const MemberProfile = () => {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [loadingContributions, setLoadingContributions] = useState(false);
   const [isQualificationsModalOpen, setIsQualificationsModalOpen] = useState(false);
+  const [showEditMedical, setShowEditMedical] = useState(false);
 
   const isAdmin = hasAnyGroup(currentUser, ["ADMIN"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
@@ -97,7 +98,7 @@ const MemberProfile = () => {
       try {
         const { data: medicalsData, error: medicalsError } = await supabase
           .from('medicals')
-          .select('*, medical_type(*)')
+          .select('*, medical_types(*)')
           .eq('user_id', id)
           .order('obtained_at', { ascending: false });
 
@@ -376,7 +377,11 @@ const MemberProfile = () => {
                     ) : medicals.length > 0 ? (
                       <MedicalCard
                         medical={medicals[0]}
-                        onEdit={() => setIsAddingMedical(true)}
+                        onEdit={() => {
+                          setSelectedMedical(medicals[0]);
+                          setIsAddingMedical(true);
+                        }}
+                        canEdit={canEdit}
                       />
                     ) : (
                       <div className="text-center text-gray-500">
@@ -490,6 +495,17 @@ const MemberProfile = () => {
             setSelectedLicense(null);
           }}
           currentLicense={selectedLicense}
+        />
+      )}
+      
+      {showEditMedical && (
+        <EditMedicalForm
+          userId={id}
+          medical={selectedMedical}
+          onClose={() => {
+            setShowEditMedical(false);
+            setSelectedMedical(null);
+          }}
         />
       )}
     </div>

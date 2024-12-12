@@ -27,7 +27,7 @@ const MedicalsCard: React.FC<MedicalsCardProps> = ({ userId, editable = false })
         .from('medicals')
         .select(`
           *,
-          medical_type:medical_types(*)
+          medical_types(*)
         `)
         .eq('user_id', userId)
         .order('obtained_at', { ascending: false });
