@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, X, Upload, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AlertTriangle, X, Upload, Trash2, FileText } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import type { PilotLicense, LicenseType } from '../../types/licenses';
@@ -33,18 +34,59 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<FormData>(() => ({
     license_type_id: currentLicense?.license_type_id || '',
     number: currentLicense?.number || '',
     authority: currentLicense?.authority || 'DGAC',
-    issued_at: currentLicense?.issued_at ? format(new Date(currentLicense.issued_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
-    expires_at: currentLicense?.expires_at ? format(new Date(currentLicense.expires_at), 'yyyy-MM-dd') : null,
+    issued_at: currentLicense?.issued_at 
+      ? format(new Date(currentLicense.issued_at), 'yyyy-MM-dd') 
+      : format(new Date(), 'yyyy-MM-dd'),
+    expires_at: currentLicense?.expires_at 
+      ? format(new Date(currentLicense.expires_at), 'yyyy-MM-dd') 
+      : null,
     data: currentLicense?.data || {},
-  });
+  }));
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+  const [documentPreview, setDocumentPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentLicense) {
+      setFormData({
+        license_type_id: currentLicense.license_type_id,
+        number: currentLicense.number,
+        authority: currentLicense.authority,
+        issued_at: format(new Date(currentLicense.issued_at), 'yyyy-MM-dd'),
+        expires_at: currentLicense.expires_at 
+          ? format(new Date(currentLicense.expires_at), 'yyyy-MM-dd') 
+          : null,
+        data: currentLicense.data || {},
+      });
+
+      if (currentLicense.scan_id) {
+        const { data: { publicUrl } } = supabase
+          .storage
+          .from('licenses')
+          .getPublicUrl(currentLicense.scan_id);
+        
+        setDocumentUrl(publicUrl);
+      }
+    }
+  }, [currentLicense]);
 
   useEffect(() => {
     loadLicenseTypes();
   }, [currentUser?.club?.id]);
+
+  useEffect(() => {
+    if (currentLicense?.scan_id) {
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('licenses')
+        .getPublicUrl(currentLicense.scan_id);
+      
+      setDocumentUrl(publicUrl);
+    }
+  }, [currentLicense]);
 
   const loadLicenseTypes = async () => {
     if (!currentUser?.club?.id) return;
@@ -64,8 +106,27 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const loadDocument = async () => {
+    if (!currentLicense?.scan_id) return;
+    
+    try {
+      const { data: { publicUrl } } = supabase.storage
+        .from('licenses')
+        .getPublicUrl(currentLicense.scan_id);
+      
+      setDocumentUrl(publicUrl);
+      
+      // Si c'est une image, on crée une prévisualisation
+      if (currentLicense.scan_id.match(/\.(jpg|jpeg|png|gif)$/i)) {
+        setDocumentPreview(publicUrl);
+      }
+    } catch (error) {
+      console.error('Error loading document:', error);
+    }
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
     if (!file) return;
 
     if (!file.type.startsWith('application/pdf') && !file.type.startsWith('image/')) {
@@ -80,6 +141,12 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
 
     setIsUploading(true);
     try {
+      // Créer une prévisualisation si c'est une image
+      if (file.type.startsWith('image/')) {
+        const preview = URL.createObjectURL(file);
+        setDocumentPreview(preview);
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}-${Date.now()}.${fileExt}`;
       const filePath = `license-documents/${fileName}`;
@@ -90,6 +157,12 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
 
       if (uploadError) throw uploadError;
 
+      const { data: { publicUrl } } = supabase.storage
+        .from('licenses')
+        .getPublicUrl(filePath);
+
+      setDocumentUrl(publicUrl);
+
       if (currentLicense) {
         const { error: updateError } = await supabase
           .from('pilot_licenses')
@@ -99,25 +172,33 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
         if (updateError) throw updateError;
       }
 
-      toast.success('Document téléchargé');
-      if (onSuccess) onSuccess();
-    } catch (err) {
-      console.error('Error uploading file:', err);
-      toast.error('Erreur lors du téléchargement');
+      toast.success('Document téléchargé avec succès');
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('Erreur lors du téléchargement du document');
     } finally {
       setIsUploading(false);
     }
-  };
+  }, [userId, currentLicense]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'image/*': ['.png', '.jpg', '.jpeg']
+    },
+    maxFiles: 1
+  });
 
   const handleDeleteDocument = async () => {
     if (!currentLicense?.scan_id) return;
 
     try {
-      const { error: deleteError } = await supabase.storage
+      const { error: deleteStorageError } = await supabase.storage
         .from('licenses')
         .remove([currentLicense.scan_id]);
 
-      if (deleteError) throw deleteError;
+      if (deleteStorageError) throw deleteStorageError;
 
       const { error: updateError } = await supabase
         .from('pilot_licenses')
@@ -126,11 +207,18 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
 
       if (updateError) throw updateError;
 
-      toast.success('Document supprimé');
-      if (onSuccess) onSuccess();
-    } catch (err) {
-      console.error('Error deleting document:', err);
-      toast.error('Erreur lors de la suppression');
+      setDocumentUrl(null);
+      setDocumentPreview(null);
+      toast.success('Document supprimé avec succès');
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast.error('Erreur lors de la suppression du document');
+    }
+  };
+
+  const handleViewDocument = async () => {
+    if (documentUrl) {
+      window.open(documentUrl, '_blank');
     }
   };
 
@@ -345,47 +433,58 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
                 </div>
               ))}
 
-            {currentLicense && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Document
-                </label>
-                {currentLicense.scan_id ? (
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => window.open(`/api/documents/${currentLicense.scan_id}`, '_blank')}
-                      className="text-sm text-sky-600 hover:text-sky-700"
-                    >
-                      Voir le document
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDeleteDocument}
-                      className="text-sm text-red-600 hover:text-red-700"
-                    >
-                      Supprimer le document
-                    </button>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <input
-                      type="file"
-                      onChange={handleFileUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      accept="application/pdf,image/*"
-                    />
-                    <button
-                      type="button"
-                      className="text-sm text-sky-600 hover:text-sky-700 flex items-center gap-1"
-                    >
-                      <Upload className="h-4 w-4" />
-                      Ajouter un document
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Document de licence
+              </label>
+              
+              {documentUrl && (
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={handleViewDocument}
+                    className="text-sky-600 hover:text-sky-700 flex items-center gap-1"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>Voir le document</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteDocument}
+                    className="text-red-600 hover:text-red-700 flex items-center gap-1"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Supprimer</span>
+                  </button>
+                </div>
+              )}
+              {!documentUrl && (
+                <div
+                  {...getRootProps()}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
+                    ${isDragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+                    ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <input {...getInputProps()} />
+                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-600">
+                    {isDragActive
+                      ? 'Déposez le fichier ici...'
+                      : 'Cliquez ou glissez un fichier PDF ou image ici'}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    PDF ou image (max. 5MB)
+                  </p>
+                  {isUploading && (
+                    <div className="mt-2">
+                      <div className="animate-pulse text-sm text-blue-600">
+                        Téléchargement en cours...
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="flex justify-end gap-2 pt-4">
               <button

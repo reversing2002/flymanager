@@ -51,6 +51,7 @@ const MemberProfile = () => {
   const [selectedMedical, setSelectedMedical] = useState<Medical | null>(null);
   const [selectedContribution, setSelectedContribution] = useState<Contribution | null>(null);
   const [isAddingLicense, setIsAddingLicense] = useState(false);
+  const [isEditingLicense, setIsEditingLicense] = useState(false);
   const [isAddingMedical, setIsAddingMedical] = useState(false);
   const [isAddingContribution, setIsAddingContribution] = useState(false);
   const [isEditingQualifications, setIsEditingQualifications] = useState(false);
@@ -296,13 +297,16 @@ const MemberProfile = () => {
                   )}
                 </div>
                 <LicensesCard
-                  userId={pilot.id}
-                  isEditModalOpen={isAddingLicense}
-                  onOpenEditModal={() => setIsAddingLicense(true)}
-                  onCloseEditModal={() => setIsAddingLicense(false)}
-                  onLicensesChange={() => {
-                    loadPilot();
+                  userId={id}
+                  onLicensesChange={loadData}
+                  isEditModalOpen={isEditingLicense}
+                  onOpenEditModal={() => setIsEditingLicense(true)}
+                  onCloseEditModal={() => {
+                    setIsEditingLicense(false);
+                    setSelectedLicense(null);
                   }}
+                  selectedLicense={selectedLicense}
+                  onSelectLicense={setSelectedLicense}
                 />
               </div>
 
@@ -399,7 +403,7 @@ const MemberProfile = () => {
       {/* Modals */}
       {(isAddingLicense || selectedLicense) && (
         <EditLicenseForm
-          userId={pilot.id}
+          userId={id}
           currentLicense={selectedLicense}
           onClose={() => {
             setIsAddingLicense(false);
@@ -410,7 +414,7 @@ const MemberProfile = () => {
 
       {(isAddingMedical || selectedMedical) && (
         <EditMedicalForm
-          userId={pilot.id}
+          userId={id}
           medical={selectedMedical}
           onClose={() => {
             setIsAddingMedical(false);
@@ -421,7 +425,7 @@ const MemberProfile = () => {
 
       {showAddContribution && (
         <EditContributionForm
-          userId={pilot.id}
+          userId={id}
           onClose={() => setShowAddContribution(false)}
           onSuccess={loadContributions}
         />
@@ -429,7 +433,7 @@ const MemberProfile = () => {
 
       {editingContribution && (
         <EditContributionForm
-          userId={pilot.id}
+          userId={id}
           currentContribution={editingContribution}
           onClose={() => setEditingContribution(null)}
           onSuccess={loadContributions}
@@ -438,8 +442,24 @@ const MemberProfile = () => {
 
       {isEditingQualifications && (
         <EditQualificationsForm
-          userId={pilot.id}
+          userId={id}
           onClose={() => setIsEditingQualifications(false)}
+        />
+      )}
+      
+      {isEditingLicense && selectedLicense && (
+        <EditLicenseForm
+          userId={id}
+          onClose={() => {
+            setIsEditingLicense(false);
+            setSelectedLicense(null);
+          }}
+          onSuccess={() => {
+            loadData();
+            setIsEditingLicense(false);
+            setSelectedLicense(null);
+          }}
+          currentLicense={selectedLicense}
         />
       )}
     </div>

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardBody } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { AlertCircle, BadgeCheck, FileText } from 'lucide-react';
+import { AlertCircle, BadgeCheck, FileText, Edit2 } from 'lucide-react';
 import { PilotLicense } from '../../types/licenses';
 import { supabase } from '../../lib/supabase';
 import EditLicenseForm from './EditLicenseForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { hasAnyGroup } from '../../lib/permissions';
+import { toast } from 'react-hot-toast';
 
 interface LicensesCardProps {
   userId: string;
@@ -15,6 +16,8 @@ interface LicensesCardProps {
   isEditModalOpen: boolean;
   onOpenEditModal: () => void;
   onCloseEditModal: () => void;
+  selectedLicense: PilotLicense | null;
+  onSelectLicense: (license: PilotLicense) => void;
 }
 
 const LicensesCard: React.FC<LicensesCardProps> = ({
@@ -23,6 +26,8 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
   isEditModalOpen,
   onOpenEditModal,
   onCloseEditModal,
+  selectedLicense,
+  onSelectLicense,
 }) => {
   const { user: currentUser } = useAuth();
   const [licenses, setLicenses] = useState<PilotLicense[]>([]);
@@ -82,6 +87,29 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
     return new Date(license.expires_at) > new Date();
   };
 
+  const getDocumentUrl = async (scanId: string) => {
+    try {
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('licenses')
+        .getPublicUrl(scanId);
+      
+      return publicUrl;
+    } catch (error) {
+      console.error('Error getting document URL:', error);
+      return null;
+    }
+  };
+
+  const handleViewDocument = async (scanId: string) => {
+    const url = await getDocumentUrl(scanId);
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      toast.error('Erreur lors de l\'ouverture du document');
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -131,9 +159,21 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
                     )}
                   </div>
                   <div className="flex items-center gap-2 ml-4">
+                    {canEdit && (
+                      <button
+                        onClick={() => {
+                          onSelectLicense(license);
+                          onOpenEditModal();
+                        }}
+                        className="p-1.5 text-slate-600 hover:text-slate-700 rounded-full transition-colors"
+                        title="Modifier la licence"
+                      >
+                        <Edit2 className="h-5 w-5" />
+                      </button>
+                    )}
                     {license.scan_id && (
                       <button
-                        onClick={() => window.open(`/api/documents/${license.scan_id}`, '_blank')}
+                        onClick={() => handleViewDocument(license.scan_id!)}
                         className="p-1.5 text-sky-600 hover:text-sky-700 rounded-full transition-colors"
                         title="Voir le document"
                       >
@@ -158,6 +198,7 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
           userId={userId}
           onClose={onCloseEditModal}
           onSuccess={handleEditSuccess}
+          currentLicense={selectedLicense}
         />
       )}
     </>
