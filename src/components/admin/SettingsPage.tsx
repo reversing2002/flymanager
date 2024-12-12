@@ -7,11 +7,15 @@ import {
   Receipt,
   Calculator,
   Upload,
+  Award,
+  BookOpen,
 } from "lucide-react";
 import AnnouncementList from "../announcements/AnnouncementList";
 import AnnouncementForm from "../announcements/AnnouncementForm";
 import AccountTypesSettings from "../settings/AccountTypesSettings";
 import ClubManagement from "../settings/ClubManagement";
+import QualificationTypesSettings from "../settings/QualificationTypesSettings";
+import LicenseTypesSettings from "../settings/LicenseTypesSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -27,6 +31,8 @@ type TabType =
   | "flightTypes"
   | "accountTypes"
   | "accountingCategories"
+  | "qualifications"
+  | "licenses"
   | "api";
 
 const SettingsPage = () => {
@@ -46,6 +52,8 @@ const SettingsPage = () => {
     { id: "flightTypes", label: "Types vol", icon: ListOrdered },
     { id: "accountTypes", label: "Types op.", icon: Receipt },
     { id: "accountingCategories", label: "Cat. compta", icon: Calculator },
+    { id: "qualifications", label: "Qualifications", icon: Award },
+    { id: "licenses", label: "Licences", icon: BookOpen },
     { id: "api", label: "API", icon: Terminal },
   ] as const;
 
@@ -119,11 +127,6 @@ const SettingsPage = () => {
 
         <div className="p-6">
           {activeTab === "club" && <ClubManagement />}
-          {activeTab === "imports" && <ImportManager />}
-          {activeTab === "flightTypes" && <FlightTypeManager />}
-          {activeTab === "accountTypes" && <AccountTypesSettings />}
-          {activeTab === "accountingCategories" && <AccountingCategoryManager />}
-          {activeTab === "api" && <ApiExplorer />}
           {activeTab === "announcements" && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
@@ -159,6 +162,13 @@ const SettingsPage = () => {
               )}
             </div>
           )}
+          {activeTab === "imports" && <ImportManager />}
+          {activeTab === "flightTypes" && <FlightTypeManager />}
+          {activeTab === "accountTypes" && <AccountTypesSettings />}
+          {activeTab === "accountingCategories" && <AccountingCategoryManager />}
+          {activeTab === "qualifications" && <QualificationTypesSettings />}
+          {activeTab === "licenses" && <LicenseTypesSettings />}
+          {activeTab === "api" && <ApiExplorer />}
         </div>
       </div>
     </div>

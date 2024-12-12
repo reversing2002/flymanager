@@ -1,91 +1,152 @@
-import React from 'react';
-import { Shield, AlertTriangle } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import React, { useState, useEffect } from 'react';
+import { Card, CardHeader, CardBody } from '@chakra-ui/react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { AlertCircle, BadgeCheck, Clock, Edit } from 'lucide-react';
+import EditQualificationsForm from './EditQualificationsForm';
+import { PilotQualification } from '../../types/qualifications';
 import { useAuth } from '../../contexts/AuthContext';
-import { hasAnyGroup } from "../../lib/permissions";
+import { hasAnyGroup } from '../../lib/permissions';
+import { supabase } from '../../lib/supabase';
 
 interface QualificationsCardProps {
   userId: string;
-  onEdit?: () => void;
+  onQualificationsChange?: () => void;
+  isEditModalOpen: boolean;
+  onOpenEditModal: () => void;
+  onCloseEditModal: () => void;
 }
 
-interface Qualification {
-  id: string;
-  code: string;
-  name: string;
-  has_qualification: boolean;
-}
-
-const QualificationsCard: React.FC<QualificationsCardProps> = ({ userId, onEdit }) => {
+const QualificationsCard: React.FC<QualificationsCardProps> = ({
+  userId,
+  onQualificationsChange,
+  isEditModalOpen,
+  onOpenEditModal,
+  onCloseEditModal,
+}) => {
   const { user: currentUser } = useAuth();
-  const [qualifications, setQualifications] = useState<Qualification[]>([]);
+  const [qualifications, setQualifications] = useState<PilotQualification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadQualifications();
-  }, [userId]);
+  const canEdit = hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']);
 
   const loadQualifications = async () => {
     try {
       const { data, error } = await supabase
         .from('pilot_qualifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('code');
+        .select(`
+          *,
+          qualification_type:qualification_types(*)
+        `)
+        .eq('pilot_id', userId);
 
       if (error) throw error;
       setQualifications(data || []);
-    } catch (error) {
-      console.error('Error loading qualifications:', error);
+    } catch (err) {
+      console.error('Error loading qualifications:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    loadQualifications();
+  }, [userId]);
+
+  const handleEditSuccess = () => {
+    loadQualifications();
+    if (onQualificationsChange) {
+      onQualificationsChange();
+    }
+    onCloseEditModal();
+  };
+
+  const isQualificationValid = (qualification: PilotQualification) => {
+    if (!qualification.expires_at) return true;
+    if (!qualification.qualification_type?.requires_instructor_validation) return true;
+    if (!qualification.validated_at) return false;
+    return new Date(qualification.expires_at) > new Date();
+  };
+
+  const isQualificationExpired = (qualification: PilotQualification) => {
+    if (!qualification.expires_at) return false;
+    return new Date(qualification.expires_at) < new Date();
+  };
+
+  const isQualificationPendingValidation = (qualification: PilotQualification) => {
+    return qualification.qualification_type?.requires_instructor_validation && !qualification.validated_at;
+  };
+
   if (loading) {
-    return <div className="animate-pulse bg-white rounded-xl h-48"></div>;
+    return (
+      <Card>
+        <CardHeader>
+          <h3 className="text-lg font-medium">Qualifications</h3>
+        </CardHeader>
+        <CardBody>
+          <div className="animate-pulse space-y-3">
+            <div className="h-12 bg-slate-100 rounded-lg"></div>
+            <div className="h-12 bg-slate-100 rounded-lg"></div>
+          </div>
+        </CardBody>
+      </Card>
+    );
   }
 
-  const hasQualifications = qualifications.some(q => q.has_qualification);
-
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Shield className="h-5 w-5 text-slate-600" />
-          Qualifications
-        </h2>
-        {onEdit && hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']) && (
-          <button
-            onClick={onEdit}
-            className="text-sm text-sky-600 hover:text-sky-700"
-          >
-            Modifier
-          </button>
-        )}
-      </div>
+    <>
+      <Card>
+        <CardBody>
+          {qualifications.length === 0 ? (
+            <p className="text-slate-500 text-sm">Aucune qualification</p>
+          ) : (
+            <div className="space-y-3">
+              {qualifications.map((qualification) => (
+                <div
+                  key={qualification.id}
+                  className="flex items-start justify-between p-3 bg-slate-50 rounded-lg"
+                >
+                  <div className="flex-grow">
+                    <div className="font-medium">
+                      {qualification.qualification_type?.name}
+                    </div>
+                    <div className="text-sm text-slate-600 mt-1">
+                      Obtenue le{' '}
+                      {format(new Date(qualification.obtained_at), 'dd MMMM yyyy', {
+                        locale: fr,
+                      })}
+                      {qualification.expires_at && (
+                        <> • Expire le{' '}
+                        {format(new Date(qualification.expires_at), 'dd MMMM yyyy', {
+                          locale: fr,
+                        })}</>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center ml-4">
+                    {isQualificationValid(qualification) ? (
+                      <BadgeCheck className="w-5 h-5 text-emerald-500" />
+                    ) : isQualificationExpired(qualification) ? (
+                      <AlertCircle className="w-5 h-5 text-red-500" />
+                    ) : isQualificationPendingValidation(qualification) ? (
+                      <Clock className="w-5 h-5 text-amber-500" />
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardBody>
+      </Card>
 
-      {hasQualifications ? (
-        <div className="grid grid-cols-2 gap-2">
-          {qualifications
-            .filter(qual => qual.has_qualification)
-            .map((qual) => (
-              <div
-                key={qual.id}
-                className="p-2 rounded-lg bg-emerald-50 text-emerald-800 text-sm"
-              >
-                {qual.code} - {qual.name}
-              </div>
-            ))}
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 p-3 bg-amber-50 text-amber-800 rounded-lg text-sm">
-          <AlertTriangle className="h-4 w-4" />
-          <span>Aucune qualification</span>
-        </div>
+      {isEditModalOpen && (
+        <EditQualificationsForm
+          userId={userId}
+          onClose={onCloseEditModal}
+          onSuccess={handleEditSuccess}
+        />
       )}
-    </div>
+    </>
   );
 };
 

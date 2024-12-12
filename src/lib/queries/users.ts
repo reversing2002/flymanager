@@ -89,10 +89,18 @@ export async function getUserById(id: string): Promise<User | null> {
         ),
         pilot_licenses (
           id,
-          type,
+          license_type:license_types (
+            id,
+            name,
+            description,
+            category
+          ),
           number,
-          valid_until,
-          document_url
+          authority,
+          issued_at,
+          expires_at,
+          data,
+          scan_id
         )
         `
       )
