@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, AlertTriangle, Calendar, FileText } from 'lucide-react';
+import { Heart, AlertTriangle, Calendar, FileText, Edit2 } from 'lucide-react';
 import { format, isFuture } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Medical } from '../../types/medicals';
@@ -11,6 +11,14 @@ interface MedicalCardProps {
 }
 
 const MedicalCard: React.FC<MedicalCardProps> = ({ medical, onEdit }) => {
+  if (!medical) {
+    return (
+      <div className="text-center text-gray-500">
+        Aucun certificat médical enregistré
+      </div>
+    );
+  }
+
   const isValid = medical.expires_at ? isFuture(new Date(medical.expires_at)) : true;
 
   const handleViewDocument = async () => {
@@ -52,23 +60,21 @@ const MedicalCard: React.FC<MedicalCardProps> = ({ medical, onEdit }) => {
             </div>
           </div>
         </div>
-
-        <div className="flex items-center space-x-2">
-          {medical.scan_id && (
-            <button
-              onClick={handleViewDocument}
-              className="p-2 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-50"
-              title="Voir le document"
-            >
-              <FileText className="h-5 w-5" />
-            </button>
-          )}
+        <div className="flex space-x-2">
           {onEdit && (
             <button
               onClick={onEdit}
-              className="p-2 text-blue-600 hover:text-blue-700 rounded-full hover:bg-blue-50"
+              className="p-1 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-100"
             >
-              Modifier
+              <Edit2 className="h-4 w-4" />
+            </button>
+          )}
+          {medical.scan_id && (
+            <button
+              onClick={handleViewDocument}
+              className="p-1 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-100"
+            >
+              <FileText className="h-4 w-4" />
             </button>
           )}
         </div>

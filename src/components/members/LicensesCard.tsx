@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardBody } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { AlertCircle, BadgeCheck, FileText, Edit2 } from 'lucide-react';
+import { AlertCircle, BadgeCheck, FileText, Edit2, Trash2 } from 'lucide-react';
 import { PilotLicense } from '../../types/licenses';
 import { supabase } from '../../lib/supabase';
 import EditLicenseForm from './EditLicenseForm';
@@ -82,9 +82,24 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
     onCloseEditModal();
   };
 
-  const isLicenseValid = (license: PilotLicense) => {
-    if (!license.expires_at) return true;
-    return new Date(license.expires_at) > new Date();
+  const handleDelete = async (licenseId: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette licence ?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('pilot_licenses')
+        .delete()
+        .eq('id', licenseId);
+
+      if (error) throw error;
+
+      toast.success('Licence supprimée avec succès');
+      loadLicenses();
+      if (onLicensesChange) onLicensesChange();
+    } catch (err) {
+      console.error('Error deleting license:', err);
+      toast.error('Erreur lors de la suppression de la licence');
+    }
   };
 
   const getDocumentUrl = async (scanId: string) => {
@@ -112,87 +127,68 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
 
   if (loading) {
     return (
-      <Card>
-        <CardBody>
-          <div className="animate-pulse space-y-3">
-            <div className="h-12 bg-slate-100 rounded-lg"></div>
-            <div className="h-12 bg-slate-100 rounded-lg"></div>
-          </div>
-        </CardBody>
-      </Card>
+      <div className="text-center">Chargement...</div>
     );
   }
 
   return (
-    <>
-      <Card>
-        <CardBody>
-          {licenses.length === 0 ? (
-            <p className="text-slate-500 text-sm">Aucune licence</p>
-          ) : (
-            <div className="space-y-3">
-              {licenses.map((license) => (
-                <div
-                  key={license.id}
-                  className="flex items-start justify-between p-3 bg-slate-50 rounded-lg"
-                >
-                  <div className="flex-grow">
-                    <div className="font-medium">
-                      {license.license_type?.name}
-                      <span className="ml-2 text-sm text-slate-600">
-                        {license.number}
-                      </span>
-                    </div>
-                    <div className="text-sm text-slate-600 mt-1">
-                      Délivrée le {format(new Date(license.issued_at), 'dd MMMM yyyy', { locale: fr })}
-                      {license.expires_at && (
-                        <> • Expire le {format(new Date(license.expires_at), 'dd MMMM yyyy', { locale: fr })}</>
-                      )}
-                    </div>
-                    {(license.authority || license.data.ratings) && (
-                      <div className="text-sm text-slate-600 mt-1">
-                        {license.authority && <span>Autorité : {license.authority}</span>}
-                        {license.data.ratings && (
-                          <span className="ml-2">• Qualifications : {license.data.ratings}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    {canEdit && (
-                      <button
-                        onClick={() => {
-                          onSelectLicense(license);
-                          onOpenEditModal();
-                        }}
-                        className="p-1.5 text-slate-600 hover:text-slate-700 rounded-full transition-colors"
-                        title="Modifier la licence"
-                      >
-                        <Edit2 className="h-5 w-5" />
-                      </button>
-                    )}
-                    {license.scan_id && (
-                      <button
-                        onClick={() => handleViewDocument(license.scan_id!)}
-                        className="p-1.5 text-sky-600 hover:text-sky-700 rounded-full transition-colors"
-                        title="Voir le document"
-                      >
-                        <FileText className="h-5 w-5" />
-                      </button>
-                    )}
-                    {isLicenseValid(license) ? (
-                      <BadgeCheck className="w-5 h-5 text-emerald-500" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-red-500" />
-                    )}
-                  </div>
-                </div>
-              ))}
+    <div className="space-y-4">
+      {licenses.map((license) => (
+        <div key={license.id} className="bg-white border rounded-lg p-4">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <div className="flex items-center space-x-2">
+                <BadgeCheck className="h-5 w-5 text-green-500" />
+                <h4 className="text-sm font-medium text-gray-900">
+                  {license.license_type?.name}
+                </h4>
+              </div>
+              <div className="mt-2 space-y-1 text-sm text-gray-500">
+                <p>N° {license.number}</p>
+                <p>Délivré par {license.authority}</p>
+                <p>
+                  Délivré le {format(new Date(license.issued_at), 'dd MMMM yyyy', { locale: fr })}
+                </p>
+                {license.expires_at && (
+                  <p>
+                    Expire le {format(new Date(license.expires_at), 'dd MMMM yyyy', { locale: fr })}
+                  </p>
+                )}
+              </div>
             </div>
-          )}
-        </CardBody>
-      </Card>
-
+            {canEdit && (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    onSelectLicense(license);
+                    onOpenEditModal();
+                  }}
+                  className="p-1 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-100"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(license.id)}
+                  className="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                {license.scan_id && (
+                  <button
+                    onClick={() => handleViewDocument(license.scan_id!)}
+                    className="p-1 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-100"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+      {!loading && licenses.length === 0 && (
+        <div className="text-center text-gray-500">Aucune licence enregistrée</div>
+      )}
       {isEditModalOpen && (
         <EditLicenseForm
           userId={userId}
@@ -201,7 +197,7 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
           currentLicense={selectedLicense}
         />
       )}
-    </>
+    </div>
   );
 };
 

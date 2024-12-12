@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardBody } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { AlertCircle, BadgeCheck, Clock, Edit } from 'lucide-react';
+import { AlertCircle, BadgeCheck, Clock, Edit2, Trash2 } from 'lucide-react';
 import EditQualificationsForm from './EditQualificationsForm';
 import { PilotQualification } from '../../types/qualifications';
 import { useAuth } from '../../contexts/AuthContext';
 import { hasAnyGroup } from '../../lib/permissions';
 import { supabase } from '../../lib/supabase';
+import { toast } from 'react-hot-toast';
+import { FileText } from 'lucide-react';
 
 interface QualificationsCardProps {
   userId: string;
@@ -53,100 +55,95 @@ const QualificationsCard: React.FC<QualificationsCardProps> = ({
     loadQualifications();
   }, [userId]);
 
-  const handleEditSuccess = () => {
-    loadQualifications();
-    if (onQualificationsChange) {
-      onQualificationsChange();
+  const handleDelete = async (qualificationId: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette qualification ?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('pilot_qualifications')
+        .delete()
+        .eq('id', qualificationId);
+
+      if (error) throw error;
+
+      toast.success('Qualification supprimée avec succès');
+      loadQualifications();
+      if (onQualificationsChange) onQualificationsChange();
+    } catch (err) {
+      console.error('Error deleting qualification:', err);
+      toast.error('Erreur lors de la suppression de la qualification');
     }
-    onCloseEditModal();
   };
-
-  const isQualificationValid = (qualification: PilotQualification) => {
-    if (!qualification.expires_at) return true;
-    if (!qualification.qualification_type?.requires_instructor_validation) return true;
-    if (!qualification.validated_at) return false;
-    return new Date(qualification.expires_at) > new Date();
-  };
-
-  const isQualificationExpired = (qualification: PilotQualification) => {
-    if (!qualification.expires_at) return false;
-    return new Date(qualification.expires_at) < new Date();
-  };
-
-  const isQualificationPendingValidation = (qualification: PilotQualification) => {
-    return qualification.qualification_type?.requires_instructor_validation && !qualification.validated_at;
-  };
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-medium">Qualifications</h3>
-        </CardHeader>
-        <CardBody>
-          <div className="animate-pulse space-y-3">
-            <div className="h-12 bg-slate-100 rounded-lg"></div>
-            <div className="h-12 bg-slate-100 rounded-lg"></div>
-          </div>
-        </CardBody>
-      </Card>
-    );
-  }
 
   return (
-    <>
-      <Card>
-        <CardBody>
-          {qualifications.length === 0 ? (
-            <p className="text-slate-500 text-sm">Aucune qualification</p>
-          ) : (
-            <div className="space-y-3">
-              {qualifications.map((qualification) => (
-                <div
-                  key={qualification.id}
-                  className="flex items-start justify-between p-3 bg-slate-50 rounded-lg"
-                >
-                  <div className="flex-grow">
-                    <div className="font-medium">
-                      {qualification.qualification_type?.name}
-                    </div>
-                    <div className="text-sm text-slate-600 mt-1">
-                      Obtenue le{' '}
-                      {format(new Date(qualification.obtained_at), 'dd MMMM yyyy', {
-                        locale: fr,
-                      })}
-                      {qualification.expires_at && (
-                        <> • Expire le{' '}
-                        {format(new Date(qualification.expires_at), 'dd MMMM yyyy', {
-                          locale: fr,
-                        })}</>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center ml-4">
-                    {isQualificationValid(qualification) ? (
-                      <BadgeCheck className="w-5 h-5 text-emerald-500" />
-                    ) : isQualificationExpired(qualification) ? (
-                      <AlertCircle className="w-5 h-5 text-red-500" />
-                    ) : isQualificationPendingValidation(qualification) ? (
-                      <Clock className="w-5 h-5 text-amber-500" />
-                    ) : null}
-                  </div>
-                </div>
-              ))}
+    <div className="space-y-4">
+      {qualifications.map((qualification) => (
+        <div key={qualification.id} className="bg-white border rounded-lg p-4">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <div className="flex items-center space-x-2">
+                <BadgeCheck className="h-5 w-5 text-green-500" />
+                <h4 className="text-sm font-medium text-gray-900">
+                  {qualification.qualification_type.name}
+                </h4>
+              </div>
+              <div className="mt-2 space-y-1 text-sm text-gray-500">
+                <p>
+                  Obtenue le {format(new Date(qualification.obtained_at), 'dd MMMM yyyy', { locale: fr })}
+                </p>
+                {qualification.expires_at && (
+                  <p>
+                    Expire le {format(new Date(qualification.expires_at), 'dd MMMM yyyy', { locale: fr })}
+                  </p>
+                )}
+                {qualification.remarks && (
+                  <p className="italic">{qualification.remarks}</p>
+                )}
+              </div>
             </div>
-          )}
-        </CardBody>
-      </Card>
+            {canEdit && (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => onOpenEditModal()}
+                  className="p-1 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-100"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(qualification.id)}
+                  className="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                {qualification.scan_id && (
+                  <button
+                    onClick={() => window.open(supabase.storage.from('qualifications').getPublicUrl(qualification.scan_id).data.publicUrl, '_blank')}
+                    className="p-1 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-100"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+      {loading && <div className="text-center">Chargement...</div>}
+      {!loading && qualifications.length === 0 && (
+        <div className="text-center text-gray-500">Aucune qualification enregistrée</div>
+      )}
 
       {isEditModalOpen && (
         <EditQualificationsForm
           userId={userId}
           onClose={onCloseEditModal}
-          onSuccess={handleEditSuccess}
+          onSuccess={() => {
+            loadQualifications();
+            if (onQualificationsChange) onQualificationsChange();
+          }}
         />
       )}
-    </>
+    </div>
   );
 };
 

@@ -21,6 +21,7 @@ import ActivityTimeline from "./ActivityTimeline";
 import type { Medical } from "./MedicalCard";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "../../lib/supabase";
 
 const getRoleBadgeColor = (role: Role) => {
   switch (role) {
@@ -44,6 +45,8 @@ const MemberProfile = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [pilot, setPilot] = useState<UserType | null>(null);
+  const [medicals, setMedicals] = useState<Medical[]>([]);
+  const [loadingMedicals, setLoadingMedicals] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +92,23 @@ const MemberProfile = () => {
 
       setPilot(pilotData);
       
+      // Charger les certificats médicaux
+      setLoadingMedicals(true);
+      try {
+        const { data: medicalsData, error: medicalsError } = await supabase
+          .from('medicals')
+          .select('*, medical_type(*)')
+          .eq('user_id', id)
+          .order('obtained_at', { ascending: false });
+
+        if (medicalsError) throw medicalsError;
+        setMedicals(medicalsData || []);
+      } catch (err) {
+        console.error("Erreur lors du chargement des certificats médicaux:", err);
+      } finally {
+        setLoadingMedicals(false);
+      }
+
       // Charger les cotisations
       setLoadingContributions(true);
       try {
@@ -100,9 +120,8 @@ const MemberProfile = () => {
         setLoadingContributions(false);
       }
     } catch (err) {
-      console.error("Erreur lors du chargement des données:", err);
+      console.error(err);
       setError("Erreur lors du chargement des données");
-      toast.error("Erreur lors du chargement des données");
     } finally {
       setLoading(false);
     }
@@ -281,80 +300,91 @@ const MemberProfile = () => {
               </div>
             </div>
 
-            {/* Licenses and Qualifications */}
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-              <div className="bg-white shadow rounded-lg p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-medium text-gray-900">Licences</h2>
-                  {hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']) && (
-                    <button
-                      onClick={() => setIsAddingLicense(true)}
-                      className="inline-flex items-center text-sm text-sky-600 hover:text-sky-700"
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Modifier
-                    </button>
-                  )}
+            {/* Section Documents */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              {/* Licences */}
+              <div className="col-span-1">
+                <div className="bg-white rounded-lg shadow">
+                  <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h3 className="text-lg font-medium text-gray-900">Licences</h3>
+                    {canEdit && (
+                      <button
+                        onClick={() => setIsAddingLicense(true)}
+                        className="inline-flex items-center p-1 border border-transparent rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+                      >
+                        <Plus className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <LicensesCard
+                      userId={id || ""}
+                      isEditModalOpen={isEditingLicense}
+                      onOpenEditModal={() => setIsEditingLicense(true)}
+                      onCloseEditModal={() => setIsEditingLicense(false)}
+                      selectedLicense={selectedLicense}
+                      onSelectLicense={setSelectedLicense}
+                    />
+                  </div>
                 </div>
-                <LicensesCard
-                  userId={id}
-                  onLicensesChange={loadData}
-                  isEditModalOpen={isEditingLicense}
-                  onOpenEditModal={() => setIsEditingLicense(true)}
-                  onCloseEditModal={() => {
-                    setIsEditingLicense(false);
-                    setSelectedLicense(null);
-                  }}
-                  selectedLicense={selectedLicense}
-                  onSelectLicense={setSelectedLicense}
-                />
               </div>
 
-              <div className="bg-white shadow rounded-lg p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-medium text-gray-900">Qualifications</h2>
-                  {hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']) && (
-                    <button
-                      onClick={() => setIsQualificationsModalOpen(true)}
-                      className="inline-flex items-center text-sm text-sky-600 hover:text-sky-700"
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Modifier
-                    </button>
-                  )}
+              {/* Qualifications */}
+              <div className="col-span-1">
+                <div className="bg-white rounded-lg shadow">
+                  <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h3 className="text-lg font-medium text-gray-900">Qualifications</h3>
+                    {canEdit && (
+                      <button
+                        onClick={() => setIsQualificationsModalOpen(true)}
+                        className="inline-flex items-center p-1 border border-transparent rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+                      >
+                        <Plus className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <QualificationsCard
+                      userId={id || ""}
+                      isEditModalOpen={isQualificationsModalOpen}
+                      onOpenEditModal={() => setIsQualificationsModalOpen(true)}
+                      onCloseEditModal={() => setIsQualificationsModalOpen(false)}
+                    />
+                  </div>
                 </div>
-                <QualificationsCard
-                  userId={pilot.id}
-                  onQualificationsChange={loadData}
-                  isEditModalOpen={isQualificationsModalOpen}
-                  onOpenEditModal={() => setIsQualificationsModalOpen(true)}
-                  onCloseEditModal={() => setIsQualificationsModalOpen(false)}
-                />
               </div>
-            </div>
 
-            {/* Medical Certificates */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-medium text-gray-900">Certificats médicaux</h2>
-                {canEdit && (
-                  <button
-                    onClick={() => setIsAddingMedical(true)}
-                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Ajouter
-                  </button>
-                )}
-              </div>
-              <div className="space-y-4">
-                {pilot?.medicals?.map((medical) => (
-                  <MedicalCard
-                    key={medical.id}
-                    medical={medical}
-                    onEdit={canEdit ? () => setSelectedMedical(medical) : undefined}
-                  />
-                ))}
+              {/* Certificats Médicaux */}
+              <div className="col-span-1">
+                <div className="bg-white rounded-lg shadow">
+                  <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h3 className="text-lg font-medium text-gray-900">Certificats Médicaux</h3>
+                    {canEdit && (
+                      <button
+                        onClick={() => setIsAddingMedical(true)}
+                        className="inline-flex items-center p-1 border border-transparent rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+                      >
+                        <Plus className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    {loadingMedicals ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      </div>
+                    ) : medicals.length > 0 ? (
+                      <MedicalCard
+                        medical={medicals[0]}
+                        onEdit={() => setIsAddingMedical(true)}
+                      />
+                    ) : (
+                      <div className="text-center text-gray-500">
+                        Aucun certificat médical enregistré
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
