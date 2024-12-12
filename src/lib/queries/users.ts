@@ -112,6 +112,7 @@ export async function getUserById(id: string): Promise<User | null> {
       .from("medicals")
       .select(`
         id,
+        medical_type_id,
         medical_type:medical_types (
           id,
           name,

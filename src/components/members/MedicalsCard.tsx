@@ -79,7 +79,7 @@ const MedicalsCard: React.FC<MedicalsCardProps> = ({ userId, editable = false })
   const handleViewDocument = async (medical: Medical) => {
     if (!medical.scan_id) return;
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = await supabase.storage
       .from('medicals')
       .getPublicUrl(medical.scan_id);
 

@@ -16,6 +16,7 @@ const MedicalCard: React.FC<MedicalCardProps> = ({ medical, onEdit }) => {
   const handleViewDocument = async () => {
     if (!medical.scan_id) return;
 
+    // Générer l'URL publique via Supabase
     const { data: { publicUrl } } = supabase
       .storage
       .from('medicals')

@@ -32,36 +32,30 @@ const EditMedicalForm: React.FC<EditMedicalFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState<FormData>(() => ({
-    medical_type_id: medical?.medical_type_id || '',
-    obtained_at: medical?.obtained_at 
-      ? format(new Date(medical.obtained_at), 'yyyy-MM-dd')
-      : format(new Date(), 'yyyy-MM-dd'),
-    expires_at: medical?.expires_at
-      ? format(new Date(medical.expires_at), 'yyyy-MM-dd')
-      : null,
+    medical_type_id: '',
+    obtained_at: format(new Date(), 'yyyy-MM-dd'),
+    expires_at: null,
   }));
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [documentPreview, setDocumentPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    if (medical) {
-      setFormData({
-        medical_type_id: medical.medical_type_id,
-        obtained_at: format(new Date(medical.obtained_at), 'yyyy-MM-dd'),
-        expires_at: medical.expires_at
-          ? format(new Date(medical.expires_at), 'yyyy-MM-dd')
-          : null,
-      });
+    loadMedicalTypes().then(() => {
+      if (medical) {
+        setFormData({
+          medical_type_id: medical.medical_type_id,
+          obtained_at: format(new Date(medical.obtained_at), 'yyyy-MM-dd'),
+          expires_at: medical.expires_at
+            ? format(new Date(medical.expires_at), 'yyyy-MM-dd')
+            : null,
+        });
 
-      if (medical.scan_id) {
-        const { data: { publicUrl } } = supabase
-          .storage
-          .from('medicals')
-          .getPublicUrl(medical.scan_id);
-        
-        setDocumentUrl(publicUrl);
+        // Chargement initial du document
+        if (medical.scan_id) {
+          loadDocument();
+        }
       }
-    }
+    });
   }, [medical]);
 
   useEffect(() => {
@@ -82,6 +76,25 @@ const EditMedicalForm: React.FC<EditMedicalFormProps> = ({
     } catch (err) {
       console.error('Error loading medical types:', err);
       setError('Erreur lors du chargement des types de certificats médicaux');
+    }
+  };
+
+  const loadDocument = async () => {
+    if (!medical?.scan_id) return;
+    
+    try {
+      const { data: { publicUrl } } = supabase.storage
+        .from('medicals')
+        .getPublicUrl(medical.scan_id);
+      
+      setDocumentUrl(publicUrl);
+      
+      // Si c'est une image, on crée une prévisualisation
+      if (medical.scan_id.match(/\.(jpg|jpeg|png|gif)$/i)) {
+        setDocumentPreview(publicUrl);
+      }
+    } catch (error) {
+      console.error('Error loading document:', error);
     }
   };
 
@@ -108,7 +121,7 @@ const EditMedicalForm: React.FC<EditMedicalFormProps> = ({
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `medical-documents/${fileName}`;
+      const filePath = `${userId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('medicals')
