@@ -208,33 +208,6 @@ export default function CustomFieldsCard({ aircraftId, clubId, canEdit }: Props)
                     {values[field.id] || field.min_value || 0}
                   </span>
                 </div>
-              ) : field.type === "file" ? (
-                <div>
-                  <input
-                    type="file"
-                    name={field.id}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        // TODO: Implement file upload
-                        handleChange(field.id, URL.createObjectURL(file));
-                      }
-                    }}
-                    disabled={!canEdit}
-                    accept={field.accepted_file_types?.join(",")}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 disabled:opacity-50"
-                  />
-                  {values[field.id] && (
-                    <a
-                      href={values[field.id]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 inline-block text-sm text-sky-600 hover:text-sky-800"
-                    >
-                      Voir le fichier actuel
-                    </a>
-                  )}
-                </div>
               ) : (
                 <input
                   type={field.type}

@@ -258,14 +258,6 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
                           <span>{field.max_value}</span>
                         </div>
                       </div>
-                    ) : field.type === "file" ? (
-                      <input
-                        type="file"
-                        name={field.id}
-                        className="w-full"
-                        required={field.required}
-                        accept={field.accepted_file_types?.join(",")}
-                      />
                     ) : (
                       <input
                         type={field.type}
