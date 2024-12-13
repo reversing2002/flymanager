@@ -12,11 +12,13 @@ import { toast } from 'react-hot-toast';
 interface AvailabilityCalendarProps {
   userId?: string;
   aircraftId?: string;
+  hideAddButton?: boolean;
 }
 
 const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   userId,
   aircraftId,
+  hideAddButton = false,
 }) => {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -136,16 +138,18 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
           </button>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg"
-        >
-          <Plus className="h-4 w-4" />
-          {user?.default_mode === 'default-available' 
-            ? 'Ajouter une indisponibilité'
-            : 'Ajouter une disponibilité'
-          }
-        </button>
+        {!hideAddButton && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg"
+          >
+            <Plus className="h-4 w-4" />
+            {user?.default_mode === 'default-available' 
+              ? 'Ajouter une indisponibilité'
+              : 'Ajouter une disponibilité'
+            }
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-7 border-b">

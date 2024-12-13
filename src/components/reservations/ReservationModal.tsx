@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { setMinutes, getMinutes } from "date-fns";
-import { X, AlertTriangle } from "lucide-react";
+import { X, AlertTriangle, Calendar } from "lucide-react";
 import type { Aircraft, User, Reservation } from "../../types/database";
 import {
   createReservation,
@@ -12,7 +12,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { hasAnyGroup } from "../../lib/permissions";
-import NewFlightForm from "../flights/NewFlightForm"; // Import the NewFlightForm component
+import NewFlightForm from "../flights/NewFlightForm";
+import LightAvailabilityCalendarModal from "../availability/LightAvailabilityCalendarModal";
 import { useNavigate } from "react-router-dom";
 
 // Utility functions
@@ -235,11 +236,13 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const [flightTypes, setFlightTypes] = useState<any[]>([]);
   const [users, setUsers] = useState(propUsers || []);
   const [aircraft, setAircraft] = useState<Aircraft[]>(propAircraft || []);
   const [showNewFlightForm, setShowNewFlightForm] = useState(false);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [selectedInstructor, setSelectedInstructor] = useState<User | null>(null);
   const [hasExistingFlight, setHasExistingFlight] = useState(false);
   const [existingReservations, setExistingReservations] = useState<
     Reservation[]
@@ -736,21 +739,37 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                 <label className="block text-sm font-medium text-gray-700">
                   Instructeur
                 </label>
-                <select
-                  name="instructorId"
-                  value={formData.instructorId}
-                  onChange={handleInputChange}
-                  disabled={!canModifyReservation()}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                    ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                >
-                  <option value="">Aucun</option>
-                  {instructors.map((instructor) => (
-                    <option key={instructor.id} value={instructor.id}>
-                      {instructor.first_name} {instructor.last_name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    name="instructorId"
+                    value={formData.instructorId}
+                    onChange={(e) => {
+                      handleInputChange(e);
+                      const instructor = instructors.find(i => i.id === e.target.value);
+                      setSelectedInstructor(instructor || null);
+                    }}
+                    disabled={!canModifyReservation()}
+                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                      ${!canModifyReservation() ? "bg-gray-100" : ""}`}
+                  >
+                    <option value="">Aucun</option>
+                    {instructors.map((instructor) => (
+                      <option key={instructor.id} value={instructor.id}>
+                        {instructor.first_name} {instructor.last_name}
+                      </option>
+                    ))}
+                  </select>
+                  {formData.instructorId && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAvailabilityModal(true)}
+                      className="mt-1 inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-sky-700 hover:text-sky-800 hover:bg-sky-50 rounded-md"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      <span>Planning</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Commentaires */}
@@ -820,6 +839,13 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
           </form>
         </div>
       </div>
+      {showAvailabilityModal && selectedInstructor && (
+        <LightAvailabilityCalendarModal
+          userId={selectedInstructor.id}
+          userName={`${selectedInstructor.first_name} ${selectedInstructor.last_name}`}
+          onClose={() => setShowAvailabilityModal(false)}
+        />
+      )}
     </div>
   );
 };
