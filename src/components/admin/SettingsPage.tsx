@@ -11,6 +11,7 @@ import {
   BookOpen,
   Heart,
   UserCog,
+  Plane,
 } from "lucide-react";
 import AnnouncementList from "../announcements/AnnouncementList";
 import AnnouncementForm from "../announcements/AnnouncementForm";
@@ -20,6 +21,7 @@ import QualificationTypesSettings from "../settings/QualificationTypesSettings";
 import LicenseTypesSettings from "../settings/LicenseTypesSettings";
 import MedicalTypesSettings from "../settings/MedicalTypesSettings";
 import CustomMemberFieldsSettings from "../settings/CustomMemberFieldsSettings";
+import CustomAircraftFieldsSettings from "../settings/CustomAircraftFieldsSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -39,6 +41,7 @@ type TabType =
   | "licenses"
   | "medicalTypes"
   | "memberFields"
+  | "aircraftFields"
   | "api";
 
 const SettingsPage = () => {
@@ -62,6 +65,7 @@ const SettingsPage = () => {
     { id: "licenses", label: "Licences", icon: BookOpen },
     { id: "medicalTypes", label: "Types médicaux", icon: Heart },
     { id: "memberFields", label: "Champs membres", icon: UserCog },
+    { id: "aircraftFields", label: "Champs avions", icon: Plane },
     { id: "api", label: "API", icon: Terminal },
   ] as const;
 
@@ -178,6 +182,7 @@ const SettingsPage = () => {
           {activeTab === "licenses" && <LicenseTypesSettings />}
           {activeTab === "medicalTypes" && <MedicalTypesSettings />}
           {activeTab === "memberFields" && <CustomMemberFieldsSettings />}
+          {activeTab === "aircraftFields" && <CustomAircraftFieldsSettings />}
           {activeTab === "api" && <ApiExplorer />}
         </div>
       </div>

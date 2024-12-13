@@ -5,6 +5,7 @@ import { createAircraft, updateAircraft } from "../../lib/queries/aircraft";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-hot-toast";
+import CustomFieldsCard from "./CustomFieldsCard";
 
 interface EditAircraftModalProps {
   aircraft: Aircraft | null;
@@ -373,6 +374,16 @@ const EditAircraftModal: React.FC<EditAircraftModalProps> = ({
                     </div>
                   )}
                 </div>
+
+                {aircraft && user?.club?.id && (
+                  <div className="col-span-2">
+                    <CustomFieldsCard
+                      aircraftId={aircraft.id}
+                      clubId={user.club.id}
+                      canEdit={true}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
