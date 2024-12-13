@@ -690,30 +690,34 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
         </div>
 
         {/* Coût d'instruction */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Coût d'instruction
-          </label>
-          <input
-            type="text"
-            value={formData.instructor_cost?.toFixed(2) || "0.00"}
-            readOnly
-            className="w-full rounded-lg bg-slate-50 border-slate-200"
-          />
-        </div>
+        {formData.instructorId && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Coût d'instruction
+            </label>
+            <input
+              type="text"
+              value={formData.instructor_cost?.toFixed(2) || "0.00"}
+              readOnly
+              className="w-full rounded-lg bg-slate-50 border-slate-200"
+            />
+          </div>
+        )}
 
         {/* Montant à reverser à l'instructeur */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Montant à reverser à l'instructeur
-          </label>
-          <input
-            type="text"
-            value={formData.instructor_fee?.toFixed(2) || "0.00"}
-            readOnly
-            className="w-full rounded-lg bg-slate-50 border-slate-200"
-          />
-        </div>
+        {hasAnyGroup(currentUser, ["ADMIN"]) && formData.instructorId && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Montant à reverser à l'instructeur
+            </label>
+            <input
+              type="text"
+              value={formData.instructor_fee?.toFixed(2) || "0.00"}
+              readOnly
+              className="w-full rounded-lg bg-slate-50 border-slate-200"
+            />
+          </div>
+        )}
       </div>
 
       {/* Buttons */}

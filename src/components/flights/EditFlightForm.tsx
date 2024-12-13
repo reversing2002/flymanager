@@ -543,31 +543,35 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
           />
         </div>
 
-        {/* Coût d'instruction */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Coût d'instruction
-          </label>
-          <input
-            type="text"
-            value={formData.instructor_cost?.toFixed(2) || "0.00"}
-            readOnly
-            className="w-full rounded-lg bg-slate-50 border-slate-200"
-          />
-        </div>
+        {/* Coût d'instruction - Affiché uniquement si un instructeur est sélectionné */}
+        {formData.instructorId && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Coût d'instruction
+            </label>
+            <input
+              type="text"
+              value={formData.instructor_cost?.toFixed(2) || "0.00"}
+              readOnly
+              className="w-full rounded-lg bg-slate-50 border-slate-200"
+            />
+          </div>
+        )}
 
-        {/* Frais d'instruction */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Frais d'instruction
-          </label>
-          <input
-            type="text"
-            value={formData.instructor_fee?.toFixed(2) || "0.00"}
-            readOnly
-            className="w-full rounded-lg bg-slate-50 border-slate-200"
-          />
-        </div>
+        {/* Frais d'instruction - Masqué */}
+        {hasAnyGroup(currentUser, ["ADMIN"]) && formData.instructorId && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Frais d'instruction
+            </label>
+            <input
+              type="text"
+              value={formData.instructor_fee?.toFixed(2) || "0.00"}
+              readOnly
+              className="w-full rounded-lg bg-slate-50 border-slate-200"
+            />
+          </div>
+        )}
       </div>
 
       {/* Boutons */}
