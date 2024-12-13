@@ -15,7 +15,9 @@ export async function getAvailabilitiesForPeriod(
       users!user_id (
         id,
         first_name,
-        last_name
+        last_name,
+        email,
+        default_mode
       ),
       aircraft!aircraft_id (
         id,
@@ -64,6 +66,7 @@ export async function createAvailability(data: CreateAvailabilityDTO): Promise<A
     .insert([{
       ...data,
       club_id: clubMember.club_id,
+      slot_type: data.slot_type,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }])
@@ -79,6 +82,7 @@ export async function updateAvailability(data: UpdateAvailabilityDTO): Promise<v
     .from('availabilities')
     .update({
       ...data,
+      slot_type: data.slot_type,
       updated_at: new Date().toISOString()
     })
     .eq('id', data.id);

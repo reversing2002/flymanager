@@ -1,22 +1,17 @@
 import type { Role } from './roles';
+import type { UserDefaultMode } from './availability';
 
 export interface User {
   id: string;
-  first_name: string;
-  last_name: string;
   email: string;
-  phone?: string;
-  roles: Role[];  // Changé de role à roles pour supporter plusieurs rôles
-  gender?: string;
-  birth_date?: string;
-  image_url?: string;
-  medical_certification?: MedicalCertification;
-  license?: License;
-  qualifications?: Qualification[];
-  instructor_rate?: string;
-  instructor_fee?: string;  // Taux horaire à reverser à l'instructeur
   created_at: string;
   updated_at: string;
+  first_name: string;
+  last_name: string;
+  phone_number?: string;
+  avatar_url?: string;
+  default_mode: UserDefaultMode;
+  role: Role;
   club?: {
     id: string;
     name: string;

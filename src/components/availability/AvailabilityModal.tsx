@@ -1,5 +1,5 @@
 // src/components/availability/AvailabilityModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, AlertTriangle, Calendar, RotateCcw, Clock, Trash2 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -8,6 +8,7 @@ import { createAvailability, updateAvailability, deleteAvailability } from '../.
 import type { Availability } from '../../types/availability';
 
 type AvailabilityType = 'recurring' | 'period';
+type DefaultMode = 'default-available' | 'default-unavailable';
 
 interface AvailabilityModalProps {
   userId?: string;
@@ -15,6 +16,9 @@ interface AvailabilityModalProps {
   availability?: Availability;
   onClose: () => void;
   onSuccess: () => void;
+  // On pourrait ici passer la valeur du mode par défaut depuis un parent, 
+  // ou le stocker en base pour chaque user.
+  initialDefaultMode?: DefaultMode;
 }
 
 const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
@@ -23,27 +27,30 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
   availability,
   onClose,
   onSuccess,
+  initialDefaultMode = 'default-available', // Par défaut, on part du principe "disponible par défaut".
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Mode par défaut : 
+  // "default-available" => on crée des indisponibilités
+  // "default-unavailable" => on crée des disponibilités
+  const [defaultMode, setDefaultMode] = useState<DefaultMode>(initialDefaultMode);
+
   const [availabilityType, setAvailabilityType] = useState<AvailabilityType>(
     availability?.is_recurring ? 'recurring' : 'period'
   );
-  
+
+  // Ce formData gère à la fois la période (start/end) et les champs récurrents
   const [formData, setFormData] = useState({
-    // Pour type 'period'
     startDate: availability?.start_time ? format(new Date(availability.start_time), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
     endDate: availability?.end_time ? format(new Date(availability.end_time), "yyyy-MM-dd") : format(addDays(new Date(), 1), "yyyy-MM-dd"),
     startTime: availability?.start_time ? format(new Date(availability.start_time), "HH:mm") : '09:00',
     endTime: availability?.end_time ? format(new Date(availability.end_time), "HH:mm") : '17:00',
-    
-    // Pour type 'recurring'
     recurringDays: availability?.recurrence_pattern ? 
       availability.recurrence_pattern.split(';')[1].replace('BYDAY=', '').split(',') : 
       ['MO'],
     recurringUntil: availability?.recurrence_end_date || format(addDays(new Date(), 30), "yyyy-MM-dd"),
-    
-    // Commun
     reason: availability?.reason || '',
   });
 
@@ -59,51 +66,60 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
         reason: formData.reason,
       };
 
-      switch (availabilityType) {
-        case 'period':
-          const [startHours, startMinutes] = formData.startTime.split(':');
-          const [endHours, endMinutes] = formData.endTime.split(':');
-          
-          const startDateTime = new Date(formData.startDate);
-          startDateTime.setHours(parseInt(startHours), parseInt(startMinutes));
-          
-          const endDateTime = new Date(formData.endDate);
-          endDateTime.setHours(parseInt(endHours), parseInt(endMinutes));
-          
-          data = {
-            ...data,
-            start_time: startDateTime.toISOString(),
-            end_time: endDateTime.toISOString(),
-            is_recurring: false,
-            recurrence_pattern: null,
-            recurrence_end_date: null,
-          };
-          break;
+      // On calcule les dates selon le type
+      const [startHours, startMinutes] = formData.startTime.split(':');
+      const [endHours, endMinutes] = formData.endTime.split(':');
+      
+      const startDateTime = new Date(formData.startDate);
+      startDateTime.setHours(parseInt(startHours), parseInt(startMinutes));
+      
+      let endDateTime = new Date(formData.endDate);
+      endDateTime.setHours(parseInt(endHours), parseInt(endMinutes));
 
-        case 'recurring':
-          data = {
-            ...data,
-            start_time: new Date(formData.startDate + 'T' + formData.startTime).toISOString(),
-            end_time: new Date(formData.startDate + 'T' + formData.endTime).toISOString(),
-            is_recurring: true,
-            recurrence_pattern: `FREQ=WEEKLY;BYDAY=${formData.recurringDays.join(',')}`,
-            recurrence_end_date: formData.recurringUntil,
-          };
-          break;
+      const isRecurring = (availabilityType === 'recurring');
+
+      // On détermine si on crée un créneau de disponibilité ou d’indisponibilité
+      // selon le defaultMode
+      const isAvailabilitySlot = (defaultMode === 'default-unavailable'); 
+      // Si default-unavailable => on crée une disponibilité
+      // Si default-available => on crée une indisponibilité
+
+      let recurrence_pattern = null;
+      let recurrence_end_date = null;
+
+      if (isRecurring) {
+        recurrence_pattern = `FREQ=WEEKLY;BYDAY=${formData.recurringDays.join(',')}`;
+        recurrence_end_date = formData.recurringUntil;
+        // Pour les créneaux récurrents, on ne se sert généralement que de la date de début (startDate)
+        // ou on garde endDate = startDate pour marquer le jour.  
+        // Ici, on peut simplifier en admettant que le user va définir un créneau horaire pour chaque jour récurrent.
+        endDateTime = new Date(formData.startDate);
+        endDateTime.setHours(parseInt(endHours), parseInt(endMinutes));
       }
+
+      data = {
+        ...data,
+        start_time: startDateTime.toISOString(),
+        end_time: endDateTime.toISOString(),
+        is_recurring: isRecurring,
+        recurrence_pattern,
+        recurrence_end_date,
+        // Nouveau champ (hypothétique) pour indiquer s’il s’agit d’un créneau de dispo ou d’indispo
+        slot_type: isAvailabilitySlot ? 'availability' : 'unavailability',
+      };
 
       if (availability) {
         await updateAvailability({ id: availability.id, ...data });
-        toast.success('Indisponibilité mise à jour');
+        toast.success(isAvailabilitySlot ? 'Disponibilité mise à jour' : 'Indisponibilité mise à jour');
       } else {
         await createAvailability(data);
-        toast.success('Indisponibilité créée');
+        toast.success(isAvailabilitySlot ? 'Disponibilité créée' : 'Indisponibilité créée');
       }
 
       onSuccess();
       onClose();
     } catch (err) {
-      console.error('Error saving availability:', err);
+      console.error('Error saving slot:', err);
       setError('Erreur lors de l\'enregistrement');
       toast.error('Erreur lors de l\'enregistrement');
     } finally {
@@ -113,8 +129,9 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
 
   const handleDelete = async () => {
     if (!availability?.id) return;
-    
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette indisponibilité ?')) {
+
+    const isAvailabilitySlot = (defaultMode === 'default-unavailable');
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer cette ${isAvailabilitySlot ? 'disponibilité' : 'indisponibilité'} ?`)) {
       return;
     }
 
@@ -123,11 +140,11 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
 
     try {
       await deleteAvailability(availability.id);
-      toast.success('Indisponibilité supprimée');
+      toast.success(isAvailabilitySlot ? 'Disponibilité supprimée' : 'Indisponibilité supprimée');
       onSuccess();
       onClose();
     } catch (err) {
-      console.error('Error deleting availability:', err);
+      console.error('Error deleting slot:', err);
       setError('Erreur lors de la suppression');
       toast.error('Erreur lors de la suppression');
     } finally {
@@ -135,35 +152,67 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
     }
   };
 
-  const renderTypeSelector = () => (
+  const renderDefaultModeSelector = () => (
     <div className="flex gap-4 mb-6">
       <button
         type="button"
-        onClick={() => setAvailabilityType('recurring')}
+        onClick={() => setDefaultMode('default-available')}
         className={`flex-1 p-4 rounded-lg border-2 ${
-          availabilityType === 'recurring'
+          defaultMode === 'default-available'
             ? 'border-sky-500 bg-sky-50'
             : 'border-slate-200 hover:border-slate-300'
         } transition-colors`}
       >
-        <RotateCcw className="h-6 w-6 mx-auto mb-2" />
-        <div className="text-sm font-medium">Récurrent</div>
+        <Calendar className="h-6 w-6 mx-auto mb-2" />
+        <div className="text-sm font-medium">Disponible par défaut</div>
       </button>
-      
       <button
         type="button"
-        onClick={() => setAvailabilityType('period')}
+        onClick={() => setDefaultMode('default-unavailable')}
         className={`flex-1 p-4 rounded-lg border-2 ${
-          availabilityType === 'period'
+          defaultMode === 'default-unavailable'
             ? 'border-sky-500 bg-sky-50'
             : 'border-slate-200 hover:border-slate-300'
         } transition-colors`}
       >
-        <Clock className="h-6 w-6 mx-auto mb-2" />
-        <div className="text-sm font-medium">Période</div>
+        <Calendar className="h-6 w-6 mx-auto mb-2" />
+        <div className="text-sm font-medium">Indisponible par défaut</div>
       </button>
     </div>
   );
+
+  const renderTypeSelector = () => {
+    const isAvailabilitySlot = (defaultMode === 'default-unavailable');
+    return (
+      <div className="flex gap-4 mb-6">
+        <button
+          type="button"
+          onClick={() => setAvailabilityType('recurring')}
+          className={`flex-1 p-4 rounded-lg border-2 ${
+            availabilityType === 'recurring'
+              ? 'border-sky-500 bg-sky-50'
+              : 'border-slate-200 hover:border-slate-300'
+          } transition-colors`}
+        >
+          <RotateCcw className="h-6 w-6 mx-auto mb-2" />
+          <div className="text-sm font-medium">{isAvailabilitySlot ? 'Disponibilité récurrente' : 'Indisponibilité récurrente'}</div>
+        </button>
+        
+        <button
+          type="button"
+          onClick={() => setAvailabilityType('period')}
+          className={`flex-1 p-4 rounded-lg border-2 ${
+            availabilityType === 'period'
+              ? 'border-sky-500 bg-sky-50'
+              : 'border-slate-200 hover:border-slate-300'
+          } transition-colors`}
+        >
+          <Clock className="h-6 w-6 mx-auto mb-2" />
+          <div className="text-sm font-medium">{isAvailabilitySlot ? 'Disponibilité ponctuelle' : 'Indisponibilité ponctuelle'}</div>
+        </button>
+      </div>
+    );
+  };
 
   const renderPeriodFields = () => (
     <div className="space-y-4">
@@ -254,6 +303,19 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
       
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">
+          Heure de fin
+        </label>
+        <input
+          type="time"
+          value={formData.endTime}
+          onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+          className="w-full rounded-lg border-slate-200"
+          required
+        />
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Jours de la semaine
         </label>
         <div className="flex flex-wrap gap-2">
@@ -302,12 +364,17 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
     </div>
   );
 
+  const isAvailabilitySlot = (defaultMode === 'default-unavailable');
+  const title = availability 
+    ? (isAvailabilitySlot ? "Modifier la disponibilité" : "Modifier l'indisponibilité")
+    : (isAvailabilitySlot ? "Nouvelle disponibilité" : "Nouvelle indisponibilité");
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
-            {availability ? 'Modifier l\'indisponibilité' : 'Nouvelle indisponibilité'}
+            {title}
           </h2>
           <button
             onClick={onClose}
@@ -325,21 +392,33 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
             </div>
           )}
 
-          {renderTypeSelector()}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Mode par défaut
+            </label>
+            {renderDefaultModeSelector()}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Type de créneau
+            </label>
+            {renderTypeSelector()}
+          </div>
 
           {availabilityType === 'period' && renderPeriodFields()}
           {availabilityType === 'recurring' && renderRecurringFields()}
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Raison
+              Raison (optionnel)
             </label>
             <input
               type="text"
               value={formData.reason}
               onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
               className="w-full rounded-lg border-slate-200"
-              placeholder="Optionnel"
+              placeholder="Ex : Vacances, réunion..."
             />
           </div>
 

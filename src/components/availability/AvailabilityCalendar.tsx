@@ -4,8 +4,10 @@ import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, 
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Clock, RotateCcw } from 'lucide-react';
 import { getAvailabilitiesForPeriod } from '../../lib/queries/availability';
-import type { Availability } from '../../types/availability';
+import type { Availability, AvailabilitySlotType } from '../../types/availability';
+import { useAuth } from '../../contexts/AuthContext';
 import AvailabilityModal from './AvailabilityModal';
+import { toast } from 'react-hot-toast';
 
 interface AvailabilityCalendarProps {
   userId?: string;
@@ -16,6 +18,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   userId,
   aircraftId,
 }) => {
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
   const [selectedAvailability, setSelectedAvailability] = useState<Availability | null>(null);
@@ -41,6 +44,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
       setAvailabilities(data);
     } catch (error) {
       console.error('Error loading availabilities:', error);
+      toast.error('Erreur lors du chargement des disponibilités');
     } finally {
       setLoading(false);
     }
@@ -99,32 +103,36 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
       return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')} (Récurrent)`;
     } else {
       const isSameStartEnd = isSameDay(start, end);
-      if (isSameStartEnd) {
-        return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
-      } else {
-        return `Du ${format(start, 'dd/MM HH:mm')} au ${format(end, 'dd/MM HH:mm')}`;
-      }
+      return isSameStartEnd 
+        ? `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`
+        : `${format(start, 'dd/MM HH:mm')} - ${format(end, 'dd/MM HH:mm')}`;
     }
   };
 
+  const getAvailabilityColor = (availability: Availability) => {
+    return availability.slot_type === 'availability' 
+      ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+      : 'bg-rose-100 text-rose-800 border-rose-200';
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="bg-white rounded-lg shadow-sm">
+      <div className="p-4 border-b flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
             onClick={handlePreviousWeek}
-            className="p-2 hover:bg-slate-100 rounded-lg"
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5 text-slate-600" />
           </button>
-          <span className="font-medium">
-            {format(days[0], 'MMMM yyyy', { locale: fr })}
-          </span>
+          <div className="text-lg font-medium">
+            {format(startOfWeek(currentDate, { locale: fr }), 'MMMM yyyy', { locale: fr })}
+          </div>
           <button
             onClick={handleNextWeek}
-            className="p-2 hover:bg-slate-100 rounded-lg"
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5 text-slate-600" />
           </button>
         </div>
 
@@ -133,73 +141,81 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg"
         >
           <Plus className="h-4 w-4" />
-          <span>Nouvelle indisponibilité</span>
+          {user?.default_mode === 'default-available' 
+            ? 'Ajouter une indisponibilité'
+            : 'Ajouter une disponibilité'
+          }
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-4">
-        {days.map((day, index) => (
-          <div key={day.toISOString()} className="space-y-2">
-            <div className="text-center">
-              <div className="text-sm font-medium text-slate-900">
-                {format(day, 'EEEE', { locale: fr })}
-              </div>
-              <div className="text-sm text-slate-500">
-                {format(day, 'd', { locale: fr })}
-              </div>
+      <div className="grid grid-cols-7 border-b">
+        {days.map((day) => (
+          <div
+            key={day.toISOString()}
+            className="p-4 text-center border-r last:border-r-0"
+          >
+            <div className="font-medium text-slate-900">
+              {format(day, 'EEEE', { locale: fr })}
             </div>
+            <div className="text-sm text-slate-500">
+              {format(day, 'd MMMM', { locale: fr })}
+            </div>
+          </div>
+        ))}
+      </div>
 
-            <div className="min-h-[150px] bg-slate-50 rounded-lg p-2 space-y-2">
-              {getAvailabilitiesForDay(day).map((availability) => (
+      <div className="grid grid-cols-7 min-h-[400px]">
+        {days.map((day) => {
+          const dayAvailabilities = getAvailabilitiesForDay(day);
+          
+          return (
+            <div
+              key={day.toISOString()}
+              className="p-4 border-r last:border-r-0 border-b space-y-2"
+            >
+              {dayAvailabilities.map((availability) => (
                 <button
                   key={availability.id}
                   onClick={() => {
                     setSelectedAvailability(availability);
                     setShowModal(true);
                   }}
-                  className="w-full text-left p-2 rounded bg-red-50 hover:bg-red-100 border border-red-200 transition-colors group"
+                  className={`w-full p-2 rounded-lg border text-left text-sm transition-colors ${getAvailabilityColor(availability)}`}
                 >
-                  <div className="flex items-start gap-2">
-                    {availability.is_recurring ? (
-                      <RotateCcw className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <Clock className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-red-900 truncate">
-                        {availability.users?.first_name} {availability.users?.last_name}
-                      </div>
-                      <div className="text-xs text-red-700">
-                        {formatAvailabilityTime(availability)}
-                      </div>
-                      {availability.reason && (
-                        <div className="text-xs text-red-600 truncate mt-1">
-                          {availability.reason}
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{formatAvailabilityTime(availability)}</span>
                   </div>
+                  {availability.is_recurring && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <RotateCcw className="h-3 w-3" />
+                      <span className="text-xs">
+                        Jusqu'au {format(parseISO(availability.recurrence_end_date!), 'd MMM', { locale: fr })}
+                      </span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {showModal && (
         <AvailabilityModal
-          userId={userId}
-          aircraftId={aircraftId}
           availability={selectedAvailability}
           onClose={() => {
             setShowModal(false);
             setSelectedAvailability(null);
           }}
           onSuccess={() => {
-            loadAvailabilities();
             setShowModal(false);
             setSelectedAvailability(null);
+            loadAvailabilities();
           }}
+          defaultDate={currentDate}
+          userId={userId}
+          aircraftId={aircraftId}
         />
       )}
     </div>

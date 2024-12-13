@@ -1,4 +1,7 @@
 // src/types/availability.ts
+export type AvailabilitySlotType = 'availability' | 'unavailability';
+export type UserDefaultMode = 'default-available' | 'default-unavailable';
+
 export interface Availability {
   id: string;
   user_id?: string;
@@ -11,7 +14,7 @@ export interface Availability {
   reason?: string;
   created_at: string;
   updated_at: string;
-  club_id: string;
+  slot_type: AvailabilitySlotType;
 }
 
 export interface CreateAvailabilityDTO {
@@ -23,6 +26,7 @@ export interface CreateAvailabilityDTO {
   recurrence_pattern?: string;
   recurrence_end_date?: string;
   reason?: string;
+  slot_type: AvailabilitySlotType;
 }
 
 export interface UpdateAvailabilityDTO extends Partial<CreateAvailabilityDTO> {

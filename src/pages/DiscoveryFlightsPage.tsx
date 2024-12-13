@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plane } from 'lucide-react';
-import DiscoveryFlightList from '../components/discovery/DiscoveryFlightList';
+import DiscoveryFlightPage from '../components/discovery/DiscoveryFlightPage';
 
 const DiscoveryFlightsPage = () => {
   return (
@@ -11,7 +11,7 @@ const DiscoveryFlightsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        <DiscoveryFlightList />
+        <DiscoveryFlightPage />
       </div>
     </div>
   );

@@ -26,7 +26,8 @@ import {
   Text,
   Badge,
   Tooltip,
-  IconButton
+  IconButton,
+  SimpleGrid
 } from '@chakra-ui/react';
 import type { DiscoveryFlight } from '../../types/discovery';
 import { supabase } from '../../lib/supabase';
@@ -38,8 +39,13 @@ import { hasAnyGroup } from '../../lib/permissions';
 import CreateDiscoveryNoteModal from './CreateDiscoveryNoteModal';
 import DiscoveryNotes from './DiscoveryNotes';
 import DiscoveryFlightChatModal from './DiscoveryFlightChatModal';
+import HorizontalReservationCalendar from '../reservations/HorizontalReservationCalendar';
 
-const DiscoveryFlightList = () => {
+interface DiscoveryFlightListProps {
+  viewMode?: 'list' | 'planning';
+}
+
+const DiscoveryFlightList: React.FC<DiscoveryFlightListProps> = ({ viewMode = 'list' }) => {
   const [selectedFlight, setSelectedFlight] = useState<DiscoveryFlight | null>(null);
   const [selectedChatFlight, setSelectedChatFlight] = useState<DiscoveryFlight | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -309,7 +315,7 @@ Dates préférées : ${flight.preferred_dates}`;
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       <div className="bg-white p-4 rounded-lg shadow-sm">
         <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
           <div className="flex-grow space-y-4 w-full md:w-auto">
@@ -364,96 +370,111 @@ Dates préférées : ${flight.preferred_dates}`;
         </div>
       </div>
 
-      {flights
-        ?.filter(flight => 
-          (statusFilter === 'all' || flight.status === statusFilter) &&
-          (searchTerm === '' || 
-            flight.contact_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            flight.contact_phone?.includes(searchTerm))
-        )
-        .map(flight => (
-          <div 
-            key={flight.id}
-            className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-4 border border-transparent hover:border-blue-100"
-          >
-            <div className="flex flex-col gap-2">
-              <div className="flex items-start justify-between">
-                <div className="flex flex-col">
-                  <Text fontSize="lg" fontWeight="semibold">
-                    {flight.contact_email}
-                  </Text>
-                  <Text color="gray.600">
-                    {flight.contact_phone}
-                  </Text>
-                </div>
+      {viewMode === 'list' ? (
+        <div className="space-y-4">
+          {flights
+            ?.filter(flight => 
+              (statusFilter === 'all' || flight.status === statusFilter) &&
+              (searchTerm === '' || 
+                flight.contact_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                flight.contact_phone?.includes(searchTerm))
+            )
+            .map(flight => (
+              <div 
+                key={flight.id}
+                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-4 border border-transparent hover:border-blue-100"
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-col">
+                      <Text fontSize="lg" fontWeight="semibold">
+                        {flight.contact_email}
+                      </Text>
+                      <Text color="gray.600">
+                        {flight.contact_phone}
+                      </Text>
+                    </div>
 
-                <div className="flex items-center gap-2">
-                  <Tooltip label="Conversation client">
-                    <IconButton
-                      aria-label="Conversation client"
-                      icon={<MessageCircle />}
-                      size="sm"
-                      colorScheme="blue"
-                      variant="ghost"
-                      onClick={() => handleChatClick(flight)}
+                    <div className="flex items-center gap-2">
+                      <Tooltip label="Conversation client">
+                        <IconButton
+                          aria-label="Conversation client"
+                          icon={<MessageCircle />}
+                          size="sm"
+                          colorScheme="blue"
+                          variant="ghost"
+                          onClick={() => handleChatClick(flight)}
+                        />
+                      </Tooltip>
+
+                      <Tooltip label="Notes privées">
+                        <IconButton
+                          aria-label="Ajouter une note privée"
+                          icon={<MessageSquare />}
+                          size="sm"
+                          colorScheme="gray"
+                          variant="ghost"
+                          onClick={() => handleCreateNote(flight)}
+                        />
+                      </Tooltip>
+
+                      {canAddFlight && !flight.pilot_id && (
+                        <Button
+                          size="sm"
+                          colorScheme="blue"
+                          onClick={() => handleAssignClick(flight)}
+                        >
+                          S'assigner
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      <span>{flight.passenger_count} passager(s)</span>
+                    </div>
+                    {flight.preferred_dates && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>Préférence : {flight.preferred_dates}</span>
+                      </div>
+                    )}
+                    {flight.pilot && (
+                      <div className="flex items-center gap-1">
+                        <span>Pilote : {flight.pilot.first_name} {flight.pilot.last_name}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {notesMap?.get(flight.id)?.length > 0 && (
+                    <DiscoveryNotes
+                      flight={flight}
+                      notes={notesMap.get(flight.id) || []}
+                      expanded={expandedNotes[flight.id]}
+                      onToggleExpand={() => setExpandedNotes(prev => ({
+                        ...prev,
+                        [flight.id]: !prev[flight.id]
+                      }))}
                     />
-                  </Tooltip>
-
-                  <Tooltip label="Notes privées">
-                    <IconButton
-                      aria-label="Ajouter une note privée"
-                      icon={<MessageSquare />}
-                      size="sm"
-                      colorScheme="gray"
-                      variant="ghost"
-                      onClick={() => handleCreateNote(flight)}
-                    />
-                  </Tooltip>
-
-                  {canAddFlight && !flight.pilot_id && (
-                    <Button
-                      size="sm"
-                      colorScheme="blue"
-                      onClick={() => handleAssignClick(flight)}
-                    >
-                      S'assigner
-                    </Button>
                   )}
                 </div>
               </div>
-
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span>{flight.passenger_count} passager(s)</span>
-                </div>
-                {flight.preferred_dates && (
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>Préférence : {flight.preferred_dates}</span>
-                  </div>
-                )}
-                {flight.pilot && (
-                  <div className="flex items-center gap-1">
-                    <span>Pilote : {flight.pilot.first_name} {flight.pilot.last_name}</span>
-                  </div>
-                )}
-              </div>
-
-              {notesMap?.get(flight.id)?.length > 0 && (
-                <DiscoveryNotes
-                  flight={flight}
-                  notes={notesMap.get(flight.id) || []}
-                  expanded={expandedNotes[flight.id]}
-                  onToggleExpand={() => setExpandedNotes(prev => ({
-                    ...prev,
-                    [flight.id]: !prev[flight.id]
-                  }))}
-                />
-              )}
-            </div>
-          </div>
-        ))}
+            ))}
+        </div>
+      ) : (
+        <div className="mt-4">
+          <HorizontalReservationCalendar
+            reservationType="discovery"
+            showAddButton={false}
+            onReservationClick={(reservation) => {
+              const flight = flights?.find(f => f.id === reservation.id);
+              if (flight) setSelectedFlight(flight);
+            }}
+          />
+        </div>
+      )}
 
       {flights?.length === 0 && (
         <div className="text-center py-12">

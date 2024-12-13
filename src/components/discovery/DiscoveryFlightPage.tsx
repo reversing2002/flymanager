@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Plane, Calendar } from 'lucide-react';
+import { Plane, Calendar, List, LayoutGrid } from 'lucide-react';
 import DiscoveryFlightList from './DiscoveryFlightList';
-import PilotAvailabilityCalendar from './PilotAvailabilityCalendar';
+import DiscoveryPilotAvailabilityPage from './DiscoveryPilotAvailabilityPage';
 
 const DiscoveryFlightPage = () => {
   const [activeTab, setActiveTab] = useState<'flights' | 'availability'>('flights');
+  const [viewMode, setViewMode] = useState<'list' | 'planning'>('list');
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -14,7 +15,7 @@ const DiscoveryFlightPage = () => {
       </div>
 
       <div className="mb-6">
-        <div className="border-b border-slate-200">
+        <div className="border-b border-slate-200 flex justify-between items-center">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('flights')}
@@ -46,13 +47,42 @@ const DiscoveryFlightPage = () => {
               </div>
             </button>
           </nav>
+
+          {activeTab === 'flights' && (
+            <div className="flex items-center bg-slate-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`
+                  p-2 rounded-md flex items-center gap-2 text-sm font-medium
+                  ${viewMode === 'list'
+                    ? 'bg-white text-sky-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'}
+                `}
+              >
+                <List className="h-4 w-4" />
+                <span>Liste</span>
+              </button>
+              <button
+                onClick={() => setViewMode('planning')}
+                className={`
+                  p-2 rounded-md flex items-center gap-2 text-sm font-medium
+                  ${viewMode === 'planning'
+                    ? 'bg-white text-sky-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'}
+                `}
+              >
+                <LayoutGrid className="h-4 w-4" />
+                <span>Planning</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {activeTab === 'flights' ? (
-        <DiscoveryFlightList />
+        <DiscoveryFlightList viewMode={viewMode} />
       ) : (
-        <PilotAvailabilityCalendar />
+        <DiscoveryPilotAvailabilityPage />
       )}
     </div>
   );

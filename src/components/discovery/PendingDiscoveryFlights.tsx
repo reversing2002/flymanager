@@ -47,6 +47,8 @@ export default function PendingDiscoveryFlights({ className }: Props) {
   const [selectedFlight, setSelectedFlight] = useState<DiscoveryFlight | null>(null);
   const [discoveryFlightTypeId, setDiscoveryFlightTypeId] = useState<string | null>(null);
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<any>(null);
+  const [selectedAircraft, setSelectedAircraft] = useState<any>(null);
   const { user } = useAuth();
   const toast = useToast();
 
@@ -218,17 +220,18 @@ export default function PendingDiscoveryFlights({ className }: Props) {
             setShowReservationModal(false);
             setSelectedFlight(null);
           }}
-          onSuccess={async (reservation) => {
+          onSuccess={async () => {
             try {
+              // Récupérer les valeurs du formulaire depuis le modal
               const { error } = await supabase
                 .from("discovery_flights")
                 .update({ 
                   pilot_id: user?.id,
                   status: 'CONFIRMED',
-                  date: reservation.startTime,
-                  start_time: format(new Date(reservation.startTime), 'HH:mm:ss'),
-                  end_time: format(new Date(reservation.endTime), 'HH:mm:ss'),
-                  aircraft_id: reservation.aircraftId
+                  date: selectedTimeSlot?.startTime,
+                  start_time: selectedTimeSlot ? format(new Date(selectedTimeSlot.startTime), 'HH:mm:ss') : null,
+                  end_time: selectedTimeSlot ? format(new Date(selectedTimeSlot.endTime), 'HH:mm:ss') : null,
+                  aircraft_id: selectedAircraft?.id
                 })
                 .eq("id", selectedFlight.id);
 
@@ -263,6 +266,8 @@ Contact: ${selectedFlight.contact_email} / ${selectedFlight.contact_phone}
 Poids total: ${selectedFlight.total_weight}kg
 ${selectedFlight.comments ? `Commentaires: ${selectedFlight.comments}` : ''}`}
           preselectedFlightTypeId={discoveryFlightTypeId || undefined}
+          setSelectedTimeSlot={setSelectedTimeSlot}
+          setSelectedAircraft={setSelectedAircraft}
         />
       )}
     </div>

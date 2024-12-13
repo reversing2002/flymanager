@@ -267,25 +267,25 @@ const HorizontalReservationCalendar = ({
       filtered = filtered.filter((r) => r.userId === currentUser.id);
     }
 
-    // Apply filters
-    if (filters.aircraftTypes.length > 0) {
+    // Apply filters only if we have aircraft data
+    if (aircraft && filters?.aircraftTypes && filters.aircraftTypes.length > 0) {
       filtered = filtered.filter((r) => {
         const aircraftType = aircraft.find((a) => a.id === r.aircraftId)?.type;
         return filters.aircraftTypes.includes(aircraftType || "");
       });
     }
 
-    if (filters.instructors.length > 0) {
+    if (filters?.instructors && filters.instructors.length > 0) {
       filtered = filtered.filter((r) =>
         filters.instructors.includes(r.instructorId || "")
       );
     }
 
-    if (filters.status !== "all") {
+    if (filters?.status && filters.status !== "all") {
       filtered = filtered.filter((r) => r.status === filters.status);
     }
 
-    if (filters.availability !== "all") {
+    if (filters?.availability && filters.availability !== "all") {
       switch (filters.availability) {
         case "available":
           filtered = filtered.filter((r) => {
@@ -906,7 +906,7 @@ const HorizontalReservationCalendar = ({
                           const pilot = users.find((u) => u.id === reservation.pilotId);
                           const instructor = reservation.instructorId
                             ? users.find((u) => u.id === reservation.instructorId)
-                            : null;
+                            : undefined;
 
                           // Déterminer les couleurs en fonction du type de réservation
                           let bgColor, textColor, borderColor;
