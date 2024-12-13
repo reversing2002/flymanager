@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { setMinutes, setHours, differenceInMinutes, format } from "date-fns";
+import { setMinutes, setHours, differenceInMinutes, format, isToday } from "date-fns";
 import { Aircraft, Reservation, User } from "../../types/database";
 import { useAuth } from "../../contexts/AuthContext";
 import { Plane, Moon } from "lucide-react";
@@ -409,6 +409,26 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     return slotMinutes > aeroEndMinutes && prevSlotMinutes <= aeroEndMinutes;
   };
 
+  const isCurrentTimeSlot = (hour: number, minute: number) => {
+    if (!isToday(selectedDate)) return false;
+    
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = Math.floor(now.getMinutes() / 15) * 15;
+    
+    return currentHour === hour && currentMinute === minute;
+  };
+
+  const isPastTimeSlot = (hour: number, minute: number) => {
+    if (!isToday(selectedDate)) return false;
+    
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = Math.floor(now.getMinutes() / 15) * 15;
+    
+    return (hour < currentHour) || (hour === currentHour && minute < currentMinute);
+  };
+
   return (
     <div ref={timeGridRef} className="relative h-full">
       <div className="h-full overflow-auto">
@@ -437,7 +457,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
           </div>
 
           {/* Contenu principal */}
-          <div className="flex-1">
+          <div className="flex-1 relative">
             {/* En-tête des avions */}
             <div
               className="sticky top-0 bg-white z-10 grid"
@@ -450,9 +470,12 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   key={`header-${aircraft.id}`}
                   className="p-2 text-center border-b border-r border-slate-200"
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <Plane className="h-4 w-4" />
-                    <span className="font-medium">{aircraft.registration}</span>
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <div className="flex items-center justify-center gap-2">
+                      <Plane className="h-4 w-4" />
+                      <span className="font-medium">{aircraft.registration}</span>
+                    </div>
+                    <span className="text-xs text-slate-500">{aircraft.type}</span>
                   </div>
                 </div>
               ))}
@@ -478,9 +501,15 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                       } ${
                         isSlotSelected(hour, minute, aircraft.id)
                           ? "bg-sky-100"
+                          : isCurrentTimeSlot(hour, minute)
+                          ? "bg-gray-200"
+                          : isPastTimeSlot(hour, minute)
+                          ? "bg-gray-100"
                           : isNightTime(hour, minute)
                           ? "bg-gray-100"
                           : "bg-white hover:bg-slate-50"
+                      } ${
+                        isPastTimeSlot(hour, minute) ? "cursor-not-allowed" : ""
                       }`}
                       data-time={`${hour}-${minute}`}
                       data-aircraft={aircraft.id}

@@ -851,10 +851,11 @@ const HorizontalReservationCalendar = ({
               {sortedAircraft.map((a) => (
                 <div
                   key={a.id}
-                  className="flex items-center h-12 px-2 border-b border-gray-200 bg-white"
+                  className="flex flex-col justify-center h-12 px-2 border-b border-gray-200 bg-white"
                   style={{ minWidth: "120px", width: "120px" }}
                 >
                   <span className="font-medium truncate">{a.registration}</span>
+                  <span className="text-xs text-slate-500 truncate">{a.type}</span>
                 </div>
               ))}
             </div>
