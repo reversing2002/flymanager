@@ -12,6 +12,9 @@ import {
   addMinutes,
   subDays,
   addDays,
+  parseISO,
+  getHours,
+  getMinutes,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -393,41 +396,66 @@ const HorizontalReservationCalendar = ({
   const START_HOUR = 7;
 
   const calculateReservationStyle = (reservation: Reservation) => {
-    // Convertir explicitement les dates UTC en local
-    const start = new Date(reservation.startTime);
-    const end = new Date(reservation.endTime);
-    
-    // Obtenir les heures locales
-    const startHour = start.getHours();
-    const startMinutes = start.getMinutes();
-    const endHour = end.getHours();
-    const endMinutes = end.getMinutes();
+    // Obtenir l'heure de début aéronautique
+    const sunTimes = clubCoordinates
+      ? getSunTimes(selectedDate, clubCoordinates.latitude, clubCoordinates.longitude)
+      : null;
+
+    // Calculer l'heure de début du planning en minutes (même logique que generateTimeSlots)
+    let planningStartMinutes;
+    if (sunTimes) {
+      planningStartMinutes =
+        sunTimes.aeroStart.getHours() * 60 + sunTimes.aeroStart.getMinutes();
+      // Arrondir au quart d'heure inférieur comme dans generateTimeSlots
+      planningStartMinutes = Math.floor(planningStartMinutes / 15) * 15;
+    } else {
+      planningStartMinutes = START_HOUR * 60;
+    }
+
+    // Convertir les dates UTC en local
+    const startDate = new Date(reservation.startTime);
+    const endDate = new Date(reservation.endTime);
+
+    // Obtenir les heures et minutes locales
+    const startHour = startDate.getHours();
+    const startMinutes = startDate.getMinutes();
+    const endHour = endDate.getHours();
+    const endMinutes = endDate.getMinutes();
 
     // Debug
     console.log('Reservation time debug:', {
       startUTC: reservation.startTime,
       endUTC: reservation.endTime,
-      startLocal: start.toLocaleString(),
-      endLocal: end.toLocaleString(),
+      startLocal: startDate.toLocaleString(),
+      endLocal: endDate.toLocaleString(),
+      planningStartMinutes,
       startHour,
       startMinutes,
       endHour,
       endMinutes
     });
     
-    // Calculer le nombre de créneaux depuis le début de la journée (7h)
+    // Calculer le nombre de minutes depuis le début du planning
     const startMinutesSinceMidnight = startHour * 60 + startMinutes;
     const endMinutesSinceMidnight = endHour * 60 + endMinutes;
-    const startMinutesSince7am = startMinutesSinceMidnight - (7 * 60);
-    const endMinutesSince7am = endMinutesSinceMidnight - (7 * 60);
+
+    // Arrondir les minutes au quart d'heure le plus proche pour l'alignement
+    const roundedStartMinutes = Math.round(startMinutesSinceMidnight / 15) * 15;
+    const roundedEndMinutes = Math.round(endMinutesSinceMidnight / 15) * 15;
     
-    if (startMinutesSince7am < 0) {
+    const startMinutesSincePlanningStart = roundedStartMinutes - planningStartMinutes;
+    const endMinutesSincePlanningStart = roundedEndMinutes - planningStartMinutes;
+    
+    if (startMinutesSincePlanningStart < 0) {
       return null;
     }
 
-    // Ajuster la position en soustrayant une cellule (15 minutes)
-    const left = ((startMinutesSince7am - 15) / 15) * CELL_WIDTH;
-    const width = Math.max(((endMinutesSince7am - startMinutesSince7am) / 15) * CELL_WIDTH, CELL_WIDTH);
+    // Calculer la position et la largeur en pixels
+    const left = (startMinutesSincePlanningStart / 15) * CELL_WIDTH;
+    const width = Math.max(
+      ((endMinutesSincePlanningStart - startMinutesSincePlanningStart) / 15) * CELL_WIDTH,
+      CELL_WIDTH
+    );
 
     return {
       left: `${left}px`,
@@ -648,9 +676,9 @@ const HorizontalReservationCalendar = ({
 
   const timeSlotStyle = (hour: number, minutes: number, aircraftId: string) => {
     return cn(
-      "h-12 border-r border-gray-200 flex-shrink-0",
+      "h-12 border-l border-gray-200 flex-shrink-0",
       {
-        "border-r-2 border-r-gray-300": shouldShowBorder(hour, minutes),
+        "border-l-2 border-l-gray-300": shouldShowBorder(hour, minutes),
         "bg-gray-50": isNightTime(hour, minutes),
         "bg-blue-100": isSlotSelected(hour, minutes, aircraftId)
       },
@@ -660,8 +688,8 @@ const HorizontalReservationCalendar = ({
 
   const hourHeaderStyle = (hour: number, minutes: number) => {
     return cn(
-      "flex-shrink-0 h-8 border-r border-gray-200 text-xs text-gray-500 flex items-center justify-center",
-      shouldShowBorder(hour, minutes) && "border-r-2 border-r-gray-300",
+      "flex-shrink-0 h-8 border-l border-gray-200 text-xs text-gray-500 flex items-center justify-center",
+      shouldShowBorder(hour, minutes) && "border-l-2 border-l-gray-300",
       "w-6" // Ajouter une largeur fixe
     );
   };
@@ -674,10 +702,6 @@ const HorizontalReservationCalendar = ({
       const updatePosition = () => {
         const now = new Date();
         if (!isToday(selectedDate)) return;
-
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
-        const currentTime = currentHour * 60 + currentMinute; // Temps en minutes
 
         // Obtenir les heures aéronautiques précises
         const sunTimes = clubCoordinates
@@ -693,14 +717,27 @@ const HorizontalReservationCalendar = ({
           return;
         }
 
-        // Convertir les heures aéronautiques en minutes pour une comparaison précise
-        const aeroStartMinutes =
-          sunTimes.aeroStart.getHours() * 60 + sunTimes.aeroStart.getMinutes();
-        const aeroEndMinutes =
-          sunTimes.aeroEnd.getHours() * 60 + sunTimes.aeroEnd.getMinutes();
+        // Calculer l'heure de début du planning en minutes
+        let planningStartMinutes;
+        if (sunTimes) {
+          planningStartMinutes =
+            sunTimes.aeroStart.getHours() * 60 + sunTimes.aeroStart.getMinutes();
+          // Arrondir au quart d'heure inférieur
+          planningStartMinutes = Math.floor(planningStartMinutes / 15) * 15;
+        } else {
+          planningStartMinutes = START_HOUR * 60;
+        }
+
+        // Convertir l'heure actuelle en minutes depuis minuit
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentMinutesSinceMidnight = currentHour * 60 + currentMinute;
+
+        // Calculer les minutes depuis le début du planning
+        const minutesSincePlanningStart = currentMinutesSinceMidnight - planningStartMinutes;
 
         // Masquer la ligne si hors limites de la journée aéronautique
-        if (currentTime < aeroStartMinutes || currentTime > aeroEndMinutes) {
+        if (minutesSincePlanningStart < 0) {
           setIsVisible(false);
           return;
         }
@@ -708,16 +745,12 @@ const HorizontalReservationCalendar = ({
         setIsVisible(true);
 
         // Calculer la position en pixels
-        const hoursSinceStart = currentHour - START_HOUR;
-        const minutePercentage = currentMinute / 60;
-        const position =
-          (hoursSinceStart + minutePercentage) * (CELL_WIDTH * 4);
-
+        const position = (minutesSincePlanningStart / 15) * CELL_WIDTH;
         setPosition(position);
       };
 
       updatePosition();
-      const interval = setInterval(updatePosition, 60000);
+      const interval = setInterval(updatePosition, 60000); // Mise à jour toutes les minutes
 
       return () => clearInterval(interval);
     }, [selectedDate, clubCoordinates]);
