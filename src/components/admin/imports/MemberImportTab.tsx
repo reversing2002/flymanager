@@ -11,6 +11,7 @@ const REQUIRED_FIELDS = ['first_name', 'last_name', 'email', 'login'];
 const FIELD_CONSTRAINTS = {
   gender: ['M', 'F', 'O'],
   default_mode: ['default-available', 'default-unavailable'],
+  member_status: ['ACTIVE', 'INACTIVE', 'PENDING', 'SUSPENDED'],
   email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
   phone: { pattern: /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/ },
   instructor_rate: { min: 0, precision: 2 },
@@ -35,7 +36,8 @@ const EXAMPLE_JSON = {
       "country": "France",                      // Optionnel: Pays
       "instructor_rate": 50.00,                 // Optionnel: Taux horaire instructeur
       "instructor_fee": 25.00,                  // Optionnel: Frais instructeur
-      "default_mode": "default-available"       // Optionnel: Mode par défaut
+      "default_mode": "default-available",      // Optionnel: Mode par défaut
+      "member_status": "ACTIVE"                 // Optionnel: Status du membre (ACTIVE, INACTIVE, PENDING, SUSPENDED)
     },
     {
       // Exemple 2: Élève (minimum requis)
@@ -99,6 +101,11 @@ const MemberImportTab = () => {
       errors.push(`Mode par défaut invalide "${user.default_mode}". Valeurs acceptées: ${FIELD_CONSTRAINTS.default_mode.join(', ')}`);
     }
 
+    // Valider le status du membre
+    if (user.member_status && !FIELD_CONSTRAINTS.member_status.includes(user.member_status)) {
+      errors.push(`Status de membre invalide "${user.member_status}". Valeurs acceptées: ${FIELD_CONSTRAINTS.member_status.join(', ')}`);
+    }
+
     // Valider les taux instructeur
     if (user.instructor_rate && (user.instructor_rate < FIELD_CONSTRAINTS.instructor_rate.min)) {
       errors.push(`Taux instructeur invalide. Doit être >= ${FIELD_CONSTRAINTS.instructor_rate.min}`);
@@ -113,6 +120,10 @@ const MemberImportTab = () => {
 
   const handleImport = async () => {
     try {
+      if (!user?.club?.id) {
+        throw new Error('Vous devez être connecté à un club pour importer des membres');
+      }
+
       setImporting(true);
       setError(null);
       setSuccess(null);
@@ -141,6 +152,8 @@ const MemberImportTab = () => {
       let skippedCount = 0;
 
       for (const userData of data.users) {
+        const { member_status = 'ACTIVE', ...userInfo } = userData;
+        
         // Vérifier si l'utilisateur existe déjà
         const { data: existingUser } = await supabase
           .from('users')
@@ -148,6 +161,8 @@ const MemberImportTab = () => {
           .eq('email', userData.email)
           .single();
 
+        let userId;
+        
         if (existingUser) {
           if (duplicateHandling === 'skip') {
             skippedCount++;
@@ -156,14 +171,35 @@ const MemberImportTab = () => {
           // Mettre à jour l'utilisateur existant
           await supabase
             .from('users')
-            .update(userData)
+            .update(userInfo)
             .eq('id', existingUser.id);
+          userId = existingUser.id;
         } else {
           // Créer un nouvel utilisateur
-          await supabase
+          const { data: newUser, error: insertError } = await supabase
             .from('users')
-            .insert([userData]);
+            .insert([userInfo])
+            .select('id')
+            .single();
+            
+          if (insertError) throw insertError;
+          userId = newUser.id;
         }
+
+        // Insérer ou mettre à jour la relation club_members
+        const { error: memberError } = await supabase
+          .from('club_members')
+          .upsert({
+            club_id: user.club.id,
+            user_id: userId,
+            status: member_status,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'club_id,user_id'
+          });
+
+        if (memberError) throw memberError;
+        
         importedCount++;
       }
 

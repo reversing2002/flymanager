@@ -3,10 +3,10 @@ import { Plane, Users, Receipt, Calendar } from 'lucide-react';
 import FlightImportTab from './FlightImportTab';
 import AccountImportTab from './AccountImportTab';
 import MemberImportTab from './MemberImportTab';
-import AircraftImportTab from './AircraftImportTab';
+import AircraftJsonTab from './AircraftJsonTab';
 
 const TABS = [
-  { id: 'avions', label: 'Avions', icon: Plane, component: AircraftImportTab },
+  { id: 'avions', label: 'Avions', icon: Plane, component: AircraftJsonTab },
   { id: 'membres', label: 'Membres', icon: Users, component: MemberImportTab },
   { id: 'comptes', label: 'Comptes', icon: Receipt, component: AccountImportTab },
   { id: 'vols', label: 'Vols', icon: Calendar, component: FlightImportTab },
