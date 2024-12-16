@@ -855,7 +855,7 @@ const HorizontalReservationCalendar = ({
                   style={{ minWidth: "120px", width: "120px" }}
                 >
                   <span className="font-medium truncate">{a.registration}</span>
-                  <span className="text-xs text-slate-500 truncate">{a.type}</span>
+                  <span className="text-xs text-slate-500 truncate">{a.name}</span>
                 </div>
               ))}
             </div>

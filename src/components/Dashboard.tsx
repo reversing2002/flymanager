@@ -508,43 +508,8 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Grille 2 colonnes pour les vols découverte et remarques avions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Vols découverte */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-          <PendingDiscoveryFlights />
-        </div>
-
-        {/* Remarques avions */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">Remarques avions</h2>
-            <Link 
-              to="/aircraft"
-              className="text-sm text-sky-600 hover:text-sky-700"
-            >
-              Voir tout
-            </Link>
-          </div>
-          <AircraftRemarks limit={5} />
-        </div>
-      </div>
-
-      {/* Autres sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Messages récents */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-          <RecentMessages />
-        </div>
-
-        {/* Événements à venir */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-          <UpcomingEvents />
-        </div>
-      </div>
-
-      {/* Prochaines réservations */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+            {/* Prochaines réservations */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
         <h2 className="text-lg font-semibold text-slate-900">Mes prochaines réservations</h2>
         <div className="space-y-4">
           {nextReservations.map((reservation) => {
@@ -578,6 +543,55 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Grille 2 colonnes pour les vols découverte et remarques avions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Vols découverte */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+          <div className="h-[400px] overflow-y-auto">
+            <PendingDiscoveryFlights />
+          </div>
+        </div>
+
+        {/* Remarques avions */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">Remarques avions</h2>
+            <Link 
+              to="/aircraft"
+              className="text-sm text-sky-600 hover:text-sky-700"
+            >
+              Voir tout
+            </Link>
+          </div>
+          <div className="h-[320px] overflow-y-auto">
+            <AircraftRemarks limit={5} />
+          </div>
+        </div>
+      </div>
+
+      {/* Autres sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Messages récents */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+
+          <div className="h-[320px] overflow-y-auto">
+            <RecentMessages />
+          </div>
+        </div>
+
+        {/* Événements à venir */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">Événements à venir</h2>
+          </div>
+          <div className="h-[320px] overflow-y-auto">
+            <UpcomingEvents />
+          </div>
+        </div>
+      </div>
+
+
 
       {/* Modal de réservation */}
       {selectedReservation && (

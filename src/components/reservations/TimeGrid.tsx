@@ -475,7 +475,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                       <Plane className="h-4 w-4" />
                       <span className="font-medium">{aircraft.registration}</span>
                     </div>
-                    <span className="text-xs text-slate-500">{aircraft.type}</span>
+                    <span className="text-xs text-slate-500">{aircraft.name}</span>
                   </div>
                 </div>
               ))}
