@@ -26,23 +26,6 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
   const canViewFinancials = isAdmin || isInstructor;
 
-  // Vérifier si la cotisation est valide
-  const isMembershipValid = React.useMemo(() => {
-    if (!member.contributions?.length) return false;
-
-    // Trier les cotisations par date de validité
-    const sortedContributions = [...member.contributions].sort(
-      (a, b) => new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime()
-    );
-
-    const lastContribution = sortedContributions[0];
-    if (!lastContribution) return false;
-
-    // Une cotisation est valide pour 12 mois
-    const validUntil = addMonths(new Date(lastContribution.valid_from), 12);
-    return isAfter(validUntil, new Date());
-  }, [member.contributions]);
-
   const getRoleBadgeColor = (role: Role) => {
     switch (role) {
       case "PILOT":
@@ -61,130 +44,118 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
-      return;
-    }
+    if (!member.id) return;
 
     try {
-      const { error } = await supabase.rpc('safe_delete_user', {
-        user_id: member.id
-      });
+      // Supprimer l'utilisateur de Supabase Auth
+      if (member.auth_id) {
+        const { error: authError } = await adminClient.auth.admin.deleteUser(
+          member.auth_id
+        );
+        if (authError) throw authError;
+      }
 
-      if (error) throw error;
+      // Supprimer l'utilisateur de la base de données
+      const { error: dbError } = await supabase
+        .from("users")
+        .delete()
+        .eq("id", member.id);
 
-      toast.success('Membre supprimé avec succès');
+      if (dbError) throw dbError;
+
+      toast.success("Membre supprimé avec succès");
       onDelete?.();
-      setShowDeleteDialog(false);
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
-      toast.error(error.message || 'Erreur lors de la suppression du membre');
+      console.error("Error deleting member:", error);
+      toast.error("Erreur lors de la suppression du membre");
     }
-  };
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Empêcher la navigation si on clique sur le bouton de suppression
-    if ((e.target as HTMLElement).closest('.delete-button')) {
-      e.stopPropagation();
-      return;
-    }
-    navigate(`/members/${member.id}`);
   };
 
   return (
-    <div
-      className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer relative"
-      onClick={handleCardClick}
-    >
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
-              {member.image_url ? (
-                <img
-                  src={member.image_url}
-                  alt={`${member.first_name} ${member.last_name}`}
-                  className="h-12 w-12 rounded-full object-cover"
-                />
-              ) : (
-                <User className="h-6 w-6 text-slate-600" />
-              )}
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">
-                {`${member.first_name} ${member.last_name}`}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {member.roles?.map((role) => (
-                  <span
-                    key={role}
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
-                      role
-                    )}`}
-                  >
-                    {getRoleLabel(role)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {!isMembershipValid && (
-              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center space-x-2 mb-2">
+            <User className="w-5 h-5 text-gray-400" />
+            <h3 
+              className="text-lg font-medium text-gray-900 hover:text-blue-600 cursor-pointer"
+              onClick={() => navigate(`/members/${member.id}`)}
+            >
+              {member.first_name} {member.last_name}
+            </h3>
+            {member.membership_status === 'expired' && (
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
                 Cotisation expirée
               </span>
             )}
-            {isAdmin && (
-              <>
-                <button
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="delete-button p-2 rounded-full hover:bg-red-50 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4 text-red-500 hover:text-red-700" />
-                </button>
+          </div>
 
-                {showDeleteDialog && (
-                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-                      <h3 className="text-lg font-semibold mb-2">Confirmer la suppression</h3>
-                      <p className="text-gray-600 mb-4">
-                        Êtes-vous sûr de vouloir supprimer {member.first_name} {member.last_name} ?
-                        Cette action est irréversible.
-                      </p>
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => setShowDeleteDialog(false)}
-                          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          onClick={handleDelete}
-                          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
+          {member.roles && member.roles.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {member.roles.map((role, index) => (
+                <span
+                  key={index}
+                  className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeColor(role as Role)}`}
+                >
+                  {getRoleLabel(role)}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="space-y-1 text-sm text-gray-500">
+            {member.email && (
+              <div className="flex items-center space-x-2">
+                <Mail className="w-4 h-4" />
+                <span>{member.email}</span>
+              </div>
+            )}
+            {member.phone && (
+              <div className="flex items-center space-x-2">
+                <Phone className="w-4 h-4" />
+                <span>{member.phone}</span>
+              </div>
             )}
           </div>
         </div>
 
-        <div className="space-y-2">
-          {member.phone && (
-            <div className="flex items-center space-x-2 text-sm text-slate-600">
-              <Phone className="h-4 w-4" />
-              <span>{member.phone}</span>
+        {isAdmin && (
+          <button
+            onClick={() => setShowDeleteDialog(true)}
+            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-medium mb-4">Confirmer la suppression</h3>
+            <p className="text-gray-500 mb-6">
+              Êtes-vous sûr de vouloir supprimer ce membre ? Cette action est irréversible.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowDeleteDialog(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  handleDelete();
+                  setShowDeleteDialog(false);
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Supprimer
+              </button>
             </div>
-          )}
-          <div className="flex items-center space-x-2 text-sm text-slate-600">
-            <Mail className="h-4 w-4" />
-            <span>{member.email}</span>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

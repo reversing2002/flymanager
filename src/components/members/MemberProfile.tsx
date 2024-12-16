@@ -97,16 +97,27 @@ const MemberProfile = () => {
       // Charger les certificats médicaux
       setLoadingMedicals(true);
       try {
+        if (!id) {
+          console.warn("Pas d'ID utilisateur, impossible de charger les certificats médicaux");
+          setMedicals([]);
+          return;
+        }
+
         const { data: medicalsData, error: medicalsError } = await supabase
           .from('medicals')
           .select('*, medical_types(*)')
           .eq('user_id', id)
           .order('obtained_at', { ascending: false });
 
-        if (medicalsError) throw medicalsError;
-        setMedicals(medicalsData || []);
+        if (medicalsError) {
+          console.error("Erreur lors du chargement des certificats médicaux:", medicalsError);
+          setMedicals([]);
+        } else {
+          setMedicals(medicalsData || []);
+        }
       } catch (err) {
         console.error("Erreur lors du chargement des certificats médicaux:", err);
+        setMedicals([]);
       } finally {
         setLoadingMedicals(false);
       }

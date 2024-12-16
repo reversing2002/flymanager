@@ -23,24 +23,10 @@ const MemberList = () => {
   const loadMembers = async () => {
     try {
       const data = await getMembersWithBalance();
-      
-      // Charger les cotisations pour chaque membre
-      const membersWithContributions = await Promise.all(
-        data.map(async (member) => {
-          try {
-            const contributions = await getContributionsByUserId(member.id);
-            return {
-              ...member,
-              contributions
-            };
-          } catch (error) {
-            console.error(`Error loading contributions for member ${member.id}:`, error);
-            return member;
-          }
-        })
-      );
-      
-      setMembers(membersWithContributions);
+      setMembers(data.map(member => ({
+        ...member,
+        contributions: [] // On ne charge pas les contributions dans la liste
+      })));
     } catch (error) {
       console.error("Error loading members:", error);
     } finally {

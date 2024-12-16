@@ -1,6 +1,7 @@
 import { supabase } from "../supabase";
 import { adminClient } from "../supabase/adminClient";
 import type { User } from "../../types/database";
+import { addMonths, isAfter } from 'date-fns';
 
 export async function updateUser(
   data: Partial<User> & { id: string }
@@ -108,7 +109,8 @@ export async function getUserById(id: string): Promise<User | null> {
     }
 
     // Fetch medicals separately
-    const { data: medicalsData, error: medicalsError } = await supabase
+    let medicalsData = [];
+    const { data: medicals, error: medicalsError } = await supabase
       .from("medicals")
       .select(`
         id,
@@ -124,11 +126,13 @@ export async function getUserById(id: string): Promise<User | null> {
         expires_at,
         scan_id
       `)
-      .eq("user_id", userData.auth_id);
+      .eq("user_id", id);
 
     if (medicalsError) {
       console.error("Error fetching medicals:", medicalsError);
-      throw medicalsError;
+      console.warn("Continuing with empty medicals array due to error");
+    } else {
+      medicalsData = medicals || [];
     }
 
     // 2. Récupérer les rôles de l'utilisateur
@@ -143,7 +147,7 @@ export async function getUserById(id: string): Promise<User | null> {
     // 3. Transformer les données
     const user: User = {
       ...userData,
-      medicals: medicalsData || [],
+      medicals: medicalsData,
       roles: userGroups || [],
       club: userData.club_members?.[0]?.club || null,
       full_name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim()
@@ -206,13 +210,12 @@ export async function getMembersWithBalance(): Promise<User[]> {
   try {
     // 1. Récupérer l'utilisateur connecté pour avoir son club
     const { data: { user: currentUser } } = await supabase.auth.getUser();
-    if (!currentUser) throw new Error("User not authenticated");
+    if (!currentUser?.id) throw new Error("User not authenticated");
 
     // 2. Récupérer le club de l'utilisateur connecté
     const { data: currentUserData, error: userError } = await supabase
       .from('users')
       .select(`
-        instructor_rate,
         club_members!inner(
           club_id
         )
@@ -228,17 +231,30 @@ export async function getMembersWithBalance(): Promise<User[]> {
     const userClubId = currentUserData?.club_members?.[0]?.club_id;
     if (!userClubId) throw new Error("User has no club");
 
-    // 3. Récupérer les membres du même club
+    // 3. Récupérer les membres du même club avec leurs cotisations en une seule requête
     const { data: members, error: membersError } = await supabase
       .from('users')
       .select(`
-        *,
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
         instructor_rate,
+        auth_id,
         club_members!inner(
           club:clubs(
             id,
             name
           )
+        ),
+        member_contributions(
+          id,
+          valid_from,
+          valid_until,
+          created_at,
+          document_url,
+          account_entry_id
         )
       `)
       .eq('club_members.club_id', userClubId)
@@ -251,32 +267,31 @@ export async function getMembersWithBalance(): Promise<User[]> {
 
     if (!members) return [];
 
-    // 4. Pour chaque membre, récupérer ses groupes via la fonction RPC
-    const membersWithRoles = await Promise.all(
-      members.map(async (member) => {
-        const { data: userGroups, error: groupsError } = await supabase
-          .rpc('get_user_groups', { user_id: member.id });
+    // 4. Transformer les données
+    const membersWithContributions = members.map(member => {
+      // Trier les cotisations par date de validité
+      const sortedContributions = member.member_contributions
+        ? [...member.member_contributions].sort(
+            (a, b) => new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime()
+          )
+        : [];
 
-        if (groupsError) {
-          console.error(`Error fetching groups for user ${member.id}:`, groupsError);
-          return {
-            ...member,
-            roles: [],
-            club: member.club_members?.[0]?.club || null,
-            full_name: `${member.first_name || ''} ${member.last_name || ''}`.trim()
-          };
-        }
+      // Vérifier si la dernière cotisation est valide
+      const lastContribution = sortedContributions[0];
+      const isValid = lastContribution
+        ? isAfter(new Date(lastContribution.valid_until), new Date())
+        : false;
 
-        return {
-          ...member,
-          roles: userGroups || [],
-          club: member.club_members?.[0]?.club || null,
-          full_name: `${member.first_name || ''} ${member.last_name || ''}`.trim()
-        };
-      })
-    );
+      return {
+        ...member,
+        contributions: sortedContributions,
+        membership_status: isValid ? 'valid' : 'expired',
+        club: member.club_members?.[0]?.club || null,
+        full_name: `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Unknown'
+      };
+    });
 
-    return membersWithRoles;
+    return membersWithContributions;
   } catch (error) {
     console.error("Error in getMembersWithBalance:", error);
     throw error;
