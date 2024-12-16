@@ -7,6 +7,7 @@ import {
   getFlights,
   getMemberBalance,
 } from "../lib/queries/index";
+import { hasAnyGroup } from "../lib/permissions";
 
 import type {
   Aircraft,
@@ -19,8 +20,8 @@ import { useAuth } from "../contexts/AuthContext";
 import ReservationModal from "./reservations/ReservationModal";
 import AnnouncementBanner from "./announcements/AnnouncementBanner";
 import { supabase } from "../lib/supabase";
+import AdminDashboard from "./admin/AdminDashboard";
 import UpcomingEvents from "./events/UpcomingEvents";
-import { hasAnyGroup } from "../lib/permissions";
 import { Link } from "react-router-dom";
 import SunCalc from "suncalc";
 import { format } from "date-fns";
@@ -303,6 +304,12 @@ const RecentMessages = () => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+
+  // Rediriger les administrateurs vers le dashboard admin
+  if (hasAnyGroup(user, ['ADMIN'])) {
+    return <AdminDashboard />;
+  }
+
   const [stats, setStats] = useState({
     aircraft: 0,
     users: 0,
