@@ -19,6 +19,7 @@ interface LicenseType {
   display_order: number;
   club_id: string;
   is_system: boolean;
+  category: string;
   created_at: string;
   updated_at: string;
 }
@@ -59,7 +60,7 @@ export default function LicenseTypesSettings() {
       const { data, error: fetchError } = await supabase
         .from("license_types")
         .select("*")
-        .eq("club_id", clubId)
+        .or(`club_id.eq.${clubId},is_system.eq.true`)
         .order("display_order");
 
       if (fetchError) throw fetchError;
@@ -120,6 +121,7 @@ export default function LicenseTypesSettings() {
         })),
         display_order: types.length,
         club_id: clubId,
+        category: formData.get("category") as string,
       };
 
       if (editingType) {
@@ -227,6 +229,13 @@ export default function LicenseTypesSettings() {
                     </ul>
                   </div>
                 )}
+                {type.is_system && (
+                  <div className="mt-2 flex items-center gap-1 text-amber-600">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="text-sm">Type système</span>
+                  </div>
+                )}
+                <p className="text-sm text-gray-600 mt-1">Catégorie : {type.category}</p>
               </div>
               <div className="flex gap-2">
                 <button
@@ -235,6 +244,7 @@ export default function LicenseTypesSettings() {
                     setIsModalOpen(true);
                   }}
                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+                  disabled={type.is_system}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
@@ -298,6 +308,23 @@ export default function LicenseTypesSettings() {
                     defaultValue={editingType?.validity_period || ""}
                     className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Catégorie
+                  </label>
+                  <select
+                    name="category"
+                    defaultValue={editingType?.category || "club"}
+                    className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
+                    required
+                  >
+                    <option value="club">Club</option>
+                    <option value="state">État</option>
+                    <option value="european">Européen</option>
+                    <option value="international">International</option>
+                  </select>
                 </div>
 
                 <div className="space-y-4">
