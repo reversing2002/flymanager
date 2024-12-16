@@ -20,7 +20,7 @@ create table custom_aircraft_field_definitions (
 -- Create custom aircraft field values table
 create table custom_aircraft_field_values (
     id uuid default uuid_generate_v4() primary key,
-    aircraft_id uuid references aircrafts(id) on delete cascade,
+    aircraft_id uuid references aircraft(id) on delete cascade,
     field_id uuid references custom_aircraft_field_definitions(id) on delete cascade,
     value jsonb,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,

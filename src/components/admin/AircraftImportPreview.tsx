@@ -1,12 +1,63 @@
+import { useState } from "react";
 import { type AircraftPreview } from "../../lib/aircraftCsvParser";
+import AircraftCsvMapping from "./AircraftCsvMapping";
 
 type Props = {
   data: AircraftPreview[];
-  onConfirm: () => void;
+  csvHeaders: string[];
+  csvFirstRow: string[];
+  onConfirm: (mapping: Record<string, string>) => void;
   disabled?: boolean;
 };
 
-const AircraftImportPreview = ({ data, onConfirm, disabled }: Props) => {
+const AircraftImportPreview = ({ 
+  data, 
+  csvHeaders, 
+  csvFirstRow,
+  onConfirm, 
+  disabled 
+}: Props) => {
+  const [mapping, setMapping] = useState<Record<string, string>>({});
+  const [step, setStep] = useState<"mapping" | "preview">("mapping");
+
+  const handleMappingChange = (newMapping: Record<string, string>) => {
+    setMapping(newMapping);
+  };
+
+  const handleConfirmMapping = () => {
+    setStep("preview");
+  };
+
+  const handleConfirmImport = () => {
+    onConfirm(mapping);
+  };
+
+  const handleBack = () => {
+    setStep("mapping");
+  };
+
+  if (step === "mapping") {
+    return (
+      <div className="space-y-4">
+        <AircraftCsvMapping
+          csvHeaders={csvHeaders}
+          csvFirstRow={csvFirstRow}
+          onMappingChange={handleMappingChange}
+        />
+        
+        <div className="flex justify-end">
+          <button
+            onClick={handleConfirmMapping}
+            disabled={Object.keys(mapping).length === 0}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            Continuer vers l'aperçu
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -48,9 +99,15 @@ const AircraftImportPreview = ({ data, onConfirm, disabled }: Props) => {
         </table>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-between">
         <button
-          onClick={onConfirm}
+          onClick={handleBack}
+          className="px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+        >
+          Retour au mapping
+        </button>
+        <button
+          onClick={handleConfirmImport}
           disabled={disabled}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >

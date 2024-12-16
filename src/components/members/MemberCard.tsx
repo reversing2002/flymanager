@@ -61,99 +61,23 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
   };
 
   const handleDelete = async () => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
+      return;
+    }
+
     try {
-      // 1. Vérifier si l'utilisateur a des transactions ou des vols
-      const { data: transactions, error: transactionsError } = await supabase
-        .from('account_transactions')
-        .select('id')
-        .eq('user_id', member.id)
-        .limit(1);
+      const { error } = await supabase.rpc('safe_delete_user', {
+        user_id: member.id
+      });
 
-      if (transactionsError) throw transactionsError;
-
-      if (transactions && transactions.length > 0) {
-        toast.error('Impossible de supprimer ce membre car il a des transactions associées');
-        return;
-      }
-
-      // Vérifier si l'utilisateur a des entrées comptables
-      const { data: accountEntries, error: accountEntriesError } = await supabase
-        .from('account_entries')
-        .select('id')
-        .eq('user_id', member.id)
-        .limit(1);
-
-      if (accountEntriesError) throw accountEntriesError;
-
-      if (accountEntries && accountEntries.length > 0) {
-        toast.error('Impossible de supprimer ce membre car il a des entrées comptables');
-        return;
-      }
-
-      // Vérifier si l'utilisateur est assigné à des entrées comptables
-      const { data: assignedEntries, error: assignedEntriesError } = await supabase
-        .from('account_entries')
-        .select('id')
-        .eq('assigned_to_id', member.id)
-        .limit(1);
-
-      if (assignedEntriesError) throw assignedEntriesError;
-
-      if (assignedEntries && assignedEntries.length > 0) {
-        toast.error('Impossible de supprimer ce membre car il est assigné à des entrées comptables');
-        return;
-      }
-
-      // 2. Supprimer les données associées dans l'ordre correct
-      const deleteOperations = [
-        // Suppression des données de communication
-        supabase.from('dismissed_announcements').delete().eq('user_id', member.id),
-        supabase.from('chat_room_members').delete().eq('user_id', member.id),
-        supabase.from('chat_messages').delete().eq('user_id', member.id),
-        supabase.from('private_messages').delete().eq('sender_id', member.id),
-        supabase.from('private_messages').delete().eq('recipient_id', member.id),
-        
-        // Suppression des données de qualifications
-        supabase.from('pilot_licenses').delete().eq('user_id', member.id),
-        supabase.from('medical_certifications').delete().eq('user_id', member.id),
-        supabase.from('user_badges').delete().eq('user_id', member.id),
-        
-        // Suppression des données d'activité
-        supabase.from('availabilities').delete().eq('user_id', member.id),
-        supabase.from('aircraft_remark_responses').delete().eq('user_id', member.id),
-        supabase.from('aircraft_remarks').delete().eq('user_id', member.id),
-        
-        // Suppression des appartenances aux groupes
-        supabase.from('user_group_memberships').delete().eq('user_id', member.id),
-        supabase.from('club_members').delete().eq('user_id', member.id),
-        
-        // Enfin, suppression de l'utilisateur lui-même
-        supabase.from('users').delete().eq('id', member.id)
-      ];
-
-      // Exécuter toutes les opérations de suppression
-      const results = await Promise.all(deleteOperations);
-      
-      // Vérifier s'il y a eu des erreurs
-      const errors = results.filter(result => result.error);
-      if (errors.length > 0) {
-        console.error('Erreurs lors de la suppression:', errors);
-        throw new Error('Erreur lors de la suppression du membre');
-      }
-
-      // Supprimer l'utilisateur de auth.users
-      const { error: authError } = await adminClient.auth.admin.deleteUser(member.id);
-      if (authError) {
-        console.error('Erreur lors de la suppression de auth.users:', authError);
-        throw authError;
-      }
+      if (error) throw error;
 
       toast.success('Membre supprimé avec succès');
       onDelete?.();
       setShowDeleteDialog(false);
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
-      toast.error('Erreur lors de la suppression du membre');
+      toast.error(error.message || 'Erreur lors de la suppression du membre');
     }
   };
 
