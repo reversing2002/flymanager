@@ -47,7 +47,7 @@ const EXAMPLE_JSON = {
   ]
 };
 
-const MemberImportTab = () => {
+const UsersJsonTab = () => {
   const { user } = useAuth();
   const [jsonContent, setJsonContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -273,4 +273,4 @@ const MemberImportTab = () => {
   );
 };
 
-export default MemberImportTab;
+export default UsersJsonTab;

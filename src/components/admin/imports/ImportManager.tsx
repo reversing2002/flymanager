@@ -1,14 +1,23 @@
 import { useState } from 'react';
-import { Box, Tabs, TabList, TabPanels, TabPanel, Tab } from '@chakra-ui/react';
+import { Plane, Users, Receipt, Calendar } from 'lucide-react';
 import FlightImportTab from './FlightImportTab';
 import AccountImportTab from './AccountImportTab';
 import MemberImportTab from './MemberImportTab';
 import AircraftImportTab from './AircraftImportTab';
 
+const TABS = [
+  { id: 'avions', label: 'Avions', icon: Plane, component: AircraftImportTab },
+  { id: 'membres', label: 'Membres', icon: Users, component: MemberImportTab },
+  { id: 'comptes', label: 'Comptes', icon: Receipt, component: AccountImportTab },
+  { id: 'vols', label: 'Vols', icon: Calendar, component: FlightImportTab },
+];
+
 const ImportManager = () => {
+  const [activeTab, setActiveTab] = useState(TABS[0].id);
+
   return (
-    <Box>
-      <Box mb={6} p={4} bg="blue.50" color="blue.800" borderRadius="lg">
+    <div className="space-y-6">
+      <div className="p-4 bg-blue-50 text-blue-800 rounded-lg">
         <h3 className="font-medium mb-2">Ordre d'import recommandé :</h3>
         <ol className="list-decimal list-inside space-y-1">
           <li>Appareils</li>
@@ -16,32 +25,36 @@ const ImportManager = () => {
           <li>Opérations comptables</li>
           <li>Vols</li>
         </ol>
-      </Box>
+      </div>
 
-      <Tabs>
-        <TabList>
-          <Tab>Avions</Tab>
-          <Tab>Membres</Tab>
-          <Tab>Comptes</Tab>
-          <Tab>Vols</Tab>
-        </TabList>
+      <div className="bg-white rounded-xl shadow-sm">
+        <div className="border-b overflow-x-auto">
+          <nav className="flex -mb-px min-w-full">
+            {TABS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center gap-1 px-3 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                  activeTab === id
+                    ? "border-sky-500 text-sky-600"
+                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
 
-        <TabPanels>
-          <TabPanel>
-            <AircraftImportTab />
-          </TabPanel>
-          <TabPanel>
-            <MemberImportTab />
-          </TabPanel>
-          <TabPanel>
-            <AccountImportTab />
-          </TabPanel>
-          <TabPanel>
-            <FlightImportTab />
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
-    </Box>
+        <div className="p-6">
+          {TABS.map(({ id, component: Component }) => {
+            if (activeTab !== id) return null;
+            return <Component key={id} />;
+          })}
+        </div>
+      </div>
+    </div>
   );
 };
 
