@@ -12,7 +12,11 @@ import {
   MessageSquare,
   Mail,
   MessageCircle,
-  Clock
+  Clock,
+  List,
+  UserCircle,
+  CheckCircle,
+  CheckCheck
 } from 'lucide-react';
 import { 
   Button,
@@ -40,6 +44,8 @@ import CreateDiscoveryNoteModal from './CreateDiscoveryNoteModal';
 import DiscoveryNotes from './DiscoveryNotes';
 import DiscoveryFlightChatModal from './DiscoveryFlightChatModal';
 import HorizontalReservationCalendar from '../reservations/HorizontalReservationCalendar';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, UserPlus, Plane } from 'lucide-react';
 
 interface DiscoveryFlightListProps {
   viewMode?: 'list' | 'planning';
@@ -49,6 +55,7 @@ const DiscoveryFlightList: React.FC<DiscoveryFlightListProps> = ({ viewMode = 'l
   const [selectedFlight, setSelectedFlight] = useState<DiscoveryFlight | null>(null);
   const [selectedChatFlight, setSelectedChatFlight] = useState<DiscoveryFlight | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showMyFlights, setShowMyFlights] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [discoveryFlightTypeId] = useState<string>('77777777-3333-3333-3333-333333333333');
   const [selectedNoteType, setSelectedNoteType] = useState<'CLIENT_COMMUNICATION' | 'INTERNAL' | null>(null);
@@ -315,156 +322,306 @@ Dates préférées : ${flight.preferred_dates}`;
   }
 
   return (
-    <div>
-      <div className="bg-white p-4 rounded-lg shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-          <div className="flex-grow space-y-4 w-full md:w-auto">
-            <input
-              type="text"
-              placeholder="Rechercher par email, téléphone..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <div className="flex gap-2 flex-wrap">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="w-full sm:w-auto space-y-2">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Rechercher par email, téléphone..."
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 placeholder-gray-400 transition-all duration-200"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+              </div>
+            </div>
+            {canAddFlight && (
               <Button
-                size="sm"
-                colorScheme={statusFilter === 'all' ? 'blue' : 'gray'}
-                onClick={() => setStatusFilter('all')}
+                leftIcon={<Plus className="h-5 w-5" />}
+                colorScheme="blue"
+                size="lg"
+                onClick={onNewFlightOpen}
+                className="w-full sm:w-auto shadow-sm hover:shadow-md transition-all duration-200"
               >
-                Tous
+                Nouveau vol découverte
+              </Button>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 flex-grow">
+              <Button
+                size="md"
+                variant={statusFilter === 'all' ? 'solid' : 'ghost'}
+                colorScheme="blue"
+                onClick={() => setStatusFilter('all')}
+                className={`whitespace-nowrap flex items-center gap-2 px-6 ${
+                  statusFilter === 'all' 
+                    ? 'shadow-md bg-blue-500 text-white hover:bg-blue-600' 
+                    : 'hover:bg-blue-50'
+                }`}
+                leftIcon={<List className={`h-4 w-4 ${statusFilter === 'all' ? 'text-white' : 'text-blue-500'}`} />}
+              >
+                Tous les vols
               </Button>
               <Button
-                size="sm"
-                colorScheme={statusFilter === 'REQUESTED' ? 'purple' : 'gray'}
+                size="md"
+                variant={statusFilter === 'REQUESTED' ? 'solid' : 'ghost'}
+                colorScheme="purple"
                 onClick={() => setStatusFilter('REQUESTED')}
+                className={`whitespace-nowrap flex items-center gap-2 px-6 ${
+                  statusFilter === 'REQUESTED' 
+                    ? 'shadow-md bg-purple-500 text-white hover:bg-purple-600' 
+                    : 'hover:bg-purple-50'
+                }`}
+                leftIcon={<Clock className={`h-4 w-4 ${statusFilter === 'REQUESTED' ? 'text-white' : 'text-purple-500'}`} />}
               >
+                <Badge 
+                  colorScheme="purple" 
+                  variant="solid"
+                  className={`ml-2 px-2.5 py-1 rounded-full font-semibold ${
+                    statusFilter === 'REQUESTED' 
+                      ? 'bg-white text-purple-500' 
+                      : 'bg-purple-500 text-white'
+                  }`}
+                >
+                  {flights?.filter(f => f.status === 'REQUESTED').length || 0}
+                </Badge>
                 Demandes reçues
               </Button>
               <Button
-                size="sm"
-                colorScheme={statusFilter === 'CONFIRMED' ? 'green' : 'gray'}
+                size="md"
+                variant={statusFilter === 'CONFIRMED' ? 'solid' : 'ghost'}
+                colorScheme="green"
                 onClick={() => setStatusFilter('CONFIRMED')}
+                className={`whitespace-nowrap flex items-center gap-2 px-6 ${
+                  statusFilter === 'CONFIRMED' 
+                    ? 'shadow-md bg-green-500 text-white hover:bg-green-600' 
+                    : 'hover:bg-green-50'
+                }`}
+                leftIcon={<CheckCircle className={`h-4 w-4 ${statusFilter === 'CONFIRMED' ? 'text-white' : 'text-green-500'}`} />}
               >
+                <Badge 
+                  colorScheme="green" 
+                  variant="solid"
+                  className={`ml-2 px-2.5 py-1 rounded-full font-semibold ${
+                    statusFilter === 'CONFIRMED' 
+                      ? 'bg-white text-green-500' 
+                      : 'bg-green-500 text-white'
+                  }`}
+                >
+                  {flights?.filter(f => f.status === 'CONFIRMED').length || 0}
+                </Badge>
                 Confirmés
               </Button>
               <Button
-                size="sm"
-                colorScheme={statusFilter === 'COMPLETED' ? 'blue' : 'gray'}
+                size="md"
+                variant={statusFilter === 'COMPLETED' ? 'solid' : 'ghost'}
+                colorScheme="blue"
                 onClick={() => setStatusFilter('COMPLETED')}
+                className={`whitespace-nowrap flex items-center gap-2 px-6 ${
+                  statusFilter === 'COMPLETED' 
+                    ? 'shadow-md bg-blue-500 text-white hover:bg-blue-600' 
+                    : 'hover:bg-blue-50'
+                }`}
+                leftIcon={<CheckCheck className={`h-4 w-4 ${statusFilter === 'COMPLETED' ? 'text-white' : 'text-blue-500'}`} />}
               >
+                <Badge 
+                  colorScheme="blue" 
+                  variant="solid"
+                  className={`ml-2 px-2.5 py-1 rounded-full font-semibold ${
+                    statusFilter === 'COMPLETED' 
+                      ? 'bg-white text-blue-500' 
+                      : 'bg-blue-500 text-white'
+                  }`}
+                >
+                  {flights?.filter(f => f.status === 'COMPLETED').length || 0}
+                </Badge>
                 Effectués
               </Button>
             </div>
+            
+            {hasAnyGroup(user, ['DISCOVERY_PILOT']) && (
+              <Button
+                size="md"
+                variant={showMyFlights ? 'solid' : 'ghost'}
+                colorScheme="orange"
+                onClick={() => setShowMyFlights(!showMyFlights)}
+                className={`whitespace-nowrap flex items-center gap-2 min-w-[200px] px-6 ${
+                  showMyFlights 
+                    ? 'shadow-md bg-orange-500 text-white hover:bg-orange-600' 
+                    : 'hover:bg-orange-50'
+                }`}
+                leftIcon={<UserCircle className={`h-4 w-4 ${showMyFlights ? 'text-white' : 'text-orange-500'}`} />}
+              >
+                <Badge 
+                  colorScheme="orange" 
+                  variant="solid"
+                  className={`ml-2 px-2.5 py-1 rounded-full font-semibold ${
+                    showMyFlights 
+                      ? 'bg-white text-orange-500' 
+                      : 'bg-orange-500 text-white'
+                  }`}
+                >
+                  {flights?.filter(f => f.pilot_id === user?.id).length || 0}
+                </Badge>
+                Mes vols
+              </Button>
+            )}
           </div>
-          {canAddFlight && (
-            <Button
-              leftIcon={<Plus className="h-5 w-5" />}
-              colorScheme="blue"
-              onClick={onNewFlightOpen}
-              className="w-full md:w-auto"
-            >
-              Nouveau vol découverte
-            </Button>
-          )}
         </div>
-      </div>
+      </motion.div>
 
       {viewMode === 'list' ? (
-        <div className="space-y-4">
-          {flights
-            ?.filter(flight => 
-              (statusFilter === 'all' || flight.status === statusFilter) &&
-              (searchTerm === '' || 
-                flight.contact_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                flight.contact_phone?.includes(searchTerm))
-            )
-            .map(flight => (
-              <div 
-                key={flight.id}
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-4 border border-transparent hover:border-blue-100"
-              >
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-col">
-                      <Text fontSize="lg" fontWeight="semibold">
-                        {flight.contact_email}
-                      </Text>
-                      <Text color="gray.600">
-                        {flight.contact_phone}
-                      </Text>
+        <AnimatePresence>
+          <div className="space-y-4">
+            {flights
+              ?.filter(flight => {
+                const statusMatch = statusFilter === 'all' || flight.status === statusFilter;
+                const searchMatch = searchTerm === '' || 
+                  flight.contact_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  flight.contact_phone?.includes(searchTerm);
+                const pilotMatch = !showMyFlights || flight.pilot_id === user?.id;
+                return statusMatch && searchMatch && pilotMatch;
+              })
+              .map((flight, index) => (
+                <motion.div
+                  key={flight.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.2, delay: index * 0.05 }}
+                  className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-4 sm:p-6 border ${
+                    flight.pilot_id === user?.id ? 'border-orange-200 bg-orange-50/30' : 'border-gray-100'
+                  }`}
+                >
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                              <Users className="h-5 w-5 text-blue-600" />
+                            </div>
+                          </div>
+                          <div>
+                            <Text fontSize="lg" fontWeight="semibold" className="truncate">
+                              {flight.contact_email}
+                            </Text>
+                            <Text color="gray.600" className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              {flight.contact_phone}
+                            </Text>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end">
+                        <Tooltip label="Conversation client">
+                          <IconButton
+                            aria-label="Conversation client"
+                            icon={<MessageCircle className="h-5 w-5" />}
+                            size="md"
+                            colorScheme="blue"
+                            variant="ghost"
+                            onClick={() => handleChatClick(flight)}
+                            className="hover:bg-blue-50"
+                          />
+                        </Tooltip>
+
+                        <Tooltip label="Notes privées">
+                          <IconButton
+                            aria-label="Ajouter une note privée"
+                            icon={<MessageSquare className="h-5 w-5" />}
+                            size="md"
+                            colorScheme="gray"
+                            variant="ghost"
+                            onClick={() => handleCreateNote(flight)}
+                            className="hover:bg-gray-50"
+                          />
+                        </Tooltip>
+
+                        {canAddFlight && !flight.pilot_id && (
+                          <Button
+                            size="md"
+                            colorScheme="blue"
+                            onClick={() => handleAssignClick(flight)}
+                            leftIcon={<UserPlus className="h-5 w-5" />}
+                            className="shadow-sm hover:shadow-md transition-all duration-200"
+                          >
+                            S'assigner
+                          </Button>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Tooltip label="Conversation client">
-                        <IconButton
-                          aria-label="Conversation client"
-                          icon={<MessageCircle />}
-                          size="sm"
-                          colorScheme="blue"
-                          variant="ghost"
-                          onClick={() => handleChatClick(flight)}
-                        />
-                      </Tooltip>
-
-                      <Tooltip label="Notes privées">
-                        <IconButton
-                          aria-label="Ajouter une note privée"
-                          icon={<MessageSquare />}
-                          size="sm"
-                          colorScheme="gray"
-                          variant="ghost"
-                          onClick={() => handleCreateNote(flight)}
-                        />
-                      </Tooltip>
-
-                      {canAddFlight && !flight.pilot_id && (
-                        <Button
-                          size="sm"
-                          colorScheme="blue"
-                          onClick={() => handleAssignClick(flight)}
-                        >
-                          S'assigner
-                        </Button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 bg-gray-50/80 p-3 rounded-lg">
+                        <Users className="h-5 w-5 text-gray-500" />
+                        <span>{flight.passenger_count} passager(s)</span>
+                      </div>
+                      {flight.preferred_dates && (
+                        <div className="flex items-center gap-2 bg-gray-50/80 p-3 rounded-lg">
+                          <Calendar className="h-5 w-5 text-gray-500" />
+                          <span className="truncate">Préférence : {flight.preferred_dates}</span>
+                        </div>
                       )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span>{flight.passenger_count} passager(s)</span>
-                    </div>
-                    {flight.preferred_dates && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>Préférence : {flight.preferred_dates}</span>
+                      {flight.pilot && (
+                        <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                          flight.pilot_id === user?.id ? 'bg-orange-100/50' : 'bg-gray-50/80'
+                        }`}>
+                          <Plane className={`h-5 w-5 ${
+                            flight.pilot_id === user?.id ? 'text-orange-500' : 'text-gray-500'
+                          }`} />
+                          <span className="truncate">
+                            Pilote : {flight.pilot.first_name} {flight.pilot.last_name}
+                            {flight.pilot_id === user?.id && " (Vous)"}
+                          </span>
+                        </div>
+                      )}
+                      <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                        getStatusColor(flight.status).bgColor
+                      }`}>
+                        {getStatusIcon(flight.status)}
+                        <span className="truncate font-medium">
+                          {getStatusLabel(flight.status)}
+                        </span>
                       </div>
-                    )}
-                    {flight.pilot && (
-                      <div className="flex items-center gap-1">
-                        <span>Pilote : {flight.pilot.first_name} {flight.pilot.last_name}</span>
-                      </div>
+                    </div>
+
+                    {notesMap?.get(flight.id)?.length > 0 && (
+                      <motion.div
+                        initial={false}
+                        animate={{ height: expandedNotes[flight.id] ? 'auto' : '0' }}
+                        className="overflow-hidden"
+                      >
+                        <DiscoveryNotes
+                          flight={flight}
+                          notes={notesMap.get(flight.id) || []}
+                          expanded={expandedNotes[flight.id]}
+                          onToggleExpand={() => setExpandedNotes(prev => ({
+                            ...prev,
+                            [flight.id]: !prev[flight.id]
+                          }))}
+                        />
+                      </motion.div>
                     )}
                   </div>
-
-                  {notesMap?.get(flight.id)?.length > 0 && (
-                    <DiscoveryNotes
-                      flight={flight}
-                      notes={notesMap.get(flight.id) || []}
-                      expanded={expandedNotes[flight.id]}
-                      onToggleExpand={() => setExpandedNotes(prev => ({
-                        ...prev,
-                        [flight.id]: !prev[flight.id]
-                      }))}
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
-        </div>
+                </motion.div>
+              ))}
+          </div>
+        </AnimatePresence>
       ) : (
-        <div className="mt-4">
+        <div className="mt-4 bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
           <HorizontalReservationCalendar
             reservationType="discovery"
             showAddButton={false}
@@ -477,12 +634,15 @@ Dates préférées : ${flight.preferred_dates}`;
       )}
 
       {flights?.length === 0 && (
-        <div className="text-center py-12">
-          <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-          <p className="text-slate-600">Aucun vol découverte à venir</p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100"
+        >
+          <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <Text fontSize="lg" color="gray.600">Aucun vol découverte à venir</Text>
+        </motion.div>
       )}
-
       {/* Modal de création d'un nouveau vol */}
       <NewDiscoveryFlightModal 
         isOpen={isNewFlightOpen} 
@@ -533,6 +693,45 @@ Dates préférées : ${flight.preferred_dates}`;
       )}
     </div>
   );
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'REQUESTED':
+      return { bgColor: 'bg-purple-50', textColor: 'text-purple-600' };
+    case 'CONFIRMED':
+      return { bgColor: 'bg-green-50', textColor: 'text-green-600' };
+    case 'COMPLETED':
+      return { bgColor: 'bg-blue-50', textColor: 'text-blue-600' };
+    default:
+      return { bgColor: 'bg-gray-50', textColor: 'text-gray-600' };
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'REQUESTED':
+      return 'Demande reçue';
+    case 'CONFIRMED':
+      return 'Confirmé';
+    case 'COMPLETED':
+      return 'Effectué';
+    default:
+      return status;
+  }
+};
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'REQUESTED':
+      return <Clock className="h-5 w-5 text-purple-500" />;
+    case 'CONFIRMED':
+      return <CheckCircle className="h-5 w-5 text-green-500" />;
+    case 'COMPLETED':
+      return <CheckCheck className="h-5 w-5 text-blue-500" />;
+    default:
+      return null;
+  }
 };
 
 export default DiscoveryFlightList;
