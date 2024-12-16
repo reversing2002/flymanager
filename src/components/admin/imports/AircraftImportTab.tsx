@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Upload, AlertTriangle } from "lucide-react";
 import { toast } from "react-hot-toast";
 import {
@@ -7,8 +7,13 @@ import {
   type AircraftPreview,
 } from "../../../lib/aircraftCsvParser";
 import AircraftImportPreview from "../AircraftImportPreview";
+import AircraftCsvMapping from "../AircraftCsvMapping";
+import AircraftJsonTab from "./AircraftJsonTab";
+
+type ImportTab = 'csv' | 'json';
 
 const AircraftImportTab = () => {
+  const [activeTab, setActiveTab] = useState<ImportTab>('csv');
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -16,6 +21,34 @@ const AircraftImportTab = () => {
   const [csvContent, setCsvContent] = useState<string | null>(null);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvFirstRow, setCsvFirstRow] = useState<string[]>([]);
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
+
+  // Définition des champs requis pour l'import
+  const REQUIRED_FIELDS = {
+    name: "Nom",
+    registration: "Immatriculation",
+    type: "Type d'appareil",
+    status: "Statut",
+    hourly_rate: "Tarif horaire",
+    hours_before_maintenance: "Heures avant maintenance",
+    total_hours: "Heures totales",
+    last_maintenance: "Dernière maintenance",
+    next_maintenance_date: "Prochaine maintenance"
+  };
+
+  // Mettre à jour la prévisualisation quand le mapping change
+  useEffect(() => {
+    if (csvContent && Object.keys(columnMapping).length > 0) {
+      try {
+        const preview = parseAircraftCsv(csvContent, columnMapping);
+        setPreviewData(preview);
+        setError(null);
+      } catch (e) {
+        setError((e as Error).message);
+        setPreviewData(null);
+      }
+    }
+  }, [csvContent, columnMapping]);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -28,6 +61,7 @@ const AircraftImportTab = () => {
     setPreviewData(null);
     setCsvHeaders([]);
     setCsvFirstRow([]);
+    setColumnMapping({});
 
     try {
       const text = await file.text();
@@ -44,63 +78,46 @@ const AircraftImportTab = () => {
       }
       setCsvHeaders(headers);
       
-      // Extraire la première ligne de données pour les exemples
       const firstDataRow = lines[1].split(";").map(cell => cell.trim());
-      if (firstDataRow.length !== headers.length) {
-        throw new Error("Le nombre de colonnes dans les données ne correspond pas aux en-têtes");
-      }
       setCsvFirstRow(firstDataRow);
-      
-    } catch (err) {
-      console.error("Preview error:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erreur lors de la prévisualisation"
-      );
-      toast.error("Erreur lors de la prévisualisation");
-    } finally {
-      if (event.target) {
-        event.target.value = "";
-      }
+
+    } catch (e) {
+      setError((e as Error).message);
     }
   };
 
-  const handleMappingConfirm = (mapping: Record<string, string>) => {
-    if (!csvContent) return;
-
-    try {
-      const preview = parseAircraftCsv(csvContent, mapping);
-      setPreviewData(preview);
-    } catch (err) {
-      console.error("Mapping error:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erreur lors du mapping des colonnes"
-      );
-      toast.error("Erreur lors du mapping des colonnes");
-    }
+  const handleColumnMappingChange = (field: string, header: string) => {
+    setColumnMapping(prev => ({
+      ...prev,
+      [field]: header
+    }));
   };
 
-  const handleImportConfirm = async () => {
+  const handleImport = async () => {
     if (!previewData) return;
+
+    // Vérifier que tous les champs requis sont mappés
+    const requiredFields = ['name', 'registration', 'type', 'status', 'hourly_rate'];
+    const missingFields = requiredFields.filter(
+      field => !columnMapping[field]
+    );
+
+    if (missingFields.length > 0) {
+      setError(`Veuillez mapper tous les champs requis : ${missingFields.map(f => REQUIRED_FIELDS[f as keyof typeof REQUIRED_FIELDS]).join(", ")}`);
+      return;
+    }
 
     setImporting(true);
     try {
       await importAircraft(previewData);
       setSuccess("Import réussi !");
-      setPreviewData(null);
       setCsvContent(null);
+      setPreviewData(null);
       setCsvHeaders([]);
       setCsvFirstRow([]);
-      toast.success("Import réussi !");
-    } catch (err) {
-      console.error("Import error:", err);
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de l'import"
-      );
-      toast.error("Erreur lors de l'import");
+      setColumnMapping({});
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
       setImporting(false);
     }
@@ -108,53 +125,104 @@ const AircraftImportTab = () => {
 
   return (
     <div className="space-y-4">
-      {/* Section d'upload */}
-      <div className="flex items-center justify-center w-full">
-        <label
-          htmlFor="dropzone-file"
-          className="flex flex-col items-center justify-center w-full h-64 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100"
-        >
-          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-            <Upload className="w-10 h-10 mb-3 text-slate-400" />
-            <p className="mb-2 text-sm text-slate-500">
-              <span className="font-semibold">Cliquez pour uploader</span> ou
-              glissez-déposez
-            </p>
-            <p className="text-xs text-slate-500">CSV (séparé par des points-virgules)</p>
-          </div>
-          <input
-            id="dropzone-file"
-            type="file"
-            className="hidden"
-            accept=".csv"
-            onChange={handleFileUpload}
-            disabled={importing}
-          />
-        </label>
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          <button
+            onClick={() => setActiveTab('csv')}
+            className={`
+              ${activeTab === 'csv'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }
+              whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
+            `}
+          >
+            Import CSV
+          </button>
+          <button
+            onClick={() => setActiveTab('json')}
+            className={`
+              ${activeTab === 'json'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }
+              whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
+            `}
+          >
+            Import/Export JSON
+          </button>
+        </nav>
       </div>
 
-      {/* Messages d'erreur/succès */}
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-600">{error}</p>
-        </div>
-      )}
-      {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-sm text-green-600">{success}</p>
-        </div>
-      )}
+      {activeTab === 'csv' ? (
+        <>
+          <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg border-gray-300 bg-gray-50">
+            <Upload className="w-12 h-12 mb-4 text-gray-400" />
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
 
-      {/* Aperçu */}
-      {csvHeaders.length > 0 && (
-        <AircraftImportPreview
-          data={previewData || []}
-          csvHeaders={csvHeaders}
-          csvFirstRow={csvFirstRow}
-          onConfirm={previewData ? handleImportConfirm : handleMappingConfirm}
-          disabled={importing}
-        />
+          {error && (
+            <div className="p-4 rounded-lg bg-red-50 text-red-700 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="p-4 rounded-lg bg-green-50 text-green-700">
+              {success}
+            </div>
+          )}
+
+          {csvHeaders.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Mapping des colonnes</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(REQUIRED_FIELDS).map(([field, label]) => (
+                  <div key={field} className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {label}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={columnMapping[field] || ""}
+                      onChange={(e) => handleColumnMappingChange(field, e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">Sélectionner une colonne</option>
+                      {csvHeaders.map((header, index) => (
+                        <option key={header} value={header}>
+                          {header} {csvFirstRow[index] ? `(ex: ${csvFirstRow[index]})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {previewData && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Prévisualisation</h3>
+              <AircraftImportPreview data={previewData} />
+              <button
+                onClick={handleImport}
+                disabled={importing}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {importing ? "Import en cours..." : "Importer les données"}
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <AircraftJsonTab />
       )}
     </div>
   );

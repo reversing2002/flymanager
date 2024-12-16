@@ -80,7 +80,11 @@ type Props = {
   onMappingChange: (mapping: Record<string, string>) => void;
 };
 
-const AircraftCsvMapping = ({ csvHeaders, csvFirstRow, onMappingChange }: Props) => {
+const AircraftCsvMapping = ({ 
+  csvHeaders = [], 
+  csvFirstRow = [], 
+  onMappingChange 
+}: Props) => {
   const [mapping, setMapping] = useState<Record<string, string>>({});
 
   const handleMappingChange = (fieldName: string, csvColumn: string) => {
@@ -100,7 +104,7 @@ const AircraftCsvMapping = ({ csvHeaders, csvFirstRow, onMappingChange }: Props)
       </div>
 
       {/* Affichage des colonnes disponibles */}
-      {csvHeaders.length > 0 && csvFirstRow?.length > 0 && (
+      {csvHeaders.length > 0 && (
         <div className="bg-slate-50 p-4 rounded-lg mb-4">
           <h4 className="text-sm font-medium text-slate-700 mb-2">Colonnes disponibles dans votre CSV :</h4>
           <div className="flex flex-wrap gap-2">
@@ -119,70 +123,36 @@ const AircraftCsvMapping = ({ csvHeaders, csvFirstRow, onMappingChange }: Props)
       )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Champ
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Description
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Format Attendu
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Exemple Attendu
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Colonne CSV
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Exemple de vos données
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
-            {AIRCRAFT_FIELDS.map((field) => (
-              <tr key={field.fieldName} className={mapping[field.fieldName] ? 'bg-blue-50' : ''}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                  {field.fieldName} {field.required && <span className="text-red-500">*</span>}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+        <div className="grid gap-6 p-6">
+          {AIRCRAFT_FIELDS.map((field) => (
+            <div key={field.fieldName} className="space-y-2">
+              <label className="flex items-baseline gap-2">
+                <span className="block text-sm font-medium text-gray-700">
                   {field.description}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                  {field.format}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                  {field.example}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                  <select
-                    className="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    value={mapping[field.fieldName] || ''}
-                    onChange={(e) => handleMappingChange(field.fieldName, e.target.value)}
-                  >
-                    <option value="">Sélectionner une colonne</option>
-                    {csvHeaders.map((header, index) => (
-                      <option key={header} value={header}>
-                        {header}
-                        {csvFirstRow?.[index] && ` (ex: ${csvFirstRow[index]})`}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                  {mapping[field.fieldName] && csvFirstRow && (
-                    <span className="font-mono bg-slate-100 px-2 py-1 rounded">
-                      {csvFirstRow[csvHeaders.indexOf(mapping[field.fieldName])]}
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                </span>
+                <span className="text-xs text-gray-500">({field.format})</span>
+              </label>
+              
+              <select
+                value={mapping[field.fieldName] || ''}
+                onChange={(e) => handleMappingChange(field.fieldName, e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              >
+                <option value="">Sélectionner une colonne</option>
+                {csvHeaders.map((header) => (
+                  <option key={header} value={header}>
+                    {header}
+                  </option>
+                ))}
+              </select>
+
+              <p className="text-xs text-gray-500">
+                Exemple : {field.example}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

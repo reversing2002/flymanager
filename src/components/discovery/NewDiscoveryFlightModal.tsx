@@ -1,31 +1,9 @@
 import { useForm } from 'react-hook-form';
-import { X, AlertTriangle } from 'lucide-react';
-import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  FormErrorMessage,
-  Stack,
-  useToast,
-  FormHelperText,
-  useDisclosure,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
-  Box
-} from '@chakra-ui/react';
+import { X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
-import { stripePromise } from '../../lib/stripe';
-import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 interface NewDiscoveryFlightModalProps {
   isOpen?: boolean;
@@ -40,7 +18,6 @@ interface FormData {
   total_weight: number;
   preferred_dates?: string;
   comments?: string;
-  club_id: string;
 }
 
 const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({ 
@@ -48,297 +25,167 @@ const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({
   onClose: propOnClose,
   isPublic = false 
 }) => {
-  const { isOpen: defaultIsOpen, onClose: defaultOnClose } = useDisclosure({ defaultIsOpen: isPublic });
-  const isOpen = propIsOpen ?? defaultIsOpen;
-  const onClose = propOnClose ?? defaultOnClose;
-  const [searchParams] = useSearchParams();
-  const clubIdFromUrl = searchParams.get('club');
-
-  const { data: club, isLoading: isLoadingClub, error: clubError } = useQuery({
-    queryKey: ['club', clubIdFromUrl],
-    queryFn: async () => {
-      if (!clubIdFromUrl) return null;
-      const { data, error } = await supabase
-        .from('clubs')
-        .select('*')
-        .eq('id', clubIdFromUrl)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!clubIdFromUrl
-  });
-
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-    setValue
-  } = useForm<FormData>({
-    defaultValues: {
-      club_id: clubIdFromUrl || ''
-    }
-  });
-  
+    formState: { errors },
+    reset
+  } = useForm<FormData>();
+
   const queryClient = useQueryClient();
-  const toast = useToast();
+  const { user } = useAuth();
 
-  // Si le club n'existe pas et qu'on a fini de charger, afficher une erreur
-  if (!isLoadingClub && clubIdFromUrl && !club) {
-    return (
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
-        <ModalOverlay className="bg-black/50" />
-        <ModalContent maxW="2xl" className="bg-white rounded-xl shadow-xl">
-          <ModalHeader className="text-red-600">
-            Club non trouvé
-          </ModalHeader>
-          <div className="p-6">
-            <Alert status="error" variant="subtle" flexDirection="column" alignItems="center" justifyContent="center" textAlign="center" height="200px">
-              <AlertIcon boxSize="40px" mr={0} />
-              <AlertTitle mt={4} mb={1} fontSize="lg">
-                Club introuvable
-              </AlertTitle>
-              <AlertDescription maxWidth="sm">
-                Le club spécifié n'existe pas. Veuillez vérifier le lien ou contacter l'administrateur.
-              </AlertDescription>
-            </Alert>
-          </div>
-        </ModalContent>
-      </Modal>
-    );
-  }
-
-  // Si on est en train de charger, afficher un loader
-  if (isLoadingClub) {
-    return (
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
-        <ModalOverlay className="bg-black/50" />
-        <ModalContent maxW="2xl" className="bg-white rounded-xl shadow-xl">
-          <ModalHeader>
-            Chargement...
-          </ModalHeader>
-          <div className="p-6 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
-          </div>
-        </ModalContent>
-      </Modal>
-    );
+  if (!user?.club?.id) {
+    console.error('No club associated with user');
+    return null;
   }
 
   const onSubmit = async (data: FormData) => {
     try {
-      // Créer la réservation dans Supabase
-      const { data: flightData, error: flightError } = await supabase
+      const { error } = await supabase
         .from('discovery_flights')
-        .insert([
-          {
-            contact_email: data.contact_email,
-            contact_phone: data.contact_phone,
-            passenger_count: data.passenger_count,
-            total_weight: data.total_weight,
-            preferred_dates: data.preferred_dates,
-            comments: data.comments,
-            club_id: data.club_id,
-            status: 'PENDING'
-          }
-        ])
-        .select()
-        .single();
+        .insert([{
+          ...data,
+          club_id: user.club.id,
+          status: 'PENDING'
+        }]);
 
-      if (flightError) throw flightError;
+      if (error) throw error;
 
-      // Créer une conversation Twilio pour ce vol
-      const conversationResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/conversations/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          flightId: flightData.id,
-          customerPhone: data.contact_phone,
-        }),
-      });
-
-      if (!conversationResponse.ok) {
-        const errorData = await conversationResponse.json().catch(() => ({}));
-        console.error('Erreur lors de la création de la conversation:', errorData);
-      }
-
-      // Créer la session de paiement Stripe
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error('Stripe n\'est pas initialisé');
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stripe/create-discovery-flight-session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          flightId: flightData.id,
-          customerEmail: data.contact_email,
-          customerPhone: data.contact_phone,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Erreur lors de la création de la session: ${errorData.error || response.statusText}`);
-      }
-
-      const session = await response.json();
-
-      // Rediriger vers la page de paiement Stripe
-      const result = await stripe.redirectToCheckout({
-        sessionId: session.id,
-      });
-
-      if (result.error) {
-        throw new Error(result.error.message);
-      }
-
-    } catch (error) {
-      console.error('Erreur:', error);
-      toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Une erreur est survenue lors de la réservation',
-        status: 'error',
-        duration: 5000,
-      });
-    } finally {
+      toast.success('Vol de découverte créé avec succès');
       reset();
-      onClose();
+      if (propOnClose) propOnClose();
+      queryClient.invalidateQueries(['discovery_flights']);
+    } catch (error) {
+      console.error('Error creating discovery flight:', error);
+      toast.error('Erreur lors de la création du vol de découverte');
     }
   };
 
+  if (!propIsOpen) return null;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
-      <ModalOverlay className="bg-black/50" />
-      <ModalContent maxW="2xl" className="bg-white rounded-xl shadow-xl">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader>
-            {isPublic ? 'Réserver un vol découverte' : 'Nouveau vol découverte'}
-          </ModalHeader>
-          {!isPublic && <ModalCloseButton />}
-          <div className="p-6 space-y-6">
-            <FormControl isInvalid={!!errors.contact_email}>
-              <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
-                Email
-              </FormLabel>
-              <Input
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                {...register('contact_email', {
-                  required: 'L\'email est requis',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Email invalide'
-                  }
-                })}
-              />
-              <FormErrorMessage>
-                {errors.contact_email?.message}
-              </FormErrorMessage>
-            </FormControl>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={propOnClose} />
+      
+      <div className="relative z-50 w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Nouveau Vol de Découverte</h2>
+          <button
+            onClick={propOnClose}
+            className="rounded-full p-2 hover:bg-gray-100 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-            <FormControl isInvalid={!!errors.contact_phone}>
-              <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
-                Téléphone
-              </FormLabel>
-              <Input
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                {...register('contact_phone', {
-                  required: 'Le téléphone est requis'
-                })}
-              />
-              <FormErrorMessage>
-                {errors.contact_phone?.message}
-              </FormErrorMessage>
-            </FormControl>
-
-            <FormControl isInvalid={!!errors.passenger_count}>
-              <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
-                Nombre de passagers
-              </FormLabel>
-              <Input
-                type="number"
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                {...register('passenger_count', {
-                  required: 'Le nombre de passagers est requis',
-                  min: { value: 1, message: 'Minimum 1 passager' },
-                  max: { value: 3, message: 'Maximum 3 passagers' }
-                })}
-              />
-              <FormHelperText className="mt-2 text-sm text-slate-600">
-                Maximum 3 passagers selon l'avion
-              </FormHelperText>
-              <FormErrorMessage>
-                {errors.passenger_count?.message}
-              </FormErrorMessage>
-            </FormControl>
-
-            <FormControl isInvalid={!!errors.total_weight}>
-              <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
-                Poids total des passagers (kg)
-              </FormLabel>
-              <Input
-                type="number"
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                {...register('total_weight', {
-                  required: 'Le poids total est requis',
-                  min: { value: 30, message: 'Le poids doit être d\'au moins 30kg' },
-                  max: { value: 300, message: 'Le poids total ne peut pas dépasser 300kg' }
-                })}
-              />
-              <FormHelperText className="mt-2 text-sm text-slate-600">
-                Poids total de tous les passagers
-              </FormHelperText>
-              <FormErrorMessage>
-                {errors.total_weight?.message}
-              </FormErrorMessage>
-            </FormControl>
-
-            <FormControl>
-              <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
-                Dates souhaitées
-              </FormLabel>
-              <Input
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                {...register('preferred_dates')}
-                placeholder="Ex: Week-end, mercredi après-midi..."
-              />
-              <FormHelperText className="mt-2 text-sm text-slate-600">
-                Indiquez vos disponibilités
-              </FormHelperText>
-            </FormControl>
-
-            <FormControl>
-              <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
-                Commentaires
-              </FormLabel>
-              <Input
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                {...register('comments')}
-                placeholder="Informations complémentaires..."
-              />
-            </FormControl>
-
-            <input type="hidden" {...register('club_id', { required: true })} />
-          </div>
-
-          <div className="flex justify-end space-x-4 p-6 border-t">
-            <Button colorScheme="blue" type="submit" isLoading={isSubmitting}>
-              {isPublic ? 'Envoyer ma demande' : 'Créer le vol découverte'}
-            </Button>
-            {!isPublic && (
-              <Button variant="ghost" onClick={onClose}>
-                Annuler
-              </Button>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email de contact
+            </label>
+            <input
+              {...register('contact_email', { required: 'Email requis' })}
+              type="email"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+            {errors.contact_email && (
+              <p className="mt-1 text-sm text-red-600">{errors.contact_email.message}</p>
             )}
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Téléphone de contact
+            </label>
+            <input
+              {...register('contact_phone', { required: 'Téléphone requis' })}
+              type="tel"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+            {errors.contact_phone && (
+              <p className="mt-1 text-sm text-red-600">{errors.contact_phone.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre de passagers
+            </label>
+            <input
+              {...register('passenger_count', { 
+                required: 'Nombre de passagers requis',
+                min: { value: 1, message: 'Minimum 1 passager' },
+                max: { value: 3, message: 'Maximum 3 passagers' }
+              })}
+              type="number"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+            {errors.passenger_count && (
+              <p className="mt-1 text-sm text-red-600">{errors.passenger_count.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Poids total (kg)
+            </label>
+            <input
+              {...register('total_weight', { 
+                required: 'Poids total requis',
+                min: { value: 30, message: 'Poids minimum 30kg' },
+                max: { value: 300, message: 'Poids maximum 300kg' }
+              })}
+              type="number"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+            {errors.total_weight && (
+              <p className="mt-1 text-sm text-red-600">{errors.total_weight.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Dates préférées
+            </label>
+            <input
+              {...register('preferred_dates')}
+              type="text"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              placeholder="Ex: Week-end, matinée..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Commentaires
+            </label>
+            <textarea
+              {...register('comments')}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              rows={3}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={propOnClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+            >
+              Créer
+            </button>
+          </div>
         </form>
-      </ModalContent>
-    </Modal>
+      </div>
+    </div>
   );
-}
+};
 
 export default NewDiscoveryFlightModal;
