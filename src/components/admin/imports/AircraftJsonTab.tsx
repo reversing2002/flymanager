@@ -83,27 +83,11 @@ const AircraftJsonTab = () => {
   const [duplicateHandling, setDuplicateHandling] = useState<'replace' | 'skip'>('skip');
 
   const formatJsonWithHighlight = (json: any): string => {
-    const jsonString = JSON.stringify(json, null, 2);
-    const lines = jsonString.split('\n');
-    
-    return lines.map(line => {
-      // Vérifier si la ligne contient un champ requis
-      const isRequiredField = REQUIRED_FIELDS.some(field => 
-        line.trim().startsWith(`"${field}":`));
-      
-      if (isRequiredField) {
-        return line.replace(
-          /^(\s*)"([^"]+)": (.*)/,
-          '$1<span class="text-blue-600 font-bold">"$2"</span>: <span class="text-blue-600">$3</span>'
-        );
-      }
-      // Mettre en évidence les commentaires
-      if (line.includes('//')) {
-        const [code, comment] = line.split('//');
-        return `${code}<span class="text-gray-500">//${comment}</span>`;
-      }
-      return line;
-    }).join('\n');
+    const jsonStr = JSON.stringify(json, null, 2);
+    return jsonStr
+      .replace(/"([^"]+)":/g, '<span class="text-blue-600">"$1"</span>:')
+      .replace(/: (".*?")/g, ': <span class="text-green-600">$1</span>')
+      .replace(/: (\d+\.?\d*)/g, ': <span class="text-purple-600">$1</span>');
   };
 
   const validateField = (field: string, value: any, index: number): void => {
@@ -293,106 +277,97 @@ const AircraftJsonTab = () => {
     }
   };
 
+  const handleExampleDownload = () => {
+    const jsonStr = JSON.stringify(EXAMPLE_JSON, null, 2);
+    setJsonContent(jsonStr);
+    toast.success('Exemple chargé');
+  };
+
   const handleCopyExample = () => {
-    const formatted = JSON.stringify(EXAMPLE_JSON, null, 2);
-    setJsonContent(formatted);
-    navigator.clipboard.writeText(formatted).then(() => {
-      toast.success('Exemple copié dans le presse-papiers', {
-        icon: <Copy className="h-4 w-4" />,
-        duration: 2000,
-      });
+    const jsonStr = JSON.stringify(EXAMPLE_JSON, null, 2);
+    navigator.clipboard.writeText(jsonStr).then(() => {
+      toast.success('Exemple copié dans le presse-papier');
     });
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Import/Export JSON</h3>
-        <div className="space-x-2">
+    <div className="space-y-6">
+      {/* En-tête avec les boutons d'action */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handleExampleDownload}
+            className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Charger l'exemple
+          </button>
           <button
             onClick={handleCopyExample}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <Copy className="h-4 w-4 mr-2" />
+            <Copy className="w-4 h-4 mr-2" />
             Copier l'exemple
           </button>
+        </div>
+
+        {/* Options d'import */}
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center space-x-2 text-sm text-gray-600">
+            <span>Doublons :</span>
+            <select
+              value={duplicateHandling}
+              onChange={(e) => setDuplicateHandling(e.target.value as 'replace' | 'skip')}
+              className="px-2 py-1 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="skip">Ignorer</option>
+              <option value="replace">Remplacer</option>
+            </select>
+          </label>
+
           <button
-            onClick={handleExport}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={handleImport}
+            disabled={importing || !jsonContent}
+            className={`flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
+              importing || !jsonContent
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-sky-500 hover:bg-sky-600'
+            }`}
           >
-            <Download className="h-4 w-4 mr-2" />
-            Exporter
+            <Upload className="w-4 h-4 mr-2" />
+            {importing ? 'Import en cours...' : 'Importer'}
           </button>
         </div>
       </div>
 
-      <div className="bg-gray-50 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <p className="text-sm text-gray-600">
-            Format JSON attendu
-          </p>
-          <div className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded font-medium">
-            Champs en bleu = requis
-          </div>
-          <div className="text-xs px-2 py-1 bg-gray-100 text-gray-800 rounded">
-            Autres champs = optionnels ou avec valeurs par défaut
-          </div>
-        </div>
-        <pre 
-          className="bg-white p-4 rounded border border-gray-200 text-sm font-mono overflow-auto whitespace-pre"
-          dangerouslySetInnerHTML={{ __html: formatJsonWithHighlight(EXAMPLE_JSON) }}
-        />
-      </div>
-
+      {/* Zone de texte JSON */}
       <div className="space-y-2">
-        <label htmlFor="json-content" className="block text-sm font-medium text-gray-700">
-          Contenu JSON
+        <label className="block text-sm font-medium text-gray-700">
+          JSON des aéronefs à importer
         </label>
         <textarea
-          id="json-content"
-          rows={10}
-          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md font-mono"
           value={jsonContent}
           onChange={(e) => setJsonContent(e.target.value)}
+          className="w-full h-[500px] p-4 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-shadow"
           placeholder="Collez votre JSON ici..."
         />
       </div>
 
-      <div className="flex items-center space-x-4">
-        <label className="text-sm font-medium text-gray-700">
-          En cas de doublon d'immatriculation :
-        </label>
-        <select
-          value={duplicateHandling}
-          onChange={(e) => setDuplicateHandling(e.target.value as 'replace' | 'skip')}
-          className="mt-1 block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-        >
-          <option value="skip">Ignorer</option>
-          <option value="replace">Remplacer</option>
-        </select>
-      </div>
-
+      {/* Messages d'erreur et de succès */}
       {error && (
-        <div className="p-4 rounded-lg bg-red-50 text-red-700 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" />
-          {error}
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start">
+            <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+            <pre className="text-sm text-red-700 whitespace-pre-wrap font-mono">{error}</pre>
+          </div>
         </div>
       )}
 
       {success && (
-        <div className="p-4 rounded-lg bg-green-50 text-green-700">
-          {success}
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <pre className="text-sm text-green-700 whitespace-pre-wrap font-mono">{success}</pre>
         </div>
       )}
-
-      <button
-        onClick={handleImport}
-        disabled={importing || !jsonContent.trim()}
-        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-      >
-        <Upload className="h-4 w-4 mr-2" />
-        {importing ? 'Import en cours...' : 'Importer'}
-      </button>
     </div>
   );
 };
