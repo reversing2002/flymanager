@@ -1,5 +1,5 @@
 -- Create get_financial_stats function
-CREATE OR REPLACE FUNCTION public.get_financial_stats()
+CREATE OR REPLACE FUNCTION public.get_financial_stats(start_date timestamp with time zone, end_date timestamp with time zone)
 RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -7,59 +7,131 @@ AS $$
 DECLARE
     result json;
 BEGIN
-    WITH revenue_by_type AS (
-        SELECT 
-            aet.code as type,
-            aet.name as type_name,
-            SUM(ae.amount) as total
-        FROM account_entries ae
-        JOIN account_entry_types aet ON ae.entry_type_id = aet.id
-        WHERE ae.created_at >= NOW() - INTERVAL '12 months'
-        AND aet.is_credit = true
-        GROUP BY aet.code, aet.name
+    WITH RECURSIVE months AS (
+        SELECT date_trunc('month', start_date) as month
+        UNION ALL
+        SELECT date_trunc('month', month + interval '1 month')
+        FROM months
+        WHERE month < date_trunc('month', end_date)
     ),
-    monthly_revenue AS (
-        SELECT 
-            date_trunc('month', ae.created_at) as month,
-            aet.code as type,
-            SUM(ae.amount) as total
+    monthly_stats AS (
+        SELECT
+            m.month,
+            COALESCE(SUM(CASE 
+                WHEN aet.is_credit THEN ae.amount 
+                ELSE 0 
+            END), 0) AS revenue,
+            COALESCE(SUM(CASE 
+                WHEN NOT aet.is_credit THEN ae.amount
+                ELSE 0 
+            END), 0) AS expenses
+        FROM months m
+        LEFT JOIN account_entries ae ON date_trunc('month', ae.date) = m.month
+            AND ae.is_validated = true
+        LEFT JOIN account_entry_types aet ON ae.entry_type_id = aet.id
+        GROUP BY m.month
+    ),
+    payment_methods AS (
+        SELECT
+            ae.payment_method,
+            COUNT(*) as count,
+            SUM(CASE 
+                WHEN aet.is_credit THEN ae.amount
+                ELSE -ae.amount
+            END) as total
         FROM account_entries ae
-        JOIN account_entry_types aet ON ae.entry_type_id = aet.id
-        WHERE ae.created_at >= NOW() - INTERVAL '12 months'
-        AND aet.is_credit = true
-        GROUP BY date_trunc('month', ae.created_at), aet.code
-        ORDER BY month DESC
+        LEFT JOIN account_entry_types aet ON ae.entry_type_id = aet.id
+        WHERE ae.date BETWEEN start_date AND end_date
+        AND ae.is_validated = true
+        GROUP BY ae.payment_method
+    ),
+    entry_types AS (
+        SELECT
+            aet.code,
+            aet.name,
+            aet.is_credit,
+            COUNT(*) as count,
+            SUM(ae.amount) as total,
+            MIN(ae.amount) as min_amount,
+            MAX(ae.amount) as max_amount
+        FROM account_entries ae
+        LEFT JOIN account_entry_types aet ON ae.entry_type_id = aet.id
+        WHERE ae.date BETWEEN start_date AND end_date
+        AND ae.is_validated = true
+        GROUP BY aet.code, aet.name, aet.is_credit
     )
     SELECT json_build_object(
-        'total_revenue', (
-            SELECT SUM(total)
-            FROM revenue_by_type
-        ),
-        'revenue_by_type', (
+        'total_revenue', COALESCE((
+            SELECT SUM(revenue)
+            FROM monthly_stats
+        ), 0),
+        'total_expenses', COALESCE((
+            SELECT SUM(expenses)
+            FROM monthly_stats
+        ), 0),
+        'monthly_stats', COALESCE((
             SELECT json_agg(
                 json_build_object(
-                    'type', type,
-                    'name', type_name,
-                    'total', total
+                    'month', trim(to_char(month, 'Month YYYY')),
+                    'revenue', revenue,
+                    'expenses', expenses,
+                    'total', revenue + expenses
                 )
+                ORDER BY month DESC
             )
-            FROM revenue_by_type
-        ),
-        'monthly_revenue', (
+            FROM monthly_stats
+        ), '[]'::json),
+        'payment_methods', COALESCE((
             SELECT json_agg(
                 json_build_object(
-                    'month', to_char(month, 'YYYY-MM'),
-                    'type', type,
+                    'method', payment_method,
+                    'count', count,
                     'total', total
                 )
+                ORDER BY payment_method
             )
-            FROM monthly_revenue
-        )
+            FROM payment_methods
+        ), '[]'::json),
+        'entry_types', COALESCE((
+            SELECT json_agg(
+                json_build_object(
+                    'code', code,
+                    'name', name,
+                    'is_credit', is_credit,
+                    'count', count,
+                    'total', total,
+                    'min_amount', min_amount,
+                    'max_amount', max_amount
+                )
+                ORDER BY is_credit DESC, total DESC
+            )
+            FROM entry_types
+        ), '[]'::json)
     ) INTO result;
 
     RETURN result;
 END;
 $$;
+
+-- Requête de debug pour comprendre les montants
+WITH debug_stats AS (
+    SELECT 
+        aet.code,
+        aet.name,
+        aet.is_credit,
+        COUNT(*) as count,
+        SUM(ae.amount) as total,
+        MIN(ae.amount) as min_amount,
+        MAX(ae.amount) as max_amount
+    FROM account_entries ae
+    LEFT JOIN account_entry_types aet ON ae.entry_type_id = aet.id
+    WHERE ae.date BETWEEN '2023-12-31T23:00:00.000Z' AND '2024-12-31T22:59:59.999Z'
+    AND ae.is_validated = true
+    GROUP BY aet.code, aet.name, aet.is_credit
+    ORDER BY aet.is_credit DESC, total DESC
+);
+
+SELECT * FROM debug_stats;
 
 -- Create get_member_stats function
 CREATE OR REPLACE FUNCTION get_member_stats()

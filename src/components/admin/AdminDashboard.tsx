@@ -16,16 +16,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import BarChart from '../stats/charts/BarChart';
-import PieChart from '../stats/charts/PieChart';
-import LineChart from '../stats/charts/LineChart';
 import UpcomingEvents from '../events/UpcomingEvents';
-import ContributionCard from '../members/ContributionCard';
-import ReservationCard from '../reservations/ReservationCard';
 import { hasAnyGroup } from '../../lib/permissions';
-import { MonthlyRevenueChart } from './charts/MonthlyRevenueChart';
-import { RevenueTypeChart } from './charts/RevenueTypeChart';
+
 import clsx from 'clsx';
+import MonthlyAccountSummary from './tables/MonthlyAccountSummary';
+import MonthlyAircraftHours from './tables/MonthlyAircraftHours';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -94,47 +90,21 @@ const AdminDashboard = () => {
             <div className="mt-4 text-2xl font-bold">{memberStats?.active_members || '0'}</div>
           </div>
         </div>
-        <div className="rounded-xl p-6 bg-gradient-to-br from-white to-slate-50 shadow-sm border border-slate-100">
-          <div className="flex flex-col">
-            <h3 className="text-lg font-medium text-slate-800">Revenus</h3>
-            <p className="text-sm text-slate-500">Ce mois-ci</p>
-            <div className="mt-4 text-2xl font-bold">{financialStats?.total_revenue?.toFixed(2) || '0'} €</div>
-          </div>
-        </div>
-        <div className="rounded-xl p-6 bg-gradient-to-br from-white to-slate-50 shadow-sm border border-slate-100">
-          <div className="flex flex-col">
-            <h3 className="text-lg font-medium text-slate-800">Qualifications</h3>
-            <p className="text-sm text-slate-500">Qualifications expirées</p>
-            <div className="mt-4 text-2xl font-bold">{memberStats?.qualification_stats?.expired || '0'}</div>
-          </div>
-        </div>
-        <div className="rounded-xl p-6 bg-gradient-to-br from-white to-slate-50 shadow-sm border border-slate-100">
-          <div className="flex flex-col">
-            <h3 className="text-lg font-medium text-slate-800">Maintenance</h3>
-            <p className="text-sm text-slate-500">Maintenances en retard</p>
-            <div className="mt-4 text-2xl font-bold">{fleetStats?.maintenance_stats?.overdue || '0'}</div>
-          </div>
-        </div>
-        <div className="rounded-xl p-6 bg-gradient-to-br from-white to-slate-50 shadow-sm border border-slate-100">
-          <div className="flex flex-col">
-            <h3 className="text-lg font-medium text-slate-800">Visites médicales</h3>
-            <p className="text-sm text-slate-500">À renouveler bientôt</p>
-            <div className="mt-4 text-2xl font-bold">{memberStats?.medical_stats?.expiring_soon || '0'}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Graphiques des revenus */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-xl p-6 bg-gradient-to-br from-white to-slate-50 shadow-sm border border-slate-100">
-          <MonthlyRevenueChart data={financialStats?.monthly_revenue || []} />
-        </div>
-        <div className="rounded-xl p-6 bg-gradient-to-br from-white to-slate-50 shadow-sm border border-slate-100">
-          <RevenueTypeChart data={financialStats?.payment_methods || []} />
-        </div>
+        
       </div>
 
 
+
+      {/* Tableau des sommes mensuelles par type d'entrée */}
+      <div className="col-span-full">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold mb-4">Résumé mensuel des comptes</h2>
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+            <MonthlyAccountSummary />
+            <MonthlyAircraftHours />
+          </div>
+        </div>
+      </div>
 
       {/* Alertes et notifications */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
