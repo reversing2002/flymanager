@@ -23,8 +23,10 @@ const AccountImportTab = () => {
   const { user } = useAuth();
   const [jsonContent, setJsonContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [duplicateHandling, setDuplicateHandling] = useState<'replace' | 'skip'>('skip');
   const [verificationProgress, setVerificationProgress] = useState<{
     users: {
       source: { login?: string; firstname?: string; lastname?: string };
@@ -50,103 +52,106 @@ const AccountImportTab = () => {
     errorCount: 0
   });
 
-  useEffect(() => {
-    console.log('jsonContent mis à jour:', jsonContent);
-  }, [jsonContent]);
-
-  useEffect(() => {
-    const loadSystemData = async () => {
-      try {
-        // Charger les types d'opérations système
-        const { data: types, error: typesError } = await supabase
-          .from('account_entry_types')
-          .select('*')
-          .eq('is_system', true)
-          .order('code');
-
-        if (typesError) throw typesError;
-        setSystemTypes(types || []);
-
-        // Charger les types d'opérations du club
-        if (user?.club?.id) {
-          const { data: clubTypes, error: clubTypesError } = await supabase
-            .from('account_entry_types')
-            .select('*')
-            .eq('club_id', user?.club?.id)
-            .eq('is_system', false)
-            .order('code');
-
-          if (clubTypesError) throw clubTypesError;
-          setClubTypes(clubTypes || []);
+  const formatJsonWithHighlight = (json: any): string => {
+    const jsonStr = JSON.stringify(json, null, 2);
+    return jsonStr
+      .replace(/"([^"]+)":/g, '<span class="text-blue-600">"$1"</span>:')
+      .replace(/: (".*?")/g, ': <span class="text-green-600">$1</span>')
+      .replace(/: (true|false|null|\d+)/g, ': <span class="text-amber-600">$1</span>')
+      .split('\n')
+      .map(line => {
+        const field = Object.keys(REQUIRED_FIELDS).find(table =>
+          REQUIRED_FIELDS[table as keyof typeof REQUIRED_FIELDS].some(f => line.includes(`"${f}"`))
+        );
+        if (field) {
+          return line + ' // REQUIS';
         }
+        return line;
+      })
+      .join('\n');
+  };
 
-        // Charger les catégories système
-        const { data: categories, error: categoriesError } = await supabase
-          .from('accounting_categories')
-          .select('*')
-          .eq('is_system', true)
-          .order('display_order');
-
-        if (categoriesError) throw categoriesError;
-        setSystemCategories(categories || []);
-      } catch (err: any) {
-        console.error('Erreur lors du chargement des données système:', err);
-        toast.error('Erreur lors du chargement des données système');
-      }
+  const generateExampleJson = () => {
+    return {
+      "account_entries": [
+        {
+          // Exemple 1: Paiement d'une réservation avec un type système
+          "user_login": "jpilote",                    // REQUIS: Login de l'utilisateur
+          "entry_type_code": "FLIGHT_PAYMENT",        // REQUIS: Type système pour paiement de vol
+          "amount": 180.50,                           // REQUIS: Montant en euros
+          "date": "2024-01-15",                       // REQUIS: Date de l'opération
+          "payment_method": "CARD",                   // REQUIS: CARD, CASH, TRANSFER, CHECK, ACCOUNT
+          "description": "Vol DR400 F-GBVR 1.5h",     // Optionnel: Description détaillée
+          "reference": "RES-2024-001"                 // Optionnel: Référence externe
+        },
+        {
+          // Exemple 2: Cotisation annuelle avec un type système
+          "firstname": "Marie",                       // Alternative à user_login
+          "lastname": "Martin",                       // Si user_login n'est pas fourni
+          "entry_type_code": "MEMBERSHIP_FEE",        // Type système pour cotisation
+          "amount": 150.00,
+          "date": "2024-01-01",
+          "payment_method": "TRANSFER",
+          "description": "Cotisation annuelle 2024"
+        },
+        {
+          // Exemple 3: Achat de matériel avec un type personnalisé
+          "user_login": "tresorier",
+          "entry_type_code": "EQUIPMENT_PURCHASE",    // Type non-système défini par le club
+          "amount": 299.99,
+          "date": "2024-01-10",
+          "payment_method": "CARD",
+          "description": "Achat casque aviation",
+          "reference": "FAC-2024-042"
+        },
+        {
+          // Exemple 4: Remboursement avec un type personnalisé
+          "firstname": "Thomas",
+          "lastname": "Dubois",
+          "entry_type_code": "REFUND",               // Type non-système défini par le club
+          "amount": 75.00,
+          "date": "2024-01-20",
+          "payment_method": "TRANSFER",
+          "description": "Remboursement avance frais"
+        }
+      ]
     };
-
-    loadSystemData();
-  }, [user?.club?.id]);
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        try {
-          // Valider que c'est un JSON valide
-          JSON.parse(content);
-          setJsonContent(content);
-          setError(null);
-        } catch (err) {
-          setError("Le fichier n'est pas un JSON valide");
-          setJsonContent('');
-        }
-      };
-      reader.readAsText(file);
-    }
   };
 
-  const handlePaste = (event: React.ClipboardEvent) => {
-    const content = event.clipboardData.getData('text');
-    try {
-      // Valider que c'est un JSON valide
-      JSON.parse(content);
-      setJsonContent(content);
-      setError(null);
-    } catch (err) {
-      setError("Le contenu collé n'est pas un JSON valide");
-      setJsonContent('');
-    }
+  const handleCopyExample = () => {
+    const example = generateExampleJson();
+    setJsonContent(JSON.stringify(example, null, 2));
+    toast.success('Exemple copié dans l\'éditeur');
   };
 
-  const openVerificationModal = () => {
-    setIsVerificationModalOpen(true);
-    verifyOneByOne();
+  const handleDownloadExample = () => {
+    const example = generateExampleJson();
+    const blob = new Blob([JSON.stringify(example, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'example_accounts.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Exemple téléchargé');
   };
 
-  const verifyOneByOne = async () => {
-    setVerificationProgress(prev => ({ ...prev, processing: true, savedCount: 0, errorCount: 0 }));
-    
+  const startImport = async () => {
+    setImporting(true);
+    setError(null);
+    setSuccess(null);
+    setVerificationProgress(prev => ({ ...prev, processing: true }));
+
     try {
       const data = JSON.parse(jsonContent);
       if (!data.account_entries) {
         throw new Error('Le JSON doit contenir un tableau "account_entries"');
       }
-  
+
       const entries = data.account_entries;
-  
+
       // Extraire les valeurs uniques et garder une trace des entrées associées
       const userEntriesMap = new Map();
       const uniqueUsers = [...new Set(entries.map((e, index) => {
@@ -167,11 +172,11 @@ const AccountImportTab = () => {
         ...JSON.parse(key),
         entries: userEntriesMap.get(key)
       }));
-  
+
       const uniqueTypes = [...new Set(entries
         .filter(e => e.entry_type_code)
         .map(e => e.entry_type_code))];
-  
+
       // Initialiser l'état de vérification
       setVerificationProgress(prev => ({
         ...prev,
@@ -186,13 +191,13 @@ const AccountImportTab = () => {
         })),
         currentStep: 'users'
       }));
-  
+
       // Vérification des utilisateurs
       const verifiedUsers = [];
       for (let i = 0; i < uniqueUsers.length; i++) {
         const user = uniqueUsers[i];
         let found = null;
-  
+
         if (user.login) {
           const { data: results } = await supabase
             .from('users')
@@ -212,7 +217,7 @@ const AccountImportTab = () => {
           
           found = results?.[0];
         }
-  
+
         const status = found ? 'success' : 'error';
         verifiedUsers.push({
           source: user,
@@ -224,22 +229,22 @@ const AccountImportTab = () => {
           } : undefined,
           status
         });
-  
+
         setVerificationProgress(prev => ({
           ...prev,
           users: verifiedUsers,
         }));
-  
+
         // Petite pause pour l'UI
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-  
+
       // Passage à la vérification des types
       setVerificationProgress(prev => ({
         ...prev,
         currentStep: 'types'
       }));
-  
+
       const verifiedTypes = [];
       for (let i = 0; i < uniqueTypes.length; i++) {
         const typeCode = uniqueTypes[i];
@@ -249,40 +254,40 @@ const AccountImportTab = () => {
           .select('id, code, name, is_credit')
           .eq('code', typeCode)
           .single();
-  
+
         const status = found ? 'success' : 'error';
         verifiedTypes.push({
           code: typeCode,
           found: found || undefined,
           status
         });
-  
+
         setVerificationProgress(prev => ({
           ...prev,
           types: verifiedTypes,
         }));
-  
+
         // Petite pause pour l'UI
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-  
+
       // Une fois que tout est vérifié, on passe à l'insertion/mise à jour
       setVerificationProgress(prev => ({
         ...prev,
         currentStep: 'saving'
       }));
-  
+
       let savedCount = 0;
       let errorCount = 0;
-  
+
       try {
         const data = JSON.parse(jsonContent);
         const entries = data.account_entries;
-  
+
         // On utilise directement les arrays verifiedUsers et verifiedTypes
         const userMap = new Map();
         const usersReady = verifiedUsers.filter(user => user.status === 'success' && user.found?.id);
-  
+
         usersReady.forEach(user => {
           if (user.found?.id) {
             // Mapper par login si disponible
@@ -296,13 +301,13 @@ const AccountImportTab = () => {
             }
           }
         });
-  
+
         const typeMap = new Map(
           verifiedTypes
             .filter(t => t.status === 'success' && t.found?.id)
             .map(t => [t.code, { id: t.found.id, is_credit: t.found.is_credit }])
         );
-  
+
         // Traiter chaque entrée
         for (const entry of entries) {
           try {
@@ -314,10 +319,10 @@ const AccountImportTab = () => {
               const nameKey = `${entry.firstname.toLowerCase()}_${entry.lastname.toLowerCase()}`;
               userId = userMap.get(nameKey);
             }
-  
+
             const type = typeMap.get(entry.entry_type_code);
             const typeId = type?.id;
-  
+
             if (userId && typeId) {
               // Valider le montant par rapport au type d'opération
               let amount = parseFloat(entry.amount);
@@ -352,7 +357,7 @@ const AccountImportTab = () => {
               if (!entry.payment_method || !FIELD_CONSTRAINTS.payment_method.includes(entry.payment_method)) {
                 throw new Error(`Méthode de paiement invalide. Valeurs acceptées : ${FIELD_CONSTRAINTS.payment_method.join(', ')}`);
               }
-  
+
               // Vérifier si l'entrée existe déjà
               const { data: existing, error: searchError } = await supabase
                 .from('account_entries')
@@ -361,9 +366,9 @@ const AccountImportTab = () => {
                 .eq('entry_type_id', typeId)
                 .eq('date', entry.date)
                 .maybeSingle();
-  
+
               if (searchError) throw searchError;
-  
+
               if (existing?.id) {
                 // Mise à jour
                 const { error: updateError } = await supabase
@@ -375,7 +380,7 @@ const AccountImportTab = () => {
                     updated_at: new Date().toISOString()
                   })
                   .eq('id', existing.id);
-  
+
                 if (updateError) throw updateError;
               } else {
                 // Insertion
@@ -394,16 +399,16 @@ const AccountImportTab = () => {
                     is_club_paid: false,
                     assigned_to_id: userId
                   });
-  
+
                 if (insertError) throw insertError;
               }
-  
+
               savedCount++;
               setVerificationProgress(prev => ({
                 ...prev,
                 savedCount: savedCount
               }));
-  
+
               // Petite pause pour éviter de surcharger la base de données
               await new Promise(resolve => setTimeout(resolve, 50));
             } else {
@@ -422,281 +427,228 @@ const AccountImportTab = () => {
             }));
           }
         }
-  
+
         console.log(`Finished processing: ${savedCount} saved, ${errorCount} errors`);
       } catch (err) {
         console.error('Verification error:', err);
         toast.error('Erreur lors de la vérification');
       } finally {
         setVerificationProgress(prev => ({ ...prev, processing: false }));
+        setImporting(false);
       }
-    } catch (err) {
-      console.error('Verification error:', err);
-      toast.error('Erreur lors de la vérification');
+    } catch (err: any) {
+      setError(err.message);
+      toast.error('Erreur lors de l\'importation');
     } finally {
+      setImporting(false);
       setVerificationProgress(prev => ({ ...prev, processing: false }));
     }
   };
-  
+
+  const handleImport = () => {
+    setIsVerificationModalOpen(true);
+    startImport();
+  };
 
   return (
-    <div className="space-y-6">
-      {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertTriangle className="h-5 w-5 text-red-400" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">
-                Erreur
-              </h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>{error}</p>
-              </div>
-            </div>
+    <div className="space-y-4">
+      <div className="flex flex-col space-y-2">
+        <div className="flex justify-between items-center">
+          <div className="flex space-x-2">
+            <button
+              onClick={handleCopyExample}
+              className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Copier l'exemple
+            </button>
+            <button
+              onClick={handleDownloadExample}
+              className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Télécharger l'exemple
+            </button>
+          </div>
+          <div className="flex items-center space-x-4">
+            <select
+              value={duplicateHandling}
+              onChange={(e) => setDuplicateHandling(e.target.value as 'replace' | 'skip')}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="skip">Ignorer les doublons</option>
+              <option value="replace">Remplacer les doublons</option>
+            </select>
+            <button
+              onClick={handleImport}
+              disabled={importing || !jsonContent}
+              className={`flex items-center px-4 py-2 text-sm font-medium text-white rounded-md ${
+                importing || !jsonContent
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              {importing ? 'Importation...' : 'Importer'}
+            </button>
           </div>
         </div>
-      )}
 
-      <div className="bg-white shadow sm:rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg font-medium leading-6 text-gray-900">
-            Import d'opérations comptables
-          </h3>
-          <div className="mt-2 max-w-xl text-sm text-gray-500">
-            <p>
-              Importez un fichier JSON contenant les opérations comptables à importer.
-              Le fichier doit contenir un tableau "account_entries" avec les champs suivants :
-            </p>
-            <ul className="list-disc list-inside mt-2">
-              <li>user_login ou (firstname et lastname) : Identifiant de l'utilisateur</li>
-              <li>entry_type_code : Code du type d'opération</li>
-              <li>amount : Montant de l'opération</li>
-              <li>date : Date de l'opération (YYYY-MM-DD)</li>
-              <li>description : Description de l'opération (optionnel)</li>
-              <li>payment_method : Méthode de paiement (optionnel)</li>
-            </ul>
+        {error && (
+          <div className="flex items-center p-4 text-red-800 bg-red-100 rounded-md">
+            <AlertTriangle className="w-5 h-5 mr-2" />
+            <pre className="whitespace-pre-wrap font-mono text-sm">{error}</pre>
           </div>
-          <div className="mt-5">
-            <div className="flex gap-4">
-              <div>
-                <label htmlFor="file-upload" className="relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:text-blue-500">
-                  <span>Choisir un fichier</span>
-                  <input
-                    id="file-upload"
-                    name="file-upload"
-                    type="file"
-                    className="sr-only"
-                    accept="application/json"
-                    onChange={handleFileUpload}
-                  />
-                </label>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(jsonContent);
-                    toast.success('Contenu copié dans le presse-papier');
-                  }}
-                  disabled={!jsonContent}
-                  className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                    !jsonContent ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <Copy className="h-4 w-4" />
-                  Copier
-                </button>
+        )}
 
-                <button
-                  type="button"
-                  onClick={openVerificationModal}
-                  disabled={!jsonContent || importing}
-                  className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 ${
-                    (!jsonContent || importing) ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <AlertTriangle className="h-4 w-4" />
-                  Vérifier et importer
-                </button>
-              </div>
-            </div>
+        {success && (
+          <div className="flex items-center p-4 text-green-800 bg-green-100 rounded-md">
+            <CheckCircle className="w-5 h-5 mr-2" />
+            <span>{success}</span>
           </div>
+        )}
 
-          <div className="mt-6">
-            <textarea
-              rows={10}
-              className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md font-mono"
-              value={jsonContent}
-              onChange={(e) => {
-                const content = e.target.value;
-                try {
-                  // Valider que c'est un JSON valide si le contenu n'est pas vide
-                  if (content) {
-                    JSON.parse(content);
-                  }
-                  setJsonContent(content);
-                  setError(null);
-                } catch (err) {
-                  setError("Le contenu n'est pas un JSON valide");
-                }
-              }}
-              onPaste={handlePaste}
-              placeholder="Collez votre JSON ici"
-            />
-          </div>
-        </div>
-      </div>
-
-      {isVerificationModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-slate-900">
-                Vérification détaillée
-              </h3>
+        <div className="relative">
+          <textarea
+            value={jsonContent}
+            onChange={(e) => setJsonContent(e.target.value)}
+            className="w-full h-[500px] p-4 font-mono text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Collez votre JSON ici..."
+          />
+          <div className="absolute top-2 right-2">
+            {jsonContent && (
               <button
-                type="button"
-                onClick={() => setIsVerificationModalOpen(false)}
-                className="text-slate-400 hover:text-slate-500"
+                onClick={() => setJsonContent('')}
+                className="p-1 text-gray-500 hover:text-gray-700"
               >
-                <span className="sr-only">Fermer</span>
-                <X className="h-5 w-5" />
+                <X className="w-4 h-4" />
               </button>
-            </div>
+            )}
+          </div>
+        </div>
 
-            <div className="space-y-6">
-              <div>
-                <h4 className="font-medium text-slate-900 mb-2">
-                  Utilisateurs {verificationProgress.currentStep === 'users' && verificationProgress.processing && '(en cours...)'}
-                </h4>
-                <div className="space-y-2">
-                  {verificationProgress.users.map((user, index) => (
-                    <div
-                      key={index}
-                      className={`p-3 rounded-lg border ${
-                        user.status === 'success' ? 'border-green-200 bg-green-50' :
-                        user.status === 'error' ? 'border-red-200 bg-red-50' :
-                        'border-slate-200 bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">
-                            {user.source.login ? (
-                              `Login: ${user.source.login}`
-                            ) : (
-                              `${user.source.firstname} ${user.source.lastname}`
-                            )}
-                          </p>
-                          {user.found && (
-                            <p className="text-sm text-slate-500">
-                              Trouvé: {user.found.login || `${user.found.firstname} ${user.found.lastname}`}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          {user.status === 'pending' && (
-                            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-                          )}
-                          {user.status === 'success' && (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          )}
-                          {user.status === 'error' && (
-                            <XCircle className="h-5 w-5 text-red-500" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        {isVerificationModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Vérification et importation des opérations
+                </h3>
+                <button
+                  onClick={() => setIsVerificationModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <div>
-                <h4 className="font-medium text-slate-900 mb-2">
-                  Types d'opérations {verificationProgress.currentStep === 'types' && verificationProgress.processing && '(en cours...)'}
-                </h4>
-                <div className="space-y-2">
-                  {verificationProgress.types.map((type, index) => (
-                    <div
-                      key={index}
-                      className={`p-3 rounded-lg border ${
-                        type.status === 'success' ? 'border-green-200 bg-green-50' :
-                        type.status === 'error' ? 'border-red-200 bg-red-50' :
-                        'border-slate-200 bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">
-                            Code: {type.code}
-                          </p>
-                          {type.found && (
-                            <p className="text-sm text-slate-500">
-                              Trouvé: {type.found.name}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          {type.status === 'pending' && (
-                            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-                          )}
-                          {type.status === 'success' && (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          )}
-                          {type.status === 'error' && (
-                            <XCircle className="h-5 w-5 text-red-500" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <div className="space-y-4">
+                {verificationProgress.processing && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-gray-900">
+                      {verificationProgress.currentStep === 'users' && 'Vérification des utilisateurs...'}
+                      {verificationProgress.currentStep === 'types' && 'Vérification des types d\'opérations...'}
+                      {verificationProgress.currentStep === 'saving' && 'Enregistrement des opérations...'}
+                    </h4>
 
-              {verificationProgress.currentStep === 'saving' && (
-                <div>
-                  <h4 className="font-medium text-slate-900 mb-2">
-                    Sauvegarde des entrées {verificationProgress.processing && '(en cours...)'}
-                  </h4>
-                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm">
-                          {verificationProgress.savedCount} entrées sauvegardées
-                          {verificationProgress.errorCount > 0 && (
-                            <span className="text-red-500 ml-2">
-                              ({verificationProgress.errorCount} erreurs)
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      <div>
-                        {verificationProgress.processing ? (
-                          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-                        ) : (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        )}
-                      </div>
+                    <div className="space-y-2">
+                      {verificationProgress.users.map((user, index) => (
+                        <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
+                          {user.status === 'pending' && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+                          {user.status === 'success' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                          {user.status === 'error' && <XCircle className="w-4 h-4 text-red-500" />}
+                          <span>
+                            {user.source.firstname} {user.source.lastname} ({user.source.login})
+                          </span>
+                        </div>
+                      ))}
+
+                      {verificationProgress.types.map((type, index) => (
+                        <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
+                          {type.status === 'pending' && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+                          {type.status === 'success' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                          {type.status === 'error' && <XCircle className="w-4 h-4 text-red-500" />}
+                          <span>{type.code}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex justify-between text-sm text-gray-500 mt-4">
+                      <span>{verificationProgress.savedCount} opérations enregistrées</span>
+                      <span>{verificationProgress.errorCount} erreurs</span>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
 
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsVerificationModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
-              >
-                Fermer
-              </button>
+                {error && (
+                  <div className="p-4 bg-red-50 text-red-800 rounded-md">
+                    <div className="flex items-center">
+                      <AlertTriangle className="w-5 h-5 mr-2" />
+                      <pre className="whitespace-pre-wrap font-mono text-sm">{error}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {success && (
+                  <div className="p-4 bg-green-50 text-green-800 rounded-md">
+                    <div className="flex items-center">
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      <span>{success}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setIsVerificationModalOpen(false)}
+                  disabled={verificationProgress.processing}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Fermer
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {verificationProgress.processing && (
+          <div className="mt-4 p-4 bg-white border border-gray-200 rounded-md shadow-sm">
+            <h3 className="text-lg font-medium mb-4">
+              {verificationProgress.currentStep === 'users' && 'Vérification des utilisateurs...'}
+              {verificationProgress.currentStep === 'types' && 'Vérification des types d\'opérations...'}
+              {verificationProgress.currentStep === 'saving' && 'Enregistrement des opérations...'}
+            </h3>
+
+            <div className="space-y-4">
+              {verificationProgress.users.map((user, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  {user.status === 'pending' && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+                  {user.status === 'success' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                  {user.status === 'error' && <XCircle className="w-4 h-4 text-red-500" />}
+                  <span>
+                    {user.source.firstname} {user.source.lastname} ({user.source.login})
+                  </span>
+                </div>
+              ))}
+
+              {verificationProgress.types.map((type, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  {type.status === 'pending' && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+                  {type.status === 'success' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                  {type.status === 'error' && <XCircle className="w-4 h-4 text-red-500" />}
+                  <span>{type.code}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex justify-between text-sm text-gray-500">
+              <span>{verificationProgress.savedCount} opérations enregistrées</span>
+              <span>{verificationProgress.errorCount} erreurs</span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
