@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { AlertTriangle, Copy, Download, Upload, X, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from "../../../contexts/AuthContext";
+import { is } from 'date-fns/locale';
 
 // Champs requis selon la définition des tables
 const REQUIRED_FIELDS = {
@@ -388,7 +389,10 @@ const AccountImportTab = () => {
                     date: entry.date,
                     description: entry.description || null,
                     created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
+                    updated_at: new Date().toISOString(),
+                    is_validated: true,
+                    is_club_paid: false,
+                    assigned_to_id: userId
                   });
   
                 if (insertError) throw insertError;
