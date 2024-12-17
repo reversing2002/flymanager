@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { AlertTriangle, Copy, Download, Upload } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { adminClient } from '../../../lib/supabase/adminClient';
 import { useAuth } from "../../../contexts/AuthContext";
+import { createMember, createAuthAccount } from '../../../lib/queries/users';
 
 // Champs requis selon la définition de la table
 const REQUIRED_FIELDS = ['first_name', 'last_name', 'email', 'login'];
@@ -134,9 +136,13 @@ const MemberImportTab = () => {
         throw new Error('Le JSON doit contenir un tableau "users"');
       }
 
+      // Limiter aux 5 premiers membres
+      const usersToImport = data.users.slice(0, 5);
+      console.log('Membres à importer:', usersToImport);
+      
       // Valider chaque utilisateur
       const allErrors: string[] = [];
-      data.users.forEach((user: any, index: number) => {
+      usersToImport.forEach((user: any, index: number) => {
         const userErrors = validateUser(user);
         if (userErrors.length > 0) {
           allErrors.push(`Utilisateur ${index + 1} (${user.email}):\n${userErrors.join('\n')}`);
@@ -150,63 +156,103 @@ const MemberImportTab = () => {
       // Importer les utilisateurs
       let importedCount = 0;
       let skippedCount = 0;
+      const createdPasswords: { email: string; password: string }[] = [];
 
-      for (const userData of data.users) {
+      for (const userData of usersToImport) {
         const { member_status = 'ACTIVE', ...userInfo } = userData;
         
         // Vérifier si l'utilisateur existe déjà
-        const { data: existingUser } = await supabase
+        const { data: existingUser } = await adminClient
           .from('users')
-          .select('id')
+          .select('id, email, auth_id')
           .eq('email', userData.email)
           .single();
 
-        let userId;
-        
         if (existingUser) {
-          if (duplicateHandling === 'skip') {
-            skippedCount++;
-            continue;
+          console.log('Utilisateur existant:', existingUser.email);
+          
+          // Si l'utilisateur n'a pas de compte auth, on le crée
+          if (!existingUser.auth_id) {
+            console.log('Création du compte auth pour:', existingUser.email);
+            try {
+              const { password } = await createAuthAccount({
+                firstName: userData.first_name,
+                lastName: userData.last_name,
+                email: userData.email,
+                userId: existingUser.id,
+              });
+              
+              console.log('Compte auth créé avec succès, mot de passe:', password);
+              
+              createdPasswords.push({
+                email: userData.email,
+                password: password,
+              });
+              
+              importedCount++;
+            } catch (error) {
+              console.error('Erreur détaillée lors de la création du compte auth:', error);
+              if (error.response) {
+                console.error('Réponse d\'erreur:', error.response);
+              }
+              throw new Error(`Erreur lors de la création du compte auth pour ${userData.email}: ${error.message}`);
+            }
+          } else {
+            console.log('Le compte auth existe déjà pour:', existingUser.email);
+            if (duplicateHandling === 'skip') {
+              console.log('Ignoré car duplicateHandling = skip');
+              skippedCount++;
+              continue;
+            }
+            // Mettre à jour l'utilisateur existant
+            await adminClient
+              .from('users')
+              .update(userInfo)
+              .eq('id', existingUser.id);
           }
-          // Mettre à jour l'utilisateur existant
-          await supabase
-            .from('users')
-            .update(userInfo)
-            .eq('id', existingUser.id);
-          userId = existingUser.id;
         } else {
-          // Créer un nouvel utilisateur
-          const { data: newUser, error: insertError } = await supabase
-            .from('users')
-            .insert([userInfo])
-            .select('id')
-            .single();
+          // Créer un nouvel utilisateur avec createMember
+          try {
+            console.log('Création du membre:', userData);
+            const { password } = await createMember({
+              firstName: userData.first_name,
+              lastName: userData.last_name,
+              email: userData.email,
+              roles: [], // Les rôles seront gérés séparément
+            });
             
-          if (insertError) throw insertError;
-          userId = newUser.id;
+            console.log('Membre créé avec succès, mot de passe:', password);
+            
+            createdPasswords.push({
+              email: userData.email,
+              password: password,
+            });
+            
+            importedCount++;
+          } catch (error) {
+            console.error('Erreur détaillée lors de la création du membre:', error);
+            if (error.response) {
+              console.error('Réponse d\'erreur:', error.response);
+            }
+            throw new Error(`Erreur lors de la création du membre ${userData.email}: ${error.message}`);
+          }
         }
-
-        // Insérer ou mettre à jour la relation club_members
-        const { error: memberError } = await supabase
-          .from('club_members')
-          .upsert({
-            club_id: user.club.id,
-            user_id: userId,
-            status: member_status,
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'club_id,user_id'
-          });
-
-        if (memberError) throw memberError;
-        
-        importedCount++;
       }
 
-      setSuccess(`Import réussi: ${importedCount} utilisateur(s) importé(s), ${skippedCount} ignoré(s)`);
-      toast.success('Import réussi');
-    } catch (err: any) {
-      setError(err.message);
+      setSuccess(
+        `Import des 5 premiers membres terminé avec succès!\n` +
+        `${importedCount} membres importés\n` +
+        `${skippedCount} membres ignorés\n\n` +
+        `Identifiants de connexion :\n` +
+        createdPasswords.map(({ email, password }) => 
+          `${email}: ${password}`
+        ).join('\n')
+      );
+      
+      toast.success('Import terminé avec succès!');
+    } catch (error) {
+      console.error('Erreur lors de l\'import:', error);
+      setError(error.message);
       toast.error('Erreur lors de l\'import');
     } finally {
       setImporting(false);

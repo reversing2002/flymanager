@@ -452,3 +452,45 @@ export async function createMember(data: {
     throw error;
   }
 }
+
+export async function createAuthAccount(data: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  userId: string;
+}): Promise<{ password: string }> {
+  try {
+    const { firstName, lastName, email, userId } = data;
+    const login = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const password = generateRandomPassword();
+    console.log("Generated password for auth account:", password);
+
+    // Create the auth user using the custom RPC function that handles the ID mapping
+    const { error: authError } = await adminClient.rpc("create_auth_user", {
+      p_email: email,
+      p_password: password,
+      p_login: login,
+      p_role: 'authenticated',  // Force role to authenticated
+      p_user_id: userId,
+      p_user_metadata: {
+        login: login,
+        password: password,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        full_name: `${firstName} ${lastName}`,
+        app_url: window.location.origin
+      }
+    });
+
+    if (authError) {
+      console.error("Error creating auth user:", authError);
+      throw authError;
+    }
+
+    return { password };
+  } catch (error) {
+    console.error("Error in createAuthAccount:", error);
+    throw error;
+  }
+}
