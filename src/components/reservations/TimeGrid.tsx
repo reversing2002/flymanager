@@ -436,7 +436,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
           {/* Colonne des heures - sticky left uniquement */}
           <div
             ref={hoursColumnRef}
-            className="sticky left-0 w-20 bg-white border-r border-slate-200 z-20"
+            className="sticky left-0 w-10 bg-white border-r border-slate-200 z-20"
           >
             {/* En-tête vide pour aligner avec les avions */}
             <div className="h-[40px] bg-white border-b border-slate-200" />
