@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Upload, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { parseFlightsPreview, importFlights, type FlightPreview } from '../../../lib/csvParser';
-import ImportPreview from '../ImportPreview';
+
 
 const FlightImportTab = () => {
   const [importing, setImporting] = useState(false);
