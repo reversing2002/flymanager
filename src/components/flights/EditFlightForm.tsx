@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import type { Aircraft, Flight, User, FlightType } from "../../types/database";
-import { updateFlight } from "../../lib/queries";
 import { useAuth } from "../../contexts/AuthContext";
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "../../lib/supabase";
@@ -10,6 +9,8 @@ import TimeInput from "../common/TimeInput";
 import { minutesToTimeFormat } from "../../lib/utils/timeFormat";
 import { toast } from "react-hot-toast";
 import { hourMeterToMinutes, validateHourMeter, formatHourMeter, parseHourMeter } from '../../lib/utils/hourMeter';
+import { useCustomFlightFields, useCustomFlightFieldValues, useUpdateCustomFlightFieldValues } from "../../lib/queries/customFlightFields";
+import { useUpdateFlight } from "../../lib/queries/useFlightMutations";
 
 interface EditFlightFormProps {
   flight: Flight;
@@ -43,6 +44,7 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
     start: '',
     end: ''
   });
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const loadFlightTypes = async () => {
@@ -110,6 +112,28 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
       end: formatHourMeter(formData.end_hour_meter, selectedAircraft?.hour_format) || ''
     });
   }, [formData.start_hour_meter, formData.end_hour_meter, formData.aircraftId, aircraftList]);
+
+  // Charger les définitions des champs personnalisés
+  console.log("EditFlightForm: club_id du vol", currentUser.club.id);
+  const { data: customFields = [] } = useCustomFlightFields(currentUser.club.id);
+  console.log("EditFlightForm: customFields reçus", customFields);
+  
+  // Charger les valeurs des champs personnalisés
+  const { data: customFieldValuesData = [] } = useCustomFlightFieldValues(flight.id);
+  console.log("EditFlightForm: customFieldValues reçus", customFieldValuesData);
+
+  // Mutation pour mettre à jour les valeurs des champs personnalisés
+  const updateCustomFieldValues = useUpdateCustomFlightFieldValues();
+  const updateFlight = useUpdateFlight();
+
+  // Initialiser les valeurs des champs personnalisés
+  useEffect(() => {
+    const values: Record<string, any> = {};
+    customFieldValuesData.forEach((value) => {
+      values[value.field_id] = value.value;
+    });
+    setCustomFieldValues(values);
+  }, [customFieldValuesData]);
 
   // Fonction utilitaire pour vérifier si un utilisateur a un groupe spécifique
   const userHasGroup = (user: User, groupName: string) => {
@@ -310,6 +334,7 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setError(null);
 
     // Vérifier que la date n'est pas dans le futur
@@ -325,29 +350,30 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
       throw new Error("Impossible de modifier un vol validé");
     }
 
-    setLoading(true);
     try {
-      const aircraft = aircraftList.find((a) => a.id === formData.aircraftId);
-      const instructor = formData.instructorId ? users.find(u => u.id === formData.instructorId) : undefined;
-      const duration = calculateDurationFromHourMeter(formData.start_hour_meter, formData.end_hour_meter);
-      const { aircraftCost, instructorCost, instructorFee } = calculateCosts(duration, aircraft, instructor);
-
-      const updatedData = {
+      // Mettre à jour le vol
+      await updateFlight.mutateAsync({
+        id: flight.id,
         ...formData,
-        hourlyRate: aircraft?.hourlyRate || 0,
-        cost: aircraftCost,
-        instructor_cost: instructorCost,
-        instructor_fee: instructorFee,
-        duration,
-        reservationId: formData.reservationId || null,
-        instructorId: formData.instructorId || null,
-      };
+        club_id: flight.club_id,
+      });
 
-      await updateFlight(flight.id, updatedData);
+      // Mettre à jour les champs personnalisés
+      if (customFields.length > 0) {
+        await updateCustomFieldValues.mutateAsync({
+          flightId: flight.id,
+          values: Object.entries(customFieldValues).map(([field_id, value]) => ({
+            field_id,
+            value,
+            flight_id: flight.id,
+          })),
+        });
+      }
+
       onSuccess();
-    } catch (error: any) {
-      console.error("Erreur complète:", error);
-      setError(`Erreur lors de la modification du vol: ${error.message}`);
+    } catch (err) {
+      setError(err.message);
+      console.error("Erreur lors de la mise à jour du vol:", err);
     } finally {
       setLoading(false);
     }
@@ -583,6 +609,62 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
           </div>
         )}
       </div>
+
+      {/* Champs personnalisés */}
+      {customFields.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Champs personnalisés</h3>
+          {customFields.map((field) => (
+            <div key={field.id} className="flex flex-col">
+              <label htmlFor={field.id} className="text-sm font-medium">
+                {field.label}
+              </label>
+              {field.type === "text" && (
+                <input
+                  type="text"
+                  id={field.id}
+                  value={customFieldValues[field.id] || ""}
+                  onChange={(e) =>
+                    setCustomFieldValues((prev) => ({
+                      ...prev,
+                      [field.id]: e.target.value,
+                    }))
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                />
+              )}
+              {field.type === "number" && (
+                <input
+                  type="number"
+                  id={field.id}
+                  value={customFieldValues[field.id] || ""}
+                  onChange={(e) =>
+                    setCustomFieldValues((prev) => ({
+                      ...prev,
+                      [field.id]: e.target.value ? Number(e.target.value) : null,
+                    }))
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                />
+              )}
+              {field.type === "boolean" && (
+                <input
+                  type="checkbox"
+                  id={field.id}
+                  checked={customFieldValues[field.id] || false}
+                  onChange={(e) =>
+                    setCustomFieldValues((prev) => ({
+                      ...prev,
+                      [field.id]: e.target.checked,
+                    }))
+                  }
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Boutons */}
       <div className="flex justify-end space-x-4 pt-4">

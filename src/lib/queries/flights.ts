@@ -73,8 +73,8 @@ export async function getInstructorFlights(instructorId: string, startDate: stri
   return data;
 }
 
-export async function createFlight(data: Partial<Flight>): Promise<void> {
-  const { error: flightError } = await supabase.from("flights").insert({
+export async function createFlight(data: Partial<Flight>): Promise<Flight> {
+  const flightData = {
     id: data.id || uuidv4(),
     reservation_id: data.reservationId,
     user_id: data.userId,
@@ -92,11 +92,20 @@ export async function createFlight(data: Partial<Flight>): Promise<void> {
     is_validated: data.isValidated,
     start_hour_meter: data.start_hour_meter,
     end_hour_meter: data.end_hour_meter,
-  });
+  };
+
+  const { data: newFlight, error: flightError } = await supabase
+    .from("flights")
+    .insert(flightData)
+    .select()
+    .single();
 
   if (flightError) throw flightError;
+  if (!newFlight) throw new Error("Le vol n'a pas pu être créé");
 
-  await createFlightAccountEntry(data as Flight);
+  await createFlightAccountEntry(newFlight as Flight);
+
+  return newFlight as Flight;
 }
 
 export async function updateFlight(
@@ -390,7 +399,7 @@ export async function deleteFlight(id: string): Promise<void> {
 }
 
 export async function createFlightAccountEntry(
-  flightData: Flight
+  flightData: Flight | any
 ): Promise<void> {
   const { data: entryTypes, error: entryTypesError } = await supabase
     .from("account_entry_types")
@@ -408,17 +417,25 @@ export async function createFlightAccountEntry(
     throw new Error("Type d'entrée comptable non trouvé");
   }
 
+  const userId = flightData.userId || flightData.user_id;
+  if (!userId) {
+    throw new Error("ID utilisateur manquant pour la création de l'entrée comptable");
+  }
+
   const { error } = await supabase.from("account_entries").insert({
-    user_id: flightData.userId,
-    assigned_to_id: flightData.userId,
+    user_id: userId,
+    assigned_to_id: userId,
     flight_id: flightData.id,
     date: flightData.date,
     entry_type_id: flightTypeId,
-    amount: -flightData.cost,
-    payment_method: flightData.paymentMethod,
-    description: `Vol ${flightData.aircraftId} - ${flightData.duration}`,
+    amount: -(flightData.cost || flightData.hourly_rate * (flightData.duration / 60)),
+    payment_method: flightData.paymentMethod || flightData.payment_method,
+    description: `Vol ${flightData.aircraftId || flightData.aircraft_id} - ${flightData.duration}`,
     is_validated: false,
   });
 
-  if (error) throw error;
+  if (error) {
+    console.error("Erreur lors de la création de l'entrée comptable", error);
+    throw error;
+  }
 }

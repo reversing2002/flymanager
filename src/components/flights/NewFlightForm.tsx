@@ -2,13 +2,15 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import type { Aircraft, FlightType, User } from "../../types/database";
-import { createFlight, getUsers } from "../../lib/queries/index";
+import { getUsers } from "../../lib/queries/index";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import { hasAnyGroup } from "../../lib/permissions";
 import { hourMeterToMinutes, validateHourMeter, formatHourMeter, parseHourMeter } from '@/lib/utils/hourMeter';
+import { useCustomFlightFields, useCreateCustomFlightFieldValues } from "../../lib/queries/customFlightFields";
+import { useCreateFlight } from "../../lib/queries/useFlightMutations";
 
 interface NewFlightFormProps {
   onSuccess: () => void;
@@ -41,6 +43,7 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
   const [flightTypes, setFlightTypes] = useState<FlightType[]>([]);
   const [users, setUsers] = useState(propUsers || []);
   const [aircraft, setAircraft] = useState<Aircraft[]>(propAircraftList || []);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
 
   const [formData, setFormData] = useState(() => {
     // Trouver l'avion sélectionné si un ID est fourni
@@ -164,6 +167,15 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
       }));
     }
   }, [currentUser]);
+
+  // Charger les définitions des champs personnalisés
+  console.log("NewFlightForm: club_id de l'utilisateur", currentUser?.club.id);
+  const { data: customFields = [] } = useCustomFlightFields(currentUser?.club.id);
+  console.log("NewFlightForm: customFields reçus", customFields);
+  
+  // Mutation pour créer les valeurs des champs personnalisés
+  const createCustomFieldValues = useCreateCustomFlightFieldValues();
+  const createFlightMutation = useCreateFlight();
 
   // Get all pilots and instructors
   const pilots = useMemo(
@@ -337,150 +349,32 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setError(null);
 
-    // Vérifier que la date n'est pas dans le futur
-    const selectedDate = new Date(formData.date);
-    const today = new Date();
-    if (selectedDate > today) {
-      setError("La date du vol ne peut pas être dans le futur");
-      return;
-    }
-
-    setLoading(true);
     try {
-      if (!formData.userId || !formData.aircraftId) {
-        throw new Error("Veuillez remplir tous les champs obligatoires");
-      }
-
       // Créer le vol
-      const selectedAircraft = aircraft.find(a => a.id === formData.aircraftId);
-      const instructor = formData.instructorId ? users.find(u => u.id === formData.instructorId) : undefined;
-      const duration = calculateDurationFromHourMeter(formData.start_hour_meter, formData.end_hour_meter);
-      const { aircraftCost, instructorCost, instructorFee } = calculateCosts(duration, selectedAircraft, instructor);
-
-      const flightData = {
+      const newFlight = await createFlightMutation.mutateAsync({
         ...formData,
-        id: uuidv4(),
-        cost: aircraftCost,
-        instructor_cost: instructorCost,
-        instructor_fee: instructorFee,
-        duration
-      };
+        club_id: currentUser?.club_id,
+      });
 
-      console.log('Creating flight with data:', flightData);
-
-      const { data: flight, error: flightError } = await supabase
-        .from("flights")
-        .insert({
-          id: flightData.id,
-          user_id: flightData.userId,
-          aircraft_id: flightData.aircraftId,
-          flight_type_id: flightData.flightTypeId,
-          instructor_id: flightData.instructorId || null,
-          reservation_id: flightData.reservationId || null,
-          date: flightData.date,
-          duration: flightData.duration,
-          destination: flightData.destination || null,
-          hourly_rate: flightData.hourlyRate,
-          cost: flightData.cost,
-          payment_method: flightData.paymentMethod,
-          start_hour_meter: flightData.start_hour_meter,
-          end_hour_meter: flightData.end_hour_meter,
-          is_validated: false,
-          instructor_cost: flightData.instructor_cost,
-          instructor_fee: flightData.instructor_fee,
-          club_id: flightData.clubId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (flightError) throw flightError;
-
-      // Trouver le type de compte "VOL"
-      const { data: accountTypes } = await supabase
-        .from("account_entry_types")
-        .select("*")
-        .eq("code", "FLIGHT")
-        .single();
-
-      if (!accountTypes) {
-        throw new Error("Type de compte VOL non trouvé");
-      }
-
-      // Créer l'écriture comptable
-      const { error: accountError } = await supabase
-        .from("account_entries")
-        .insert({
-          id: uuidv4(),
-          user_id: flightData.userId,
-          entry_type_id: accountTypes.id,
-          date: flightData.date,
-          amount: -Math.abs(flightData.cost),
-          payment_method: flightData.paymentMethod,
-          description: `Vol ${selectedAircraft?.registration} - ${convertMinutesToDecimalHours(flightData.duration)}h`,
-          flight_id: flight.id,
-          assigned_to_id: flightData.userId,
-          is_validated: false,
-          is_club_paid: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+      // Créer les valeurs des champs personnalisés
+      if (customFields.length > 0 && newFlight?.id) {
+        await createCustomFieldValues.mutateAsync({
+          flightId: newFlight.id,
+          values: Object.entries(customFieldValues).map(([field_id, value]) => ({
+            field_id,
+            value,
+            flight_id: newFlight.id,
+          })),
         });
-
-      if (accountError) throw accountError;
-
-      // Si il y a un instructeur, créer une écriture comptable pour le coût d'instruction
-      if (flightData.instructorId && flightData.instructor_cost) {
-        const { error: instructorAccountError } = await supabase
-          .from("account_entries")
-          .insert({
-            id: uuidv4(),
-            user_id: flightData.userId,
-            entry_type_id: accountTypes.id,
-            date: flightData.date,
-            amount: -Math.abs(flightData.instructor_cost),
-            payment_method: flightData.paymentMethod,
-            description: `Instruction vol du ${new Date(flightData.date).toLocaleDateString()} - ${convertMinutesToDecimalHours(flightData.duration)}h`,
-            flight_id: flight.id,
-            assigned_to_id: flightData.userId,
-            is_validated: false,
-            is_club_paid: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
-        if (instructorAccountError) throw instructorAccountError;
-      }
-
-      // Si il y a un instructeur, créer une écriture comptable pour le montant à reverser à l'instructeur
-      if (flightData.instructorId && flightData.instructor_fee) {
-        const { error: instructorFeeAccountError } = await supabase
-          .from("account_entries")
-          .insert({
-            id: uuidv4(),
-            user_id: flightData.instructorId,
-            entry_type_id: "68818f41-b9cb-4f6c-bb5e-c38fae86e82d", // remun instruction
-            date: flightData.date,
-            amount: Math.abs(flightData.instructor_fee),
-            payment_method: flightData.paymentMethod,
-            description: `Instruction vol du ${new Date(flightData.date).toLocaleDateString()} - ${convertMinutesToDecimalHours(flightData.duration)}h`,
-            flight_id: flight.id,
-            assigned_to_id: flightData.instructorId,
-            is_validated: false,
-            is_club_paid: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
-        if (instructorFeeAccountError) throw instructorFeeAccountError;
       }
 
       onSuccess();
-    } catch (error) {
-      console.error('Error creating flight:', error);
-      setError(error instanceof Error ? error.message : 'Une erreur est survenue');
+    } catch (err) {
+      setError(err.message);
+      console.error("Erreur lors de la création du vol:", err);
     } finally {
       setLoading(false);
     }
@@ -490,9 +384,9 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <div className="p-4 bg-red-50 text-red-800 rounded-lg flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5" />
-          <p>{error}</p>
-        </div>
+        <AlertTriangle className="h-5 w-5" />
+        <p>{error}</p>
+      </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -658,7 +552,61 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
           />
         </div>
 
-
+        {/* Champs personnalisés */}
+        {customFields.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Champs personnalisés</h3>
+            {customFields.map((field) => (
+              <div key={field.id} className="flex flex-col">
+                <label htmlFor={field.id} className="text-sm font-medium">
+                  {field.label}
+                </label>
+                {field.type === "text" && (
+                  <input
+                    type="text"
+                    id={field.id}
+                    value={customFieldValues[field.id] || ""}
+                    onChange={(e) =>
+                      setCustomFieldValues((prev) => ({
+                        ...prev,
+                        [field.id]: e.target.value,
+                      }))
+                    }
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  />
+                )}
+                {field.type === "number" && (
+                  <input
+                    type="number"
+                    id={field.id}
+                    value={customFieldValues[field.id] || ""}
+                    onChange={(e) =>
+                      setCustomFieldValues((prev) => ({
+                        ...prev,
+                        [field.id]: e.target.value ? Number(e.target.value) : null,
+                      }))
+                    }
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  />
+                )}
+                {field.type === "boolean" && (
+                  <input
+                    type="checkbox"
+                    id={field.id}
+                    checked={customFieldValues[field.id] || false}
+                    onChange={(e) =>
+                      setCustomFieldValues((prev) => ({
+                        ...prev,
+                        [field.id]: e.target.checked,
+                      }))
+                    }
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Hourly Rate (readonly) */}
         <div>
