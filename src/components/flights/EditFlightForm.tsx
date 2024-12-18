@@ -64,6 +64,33 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
   }, []);
 
   useEffect(() => {
+    // Mettre à jour les données du formulaire quand le vol change
+    const aircraft = aircraftList.find((a) => a.id === flight.aircraftId);
+    const instructor = flight.instructorId ? users.find(u => u.id === flight.instructorId) : undefined;
+    const duration = calculateDurationFromHourMeter(flight.start_hour_meter, flight.end_hour_meter);
+    const { aircraftCost, instructorCost, instructorFee } = calculateCosts(duration, aircraft, instructor);
+
+    setFormData(prevData => ({
+      ...prevData,
+      ...flight,
+      userId: flight.userId, // S'assurer que le pilote est correctement initialisé
+      date: new Date(flight.date).toISOString().split("T")[0],
+      start_hour_meter: flight.start_hour_meter,
+      end_hour_meter: flight.end_hour_meter,
+      cost: aircraftCost,
+      instructor_cost: instructorCost,
+      instructor_fee: instructorFee
+    }));
+
+    // Initialiser les horamètres
+    const selectedAircraft = aircraftList.find(a => a.id === flight.aircraftId);
+    setHourMeterInputs({
+      start: formatHourMeter(flight.start_hour_meter, selectedAircraft?.hour_format) || '',
+      end: formatHourMeter(flight.end_hour_meter, selectedAircraft?.hour_format) || ''
+    });
+  }, [flight, aircraftList, users]);
+
+  useEffect(() => {
     // Set default values when component mounts or flight changes
     if (currentUser && flight) {
       const isAdminOrInstructor = hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR"]);
@@ -75,25 +102,6 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
       }));
     }
   }, [currentUser, flight]);
-
-  useEffect(() => {
-    // Mettre à jour les données du formulaire quand le vol change
-    const aircraft = aircraftList.find((a) => a.id === flight.aircraftId);
-    const instructor = flight.instructorId ? users.find(u => u.id === flight.instructorId) : undefined;
-    const duration = calculateDurationFromHourMeter(flight.start_hour_meter, flight.end_hour_meter);
-    const { aircraftCost, instructorCost, instructorFee } = calculateCosts(duration, aircraft, instructor);
-
-    setFormData(prevData => ({
-      ...prevData,
-      ...flight,
-      date: new Date(flight.date).toISOString().split("T")[0],
-      start_hour_meter: flight.start_hour_meter,
-      end_hour_meter: flight.end_hour_meter,
-      cost: aircraftCost,
-      instructor_cost: instructorCost,
-      instructor_fee: instructorFee
-    }));
-  }, [flight, aircraftList, users]);
 
   useEffect(() => {
     const selectedAircraft = aircraftList.find(a => a.id === formData.aircraftId);
@@ -379,25 +387,27 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
         </div>
 
         {/* Pilote */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Pilote
-          </label>
-          <select
-            name="userId"
-            value={formData.userId || ""}
-            onChange={handleInputChange}
-            className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-            required
-          >
-            <option value="">Sélectionner un pilote</option>
-            {availablePilots.map((pilot) => (
-              <option key={pilot.id} value={pilot.id}>
-                {pilot.last_name} {pilot.first_name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR"]) && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Pilote
+            </label>
+            <select
+              name="userId"
+              value={formData.userId || ""}
+              onChange={handleInputChange}
+              className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+              required
+            >
+              <option value="">Sélectionner un pilote</option>
+              {users.map((pilot) => (
+                <option key={pilot.id} value={pilot.id}>
+                  {pilot.first_name} {pilot.last_name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Instructeur */}
         <div>

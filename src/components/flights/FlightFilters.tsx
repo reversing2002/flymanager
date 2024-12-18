@@ -150,12 +150,12 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
               <label key={type.id} className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={filters.accountingCategories.includes(type.accounting_category)}
+                  checked={filters.flightTypes.includes(type.id)}
                   onChange={(e) => {
-                    const newCategories = e.target.checked
-                      ? [...filters.accountingCategories, type.accounting_category]
-                      : filters.accountingCategories.filter((c) => c !== type.accounting_category);
-                    onFiltersChange({ ...filters, accountingCategories: newCategories });
+                    const newTypes = e.target.checked
+                      ? [...filters.flightTypes, type.id]
+                      : filters.flightTypes.filter((id) => id !== type.id);
+                    onFiltersChange({ ...filters, flightTypes: newTypes });
                   }}
                   className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                 />
