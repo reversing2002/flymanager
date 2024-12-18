@@ -50,6 +50,19 @@ const EditModal: React.FC<EditModalProps> = ({ flightType, isOpen, onClose, onSa
           </div>
 
           <div>
+            <label htmlFor="edit-code" className="block text-sm font-medium text-slate-700">
+              Code
+            </label>
+            <input
+              type="text"
+              id="edit-code"
+              value={editedType.code}
+              onChange={(e) => setEditedType(prev => ({ ...prev, code: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+            />
+          </div>
+
+          <div>
             <label htmlFor="edit-description" className="block text-sm font-medium text-slate-700">
               Description
             </label>
@@ -126,6 +139,7 @@ const EditModal: React.FC<EditModalProps> = ({ flightType, isOpen, onClose, onSa
 interface FlightType {
   id: string;
   name: string;
+  code: string;
   description: string | null;
   requires_instructor: boolean;
   is_default: boolean;
@@ -144,6 +158,7 @@ const FlightTypeManager = () => {
   const [error, setError] = useState<string | null>(null);
   const [newFlightType, setNewFlightType] = useState({
     name: "",
+    code: "",
     description: "",
     requires_instructor: false,
     accounting_category_id: "",
@@ -233,6 +248,7 @@ const FlightTypeManager = () => {
 
       await createFlightType({
         name: newFlightType.name,
+        code: newFlightType.code,
         description: newFlightType.description,
         requires_instructor: newFlightType.requires_instructor,
         accounting_category_id: newFlightType.accounting_category_id || null,
@@ -242,6 +258,7 @@ const FlightTypeManager = () => {
 
       setNewFlightType({
         name: "",
+        code: "",
         description: "",
         requires_instructor: false, 
         accounting_category_id: "",
@@ -307,6 +324,21 @@ const FlightTypeManager = () => {
               value={newFlightType.name}
               onChange={(e) =>
                 setNewFlightType((prev) => ({ ...prev, name: e.target.value }))
+              }
+              className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="code" className="block text-sm font-medium text-slate-700">
+              Code
+            </label>
+            <input
+              type="text"
+              id="code"
+              value={newFlightType.code}
+              onChange={(e) =>
+                setNewFlightType((prev) => ({ ...prev, code: e.target.value }))
               }
               className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
             />

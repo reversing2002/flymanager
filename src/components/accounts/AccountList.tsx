@@ -103,6 +103,8 @@ const AccountList = () => {
         return "Carte";
       case "CASH":
         return "Espèces";
+      case "CHECK":
+        return "Chèque";
       case "TRANSFER":
         return "Virement";
       default:

@@ -7,7 +7,8 @@ import { useAuth } from "../../../contexts/AuthContext";
 // Champs requis selon la définition des tables
 const REQUIRED_FIELDS = {
   flights: [
-    'user_login',
+    'lastname',
+    'firstname',
     'aircraft_registration',
     'flight_type_code',
     'date',
@@ -20,7 +21,7 @@ const REQUIRED_FIELDS = {
 
 // Contraintes et options pour les champs
 const FIELD_CONSTRAINTS = {
-  payment_method: ['ACCOUNT', 'CARD', 'CASH', 'TRANSFER'],
+  payment_method: ['ACCOUNT', 'CARD', 'CASH', 'TRANSFER', 'CHECK'],
   hourly_rate: { min: 0, precision: 2 },
   cost: { min: 0, precision: 2 },
   instructor_fee: { min: 0, precision: 2 },
@@ -31,7 +32,7 @@ const FIELD_CONSTRAINTS = {
 };
 
 const FlightImportTab = () => {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
   const [jsonContent, setJsonContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -40,7 +41,7 @@ const FlightImportTab = () => {
   const [duplicateHandling, setDuplicateHandling] = useState<'replace' | 'skip'>('skip');
   const [verificationProgress, setVerificationProgress] = useState<{
     users: {
-      source: { login?: string; firstname?: string; lastname?: string };
+      source: { lastname: string; firstname: string };
       found?: { id: string; login?: string; first_name?: string; last_name?: string };
       status: 'pending' | 'success' | 'error';
     }[];
@@ -128,30 +129,65 @@ const FlightImportTab = () => {
       setVerificationProgress(prev => ({ ...prev, processing: true }));
 
       // Vérification des utilisateurs
-      const userLogins = new Set([
-        ...data.flights.map(f => f.user_login),
-        ...data.flights.filter(f => f.instructor_login).map(f => f.instructor_login)
-      ]);
+      const userIdentifiers = data.flights.map(f => ({
+        lastname: f.lastname.toUpperCase(),
+        firstname: f.firstname
+      }));
+      
+      const uniqueUsers = Array.from(
+        new Set(userIdentifiers.map(u => `${u.lastname}|${u.firstname}`))
+      ).map(key => {
+        const [lastname, firstname] = key.split('|');
+        return { lastname, firstname };
+      });
 
       const userResults = await Promise.all(
-        Array.from(userLogins).map(async login => {
+        uniqueUsers.map(async ({ lastname, firstname }) => {
           const { data: userData, error: userError } = await supabase
             .from('users')
             .select('id, login, first_name, last_name')
-            .eq('login', login)
+            .ilike('last_name', lastname)
+            .ilike('first_name', firstname)
             .single();
 
           return {
-            source: { login },
+            source: { lastname, firstname },
             found: userData,
             status: userData ? 'success' : 'error'
           };
         })
       );
 
+      // Vérification des instructeurs
+      const instructorLastnames = new Set(
+        data.flights
+          .filter(f => f.instructor_login)
+          .map(f => f.instructor_login)
+      );
+
+      const instructorResults = await Promise.all(
+        Array.from(instructorLastnames).map(async instructorLogin => {
+          // Chercher l'instructeur par login
+          let { data: instructorData } = await supabase
+            .from('users')
+            .select('id, login, first_name, last_name')
+            .ilike('login', instructorLogin)
+            .single();
+
+          return {
+            source: { lastname: instructorLogin },
+            found: instructorData,
+            status: instructorData ? 'success' : 'error'
+          };
+        })
+      );
+
+      // Combiner les résultats des utilisateurs et instructeurs
+      const allUserResults = [...userResults, ...instructorResults];
+      
       setVerificationProgress(prev => ({
         ...prev,
-        users: userResults,
+        users: allUserResults,
         currentStep: 'aircraft'
       }));
 
@@ -180,7 +216,7 @@ const FlightImportTab = () => {
       }));
 
       // Vérification des types de vol
-      const flightTypeCodes = new Set(data.flights.map(f => f.flight_type_code));
+      const flightTypeCodes = new Set(data.flights.map(f => f.flight_type_code.trim()));
       const flightTypeResults = await Promise.all(
         Array.from(flightTypeCodes).map(async code => {
           const { data: typeData, error: typeError } = await supabase
@@ -204,7 +240,7 @@ const FlightImportTab = () => {
       }));
 
       // Si tout est validé, on procède à l'import
-      const hasErrors = [...userResults, ...aircraftResults, ...flightTypeResults]
+      const hasErrors = [...allUserResults, ...aircraftResults, ...flightTypeResults]
         .some(result => result.status === 'error');
 
       if (hasErrors) {
@@ -215,35 +251,55 @@ const FlightImportTab = () => {
       let savedCount = 0;
       let errorCount = 0;
 
-      for (const flight of data.flights) {
-        const user = userResults.find(u => u.source.login === flight.user_login)?.found;
-        const aircraft = aircraftResults.find(a => a.registration === flight.aircraft_registration)?.found;
-        const flightType = flightTypeResults.find(t => t.code === flight.flight_type_code)?.found;
-        const instructor = flight.instructor_login 
-          ? userResults.find(u => u.source.login === flight.instructor_login)?.found
-          : null;
+      const newFlights = data.flights.map(flight => {
+        const user = userResults.find(u =>
+          u.source.lastname === flight.lastname.toUpperCase() &&
+          u.source.firstname === flight.firstname
+        )?.found;
 
+        const aircraft = aircraftResults.find(a =>
+          a.registration === flight.aircraft_registration
+        )?.found;
+
+        const flightType = flightTypeResults.find(t =>
+          t.code === flight.flight_type_code.trim()
+        )?.found;
+
+        let instructor = null;
+        if (flight.instructor_login) {
+          instructor = instructorResults.find(i => 
+            i.source.lastname === flight.instructor_login
+          )?.found;
+        }
+
+        if (!user || !aircraft || !flightType) return null;
+
+        return {
+          user_id: user.id,
+          aircraft_id: aircraft.id,
+          flight_type_id: flightType.id,
+          instructor_id: instructor?.id || null,
+          date: flight.date,
+          duration: flight.duration,
+          hourly_rate: flight.hourly_rate,
+          cost: flight.cost,
+          payment_method: flight.payment_method,
+          club_id: authUser?.club?.id,
+          is_validated: false,
+          start_hour_meter: flight.start_hour_meter || 0,
+          end_hour_meter: flight.end_hour_meter || 0,
+          instructor_cost: flight.instructor_fee || null
+        };
+      }).filter(f => f !== null);
+
+      for (const flight of newFlights) {
         const { error: insertError } = await supabase
           .from('flights')
-          .insert({
-            user_id: user?.id,
-            aircraft_id: aircraft?.id,
-            flight_type_id: flightType?.id,
-            instructor_id: instructor?.id,
-            date: flight.date,
-            duration: flight.duration,
-            destination: flight.destination,
-            hourly_rate: flight.hourly_rate,
-            cost: flight.cost,
-            payment_method: flight.payment_method,
-            instructor_fee: flight.instructor_fee,
-            club_id: user?.club_id,
-            start_hour_meter: flight.start_hour_meter,
-            end_hour_meter: flight.end_hour_meter
-          });
+          .insert(flight);
 
         if (insertError) {
           errorCount++;
+          console.error('Insert error:', insertError);
         } else {
           savedCount++;
         }
@@ -279,36 +335,37 @@ const FlightImportTab = () => {
     const example = `{
   "flights": [
     {
-      "user_login": "pilote1",  // Le login du pilote (sera converti en user_id)
-      "aircraft_registration": "F-ABCD",  // L'immatriculation de l'avion (sera convertie en aircraft_id)
-      "flight_type_code": "VFR",  // Le code du type de vol (sera converti en flight_type_id)
-      "instructor_login": "instructeur1",  // Optionnel - Le login de l'instructeur
-      "date": "2024-12-17T14:30:00Z",  // Date et heure du vol au format ISO
-      "duration": 120,  // Durée en minutes
-      "destination": "LFPG",  // Optionnel - Aéroport de destination
-      "hourly_rate": 150.00,  // Taux horaire
-      "cost": 300.00,  // Coût total du vol
-      "payment_method": "CARD",  // CARD, CASH, TRANSFER ou ACCOUNT
-      "start_hour_meter": 1234.50,  // Optionnel - Relevé compteur début
-      "end_hour_meter": 1236.50,  // Optionnel - Relevé compteur fin
-      "instructor_fee": 50.00  // Optionnel - Tarif instructeur
+      "lastname": "PIANTE",            // Requis - Nom de famille du pilote
+      "firstname": "Frederic",         // Requis - Prénom du pilote
+      "date": "2024-12-17T00:00:00Z", // Requis - Date et heure du vol au format ISO
+      "aircraft_registration": "42OF",  // Requis - Immatriculation de l'avion
+      "flight_type_code": "Local",     // Requis - Code du type de vol
+      "instructor_login": null,        // Optionnel - Nom de famille de l'instructeur
+      "duration": 24,                  // Requis - Durée en minutes
+      "hourly_rate": 93.0,            // Requis - Taux horaire
+      "cost": 37.2,                   // Requis - Coût total du vol
+      "payment_method": "ACCOUNT",     // Requis - ACCOUNT, CARD, CASH ou TRANSFER
+      "destination": null,             // Optionnel - Aéroport de destination
+      "start_hour_meter": null,        // Optionnel - Relevé compteur début
+      "end_hour_meter": null,          // Optionnel - Relevé compteur fin
+      "instructor_fee": null           // Optionnel - Tarif instructeur
     },
     {
-      "user_login": "pilote2",
-      "aircraft_registration": "F-WXYZ",
-      "flight_type_code": "INST",
-      "date": "2024-12-17T16:00:00Z",
-      "duration": 60,
-      "hourly_rate": 180.00,
-      "cost": 180.00,
-      "payment_method": "ACCOUNT",
-      "start_hour_meter": 2345.60,
-      "end_hour_meter": 2346.60
+      "lastname": "VALENTIN",
+      "firstname": "Laurent",
+      "date": "2024-12-16T00:00:00Z",
+      "aircraft_registration": "F-BXTP",
+      "flight_type_code": "Local",
+      "instructor_login": null,
+      "duration": 52,
+      "hourly_rate": 147.0,
+      "cost": 127.4,
+      "payment_method": "ACCOUNT"
     }
   ]
 }`;
     navigator.clipboard.writeText(example);
-    setJsonContent(example); // Insérer directement l'exemple dans le textarea
+    setJsonContent(example);
     toast.success('Exemple copié dans le presse-papier et inséré dans l\'éditeur');
   };
 
@@ -395,7 +452,7 @@ const FlightImportTab = () => {
                     ) : (
                       <XCircle className="h-4 w-4 text-red-500" />
                     )}
-                    <span>{user.source.login}</span>
+                    <span>{user.source.lastname} {user.source.firstname}</span>
                     {user.status === 'success' && (
                       <span className="text-slate-500">
                         → {user.found?.first_name} {user.found?.last_name}

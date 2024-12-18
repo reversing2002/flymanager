@@ -55,7 +55,7 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
       : dateUtils.toLocalDateTime(new Date().toISOString()),
     entry_type_id: entry?.entry_type_id || "",
     amount: entry?.amount || 0,
-    payment_method: entry?.payment_method || "CASH",
+    payment_method: entry?.payment_method || "ACCOUNT",
     description: entry?.description || "",
     is_validated: entry?.is_validated || false,
     is_club_paid: entry?.is_club_paid || false,
@@ -316,6 +316,7 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
                   <option value="ACCOUNT">Compte</option>
                   <option value="CARD">Carte</option>
                   <option value="CASH">Espèces</option>
+                  <option value="CHEQUE">Chèque</option>
                   <option value="TRANSFER">Virement</option>
                 </select>
               ) : (
@@ -323,6 +324,7 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
                   {formData.payment_method === "ACCOUNT" && "Compte"}
                   {formData.payment_method === "CARD" && "Carte"}
                   {formData.payment_method === "CASH" && "Espèces"}
+                  {formData.payment_method === "CHECK" && "Chèque"}
                   {formData.payment_method === "TRANSFER" && "Virement"}
                 </div>
               )}

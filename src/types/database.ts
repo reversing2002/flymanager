@@ -143,6 +143,7 @@ export interface AccountingCategory {
 export interface FlightType {
   id: string;
   name: string;
+  code: string;
   description: string | null;
   requires_instructor: boolean;
   accounting_category_id: string;
@@ -151,7 +152,7 @@ export interface FlightType {
   display_order: number;
 }
 
-export type PaymentMethod = "CARD" | "CASH" | "ACCOUNT" | "TRANSFER";
+export type PaymentMethod = "CARD" | "CASH" | "ACCOUNT" | "TRANSFER" | "CHECK";
 
 export interface AccountEntry {
   id: string;
