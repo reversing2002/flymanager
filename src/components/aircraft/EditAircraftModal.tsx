@@ -106,12 +106,14 @@ const EditAircraftModal: React.FC<EditAircraftModalProps> = ({
         await updateAircraft(aircraft.id, {
           ...formData,
           club_id: user.club.id,
+          lastMaintenance: formData.lastMaintenance || null,
         });
         toast.success("Appareil mis à jour");
       } else {
         await createAircraft({
           ...formData,
           club_id: user.club.id,
+          lastMaintenance: formData.lastMaintenance || null,
         });
         toast.success("Appareil créé");
       }
