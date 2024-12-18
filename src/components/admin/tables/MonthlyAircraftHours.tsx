@@ -60,11 +60,11 @@ const MonthlyAircraftHours = () => {
   // Obtenir la liste unique des mois
   const months = Array.from(
     new Set(
-      flightHours?.map((entry) =>
-        format(new Date(entry.month), 'MMM yyyy', { locale: fr })
-      )
+      flightHours?.map((entry) => entry.month)
     )
-  ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  )
+    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+    .map(month => format(new Date(month), 'MMM yyyy', { locale: fr }));
 
   return (
     <Card>
