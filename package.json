@@ -17,6 +17,7 @@
     "@monaco-editor/react": "^4.6.0",
     "@mui/icons-material": "^6.1.10",
     "@mui/material": "^6.1.10",
+    "@mui/x-date-pickers": "^7.23.2",
     "@radix-ui/react-checkbox": "^1.1.2",
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-tooltip": "^1.1.4",

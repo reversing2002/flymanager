@@ -2,64 +2,78 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, PieChart, LineChart } from './charts';
 import { Clock, Calendar, Plane, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { format, subMonths, startOfYear, endOfYear } from 'date-fns';
+import { format, subMonths, startOfYear, endOfYear, subYears } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { DateRangeSelector } from '../common/DateRangeSelector';
 
 const StatsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState({
+    startDate: startOfYear(new Date()),
+    endDate: endOfYear(new Date())
+  });
   const [stats, setStats] = useState<any>({
     flightsByAircraft: [],
     flightsByInstructor: [],
     flightsByType: [],
-    monthlyComparison: [],
-    yearlyTotals: []
+    monthlyComparison: []
   });
+
+  const loadMonthlyComparison = async () => {
+    try {
+      const currentDate = new Date();
+      const threeYearsAgo = startOfYear(subYears(currentDate, 2));
+      
+      const { data: monthlyComparison } = await supabase.rpc('get_monthly_flight_hours', {
+        start_date: threeYearsAgo.toISOString(),
+        end_date: currentDate.toISOString()
+      });
+
+      return monthlyComparison || [];
+    } catch (err) {
+      console.error('Error loading monthly comparison:', err);
+      return [];
+    }
+  };
 
   useEffect(() => {
     loadStats();
-  }, []);
+  }, [dateRange]);
 
   const loadStats = async () => {
     try {
-      const currentDate = new Date();
-      const startOfCurrentYear = startOfYear(currentDate);
-      const endOfCurrentYear = endOfYear(currentDate);
-      const startOfPreviousYear = startOfYear(subMonths(currentDate, 12));
-
+      setLoading(true);
       // Get flights by aircraft
       const { data: flightsByAircraft } = await supabase.rpc('get_flights_by_aircraft', {
-        start_date: startOfCurrentYear.toISOString(),
-        end_date: endOfCurrentYear.toISOString()
+        start_date: dateRange.startDate.toISOString(),
+        end_date: dateRange.endDate.toISOString()
       });
 
       // Get flights by instructor
       const { data: flightsByInstructor } = await supabase.rpc('get_flights_by_instructor', {
-        start_date: startOfCurrentYear.toISOString(),
-        end_date: endOfCurrentYear.toISOString()
+        start_date: dateRange.startDate.toISOString(),
+        end_date: dateRange.endDate.toISOString()
       });
 
       // Get flights by type
       const { data: flightsByType } = await supabase.rpc('get_flights_by_type', {
-        start_date: startOfCurrentYear.toISOString(),
-        end_date: endOfCurrentYear.toISOString()
+        start_date: dateRange.startDate.toISOString(),
+        end_date: dateRange.endDate.toISOString()
       });
 
-      // Get monthly comparison
-      const { data: monthlyComparison } = await supabase.rpc('get_monthly_flight_hours', {
-        start_date: startOfPreviousYear.toISOString(),
-        end_date: endOfCurrentYear.toISOString()
-      });
+      // Get monthly comparison (toujours sur 3 ans)
+      const monthlyComparison = await loadMonthlyComparison();
 
       setStats({
         flightsByAircraft: flightsByAircraft || [],
         flightsByInstructor: flightsByInstructor || [],
         flightsByType: flightsByType || [],
-        monthlyComparison: monthlyComparison || [],
+        monthlyComparison
       });
     } catch (err) {
       console.error('Error loading stats:', err);
-      setError('Erreur lors du chargement des statistiques');
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du chargement des statistiques');
     } finally {
       setLoading(false);
     }
@@ -84,6 +98,12 @@ const StatsPage = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Statistiques</h1>
         <p className="text-slate-600">Analyse détaillée de l'activité du club</p>
+      </div>
+
+      <div className="mb-6">
+        <DateRangeSelector
+          onChange={(range) => setDateRange(range)}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -132,11 +152,30 @@ const StatsPage = () => {
             <Calendar className="h-5 w-5 text-slate-600" />
             Comparaison mensuelle
           </h2>
+          <div className="mb-3 flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+              <span>{new Date().getFullYear()}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+              <span>{new Date().getFullYear() - 1}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-300"></div>
+              <span>{new Date().getFullYear() - 2}</span>
+            </div>
+          </div>
           <LineChart
             data={stats.monthlyComparison}
             xKey="month"
             yKey="total_hours"
             compareKey="year"
+            colors={{
+              [new Date().getFullYear()]: '#2563eb', 
+              [new Date().getFullYear() - 1]: '#60a5fa', 
+              [new Date().getFullYear() - 2]: '#93c5fd', 
+            }}
           />
         </div>
       </div>

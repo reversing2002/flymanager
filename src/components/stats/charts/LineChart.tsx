@@ -26,9 +26,10 @@ interface LineChartProps {
   xKey: string;
   yKey: string;
   compareKey: string;
+  colors?: Record<string | number, string>;
 }
 
-const LineChart: React.FC<LineChartProps> = ({ data, xKey, yKey, compareKey }) => {
+const LineChart: React.FC<LineChartProps> = ({ data, xKey, yKey, compareKey, colors }) => {
   // Group data by year
   const groupedData = data.reduce((acc, item) => {
     const year = item[compareKey];
@@ -39,13 +40,20 @@ const LineChart: React.FC<LineChartProps> = ({ data, xKey, yKey, compareKey }) =
     return acc;
   }, {} as Record<string, any[]>);
 
+  const getColorForYear = (year: string | number) => {
+    if (colors && colors[year]) {
+      return colors[year];
+    }
+    return year === new Date().getFullYear().toString() ? '#3b82f6' : '#9ca3af';
+  };
+
   const chartData = {
     labels: groupedData[Object.keys(groupedData)[0]]?.map(item => item[xKey]) || [],
     datasets: Object.entries(groupedData).map(([year, items]) => ({
       label: year,
       data: items.map(item => item[yKey]),
-      borderColor: year === new Date().getFullYear().toString() ? '#3b82f6' : '#9ca3af',
-      backgroundColor: year === new Date().getFullYear().toString() ? '#3b82f6' : '#9ca3af',
+      borderColor: getColorForYear(year),
+      backgroundColor: getColorForYear(year),
       tension: 0.3,
     })),
   };
@@ -54,12 +62,11 @@ const LineChart: React.FC<LineChartProps> = ({ data, xKey, yKey, compareKey }) =
     responsive: true,
     plugins: {
       legend: {
-        position: 'top' as const,
+        display: false,
       },
       tooltip: {
-        callbacks: {
-          label: (context: any) => `${context.dataset.label}: ${context.formattedValue}h`,
-        },
+        mode: 'index' as const,
+        intersect: false,
       },
     },
     scales: {
@@ -69,6 +76,11 @@ const LineChart: React.FC<LineChartProps> = ({ data, xKey, yKey, compareKey }) =
           callback: (value: number) => `${value}h`,
         },
       },
+    },
+    interaction: {
+      mode: 'nearest' as const,
+      axis: 'x' as const,
+      intersect: false,
     },
   };
 
