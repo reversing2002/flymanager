@@ -188,3 +188,31 @@ export async function updateContribution(
 
   return updatedContribution;
 }
+
+export async function getAllActiveContributions(): Promise<Contribution[]> {
+  const profile = await getUserProfile();
+  const clubId = profile.club_id;
+
+  const { data, error } = await supabase
+    .from("member_contributions")
+    .select(`
+      *,
+      account_entry:account_entries (
+        id,
+        amount,
+        description,
+        entry_type:account_entry_types!inner (
+          code,
+          name,
+          is_credit
+        )
+      )
+    `)
+    .order("valid_from", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}

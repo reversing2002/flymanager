@@ -3,7 +3,7 @@ import { Search, Filter, Plus, UserCog } from "lucide-react";
 import type { User as UserType } from "../../types/database";
 import type { Contribution } from "../../types/contribution";
 import { getMembersWithBalance } from "../../lib/queries/users";
-import { getContributionsByUserId } from "../../lib/queries/contributions";
+import { getAllActiveContributions } from "../../lib/queries/contributions";
 import MemberCard from "./MemberCard";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
@@ -15,20 +15,37 @@ const MemberList = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedMembershipStatus, setSelectedMembershipStatus] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const [members, setMembers] = useState<(UserType & { contributions?: Contribution[] })[]>([]);
+  const [allContributions, setAllContributions] = useState<Contribution[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 
   const loadMembers = async () => {
     try {
-      const data = await getMembersWithBalance();
-      setMembers(data.map(member => ({
+      const [membersData, contributionsData] = await Promise.all([
+        getMembersWithBalance(),
+        getAllActiveContributions()
+      ]);
+
+      // Organiser les contributions par utilisateur
+      const contributionsByUser = contributionsData.reduce((acc, contribution) => {
+        if (!acc[contribution.user_id]) {
+          acc[contribution.user_id] = [];
+        }
+        acc[contribution.user_id].push(contribution);
+        return acc;
+      }, {} as Record<string, Contribution[]>);
+
+      // Associer les contributions aux membres
+      const membersWithContributions = membersData.map(member => ({
         ...member,
-        contributions: [] // On ne charge pas les contributions dans la liste
-      })));
+        contributions: contributionsByUser[member.id] || []
+      }));
+
+      setMembers(membersWithContributions);
+      setAllContributions(contributionsData);
     } catch (error) {
       console.error("Error loading members:", error);
     } finally {
@@ -41,33 +58,33 @@ const MemberList = () => {
   }, []);
 
   const filteredMembers = members.filter((member) => {
-    const matchesSearch =
-      `${member.firstName} ${member.lastName}`
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/);
+    const memberFields = [
+      member.first_name?.toLowerCase() || '',
+      member.last_name?.toLowerCase() || '',
+      member.email?.toLowerCase() || ''
+    ];
 
-    const matchesRole =
-      selectedRole === "all" ||
-      (member.roles && member.roles.includes(selectedRole.toUpperCase()));
+    const matchesSearch = searchTerms.every(term => 
+      memberFields.some(field => field.includes(term))
+    );
 
     // Vérifier si la cotisation est valide
-    const isMembershipValid = member.contributions?.length ? (() => {
+    const isMembershipValid = member.contributions && member.contributions.length > 0 && (() => {
       const sortedContributions = [...member.contributions].sort(
         (a, b) => new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime()
       );
       const lastContribution = sortedContributions[0];
-      if (!lastContribution) return false;
       const validUntil = addMonths(new Date(lastContribution.valid_from), 12);
       return isAfter(validUntil, new Date());
-    })() : false;
+    })();
 
     const matchesMembershipStatus =
       selectedMembershipStatus === "all" ||
       (selectedMembershipStatus === "valid" && isMembershipValid) ||
       (selectedMembershipStatus === "expired" && !isMembershipValid);
 
-    return matchesSearch && matchesRole && matchesMembershipStatus;
+    return matchesSearch && matchesMembershipStatus;
   });
 
   if (loading) {
@@ -133,18 +150,6 @@ const MemberList = () => {
 
         {showFilters && (
           <div className="mt-4 flex flex-col sm:flex-row gap-4">
-            <select
-              className="form-select block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-            >
-              <option value="all">Tous les rôles</option>
-              <option value="admin">Administrateurs</option>
-              <option value="instructor">Instructeurs</option>
-              <option value="pilot">Pilotes</option>
-              <option value="student">Élèves</option>
-            </select>
-
             <select
               className="form-select block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
               value={selectedMembershipStatus}
