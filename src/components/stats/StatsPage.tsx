@@ -5,10 +5,13 @@ import { supabase } from '../../lib/supabase';
 import { format, subMonths, startOfYear, endOfYear, subYears } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { DateRangeSelector } from '../common/DateRangeSelector';
+import { getFlightTypes } from '../../lib/queries/flightTypes';
+import type { FlightType } from '../../types/database';
 
 const StatsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [flightTypes, setFlightTypes] = useState<FlightType[]>([]);
   const [dateRange, setDateRange] = useState({
     startDate: startOfYear(new Date()),
     endDate: endOfYear(new Date())
@@ -17,7 +20,8 @@ const StatsPage = () => {
     flightsByAircraft: [],
     flightsByInstructor: [],
     flightsByType: [],
-    monthlyComparison: []
+    monthlyComparison: [],
+    flightsWithInstructor: []
   });
 
   const loadMonthlyComparison = async () => {
@@ -36,6 +40,20 @@ const StatsPage = () => {
       return [];
     }
   };
+
+  useEffect(() => {
+    const loadFlightTypes = async () => {
+      try {
+        const types = await getFlightTypes();
+        setFlightTypes(types);
+      } catch (err) {
+        console.error('Error loading flight types:', err);
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du chargement des types de vol');
+      }
+    };
+
+    loadFlightTypes();
+  }, []);
 
   useEffect(() => {
     loadStats();
@@ -62,6 +80,33 @@ const StatsPage = () => {
         end_date: dateRange.endDate.toISOString()
       });
 
+      // Get flights with/without instructor
+      const { data: flightsWithInstructor } = await supabase.rpc('get_flights_with_instructor', {
+        start_date: dateRange.startDate.toISOString(),
+        end_date: dateRange.endDate.toISOString()
+      });
+
+      // Transformer les données pour combiner le type de vol et la présence d'un instructeur
+      const transformedFlightsWithInstructor = (flightsWithInstructor || [])
+        .sort((a, b) => {
+          // D'abord trier par mois
+          if (a.month !== b.month) {
+            return a.month.localeCompare(b.month);
+          }
+          // Ensuite par présence d'instructeur (avec instructeur en premier)
+          if (a.has_instructor !== b.has_instructor) {
+            return a.has_instructor === "Avec instructeur" ? -1 : 1;
+          }
+          // Enfin par display_order
+          return a.display_order - b.display_order;
+        })
+        .map(flight => ({
+          ...flight,
+          combined_type: `${flight.has_instructor} - ${flight.flight_type_code}`,
+          // Ajouter une clé pour le tri dans le graphique
+          sort_key: `${flight.has_instructor === "Avec instructeur" ? "A" : "B"}-${flight.display_order.toString().padStart(3, '0')}-${flight.flight_type_code}`
+        }));
+
       // Get monthly comparison (toujours sur 3 ans)
       const monthlyComparison = await loadMonthlyComparison();
 
@@ -69,7 +114,8 @@ const StatsPage = () => {
         flightsByAircraft: flightsByAircraft || [],
         flightsByInstructor: flightsByInstructor || [],
         flightsByType: flightsByType || [],
-        monthlyComparison
+        monthlyComparison,
+        flightsWithInstructor: transformedFlightsWithInstructor
       });
     } catch (err) {
       console.error('Error loading stats:', err);
@@ -77,6 +123,28 @@ const StatsPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Génération des couleurs pour les types de vol
+  const getTypeColors = () => {
+    const colors: Record<string, string> = {};
+    
+    flightTypes.forEach((type, index) => {
+      // Calculer la teinte de bleu pour "avec instructeur"
+      const blueHue = 220; // Bleu
+      const blueSaturation = 84;
+      const blueLightness = Math.max(30, 70 - (index * 8)); // Plus foncé pour les premiers types
+      
+      // Calculer la teinte de vert pour "sans instructeur"
+      const greenHue = 142; // Vert
+      const greenSaturation = 84;
+      const greenLightness = Math.max(30, 70 - (index * 8));
+
+      colors[`Avec instructeur - ${type.code}`] = `hsl(${blueHue}, ${blueSaturation}%, ${blueLightness}%)`;
+      colors[`Sans instructeur - ${type.code}`] = `hsl(${greenHue}, ${greenSaturation}%, ${greenLightness}%)`;
+    });
+
+    return colors;
   };
 
   if (loading) {
@@ -137,6 +205,56 @@ const StatsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Users className="h-5 w-5 text-slate-600" />
+            Types de vol avec/sans instructeur
+          </h2>
+          <BarChart
+            data={stats.flightsWithInstructor}
+            xKey="month"
+            yKey="total_hours"
+            compareKey="combined_type"
+            sortKey="sort_key"
+            stacked={true}
+            colors={getTypeColors()}
+          />
+          <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div className="font-medium mb-2">Avec instructeur</div>
+              <div className="space-y-2">
+                {flightTypes
+                  .sort((a, b) => a.display_order - b.display_order)
+                  .map((type) => (
+                    <div key={`with-${type.id}`} className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: getTypeColors()[`Avec instructeur - ${type.code}`] }}
+                      />
+                      <span>{type.name}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+            <div>
+              <div className="font-medium mb-2">Sans instructeur</div>
+              <div className="space-y-2">
+                {flightTypes
+                  .sort((a, b) => a.display_order - b.display_order)
+                  .map((type) => (
+                    <div key={`without-${type.id}`} className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: getTypeColors()[`Sans instructeur - ${type.code}`] }}
+                      />
+                      <span>{type.name}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Clock className="h-5 w-5 text-slate-600" />
             Répartition des types de vol
           </h2>
@@ -146,7 +264,9 @@ const StatsPage = () => {
             valueKey="total_hours"
           />
         </div>
+      </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Calendar className="h-5 w-5 text-slate-600" />
