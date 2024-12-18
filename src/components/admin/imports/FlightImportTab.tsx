@@ -285,7 +285,7 @@ const FlightImportTab = () => {
           cost: flight.cost,
           payment_method: flight.payment_method,
           club_id: authUser?.club?.id,
-          is_validated: false,
+          is_validated: true,
           start_hour_meter: flight.start_hour_meter || 0,
           end_hour_meter: flight.end_hour_meter || 0,
           instructor_cost: flight.instructor_fee || null
@@ -293,6 +293,37 @@ const FlightImportTab = () => {
       }).filter(f => f !== null);
 
       for (const flight of newFlights) {
+        // Vérifier si le vol existe déjà
+        const { data: existingFlight } = await supabase
+          .from('flights')
+          .select('id')
+          .eq('user_id', flight.user_id)
+          .eq('aircraft_id', flight.aircraft_id)
+          .eq('date', flight.date)
+          .eq('duration', flight.duration)
+          .single();
+
+        if (existingFlight) {
+          if (duplicateHandling === 'skip') {
+            continue; // Passer au vol suivant
+          } else {
+            // Mettre à jour le vol existant
+            const { error: updateError } = await supabase
+              .from('flights')
+              .update(flight)
+              .eq('id', existingFlight.id);
+
+            if (updateError) {
+              errorCount++;
+              console.error('Update error:', updateError);
+            } else {
+              savedCount++;
+            }
+            continue;
+          }
+        }
+
+        // Si le vol n'existe pas, l'insérer
         const { error: insertError } = await supabase
           .from('flights')
           .insert(flight);
@@ -370,146 +401,136 @@ const FlightImportTab = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {error && (
-        <div className="p-4 bg-red-50 text-red-800 rounded-lg flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5" />
-          <p className="whitespace-pre-wrap">{error}</p>
+    <div className="space-y-4">
+      <div className="flex flex-col space-y-2">
+        <div className="flex justify-between items-center">
+          <div className="flex space-x-2">
+            <button
+              onClick={handleCopyExample}
+              className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Copier l'exemple
+            </button>
+            <button
+              onClick={() => {}}
+              className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Télécharger l'exemple
+            </button>
+          </div>
+          <div className="flex items-center space-x-4">
+            <select
+              value={duplicateHandling}
+              onChange={(e) => setDuplicateHandling(e.target.value as 'replace' | 'skip')}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="skip">Ignorer les doublons</option>
+              <option value="replace">Remplacer les doublons</option>
+            </select>
+            <button
+              onClick={handleImport}
+              disabled={importing || !jsonContent}
+              className={`flex items-center px-4 py-2 text-sm font-medium text-white rounded-md ${
+                importing || !jsonContent
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              {importing ? 'Importation...' : 'Importer'}
+            </button>
+          </div>
         </div>
-      )}
 
-      {success && (
-        <div className="p-4 bg-emerald-50 text-emerald-800 rounded-lg">
-          {success}
-        </div>
-      )}
+        {error && (
+          <div className="flex items-center p-4 text-red-800 bg-red-100 rounded-md">
+            <AlertTriangle className="w-5 h-5 mr-2" />
+            <pre className="whitespace-pre-wrap font-mono text-sm">{error}</pre>
+          </div>
+        )}
 
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-slate-700">
-            Import des vols (JSON)
-          </label>
-          <button
-            onClick={handleCopyExample}
-            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900"
-          >
-            <Copy className="h-4 w-4" />
-            Copier un exemple
-          </button>
-        </div>
+        {success && (
+          <div className="flex items-center p-4 text-green-800 bg-green-100 rounded-md">
+            <CheckCircle className="w-5 h-5 mr-2" />
+            {success}
+          </div>
+        )}
 
         <textarea
           value={jsonContent}
           onChange={handleJsonChange}
-          className="w-full h-96 font-mono text-sm p-4 border border-slate-200 rounded-lg"
           placeholder="Collez votre JSON ici..."
+          className="w-full h-96 p-4 font-mono text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-
-        <div className="mt-4 flex justify-end gap-4">
-          <button
-            onClick={() => setJsonContent('')}
-            className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900"
-          >
-            Effacer
-          </button>
-          <button
-            onClick={handleImport}
-            disabled={!jsonContent.trim() || !!error || importing}
-            className={`inline-flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg text-sm font-medium hover:bg-sky-700 ${
-              (!jsonContent.trim() || !!error || importing) ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {importing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Upload className="h-4 w-4" />
-            )}
-            Importer
-          </button>
-        </div>
       </div>
 
       {isVerificationModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
+            <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">Vérification des données</h3>
               <button
-                onClick={() => !verificationProgress.processing && setIsVerificationModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                onClick={() => setIsVerificationModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500"
               >
-                <X className="h-5 w-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">Utilisateurs</h4>
-                {verificationProgress.users.map((user, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm">
-                    {user.status === 'success' ? (
-                      <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    )}
-                    <span>{user.source.lastname} {user.source.firstname}</span>
-                    {user.status === 'success' && (
-                      <span className="text-slate-500">
-                        → {user.found?.first_name} {user.found?.last_name}
-                      </span>
-                    )}
-                  </div>
-                ))}
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  verificationProgress.currentStep === 'users' 
+                    ? 'bg-blue-500' 
+                    : verificationProgress.users.length > 0 
+                      ? 'bg-green-500' 
+                      : 'bg-gray-300'
+                }`} />
+                <span>Vérification des utilisateurs</span>
+                {verificationProgress.currentStep === 'users' && (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                )}
               </div>
 
-              <div className="space-y-2">
-                <h4 className="font-medium">Avions</h4>
-                {verificationProgress.aircraft.map((aircraft, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm">
-                    {aircraft.status === 'success' ? (
-                      <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    )}
-                    <span>{aircraft.registration}</span>
-                  </div>
-                ))}
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  verificationProgress.currentStep === 'aircraft' 
+                    ? 'bg-blue-500' 
+                    : verificationProgress.aircraft.length > 0 
+                      ? 'bg-green-500' 
+                      : 'bg-gray-300'
+                }`} />
+                <span>Vérification des avions</span>
+                {verificationProgress.currentStep === 'aircraft' && (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                )}
               </div>
 
-              <div className="space-y-2">
-                <h4 className="font-medium">Types de vol</h4>
-                {verificationProgress.flightTypes.map((type, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm">
-                    {type.status === 'success' ? (
-                      <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    )}
-                    <span>{type.code}</span>
-                    {type.status === 'success' && (
-                      <span className="text-slate-500">→ {type.found?.name}</span>
-                    )}
-                  </div>
-                ))}
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  verificationProgress.currentStep === 'flightTypes' 
+                    ? 'bg-blue-500' 
+                    : verificationProgress.flightTypes.length > 0 
+                      ? 'bg-green-500' 
+                      : 'bg-gray-300'
+                }`} />
+                <span>Vérification des types de vol</span>
+                {verificationProgress.currentStep === 'flightTypes' && (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                )}
               </div>
 
               {verificationProgress.currentStep === 'saving' && (
-                <div className="text-sm">
-                  {verificationProgress.processing ? (
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Import en cours...
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <div className="text-emerald-600">
-                        {verificationProgress.savedCount} vols importés
-                      </div>
-                      {verificationProgress.errorCount > 0 && (
-                        <div className="text-red-600">
-                          {verificationProgress.errorCount} erreurs
-                        </div>
-                      )}
+                <div className="mt-4">
+                  <div className="flex justify-between mb-2">
+                    <span>Progression</span>
+                    <span>{verificationProgress.savedCount} vols importés</span>
+                  </div>
+                  {verificationProgress.errorCount > 0 && (
+                    <div className="text-red-600">
+                      {verificationProgress.errorCount} erreurs
                     </div>
                   )}
                 </div>
