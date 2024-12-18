@@ -44,6 +44,22 @@ export default function EnhancedDiscoveryPage() {
     enabled: !!clubId,
   })
 
+  // Récupération des prestations incluses
+  const { data: features } = useQuery({
+    queryKey: ['discoveryFlightFeatures', clubId],
+    queryFn: async () => {
+      if (!clubId) return null
+      const { data, error } = await supabase
+        .from('discovery_flight_features')
+        .select('*')
+        .eq('club_id', clubId)
+        .order('display_order')
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!clubId,
+  })
+
   const discoveryFlightInfo = {
     price: discoveryFlightPrice?.price ? `${discoveryFlightPrice.price}€` : '130€',
     duration: discoveryFlightPrice?.duration ? `${discoveryFlightPrice.duration} minutes` : '30 minutes',
@@ -145,14 +161,9 @@ export default function EnhancedDiscoveryPage() {
           <div className="backdrop-blur-xl backdrop-filter rounded-xl border border-white/10 bg-white/5 p-8 text-white">
             <h2 className="mb-8 text-2xl font-semibold">Vol découverte inclus :</h2>
             <ul className="space-y-6">
-              {[
-                `Vol de ${discoveryFlightInfo.duration} avec un pilote expérimenté`,
-                "Briefing complet avant le vol",
-                "Photos souvenirs",
-                "Certificat de vol"
-              ].map((item, index) => (
+              {features?.map((feature, index) => (
                 <motion.li
-                  key={index}
+                  key={feature.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 * index }}
@@ -161,7 +172,7 @@ export default function EnhancedDiscoveryPage() {
                   <div className="rounded-full bg-gradient-to-r from-orange-400 to-orange-600 p-1">
                     <div className="h-2 w-2 rounded-full bg-white" />
                   </div>
-                  <span className="text-lg">{item}</span>
+                  <span className="text-lg">{feature.description}</span>
                 </motion.li>
               ))}
             </ul>

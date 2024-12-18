@@ -67,37 +67,35 @@ const DiscoveryQRCode = () => {
   });
 
   // Récupération des informations du vol découverte
-  const { data: discoveryFlightPrice, isLoading: isLoadingPrice } = useQuery({
+  const { data: discoveryFlightInfo } = useQuery({
     queryKey: ['discoveryFlightPrice', clubId],
     queryFn: async () => {
-      if (!clubId) return null;
       const { data, error } = await supabase
         .from('discovery_flight_prices')
         .select('*')
         .eq('club_id', clubId)
         .single();
+
       if (error) throw error;
-      return data;
+      return data || { price: 130, duration: 30 };
     },
-    enabled: !!clubId,
-    onError: (error) => {
-      console.error('Error fetching discovery flight price:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger le tarif du vol découverte',
-        status: 'error',
-        duration: 5000,
-      });
-    }
   });
 
-  const isLoading = isLoadingClub || isLoadingPrice;
+  const { data: features } = useQuery({
+    queryKey: ['discoveryFlightFeatures', clubId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('discovery_flight_features')
+        .select('*')
+        .eq('club_id', clubId)
+        .order('display_order');
 
-  // Prix et durée par défaut si pas de configuration
-  const discoveryFlightInfo = {
-    price: discoveryFlightPrice?.price ? `${discoveryFlightPrice.price}€` : '130€',
-    duration: discoveryFlightPrice?.duration ? `${discoveryFlightPrice.duration} minutes` : '30 minutes',
-  };
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const isLoading = isLoadingClub || !discoveryFlightInfo || !features;
 
   if (isLoading) {
     return (
@@ -139,8 +137,8 @@ const DiscoveryQRCode = () => {
         {/* Prix et Informations principales */}
         <Box bg={secondaryBg} p={6} borderRadius="xl" boxShadow="base" border="1px" borderColor="whiteAlpha.100">
           <VStack spacing={4} align="center">
-            <Heading size="2xl" color={primaryColor}>{discoveryFlightInfo.price}</Heading>
-            <Text fontSize="xl" fontWeight="medium">Vol découverte {discoveryFlightInfo.duration}</Text>
+            <Heading size="2xl" color={primaryColor}>{discoveryFlightInfo.price}€</Heading>
+            <Text fontSize="xl" fontWeight="medium">Vol découverte {discoveryFlightInfo.duration} minutes</Text>
             <HStack spacing={6} mt={2}>
               <VStack align="center">
                 <Icon as={FaPlane} color={primaryColor} boxSize={6} />
@@ -180,22 +178,12 @@ const DiscoveryQRCode = () => {
         <Box {...glassEffect} p={6} borderRadius="xl" boxShadow="base">
           <Heading size="md" mb={4} color="white">Ce qui est inclus :</Heading>
           <List spacing={3} color="white">
-            <ListItem>
-              <ListIcon as={FaCheckCircle} color="green.500" />
-              Briefing complet avant le vol
-            </ListItem>
-            <ListItem>
-              <ListIcon as={FaCheckCircle} color="green.500" />
-              Vol de {discoveryFlightInfo.duration} avec un pilote expérimenté
-            </ListItem>
-            <ListItem>
-              <ListIcon as={FaCheckCircle} color="green.500" />
-              Photos souvenirs
-            </ListItem>
-            <ListItem>
-              <ListIcon as={FaCheckCircle} color="green.500" />
-              Certificat de vol
-            </ListItem>
+            {features?.map((feature) => (
+              <ListItem key={feature.id}>
+                <ListIcon as={FaCheckCircle} color="green.500" />
+                {feature.description}
+              </ListItem>
+            ))}
           </List>
         </Box>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useUser } from '../../hooks/useUser';
+import DiscoveryFlightSettings from './DiscoveryFlightSettings';
 
 interface ClubData {
   id: string;
@@ -20,6 +21,12 @@ const ClubManagement = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [clubData, setClubData] = useState<ClubData | null>(null);
   const { user } = useUser();
+  const [activeTab, setActiveTab] = useState('general');
+
+  const tabs = [
+    { id: 'general', label: 'Général' },
+    { id: 'discovery', label: 'Vols découverte' },
+  ];
 
   useEffect(() => {
     if (user?.club?.id) {
@@ -115,7 +122,26 @@ const ClubManagement = () => {
         </div>
       )}
 
-      {clubData && (
+      <div className="border-b mb-6">
+        <nav className="-mb-px flex space-x-8">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`
+                py-4 px-1 border-b-2 font-medium text-sm
+                ${activeTab === tab.id
+                  ? 'border-sky-500 text-sky-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}
+              `}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {activeTab === 'general' && clubData && (
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -237,6 +263,10 @@ const ClubManagement = () => {
             </button>
           </div>
         </form>
+      )}
+
+      {activeTab === 'discovery' && (
+        <DiscoveryFlightSettings />
       )}
     </div>
   );
