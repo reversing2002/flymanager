@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, isWithinInterval, parseISO, addDays, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Clock, RotateCcw } from 'lucide-react';
-import { getAvailabilitiesForPeriod } from '../../lib/queries/availability';
+import { getAvailabilitiesForPeriod, getReservationsAsAvailabilities } from '../../lib/queries/availability';
 import type { Availability, AvailabilitySlotType } from '../../types/availability';
 import { useAuth } from '../../contexts/AuthContext';
 import AvailabilityModal from './AvailabilityModal';
@@ -45,14 +45,24 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
       const startDate = startOfWeek(currentDate, { locale: fr });
       const endDate = endOfWeek(currentDate, { locale: fr });
       
-      const data = await getAvailabilitiesForPeriod(
+      // Charger les disponibilités normales
+      const availabilitiesData = await getAvailabilitiesForPeriod(
         startDate.toISOString(),
         endDate.toISOString(),
         userId,
         aircraftId
       );
       
-      setAvailabilities(data);
+      // Charger les réservations comme indisponibilités
+      const reservationsData = await getReservationsAsAvailabilities(
+        startDate.toISOString(),
+        endDate.toISOString(),
+        userId,
+        aircraftId
+      );
+      
+      // Combiner les deux types de données
+      setAvailabilities([...availabilitiesData, ...reservationsData]);
     } catch (error) {
       console.error('Error loading availabilities:', error);
       toast.error('Erreur lors du chargement des disponibilités');
@@ -106,6 +116,32 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     });
   };
 
+  const getSlotColor = (availability: Availability) => {
+    if (availability.slot_type === 'reservation') {
+      if (availability.instructor_id) {
+        return 'bg-orange-200 border-orange-300'; // Couleur pour les réservations avec instructeur
+      }
+      return 'bg-red-200 border-red-300'; // Couleur pour les réservations normales
+    }
+    return availability.slot_type === 'available' 
+      ? 'bg-green-200 border-green-300'
+      : 'bg-gray-200 border-gray-300';
+  };
+
+  const getSlotTitle = (availability: Availability) => {
+    if (availability.slot_type === 'reservation') {
+      let title = 'Réservation';
+      if (availability.instructor) {
+        title += ` avec instructeur ${availability.instructor.first_name} ${availability.instructor.last_name}`;
+      }
+      if (availability.aircraft) {
+        title += ` - ${availability.aircraft.registration}`;
+      }
+      return title;
+    }
+    return availability.slot_type === 'available' ? 'Disponible' : 'Indisponible';
+  };
+
   const formatAvailabilityTime = (availability: Availability) => {
     const start = parseISO(availability.start_time);
     const end = parseISO(availability.end_time);
@@ -118,12 +154,6 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
         ? `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`
         : `${format(start, 'dd/MM HH:mm')} - ${format(end, 'dd/MM HH:mm')}`;
     }
-  };
-
-  const getAvailabilityColor = (availability: Availability) => {
-    return availability.slot_type === 'availability' 
-      ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-      : 'bg-rose-100 text-rose-800 border-rose-200';
   };
 
   return (
@@ -193,7 +223,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                     setSelectedAvailability(availability);
                     setShowModal(true);
                   }}
-                  className={`w-full p-2 rounded-lg border text-left text-sm transition-colors ${getAvailabilityColor(availability)}`}
+                  className={`w-full p-2 rounded-lg border text-left text-sm transition-colors ${getSlotColor(availability)}`}
                 >
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
@@ -207,6 +237,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                       </span>
                     </div>
                   )}
+                  <div className="text-xs mt-1">{getSlotTitle(availability)}</div>
                 </button>
               ))}
             </div>

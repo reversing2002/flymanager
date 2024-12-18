@@ -98,3 +98,74 @@ export async function deleteAvailability(id: string): Promise<void> {
 
   if (error) throw error;
 }
+
+// Nouvelle fonction pour obtenir les réservations comme indisponibilités
+export async function getReservationsAsAvailabilities(
+  startDate: string,
+  endDate: string,
+  userId?: string,
+  aircraftId?: string
+): Promise<Availability[]> {
+  let query = supabase
+    .from('reservations')
+    .select(`
+      id,
+      start_time,
+      end_time,
+      user_id,
+      aircraft_id,
+      instructor_id,
+      users!user_id (
+        id,
+        first_name,
+        last_name,
+        email
+      ),
+      aircraft!aircraft_id (
+        id,
+        registration,
+        name
+      ),
+      instructor:users!instructor_id (
+        id,
+        first_name,
+        last_name,
+        email
+      )
+    `)
+    .gte('end_time', startDate)
+    .lte('start_time', endDate);
+
+  if (userId) {
+    query = query.or(`user_id.eq.${userId},instructor_id.eq.${userId}`);
+  }
+
+  if (aircraftId) {
+    query = query.eq('aircraft_id', aircraftId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching reservations:', error);
+    throw error;
+  }
+
+  // Convertir les réservations en indisponibilités
+  return (data || []).map(reservation => ({
+    id: `reservation-${reservation.id}`,
+    start_time: reservation.start_time,
+    end_time: reservation.end_time,
+    user_id: reservation.user_id,
+    aircraft_id: reservation.aircraft_id,
+    slot_type: 'reservation',
+    is_recurring: false,
+    users: reservation.users,
+    aircraft: reservation.aircraft,
+    instructor_id: reservation.instructor_id,
+    instructor: reservation.instructor,
+    club_id: null, // Sera rempli par la base de données
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }));
+}
