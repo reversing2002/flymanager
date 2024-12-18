@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, Plus } from "lucide-react";
+import { Search, Filter, Plus, UserCog } from "lucide-react";
 import type { User as UserType } from "../../types/database";
 import type { Contribution } from "../../types/contribution";
 import { getMembersWithBalance } from "../../lib/queries/users";
@@ -9,9 +9,11 @@ import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
 import AddMemberForm from "./AddMemberForm";
 import { addMonths, isAfter } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 const MemberList = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedMembershipStatus, setSelectedMembershipStatus] = useState<string>("all");
@@ -88,14 +90,23 @@ const MemberList = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <h1 className="text-2xl font-semibold text-slate-900 mb-4 sm:mb-0">Membres</h1>
-        {hasAnyGroup(user, ["ADMIN", "INSTRUCTOR"]) && (
-          <button
-            onClick={() => setIsAddMemberOpen(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Ajouter un membre
-          </button>
+        {hasAnyGroup(user, ["ADMIN"]) && (
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setIsAddMemberOpen(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Ajouter un membre
+            </button>
+            <button
+              onClick={() => navigate('/members/roles')}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <UserCog className="h-5 w-5 mr-2" />
+              Attribuer les rôles
+            </button>
+          </div>
         )}
       </div>
 

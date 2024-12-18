@@ -10,6 +10,7 @@ import Dashboard from "./components/Dashboard";
 import ProfilePage from "./components/profile/ProfilePage";
 import MemberList from "./components/members/MemberList";
 import MemberProfile from "./components/members/MemberProfile";
+import RoleManagement from "./components/members/RoleManagement";
 import AircraftList from "./components/aircraft/AircraftList";
 import MaintenancePage from "./pages/MaintenancePage";
 import CalendarContainer from "./components/reservations/CalendarContainer";
@@ -93,6 +94,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="members/roles" element={<RoleManagement />} />
               <Route path="members/:id" element={<MemberProfile />} />
 
               {/* Instructor Students */}
