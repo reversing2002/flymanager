@@ -863,7 +863,7 @@ const HorizontalReservationCalendar = ({
 
           {/* Grille scrollable */}
           <div className="flex-1 overflow-x-auto">
-            <div className="relative">
+            <div style={{ minWidth: `${timeSlots.length * CELL_WIDTH}px` }}>
               {/* En-tête des heures */}
               <div className="flex h-8 border-b border-gray-200">
                 {timeSlots.map(({ hour, minutes }, index) => (
@@ -884,20 +884,21 @@ const HorizontalReservationCalendar = ({
                 {sortedAircraft.map((aircraft, aircraftIndex) => (
                   <div
                     key={aircraft.id}
-                    className="relative flex h-12 border-b border-gray-200"
+                    className="relative h-12 border-b border-gray-200"
+                    style={{ minWidth: `${timeSlots.length * CELL_WIDTH}px` }}
                     data-aircraft-id={aircraft.id}
                   >
-                    {/* Créneaux horaires */}
-                    {timeSlots.map(({ hour, minutes }, index) => (
-                      <div
-                        key={index}
-                        className={timeSlotStyle(hour, minutes, aircraft.id)}
-                        onMouseDown={() => handleMouseDown(hour, minutes, aircraft.id)}
-                        onMouseEnter={() => handleMouseMove(hour, minutes)}
-                        onMouseUp={handleMouseUp}
-                      />
-                    ))}
-
+                    <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${timeSlots.length}, ${CELL_WIDTH}px)` }}>
+                      {timeSlots.map(({ hour, minutes }, index) => (
+                        <div
+                          key={index}
+                          className={timeSlotStyle(hour, minutes, aircraft.id)}
+                          onMouseDown={() => handleMouseDown(hour, minutes, aircraft.id)}
+                          onMouseEnter={() => handleMouseMove(hour, minutes)}
+                          onMouseUp={handleMouseUp}
+                        />
+                      ))}
+                    </div>
                     {/* Réservations pour cet avion */}
                     <div className="absolute inset-0 pointer-events-none">
                       {filteredReservations

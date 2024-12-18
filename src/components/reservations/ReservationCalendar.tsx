@@ -9,6 +9,7 @@ import {
   isBefore,
   isAfter,
   subDays,
+  endOfDay,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -16,12 +17,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import type { Aircraft, Reservation, User } from "../../types/database";
+import type { Aircraft, Reservation, User, Availability } from "../../types/database";
 import {
   getAircraft,
   getReservations,
   getUsers,
   updateReservation,
+  getAvailabilitiesForPeriod,
 } from "../../lib/queries";
 import { getAircraftOrder, updateAircraftOrder } from "../../services/aircraft";
 import TimeGrid from "./TimeGrid";
@@ -74,6 +76,7 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
 
   // Charger les données initiales
   useEffect(() => {
@@ -142,32 +145,35 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
     Reservation[]
   >([]);
 
-  // Fonction pour charger les données initiales
   const loadData = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      // Charger les avions
-      const aircraftData = await getAircraft();
-      if (aircraftData) {
-        setAircraft(aircraftData);
-      }
+      const [reservationsData, aircraftData, usersData, availabilitiesData] = await Promise.all([
+        getReservations(selectedDate),
+        getAircraft(),
+        getUsers(),
+        getAvailabilitiesForPeriod(
+          startOfDay(selectedDate).toISOString(),
+          endOfDay(selectedDate).toISOString(),
+          null,
+          filters.aircraftId
+        ),
+      ]);
 
-      // Charger les utilisateurs
-      const usersData = await getUsers();
-      if (usersData) {
-        setUsers(usersData);
-      }
-
-      // Charger les réservations
-      const startDate = startOfDay(selectedDate);
-      const endDate = addDays(startDate, 1);
-      const reservationsData = await getReservations(startDate, endDate);
       setReservations(reservationsData);
+      setAircraft(aircraftData);
+      setUsers(usersData);
+      setAvailabilities(availabilitiesData);
 
       // Charger l'ordre des avions
       const order = await getAircraftOrder(currentUser?.club?.id || "");
       setAircraftOrder(order);
-    } catch (error) {
-      console.error("Error loading data:", error);
+    } catch (err) {
+      console.error("Error loading data:", err);
+      setError("Erreur lors du chargement des données");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -188,15 +194,12 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
   };
 
   const handleTimeSlotClick = (start: Date, end: Date, aircraftId: string) => {
-    const localStart = new Date(start.getTime());
-    const localEnd = new Date(end.getTime());
-
-    setSelectedTimeSlot({
-      start: localStart,
-      end: localEnd,
-      aircraftId,
-    });
-    setSelectedReservation(null);
+    if (!isTimeSlotAvailable(start, end, aircraftId)) {
+      // Suppression du toast ici car il est maintenant géré dans le TimeGrid
+      return;
+    }
+    
+    setSelectedTimeSlot({ start, end, aircraftId });
     setShowReservationModal(true);
   };
 
@@ -325,6 +328,46 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
       console.error("Error updating aircraft order:", error);
       toast.error("Erreur lors de la mise à jour de l'ordre des avions");
     }
+  };
+
+  const isTimeSlotAvailable = (start: Date, end: Date, aircraftId: string) => {
+    // Vérifier les indisponibilités
+    const hasConflictingAvailability = availabilities.some((availability) => {
+      if (availability.aircraft_id && availability.aircraft_id !== aircraftId) {
+        return false;
+      }
+      
+      const availStart = new Date(availability.start_time);
+      const availEnd = new Date(availability.end_time);
+      
+      return (
+        (start >= availStart && start < availEnd) ||
+        (end > availStart && end <= availEnd) ||
+        (start <= availStart && end >= availEnd)
+      );
+    });
+
+    if (hasConflictingAvailability) {
+      return false;
+    }
+
+    // Vérifier les réservations existantes
+    const hasConflictingReservation = reservations.some((reservation) => {
+      if (reservation.aircraftId !== aircraftId) {
+        return false;
+      }
+      
+      const resStart = new Date(reservation.startTime);
+      const resEnd = new Date(reservation.endTime);
+      
+      return (
+        (start >= resStart && start < resEnd) ||
+        (end > resStart && end <= resEnd) ||
+        (start <= resStart && end >= resEnd)
+      );
+    });
+
+    return !hasConflictingReservation;
   };
 
   // Charger les coordonnées du club
@@ -493,13 +536,14 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
           onReservationUpdate={handleReservationUpdate}
           onCreateFlight={handleCreateFlight}
           reservations={filteredReservations}
+          availabilities={availabilities}
           aircraft={filteredAircraft}
           aircraftOrder={aircraftOrder}
           onAircraftOrderChange={handleAircraftOrderChange}
           users={users}
           flights={flights}
           onDateChange={setSelectedDate}
-          nightFlightsEnabled={clubSettings?.night_flights_enabled ?? false}
+          nightFlightsEnabled={clubSettings?.night_flights_enabled || false}
         />
       </div>
 

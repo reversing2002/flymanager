@@ -7,3 +7,4 @@ export * from "./accounts";
 export * from "./licenses";
 export * from "./training";
 export * from "./contributions";
+export * from "./availability";

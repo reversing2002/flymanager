@@ -26,6 +26,15 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   const [selectedAvailability, setSelectedAvailability] = useState<Availability | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [defaultMode, setDefaultMode] = useState<'default-available' | 'default-unavailable'>(
+    user?.default_mode || 'default-available'
+  );
+
+  useEffect(() => {
+    if (user?.default_mode) {
+      setDefaultMode(user.default_mode);
+    }
+  }, [user?.default_mode]);
 
   useEffect(() => {
     loadAvailabilities();
@@ -144,7 +153,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg"
           >
             <Plus className="h-4 w-4" />
-            {user?.default_mode === 'default-available' 
+            {defaultMode === 'default-available' 
               ? 'Ajouter une indisponibilité'
               : 'Ajouter une disponibilité'
             }
@@ -207,19 +216,15 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
 
       {showModal && (
         <AvailabilityModal
+          userId={userId}
+          aircraftId={aircraftId}
           availability={selectedAvailability}
           onClose={() => {
             setShowModal(false);
             setSelectedAvailability(null);
           }}
-          onSuccess={() => {
-            setShowModal(false);
-            setSelectedAvailability(null);
-            loadAvailabilities();
-          }}
-          defaultDate={currentDate}
-          userId={userId}
-          aircraftId={aircraftId}
+          onSuccess={loadAvailabilities}
+          initialDefaultMode={defaultMode}
         />
       )}
     </div>

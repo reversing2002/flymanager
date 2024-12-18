@@ -25,7 +25,7 @@ export async function getAvailabilitiesForPeriod(
         name
       )
     `)
-    .or(`and(start_time.gte.${startDate},end_time.lte.${endDate}),and(is_recurring.eq.true,or(recurrence_end_date.gte.${startDate},recurrence_end_date.is.null))`);
+    .or(`and(end_time.gte.${startDate},start_time.lte.${endDate}),and(is_recurring.eq.true,or(recurrence_end_date.gte.${startDate},recurrence_end_date.is.null))`);
 
   if (userId) {
     query = query.eq('user_id', userId);
