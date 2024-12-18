@@ -99,7 +99,7 @@ const AdminDashboard = () => {
       <div className="col-span-full">
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-lg font-semibold mb-4">Résumé mensuel des comptes</h2>
-          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 max-h-[600px] overflow-y-auto">
             <MonthlyAccountSummary />
             <MonthlyAircraftHours />
           </div>
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
             <AlertCircle className="h-5 w-5 text-slate-600" />
             Alertes membres
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[600px] overflow-y-auto">
             {/* Adhésions expirant bientôt */}
             {memberStats?.expiring_memberships?.map(member => (
               <div key={member.id} className="p-4 bg-amber-50 text-amber-800 rounded-lg">
@@ -182,8 +182,8 @@ const AdminDashboard = () => {
             <Activity className="h-5 w-5 text-slate-600" />
             État de la flotte
           </h2>
-          <div className="space-y-4">
-            {fleetStats?.aircraft_list?.map(aircraft => (
+          <div className="space-y-4 max-h-[600px] overflow-y-auto">
+            {fleetStats?.aircraft_list?.filter(aircraft => aircraft.status !== 'UNAVAILABLE').map(aircraft => (
               <div key={aircraft.id} className="p-4 bg-white border rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

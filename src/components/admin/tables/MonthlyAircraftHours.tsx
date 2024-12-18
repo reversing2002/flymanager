@@ -63,7 +63,7 @@ const MonthlyAircraftHours = () => {
       flightHours?.map((entry) => entry.month)
     )
   )
-    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
     .map(month => format(new Date(month), 'MMM yyyy', { locale: fr }));
 
   return (
@@ -77,12 +77,12 @@ const MonthlyAircraftHours = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Avion</TableHead>
+                <TableHead className="text-right">Total</TableHead>
                 {months.map((month) => (
                   <TableHead key={month} className="text-right">
                     {month}
                   </TableHead>
                 ))}
-                <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -97,14 +97,14 @@ const MonthlyAircraftHours = () => {
                     <TableCell className="font-medium">
                       {data.registration}
                     </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {Math.round(totalHours)}
+                    </TableCell>
                     {months.map((month) => (
                       <TableCell key={month} className="text-right">
-                        {data.monthlyHours.get(month)?.toFixed(1) || '-'}
+                        {data.monthlyHours.get(month) ? Math.round(data.monthlyHours.get(month)!) : '-'}
                       </TableCell>
                     ))}
-                    <TableCell className="text-right font-medium">
-                      {totalHours.toFixed(1)}
-                    </TableCell>
                   </TableRow>
                 );
               })}
