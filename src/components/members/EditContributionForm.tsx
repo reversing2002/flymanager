@@ -29,8 +29,8 @@ const EditContributionForm: React.FC<EditContributionFormProps> = ({
       new Date(currentContribution.valid_from).toISOString().split('T')[0] : '',
     valid_until: currentContribution?.valid_until ? 
       new Date(currentContribution.valid_until).toISOString().split('T')[0] : '',
-    amount: currentContribution?.account_entry.amount.toString() || '',
-    entry_date: currentContribution?.account_entry.date ? 
+    amount: currentContribution?.account_entry?.amount?.toString() ?? '',
+    entry_date: currentContribution?.account_entry?.date ? 
       new Date(currentContribution.account_entry.date).toISOString().split('T')[0] : 
       new Date().toISOString().split('T')[0],
   });
