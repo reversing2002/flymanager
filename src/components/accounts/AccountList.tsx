@@ -183,7 +183,7 @@ const AccountList = () => {
                 onClick={() => setSelectedEntry(entry)}
               >
                 <td className="py-3 text-slate-600">
-                  {dateUtils.formatDateTime(entry.date)}
+                  {dateUtils.formatDate(entry.date)}
                 </td>
                 <td className="py-3 text-slate-600">
                   {getUserName(entry.assigned_to_id)}

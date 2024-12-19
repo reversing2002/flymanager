@@ -45,6 +45,7 @@ import InstructorAvailabilityPage from "./components/availability/InstructorAvai
 import AircraftAvailabilityPage from "./components/availability/AircraftAvailabilityPage";
 import InstructorBillingList from "./components/billing/InstructorBillingList";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import NotificationList from "./components/admin/NotificationList";
 
 function App() {
   const queryClient = new QueryClient({
@@ -176,6 +177,14 @@ function App() {
 
               {/* Accounts */}
               <Route path="accounts" element={<AccountList />} />
+              <Route
+                path="notifications"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <NotificationList />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="instructor-billing"
                 element={

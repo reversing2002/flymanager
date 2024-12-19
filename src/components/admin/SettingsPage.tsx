@@ -14,6 +14,7 @@ import {
   Plane,
   Users,
   Lock,
+  Bell,
 } from "lucide-react";
 import AnnouncementList from "../announcements/AnnouncementList";
 import AnnouncementForm from "../announcements/AnnouncementForm";
@@ -34,6 +35,7 @@ import ApiExplorer from "../api/ApiExplorer";
 import FlightTypeManager from "./FlightTypeManager";
 import AccountingCategoryManager from "./AccountingCategoryManager";
 import ImportManager from "./imports/ImportManager";
+import NotificationList from "./NotificationList";
 
 type TabType =
   | "club"
@@ -50,6 +52,7 @@ type TabType =
   | "flightFields"
   | "roles"
   | "permissions"
+  | "notifications"
   | "api";
 
 const SettingsPage = () => {
@@ -77,6 +80,7 @@ const SettingsPage = () => {
     { id: "flightFields", label: "Champs vols", icon: ListOrdered },
     { id: "roles", label: "Rôles", icon: Users },
     { id: "permissions", label: "Permissions", icon: Lock },
+    { id: "notifications", label: "Notifications", icon: Bell },
     { id: "api", label: "API", icon: Terminal },
   ] as const;
 
@@ -185,6 +189,7 @@ const SettingsPage = () => {
               )}
             </div>
           )}
+          {activeTab === "notifications" && <NotificationList />}
           {activeTab === "imports" && <ImportManager />}
           {activeTab === "flightTypes" && <FlightTypeManager />}
           {activeTab === "accountTypes" && <AccountTypesSettings />}
