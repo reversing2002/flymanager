@@ -149,7 +149,6 @@ export async function getAllAvailableRoles(clubId: string): Promise<string[]> {
     const { data: roles, error } = await supabase
       .from('user_groups')
       .select('code')
-      .eq('club_id', clubId)
       .order('code');
 
     if (error) throw error;

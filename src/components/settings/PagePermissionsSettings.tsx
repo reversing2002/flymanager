@@ -182,7 +182,6 @@ export default function PagePermissionsSettings() {
         .from('permission_settings')
         .update({
           allowed_roles: permission.allowed_roles,
-          is_custom: true,
         })
         .eq('id', permission.id)
         .eq('club_id', user.club.id);
@@ -196,30 +195,6 @@ export default function PagePermissionsSettings() {
     onError: (error) => {
       toast.error('Erreur lors de la mise à jour des permissions');
       console.error('Error updating permissions:', error);
-    },
-  });
-
-  const resetToDefault = useMutation({
-    mutationFn: async (permissionId: string) => {
-      if (!user?.club?.id) throw new Error('No club selected');
-      
-      const { error } = await supabase
-        .from('permission_settings')
-        .update({
-          is_custom: false,
-        })
-        .eq('id', permissionId)
-        .eq('club_id', user.club.id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['permissionSettings', user?.club?.id] });
-      toast.success('Permissions réinitialisées par défaut');
-    },
-    onError: (error) => {
-      toast.error('Erreur lors de la réinitialisation des permissions');
-      console.error('Error resetting permissions:', error);
     },
   });
 
@@ -264,56 +239,45 @@ export default function PagePermissionsSettings() {
           Gestion des permissions
         </Typography>
         <Typography color="text.secondary">
-          Configurez les permissions pour chaque fonctionnalité de l'application.
+          Configurez les permissions pour chaque rôle de l'application.
         </Typography>
       </Box>
 
       <Box display="flex" flexDirection="column" gap={2}>
-        {PERMISSION_GROUPS.map((group) => (
+        {roles?.map((role) => (
           <Accordion
-            key={group.id}
-            expanded={expandedGroup === group.id}
-            onChange={handleAccordionChange(group.id)}
+            key={role}
+            expanded={expandedGroup === role}
+            onChange={handleAccordionChange(role)}
           >
             <AccordionSummary expandIcon={<ExpandMore />}>
-              <Typography variant="h6">{group.name}</Typography>
+              <Typography variant="h6">{role}</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Box display="flex" flexDirection="column" gap={2}>
-                {group.permissions.map((permissionId) => {
-                  const permission = permissions?.find(p => p.permission_id === permissionId);
-                  if (!permission) return null;
+                {PERMISSION_GROUPS.map((group) => (
+                  <Paper key={group.id} elevation={1}>
+                    <Box p={2}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        {group.name}
+                      </Typography>
+                      <Box 
+                        display="grid" 
+                        gridTemplateColumns={{
+                          xs: 'repeat(1, 1fr)',
+                          sm: 'repeat(2, 1fr)',
+                          md: 'repeat(3, 1fr)',
+                          lg: 'repeat(4, 1fr)'
+                        }}
+                        gap={2}
+                      >
+                        {group.permissions.map((permissionId) => {
+                          const permission = permissions?.find(p => p.permission_id === permissionId);
+                          if (!permission) return null;
 
-                  return (
-                    <Paper key={permission.id} elevation={1}>
-                      <Box p={2}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                          <Typography>{getPermissionLabel(permissionId)}</Typography>
-                          {permission.is_custom && (
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              startIcon={<Refresh />}
-                              onClick={() => resetToDefault.mutate(permission.id)}
-                            >
-                              Réinitialiser
-                            </Button>
-                          )}
-                        </Box>
-
-                        <Box 
-                          display="grid" 
-                          gridTemplateColumns={{
-                            xs: 'repeat(1, 1fr)',
-                            sm: 'repeat(2, 1fr)',
-                            md: 'repeat(3, 1fr)',
-                            lg: 'repeat(4, 1fr)'
-                          }}
-                          gap={2}
-                        >
-                          {roles?.map((role) => (
+                          return (
                             <FormControlLabel
-                              key={role}
+                              key={permission.id}
                               control={
                                 <Checkbox
                                   checked={permission.allowed_roles.includes(role)}
@@ -321,14 +285,14 @@ export default function PagePermissionsSettings() {
                                   color="primary"
                                 />
                               }
-                              label={role}
+                              label={getPermissionLabel(permissionId)}
                             />
-                          ))}
-                        </Box>
+                          );
+                        })}
                       </Box>
-                    </Paper>
-                  );
-                })}
+                    </Box>
+                  </Paper>
+                ))}
               </Box>
             </AccordionDetails>
           </Accordion>
