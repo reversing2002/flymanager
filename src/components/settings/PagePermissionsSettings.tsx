@@ -103,43 +103,125 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
       PERMISSIONS.DOC_MODIFY,
     ],
   },
+  {
+    id: 'planning',
+    name: 'Planning',
+    permissions: [
+      PERMISSIONS.PLANNING_VIEW,
+      PERMISSIONS.PLANNING_MODIFY,
+    ],
+  },
+  {
+    id: 'discovery',
+    name: 'Vols découverte',
+    permissions: [
+      PERMISSIONS.DISCOVERY_FLIGHT_VIEW,
+      PERMISSIONS.DISCOVERY_FLIGHT_CREATE,
+      PERMISSIONS.DISCOVERY_FLIGHT_MODIFY,
+      PERMISSIONS.DISCOVERY_FLIGHT_DELETE,
+    ],
+  },
 ];
 
 const getPermissionLabel = (permissionId: PermissionId): string => {
-  const labels: Record<PermissionId, string> = {
-    'flight:view': 'Voir les vols',
-    'flight:create': 'Créer des vols',
-    'flight:modify': 'Modifier les vols',
-    'flight:delete': 'Supprimer les vols',
-    'training:view': 'Voir les formations',
-    'training:create': 'Créer des formations',
-    'training:modify': 'Modifier les formations',
-    'training:delete': 'Supprimer les formations',
-    'maintenance:view': 'Voir la maintenance',
-    'maintenance:create': 'Créer des maintenances',
-    'maintenance:modify': 'Modifier les maintenances',
-    'maintenance:delete': 'Supprimer les maintenances',
-    'user:view': 'Voir les utilisateurs',
-    'user:create': 'Créer des utilisateurs',
-    'user:modify': 'Modifier les utilisateurs',
-    'user:delete': 'Supprimer les utilisateurs',
-    'settings:view': 'Voir les paramètres',
-    'settings:modify': 'Modifier les paramètres',
-    'chat:view': 'Voir les messages',
-    'chat:send': 'Envoyer des messages',
-    'event:view': 'Voir les événements',
-    'event:create': 'Créer des événements',
-    'event:modify': 'Modifier les événements',
-    'event:delete': 'Supprimer les événements',
-    'doc:view': 'Voir la documentation',
-    'doc:modify': 'Modifier la documentation',
-    'progression:view': 'Voir les progressions',
-    'progression:modify': 'Modifier les progressions',
-    'planning:view': 'Voir le planning',
-    'planning:modify': 'Modifier le planning',
-    'stats:view': 'Voir les statistiques',
-  };
-  return labels[permissionId] || permissionId;
+  switch (permissionId) {
+    // Vols
+    case PERMISSIONS.FLIGHT_VIEW:
+      return 'Voir les vols';
+    case PERMISSIONS.FLIGHT_CREATE:
+      return 'Créer des vols';
+    case PERMISSIONS.FLIGHT_MODIFY:
+      return 'Modifier les vols';
+    case PERMISSIONS.FLIGHT_DELETE:
+      return 'Supprimer les vols';
+
+    // Formation
+    case PERMISSIONS.TRAINING_VIEW:
+      return 'Voir les formations';
+    case PERMISSIONS.TRAINING_CREATE:
+      return 'Créer des formations';
+    case PERMISSIONS.TRAINING_MODIFY:
+      return 'Modifier les formations';
+    case PERMISSIONS.TRAINING_DELETE:
+      return 'Supprimer les formations';
+
+    // Maintenance
+    case PERMISSIONS.MAINTENANCE_VIEW:
+      return 'Voir la maintenance';
+    case PERMISSIONS.MAINTENANCE_CREATE:
+      return 'Créer des maintenances';
+    case PERMISSIONS.MAINTENANCE_MODIFY:
+      return 'Modifier les maintenances';
+    case PERMISSIONS.MAINTENANCE_DELETE:
+      return 'Supprimer les maintenances';
+
+    // Utilisateurs
+    case PERMISSIONS.USER_VIEW:
+      return 'Voir les utilisateurs';
+    case PERMISSIONS.USER_CREATE:
+      return 'Créer des utilisateurs';
+    case PERMISSIONS.USER_MODIFY:
+      return 'Modifier les utilisateurs';
+    case PERMISSIONS.USER_DELETE:
+      return 'Supprimer les utilisateurs';
+
+    // Paramètres
+    case PERMISSIONS.SETTINGS_VIEW:
+      return 'Voir les paramètres';
+    case PERMISSIONS.SETTINGS_MODIFY:
+      return 'Modifier les paramètres';
+
+    // Communication
+    case PERMISSIONS.CHAT_VIEW:
+      return 'Voir les messages';
+    case PERMISSIONS.CHAT_SEND:
+      return 'Envoyer des messages';
+
+    // Événements
+    case PERMISSIONS.EVENT_VIEW:
+      return 'Voir les événements';
+    case PERMISSIONS.EVENT_CREATE:
+      return 'Créer des événements';
+    case PERMISSIONS.EVENT_MODIFY:
+      return 'Modifier les événements';
+    case PERMISSIONS.EVENT_DELETE:
+      return 'Supprimer les événements';
+
+    // Documentation
+    case PERMISSIONS.DOC_VIEW:
+      return 'Visualiser la documentation';
+    case PERMISSIONS.DOC_MODIFY:
+      return 'Modifier la documentation';
+
+    // Planning
+    case PERMISSIONS.PLANNING_VIEW:
+      return 'Visualiser les plannings';
+    case PERMISSIONS.PLANNING_MODIFY:
+      return 'Gérer les plannings';
+
+    // Vols découverte
+    case PERMISSIONS.DISCOVERY_FLIGHT_VIEW:
+      return 'Visualiser les vols découverte';
+    case PERMISSIONS.DISCOVERY_FLIGHT_CREATE:
+      return 'Créer des vols découverte';
+    case PERMISSIONS.DISCOVERY_FLIGHT_MODIFY:
+      return 'Modifier les vols découverte';
+    case PERMISSIONS.DISCOVERY_FLIGHT_DELETE:
+      return 'Supprimer les vols découverte';
+
+    // Progression
+    case PERMISSIONS.PROGRESSION_VIEW:
+      return 'Voir les progressions';
+    case PERMISSIONS.PROGRESSION_MODIFY:
+      return 'Modifier les progressions';
+
+    // Statistiques
+    case PERMISSIONS.STATS_VIEW:
+      return 'Voir les statistiques';
+
+    default:
+      return permissionId;
+  }
 };
 
 export default function PagePermissionsSettings() {
@@ -152,7 +234,9 @@ export default function PagePermissionsSettings() {
     queryKey: ['availableRoles', user?.club?.id],
     queryFn: async () => {
       if (!user?.club?.id) throw new Error('No club selected');
-      return getAllAvailableRoles(user.club.id);
+      const allRoles = await getAllAvailableRoles(user.club.id);
+      // Filtrer le rôle superadmin
+      return allRoles.filter(role => role.toLowerCase() !== 'superadmin');
     },
     enabled: !!user?.club?.id,
   });

@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { signOut } from "../../lib/supabase";
-import { hasAnyGroup } from "../../lib/permissions";
+import { usePermissions, hasPermission, hasAnyGroup } from "../../lib/permissions";
+import { PERMISSIONS } from "../../types/permissions";
 import { getRoleLabel, getRoleBadgeColor } from "../../lib/utils/roleUtils";
 import { getInitials } from "../../lib/utils/avatarUtils";
 import type { Role } from "../../types/roles";
@@ -31,11 +32,11 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user: currentUser } = useAuth();
+  const permissions = usePermissions(currentUser);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   useEffect(() => {
-    // Ferme le menu après le changement de page
     setIsMobileMenuOpen(false);
     setOpenDropdown(null);
   }, [location.pathname]);
@@ -49,17 +50,23 @@ const Navbar = () => {
     }
   };
 
-  const canAccessMembers = true;
-  const canAccessFlights = !hasAnyGroup(currentUser, ["MECHANIC"]);
-  const canAccessTraining = !hasAnyGroup(currentUser, ["MECHANIC"]);
-  const canAccessAccounts = true;
-  const canAccessSettings = hasAnyGroup(currentUser, ["ADMIN"]);
-  const canAccessTrainingAdmin = hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR"]);
-  const canAccessEvents = true;
+  // Utilisation des permissions basées sur les permissions définies
+  const canAccessMembers = hasPermission(currentUser, PERMISSIONS.USER_VIEW);
+  const canAccessFlights = hasPermission(currentUser, PERMISSIONS.FLIGHT_VIEW);
+  const canAccessTraining = hasPermission(currentUser, PERMISSIONS.TRAINING_VIEW);
+  const canAccessAccounts = hasPermission(currentUser, PERMISSIONS.USER_VIEW);
+  const canAccessSettings = hasPermission(currentUser, PERMISSIONS.SETTINGS_VIEW);
+  const canAccessTrainingAdmin = hasPermission(currentUser, PERMISSIONS.TRAINING_MODIFY);
+  const canAccessEvents = hasPermission(currentUser, PERMISSIONS.EVENT_VIEW);
+  const canAccessChat = hasPermission(currentUser, PERMISSIONS.CHAT_VIEW);
+  const canManageAvailability = hasPermission(currentUser, PERMISSIONS.SETTINGS_MODIFY);
+  const canAccessDiscoveryFlights = hasPermission(currentUser, PERMISSIONS.DISCOVERY_FLIGHT_VIEW);
+  const canAccessDocumentation = hasPermission(currentUser, PERMISSIONS.DOC_VIEW);
+  const canViewPlanning = hasPermission(currentUser, PERMISSIONS.PLANNING_VIEW);
+  const canModifyPlanning = hasPermission(currentUser, PERMISSIONS.PLANNING_MODIFY);
+  
+  // Pour les rôles spécifiques, on utilise toujours hasAnyGroup
   const showMyProgression = hasAnyGroup(currentUser, ["PILOT"]);
-  const canAccessDocumentation = true;
-  const canAccessChat = hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR", "PILOT"]);
-  const canAccessDiscoveryFlights = hasAnyGroup(currentUser, ["ADMIN", "DISCOVERY_PILOT"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
 
   return (
@@ -91,13 +98,16 @@ const Navbar = () => {
               <MessageSquare className="h-4 w-4" />
             </Link>
           )}
-          <Link 
-            to="/reservations" 
-            className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
-            title="Planning"
-          >
-            <Calendar className="h-4 w-4" />
-          </Link>
+          {canViewPlanning && (
+            <Link 
+              to="/planning" 
+              className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+              title="Planning"
+            >
+              <Calendar className="h-4 w-4" />
+            </Link>
+          )}
+          
         </div>
       </div>
 
@@ -119,13 +129,15 @@ const Navbar = () => {
                 <Home className="w-5 h-5 mr-3" />
                 <span>Accueil</span>
               </Link>
+              {canViewPlanning && (
               <Link to="/reservations" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                 <Calendar className="w-5 h-5 mr-3" />
                 <span>Planning</span>
-              </Link>
+              </Link> 
+              )}
               
               {/* Availability Management */}
-              {hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR', 'MECHANIC']) && (
+              {canManageAvailability && (
                 <Link 
                   to="/availability" 
                   className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400"
@@ -151,7 +163,7 @@ const Navbar = () => {
               )}
               {canAccessAccounts && (
                 <>
-                  {hasAnyGroup(currentUser, ["ADMIN"]) && (
+                  {canAccessTrainingAdmin && (
                     <Link to="/instructor-billing" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                       <CreditCard className="w-5 h-5 mr-3" />
                       <span>Facturation instructeurs</span>
@@ -219,16 +231,16 @@ const Navbar = () => {
                   <span>Vols découverte</span>
                 </Link>
               )}
+              <Link to="/stats" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                <BarChart2 className="w-5 h-5 mr-3" />
+                <span>Statistiques</span>
+              </Link>
               {canAccessDocumentation && (
                 <Link to="/documentation" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                   <Book className="w-5 h-5 mr-3" />
                   <span>Documentation</span>
                 </Link>
               )}
-              <Link to="/stats" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <BarChart2 className="w-5 h-5 mr-3" />
-                <span>Statistiques</span>
-              </Link>
             </div>
 
             {/* Additional Links */}

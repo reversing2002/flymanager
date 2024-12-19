@@ -67,6 +67,12 @@ export const PERMISSIONS = {
 
   // Statistiques
   STATS_VIEW: 'stats:view',
+
+  // Vols découverte
+  DISCOVERY_FLIGHT_VIEW: 'discovery:view',
+  DISCOVERY_FLIGHT_CREATE: 'discovery:create',
+  DISCOVERY_FLIGHT_MODIFY: 'discovery:modify',
+  DISCOVERY_FLIGHT_DELETE: 'discovery:delete',
 } as const;
 
 export type PermissionId = keyof typeof PERMISSIONS;
