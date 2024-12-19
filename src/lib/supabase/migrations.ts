@@ -1,6 +1,6 @@
 import { createAuthUsers } from './auth';
 import { supabase } from '../supabase';
-import { ROLE_GROUPS } from '../../types/roles';
+import { SYSTEM_ROLE_GROUPS } from '../../types/roles';
 import { initializeDefaultChatRooms } from './chat';
 
 export async function migrateData() {
@@ -95,7 +95,7 @@ async function createTestAccounts() {
       first_name: 'Admin',
       last_name: 'System',
       email: 'admin@flymanager.com',
-      roles: [ROLE_GROUPS.ADMIN[0]],
+      roles: [SYSTEM_ROLE_GROUPS.ADMIN[0]],
       login: 'admin',
       password: 'admin123'
     },
@@ -103,7 +103,7 @@ async function createTestAccounts() {
       first_name: 'Marie',
       last_name: 'Martin',
       email: 'instructor@flymanager.com',
-      roles: [ROLE_GROUPS.INSTRUCTOR[0]],
+      roles: [SYSTEM_ROLE_GROUPS.INSTRUCTOR[0]],
       login: 'instructor',
       password: 'instructor123'
     },
@@ -111,7 +111,7 @@ async function createTestAccounts() {
       first_name: 'Jean',
       last_name: 'Dupont',
       email: 'pilot@flymanager.com',
-      roles: [ROLE_GROUPS.PILOT[0]],
+      roles: [SYSTEM_ROLE_GROUPS.PILOT[0]],
       login: 'pilot',
       password: 'pilot123'
     },
@@ -119,7 +119,7 @@ async function createTestAccounts() {
       first_name: 'Pierre',
       last_name: 'Dubois',
       email: 'mechanic@flymanager.com',
-      roles: [ROLE_GROUPS.MECHANIC[0]],
+      roles: [SYSTEM_ROLE_GROUPS.MECHANIC[0]],
       login: 'mechanic',
       password: 'mechanic123'
     }

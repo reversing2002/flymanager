@@ -11,7 +11,7 @@ export interface User {
   phone_number?: string;
   avatar_url?: string;
   default_mode: UserDefaultMode;
-  role: Role;
+  roles: Role[];
   club?: {
     id: string;
     name: string;

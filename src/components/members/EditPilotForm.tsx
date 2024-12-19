@@ -3,7 +3,7 @@ import { AlertTriangle, Upload, X } from "lucide-react";
 import type { User } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
-import { Role, ROLE_GROUPS } from "../../types/roles";
+import { Role, SYSTEM_ROLE_GROUPS } from "../../types/roles";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { getInitials } from "../../lib/utils/avatarUtils";
 
@@ -38,7 +38,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const availableGroups = ["ADMIN", "INSTRUCTOR", "PILOT", "MECHANIC", "STUDENT", "DISCOVERY_PILOT"];
+  const availableGroups = SYSTEM_ROLE_GROUPS;
 
   useEffect(() => {
     const loadUserGroups = async () => {

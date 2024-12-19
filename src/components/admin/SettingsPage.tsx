@@ -13,6 +13,7 @@ import {
   UserCog,
   Plane,
   Users,
+  Lock,
 } from "lucide-react";
 import AnnouncementList from "../announcements/AnnouncementList";
 import AnnouncementForm from "../announcements/AnnouncementForm";
@@ -25,6 +26,7 @@ import CustomMemberFieldsSettings from "../settings/CustomMemberFieldsSettings";
 import CustomAircraftFieldsSettings from "../settings/CustomAircraftFieldsSettings";
 import CustomFlightFieldsSettings from "../settings/CustomFlightFieldsSettings";
 import RolesSettings from "../settings/RolesSettings";
+import PagePermissionsSettings from "../settings/PagePermissionsSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -47,6 +49,7 @@ type TabType =
   | "aircraftFields"
   | "flightFields"
   | "roles"
+  | "permissions"
   | "api";
 
 const SettingsPage = () => {
@@ -73,6 +76,7 @@ const SettingsPage = () => {
     { id: "aircraftFields", label: "Champs avions", icon: Plane },
     { id: "flightFields", label: "Champs vols", icon: ListOrdered },
     { id: "roles", label: "Rôles", icon: Users },
+    { id: "permissions", label: "Permissions", icon: Lock },
     { id: "api", label: "API", icon: Terminal },
   ] as const;
 
@@ -192,6 +196,7 @@ const SettingsPage = () => {
           {activeTab === "aircraftFields" && <CustomAircraftFieldsSettings />}
           {activeTab === "flightFields" && <CustomFlightFieldsSettings />}
           {activeTab === "roles" && <RolesSettings />}
+          {activeTab === "permissions" && <PagePermissionsSettings />}
           {activeTab === "api" && <ApiExplorer />}
         </div>
       </div>
