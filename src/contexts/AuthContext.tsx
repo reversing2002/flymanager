@@ -22,6 +22,7 @@ interface AuthContextType {
     | null;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   loading: boolean;
   error: string | null;
   getAccessToken: () => string | null;
@@ -318,6 +319,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        console.error("Erreur de réinitialisation:", error);
+        setError("Impossible d'envoyer l'email de réinitialisation");
+        return;
+      }
+
+      console.log("Email de réinitialisation envoyé avec succès");
+    } catch (error) {
+      console.error("Erreur inattendue:", error);
+      setError(AUTH_ERRORS.UNKNOWN_ERROR);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -325,6 +350,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         signIn,
         signOut,
+        resetPassword,
         loading,
         error,
         getAccessToken,

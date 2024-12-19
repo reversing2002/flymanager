@@ -44,6 +44,7 @@ import AvailabilityManagementPage from "./components/availability/AvailabilityMa
 import InstructorAvailabilityPage from "./components/availability/InstructorAvailabilityPage";
 import AircraftAvailabilityPage from "./components/availability/AircraftAvailabilityPage";
 import InstructorBillingList from "./components/billing/InstructorBillingList";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 function App() {
   const queryClient = new QueryClient({
@@ -64,6 +65,7 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/create-club" element={<CreateClubPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
             <Route path="/discovery/qr2" element={<EnhancedDiscoveryPage />} />
             <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
@@ -101,7 +103,7 @@ function App() {
               <Route
                 path="instructor-students"
                 element={
-                  <ProtectedRoute roles={["INSTRUCTOR"]}>
+                  <ProtectedRoute roles={["instructor"]}>
                     <InstructorStudentsPage />
                   </ProtectedRoute>
                 }
@@ -112,7 +114,7 @@ function App() {
               <Route
                 path="aircraft/:id/maintenance"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "MECHANIC"]}>
+                  <ProtectedRoute roles={["admin", "mechanic"]}>
                     <MaintenancePage />
                   </ProtectedRoute>
                 }
@@ -122,7 +124,7 @@ function App() {
               <Route
                 path="discovery-flights"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "DISCOVERY_PILOT"]}>
+                  <ProtectedRoute roles={["admin", "discovery", "instructor"]}>
                     <DiscoveryFlightsPage />
                   </ProtectedRoute>
                 }
@@ -132,7 +134,7 @@ function App() {
               <Route
                 path="reservations"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "INSTRUCTOR", "PILOT", "MECHANIC"]}>
+                  <ProtectedRoute roles={["admin", "instructor", "pilot", "mechanic"]}>
                     <CalendarContainer />
                   </ProtectedRoute>
                 }
@@ -140,7 +142,7 @@ function App() {
               <Route
                 path="my-reservations"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "INSTRUCTOR", "PILOT"]}>
+                  <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
                     <ReservationList />
                   </ProtectedRoute>
                 }
@@ -150,7 +152,7 @@ function App() {
               <Route
                 path="flights"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "INSTRUCTOR", "PILOT"]}>
+                  <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
                     <FlightList />
                   </ProtectedRoute>
                 }
@@ -158,7 +160,7 @@ function App() {
               <Route
                 path="flights/new"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "INSTRUCTOR", "PILOT"]}>
+                  <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
                     <NewFlightForm />
                   </ProtectedRoute>
                 }
@@ -166,7 +168,7 @@ function App() {
               <Route
                 path="instructor-flights"
                 element={
-                  <ProtectedRoute roles={["INSTRUCTOR"]}>
+                  <ProtectedRoute roles={["instructor"]}>
                     <InstructorFlightsPage />
                   </ProtectedRoute>
                 }
@@ -177,7 +179,7 @@ function App() {
               <Route
                 path="instructor-billing"
                 element={
-                  <ProtectedRoute roles={["ADMIN"]}>
+                  <ProtectedRoute roles={["admin"]}>
                     <InstructorBillingList />
                   </ProtectedRoute>
                 }
@@ -187,7 +189,7 @@ function App() {
               <Route
                 path="chat"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "INSTRUCTOR", "PILOT"]}>
+                  <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
                     <ChatPage />
                   </ProtectedRoute>
                 }
@@ -213,7 +215,7 @@ function App() {
               <Route
                 path="training-admin"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "INSTRUCTOR"]}>
+                  <ProtectedRoute roles={["admin", "instructor"]}>
                     <TrainingAdminPage />
                   </ProtectedRoute>
                 }
@@ -223,7 +225,7 @@ function App() {
               <Route
                 path="progression"
                 element={
-                  <ProtectedRoute roles={["INSTRUCTOR", "PILOT"]}>
+                  <ProtectedRoute roles={["instructor", "pilot"]}>
                     <ProgressionPage />
                   </ProtectedRoute>
                 }
@@ -231,7 +233,7 @@ function App() {
               <Route
                 path="progression/admin"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "INSTRUCTOR"]}>
+                  <ProtectedRoute roles={["admin", "instructor"]}>
                     <ProgressionAdminPage />
                   </ProtectedRoute>
                 }
@@ -239,7 +241,7 @@ function App() {
               <Route
                 path="progression/students"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "INSTRUCTOR"]}>
+                  <ProtectedRoute roles={["admin", "instructor"]}>
                     <StudentProgressionsPage />
                   </ProtectedRoute>
                 }
@@ -249,7 +251,7 @@ function App() {
               <Route
                 path="availability"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "INSTRUCTOR", "MECHANIC"]}>
+                  <ProtectedRoute roles={["admin", "instructor", "mechanic"]}>
                     <AvailabilityManagementPage />
                   </ProtectedRoute>
                 }
@@ -257,7 +259,7 @@ function App() {
               <Route
                 path="availability/instructor/:id"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "INSTRUCTOR"]}>
+                  <ProtectedRoute roles={["admin", "instructor"]}>
                     <InstructorAvailabilityPage />
                   </ProtectedRoute>
                 }
@@ -265,7 +267,7 @@ function App() {
               <Route
                 path="availability/aircraft/:id"
                 element={
-                  <ProtectedRoute roles={["ADMIN", "MECHANIC"]}>
+                  <ProtectedRoute roles={["admin", "mechanic"]}>
                     <AircraftAvailabilityPage />
                   </ProtectedRoute>
                 }
@@ -278,7 +280,7 @@ function App() {
               <Route
                 path="settings"
                 element={
-                  <ProtectedRoute roles={["ADMIN"]}>
+                  <ProtectedRoute roles={["admin"]}>
                     <SettingsPage />
                   </ProtectedRoute>
                 }

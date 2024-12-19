@@ -38,7 +38,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const availableGroups = SYSTEM_ROLE_GROUPS;
+  const availableGroups = SYSTEM_ROLE_GROUPS.ALL;
 
   useEffect(() => {
     const loadUserGroups = async () => {

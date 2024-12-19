@@ -58,6 +58,12 @@ const AircraftList = () => {
       selectedStatus === "all" ||
       a.status.toLowerCase() === selectedStatus.toLowerCase();
 
+    // N'afficher les avions indisponibles qu'aux admin et mécaniciens
+    const canSeeUnavailable = hasAnyGroup(user, ["ADMIN", "MECHANIC"]);
+    if (!canSeeUnavailable && a.status.toLowerCase() === "unavailable") {
+      return false;
+    }
+
     return matchesSearch && matchesStatus;
   });
 
