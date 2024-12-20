@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from '@tanstack/react-query';
 import { Plane, Users, Calendar, CreditCard, MessageSquare, Sun } from "lucide-react";
 import {
   getAircraft,
@@ -7,7 +8,9 @@ import {
   getFlights,
   getMemberBalance,
 } from "../lib/queries/index";
-import { hasAnyGroup } from "../lib/permissions";
+import {
+  hasAnyGroup
+} from "../lib/permissions";
 
 import type {
   Aircraft,
@@ -310,19 +313,8 @@ const Dashboard = () => {
     return <AdminDashboard />;
   }
 
-  const [stats, setStats] = useState({
-    aircraft: 0,
-    users: 0,
-    reservations: 0,
-    flights: 0,
-  });
-  const [balance, setBalance] = useState<number | null>(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [aircraft, setAircraft] = useState<Aircraft[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [flights, setFlights] = useState<Flight[]>([]);
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -334,22 +326,46 @@ const Dashboard = () => {
     aeroEnd: Date;
   } | null>(null);
 
-  const loadData = async () => {
+  // Stats des membres
+  const { data: memberStats } = useQuery({
+    queryKey: ['memberStats'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_member_stats');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Stats de la flotte
+  const { data: fleetStats } = useQuery({
+    queryKey: ['fleetStats'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_maintenance_stats');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Stats des réservations
+  const { data: reservations = [] } = useQuery({
+    queryKey: ['reservations'],
+    queryFn: getReservations,
+  });
+
+  const { data: balance } = useQuery({
+    queryKey: ['memberBalance', user?.id],
+    queryFn: () => getMemberBalance(user?.id || ''),
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    loadAnnouncementsAndSunTimes();
+  }, [user?.id]);
+
+  const loadAnnouncementsAndSunTimes = async () => {
     if (!user?.id) return;
 
     try {
-      const [aircraftData, usersData, reservationsData, flightsData] = await Promise.all([
-        getAircraft(),
-        getUsers(),
-        getReservations(),
-        getFlights(),
-      ]);
-
-      setAircraft(aircraftData);
-      setUsers(usersData);
-      setReservations(reservationsData);
-      setFlights(flightsData);
-
       // Load announcements
       const { data: announcementsData } = await supabase
         .from("announcements")
@@ -364,10 +380,6 @@ const Dashboard = () => {
         .order("created_at", { ascending: false });
 
       setAnnouncements(announcementsData || []);
-
-      // Load balance
-      const balanceData = await getMemberBalance(user.id);
-      setBalance(balanceData);
 
       // Load club coordinates and calculate sun times
       const { data: clubData } = await supabase
@@ -393,7 +405,6 @@ const Dashboard = () => {
           aeroEnd
         });
       }
-
     } catch (err) {
       console.error("Error loading data:", err);
       setError("Erreur lors du chargement des données");
@@ -402,13 +413,36 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, [user?.id]);
+  // Calculate stats
+  const activeAircraft = fleetStats?.aircraft_stats?.filter(a => a.status === 'AVAILABLE').length || 0;
+  const totalAircraft = fleetStats?.aircraft_stats?.length || 0;
+  const activePilots = memberStats?.active_members || 0;
+  const todayFlights = reservations.filter(
+    (r) => new Date(r.startTime).toDateString() === new Date().toDateString()
+  ).length;
 
-  const handleDismissAnnouncement = async (id: string) => {
-    setDismissedAnnouncements((prev) => [...prev, id]);
-  };
+  // Filter future reservations
+  const now = new Date();
+  const futureReservations = reservations
+    .filter(r => {
+      // Filter for future reservations
+      const startTime = new Date(r.startTime);
+      if (startTime <= now) return false;
+
+      // Filter for valid aircraft
+      const aircraftExists = fleetStats?.aircraft.some(a => a.id === r.aircraftId);
+      if (!aircraftExists) return false;
+
+      // Filter for reservations relevant to the current user
+      const isUserPilot = r.pilotId === user?.id;
+      const isUserInstructor = r.instructorId === user?.id;
+      
+      return isUserPilot || isUserInstructor;
+    })
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  // Take only the next 5 reservations
+  const nextReservations = futureReservations.slice(0, 5);
 
   if (loading) {
     return (
@@ -437,36 +471,6 @@ const Dashboard = () => {
     );
   }
 
-  const activeAircraft = aircraft.filter((a) => a.status === "AVAILABLE").length;
-  const totalAircraft = aircraft.length;
-  const activePilots = users.filter((u) => hasAnyGroup({ role: u.role } as User, ["PILOT"])).length;
-  const todayFlights = reservations.filter(
-    (r) => new Date(r.startTime).toDateString() === new Date().toDateString()
-  ).length;
-
-  // Filter future reservations
-  const now = new Date();
-  const futureReservations = reservations
-    .filter(r => {
-      // Filter for future reservations
-      const startTime = new Date(r.startTime);
-      if (startTime <= now) return false;
-
-      // Filter for valid aircraft
-      const aircraftExists = aircraft.some(a => a.id === r.aircraftId);
-      if (!aircraftExists) return false;
-
-      // Filter for reservations relevant to the current user
-      const isUserPilot = r.pilotId === user?.id;
-      const isUserInstructor = r.instructorId === user?.id;
-      
-      return isUserPilot || isUserInstructor;
-    })
-    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-
-  // Take only the next 5 reservations
-  const nextReservations = futureReservations.slice(0, 5);
-
   return (
     <div className="space-y-6">
       {/* Heures de lever/coucher du soleil */}
@@ -482,14 +486,14 @@ const Dashboard = () => {
         <StatCard
           icon={<Plane className="h-6 w-6" />}
           title="Avions"
-          value={aircraft.length.toString()}
+          value={`${activeAircraft}`}
           description="Flotte disponible"
           color="blue"
         />
         <StatCard
           icon={<Users className="h-6 w-6" />}
           title="Membres"
-          value={users.length.toString()}
+          value={activePilots.toString()}
           description="Membres actifs"
           color="green"
         />
@@ -515,12 +519,12 @@ const Dashboard = () => {
         )}
       </div>
 
-            {/* Prochaines réservations */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+      {/* Prochaines réservations */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
         <h2 className="text-lg font-semibold text-slate-900">Mes prochaines réservations</h2>
         <div className="space-y-4">
           {nextReservations.map((reservation) => {
-            const aircraftItem = aircraft.find(
+            const aircraftItem = fleetStats?.aircraft.find(
               (a) => a.id === reservation.aircraftId
             );
             return (
@@ -598,8 +602,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-
-
       {/* Modal de réservation */}
       {selectedReservation && (
         <ReservationModal
@@ -608,10 +610,10 @@ const Dashboard = () => {
           onClose={() => setSelectedReservation(null)}
           onSuccess={() => {
             setSelectedReservation(null);
-            loadData();
+            loadAnnouncementsAndSunTimes();
           }}
-          aircraft={aircraft}
-          users={users}
+          aircraft={fleetStats?.aircraft}
+          users={memberStats?.users}
           existingReservation={selectedReservation}
         />
       )}
