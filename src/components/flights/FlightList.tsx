@@ -385,7 +385,11 @@ const FlightList = () => {
                       {formatDuration(flight.duration)}
                     </td>
                     <td className="p-4 text-right">
-                      {flight.cost ? (flight.cost + (flight.instructorCost || 0)).toFixed(2) : "-"}
+                      <div className="flex items-center">
+                        <span className={`${flight.flightType?.accounting_category?.is_club_paid ? 'text-green-600 font-medium' : ''}`}>
+                          {flight.flightType?.accounting_category?.is_club_paid ? '0.00 €' : `${flight.cost.toFixed(2)} €`}
+                        </span>
+                      </div>
                     </td>
                     <td className="p-4 text-right">
                       {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
@@ -639,7 +643,11 @@ const FlightList = () => {
                               {formatDuration(flight.duration)}
                             </td>
                             <td className="p-4 text-right">
-                              {flight.cost ? (flight.cost + (flight.instructorCost || 0)).toFixed(2) : "-"}
+                              <div className="flex items-center">
+                                <span className={`${flight.flightType?.accounting_category?.is_club_paid ? 'text-green-600 font-medium' : ''}`}>
+                                  {flight.flightType?.accounting_category?.is_club_paid ? '0.00 €' : `${flight.cost.toFixed(2)} €`}
+                                </span>
+                              </div>
                             </td>
                             <td className="p-4 text-right">
                               {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
@@ -791,7 +799,11 @@ const FlightList = () => {
                             {formatDuration(flight.duration)}
                           </td>
                           <td className="p-4 text-right">
-                            {flight.cost ? (flight.cost + (flight.instructorCost || 0)).toFixed(2) : "-"}
+                            <div className="flex items-center">
+                              <span className={`${flight.flightType?.accounting_category?.is_club_paid ? 'text-green-600 font-medium' : ''}`}>
+                                {flight.flightType?.accounting_category?.is_club_paid ? '0.00 €' : `${flight.cost.toFixed(2)} €`}
+                              </span>
+                            </div>
                           </td>
                           <td className="p-4 text-right">
                             {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}

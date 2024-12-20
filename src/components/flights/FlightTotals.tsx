@@ -24,7 +24,8 @@ const CATEGORY_LABELS = {
 
 const FlightTotals: React.FC<FlightTotalsProps> = ({ flights, showByCategory = false }) => {
   const totalDuration = flights.reduce((acc, flight) => acc + flight.duration, 0);
-  const totalCost = flights.reduce((acc, flight) => acc + flight.cost, 0);
+  const totalCost = flights.reduce((acc, flight) => 
+    flight.flightType?.accounting_category?.is_club_paid ? acc : acc + flight.cost, 0);
 
   // Calculer les totaux par catégorie
   const categoryTotals = flights.reduce((acc, flight) => {
@@ -33,7 +34,7 @@ const FlightTotals: React.FC<FlightTotalsProps> = ({ flights, showByCategory = f
       acc[category] = { duration: 0, cost: 0, count: 0 };
     }
     acc[category].duration += flight.duration;
-    acc[category].cost += flight.cost;
+    acc[category].cost += flight.flightType?.accounting_category?.is_club_paid ? 0 : flight.cost;
     acc[category].count += 1;
     return acc;
   }, {} as Record<string, CategoryTotal>);
