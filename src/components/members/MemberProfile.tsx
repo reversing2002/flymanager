@@ -68,8 +68,8 @@ const MemberProfile = () => {
 
   const isAdmin = hasAnyGroup(currentUser, ["ADMIN"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
-  const canEdit = isAdmin || isInstructor;
   const isOwnProfile = currentUser?.id === id;
+  const canEdit = isAdmin || isInstructor || isOwnProfile;
   const canManageContributions = isAdmin || isInstructor;
 
   useEffect(() => {
