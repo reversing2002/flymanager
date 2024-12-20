@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Plane, Users, Receipt, Calendar, FileText, CreditCard } from 'lucide-react';
+import { Plane, Users, Receipt, Calendar, FileText, CreditCard, Wallet } from 'lucide-react';
 import FlightImportTab from './FlightImportTab';
 import AccountImportTab from './AccountImportTab';
 import MemberImportTab from './MemberImportTab';
 import AircraftJsonTab from './AircraftJsonTab';
 import AccountTypeJsonTab from './AccountTypeJsonTab';
 import MemberContributionImportTab from './MemberContributionImportTab';
+import BalanceImportTab from './BalanceImportTab';
 
 const TABS = [
   { id: 'avions', label: 'Avions', icon: Plane, component: AircraftJsonTab },
@@ -14,6 +15,7 @@ const TABS = [
   { id: 'comptes', label: 'Comptes', icon: Receipt, component: AccountImportTab },
   { id: 'vols', label: 'Vols', icon: Calendar, component: FlightImportTab },
   { id: 'cotisations', label: 'Cotisations', icon: CreditCard, component: MemberContributionImportTab },
+  { id: 'soldes', label: 'Soldes', icon: Wallet, component: BalanceImportTab },
 ];
 
 const ImportManager = () => {
@@ -30,6 +32,7 @@ const ImportManager = () => {
           <li>Opérations comptables</li>
           <li>Vols</li>
           <li>Cotisations</li>
+          <li>Soldes</li>
         </ol>
       </div>
 
