@@ -12,6 +12,18 @@ export async function getAccountEntries(): Promise<AccountEntry[]> {
         name,
         description,
         is_credit
+      ),
+      flights(
+        id,
+        flight_type_id,
+        flight_types(
+          id,
+          accounting_category_id,
+          accounting_categories(
+            id,
+            is_club_paid
+          )
+        )
       )
     `)
     .order("date", { ascending: false });
@@ -123,38 +135,24 @@ export async function getMembersWithBalance(): Promise<User[]> {
 }
 
 export async function getMemberBalance(userId: string) {
-  const { data, error } = await supabase
-    .from("account_entries")
-    .select(`
-      *,
-      account_entry_types(
-        id,
-        code,
-        name,
-        is_credit
-      )
-    `)
-    .eq("assigned_to_id", userId)
-    .order("date", { ascending: false })
-    .order("created_at", { ascending: false });
+  const { data: balances, error } = await supabase
+    .rpc('calculate_pending_balance_from_date', {
+      p_user_id: userId,
+      p_date: new Date().toISOString()
+    });
 
   if (error) throw error;
 
-  // Calculate validated balance (only validated entries not paid by club)
-  const validatedEntries = data.filter(entry => entry.is_validated && !entry.is_club_paid);
-  const validated = validatedEntries.reduce((acc, entry) => {
-    return acc + entry.amount;
-  }, 0);
-
-  // Calculate pending balance (non-validated entries not paid by club)
-  const pendingEntries = data.filter(entry => !entry.is_validated && !entry.is_club_paid);
-  const pending = pendingEntries.reduce((acc, entry) => {
-    return acc + entry.amount;
-  }, 0);
+  if (!balances || !balances[0]) {
+    return {
+      validated: 0,
+      pending: 0
+    };
+  }
 
   return {
-    validated,
-    pending,
+    validated: balances[0].validated_balance || 0,
+    pending: balances[0].total_balance || 0
   };
 }
 
@@ -230,4 +228,42 @@ export async function getMembershipStatus(userId: string): Promise<boolean> {
   }
 
   return data.length > 0;
+}
+
+// Fonction pour calculer le solde validé
+export async function calculateMemberBalance(userId: string, date: string) {
+  const { data: balance, error } = await supabase
+    .rpc('calculate_balance_from_date', {
+      p_user_id: userId,
+      p_date: date
+    });
+
+  if (error) throw error;
+  return balance || 0;
+}
+
+// Fonction pour calculer le solde en attente (solde final après application des transactions non validées)
+export async function calculatePendingBalance(userId: string, date: string): Promise<number> {
+  const { data, error } = await supabase
+    .rpc('calculate_pending_balance_from_date', {
+      p_user_id: userId,
+      p_date: date
+    });
+
+  if (error) throw error;
+  
+  // La fonction retourne maintenant un objet avec pending_amount
+  return data[0]?.pending_amount || 0;
+}
+
+// Fonction pour calculer le solde total (validé + en attente)
+export async function calculateTotalBalance(userId: string, date: string) {
+  const { data: balance, error } = await supabase
+    .rpc('calculate_total_balance_from_date', {
+      p_user_id: userId,
+      p_date: date
+    });
+
+  if (error) throw error;
+  return balance || 0;
 }

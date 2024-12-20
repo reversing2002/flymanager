@@ -99,7 +99,12 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
     try {
       const selectedType = accountTypes.find(t => t.id === formData.entry_type_id);
       if (!selectedType) {
-        throw new Error("Type de compte invalide");
+        throw new Error("Type de transaction non valide");
+      }
+
+      // Validation spéciale pour la réinitialisation du solde
+      if (selectedType.code === 'BALANCE_RESET' && !isAdmin) {
+        throw new Error("Seuls les administrateurs peuvent réinitialiser le solde");
       }
 
       // Ajuster le montant selon le type (crédit/débit)
@@ -199,263 +204,203 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold">
-            {entry ? "Modifier l'opération" : "Nouvelle opération"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-lg">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
+        >
+          <X className="h-6 w-6" />
+        </button>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {error && (
-            <div className="p-4 bg-red-50 text-red-800 rounded-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              <p>{error}</p>
-            </div>
-          )}
+        <h2 className="mb-4 text-2xl font-bold">
+          {entry ? "Modifier la transaction" : "Nouvelle transaction"}
+        </h2>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Date et heure
-              </label>
-              {(canEdit || !entry) ? (
-                <input
-                  type="datetime-local"
-                  value={formData.date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, date: e.target.value })
-                  }
-                  className="w-full rounded-lg border-slate-200"
-                  required
-                />
-              ) : (
-                <div className="text-slate-900 py-2">
-                  {new Date(formData.date as string).toLocaleString()}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Type d'opération
-              </label>
-              {(canEdit || !entry) ? (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {isAdmin && (
+            <>
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Utilisateur
+                </label>
                 <select
-                  value={formData.entry_type_id}
+                  value={formData.user_id}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      entry_type_id: e.target.value,
-                      // Réinitialiser le montant pour éviter les confusions crédit/débit
-                      amount: 0
-                    })
+                    setFormData({ ...formData, user_id: e.target.value })
                   }
-                  className="w-full rounded-lg border-slate-200"
+                  className="w-full rounded-md border p-2"
                   required
                 >
-                  <option value="">Sélectionner un type</option>
-                  {accountTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name} ({type.is_credit ? "Crédit" : "Débit"})
+                  <option value="">Sélectionner un utilisateur</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.first_name} {u.last_name}
                     </option>
                   ))}
                 </select>
-              ) : (
-                <div className="text-slate-900 py-2">
-                  {accountTypes.find(t => t.id === formData.entry_type_id)?.name || "Type inconnu"}
-                </div>
-              )}
-            </div>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Montant
-              </label>
-              {(canEdit || !entry) ? (
-                <input
-                  type="number"
-                  step="0.01"
-                  value={Math.abs(formData.amount || 0)}
-                  onChange={(e) =>
-                    setFormData({ ...formData, amount: Number(e.target.value) })
-                  }
-                  className="w-full rounded-lg border-slate-200"
-                  required
-                />
-              ) : (
-                <div className="text-slate-900 py-2">
-                  {Math.abs(formData.amount || 0)} €
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Mode de paiement
-              </label>
-              {(canEdit || !entry) ? (
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Assigné à
+                </label>
                 <select
-                  value={formData.payment_method}
+                  value={formData.assigned_to_id}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      payment_method: e.target.value as PaymentMethod,
-                    })
+                    setFormData({ ...formData, assigned_to_id: e.target.value })
                   }
-                  className="w-full rounded-lg border-slate-200"
+                  className="w-full rounded-md border p-2"
                   required
                 >
-                  <option value="ACCOUNT">Compte</option>
-                  <option value="CARD">Carte</option>
-                  <option value="CASH">Espèces</option>
-                  <option value="CHEQUE">Chèque</option>
-                  <option value="TRANSFER">Virement</option>
+                  <option value="">Sélectionner un utilisateur</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.first_name} {u.last_name}
+                    </option>
+                  ))}
                 </select>
-              ) : (
-                <div className="text-slate-900 py-2">
-                  {formData.payment_method === "ACCOUNT" && "Compte"}
-                  {formData.payment_method === "CARD" && "Carte"}
-                  {formData.payment_method === "CASH" && "Espèces"}
-                  {formData.payment_method === "CHECK" && "Chèque"}
-                  {formData.payment_method === "TRANSFER" && "Virement"}
-                </div>
-              )}
-            </div>
-
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Description
-              </label>
-              {(canEdit || !entry) ? (
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  className="w-full rounded-lg border-slate-200"
-                  required
-                />
-              ) : (
-                <div className="text-slate-900 py-2">
-                  {formData.description}
-                </div>
-              )}
-            </div>
-
-            {(canEdit || !entry) && (
-              <div className="col-span-2">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_club_paid}
-                    onChange={(e) =>
-                      setFormData({ ...formData, is_club_paid: e.target.checked })
-                    }
-                    className="rounded border-slate-300"
-                    disabled={!canEdit && entry}
-                  />
-                  <span className="text-sm font-medium text-slate-700">
-                    Payé par le club
-                  </span>
-                </label>
               </div>
-            )}
+            </>
+          )}
 
-            {isAdmin && (
-              <>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Membre affecté
-                  </label>
-                  <select
-                    value={formData.assigned_to_id}
-                    onChange={(e) =>
-                      setFormData({ ...formData, assigned_to_id: e.target.value })
-                    }
-                    className="w-full rounded-lg border-slate-200"
-                  >
-                    <option value="">Non affecté</option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.last_name} {user.first_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.is_validated}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          is_validated: e.target.checked,
-                        })
-                      }
-                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                    />
-                    <span className="text-sm font-medium text-slate-700">
-                      Transaction vérifiée
-                    </span>
-                  </label>
-                </div>
-              </>
-            )}
-            
-            {!isAdmin && entry && (
-              <div className="col-span-2">
-                <div className="text-sm text-slate-600">
-                  {formData.is_validated ? (
-                    <span className="text-emerald-600">✓ Transaction vérifiée</span>
-                  ) : (
-                    <span className="text-amber-600">En attente de vérification</span>
-                  )}
-                </div>
-              </div>
-            )}
+          <div>
+            <label className="mb-1 block text-sm font-medium">Type</label>
+            <select
+              value={formData.entry_type_id}
+              onChange={(e) => {
+                const selectedType = accountTypes.find(t => t.id === e.target.value);
+                setFormData({ 
+                  ...formData, 
+                  entry_type_id: e.target.value,
+                  payment_method: selectedType?.code === 'BALANCE_RESET' ? 'ACCOUNT' : formData.payment_method
+                });
+              }}
+              className="w-full rounded-md border p-2"
+              required
+              disabled={!isAdmin && entry?.is_validated}
+            >
+              <option value="">Sélectionner un type</option>
+              {accountTypes
+                .filter(type => isAdmin || (!type.is_system && type.code !== 'BALANCE_RESET'))
+                .map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+            </select>
           </div>
 
-          <div className="flex justify-between pt-6 border-t">
-            {(isAdmin || canDelete) && entry && (
+          <div>
+            <label className="mb-1 block text-sm font-medium">Date</label>
+            <input
+              type="datetime-local"
+              value={formData.date}
+              onChange={(e) =>
+                setFormData({ ...formData, date: e.target.value })
+              }
+              className="w-full rounded-md border p-2"
+              required
+              disabled={!isAdmin && entry?.is_validated}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Montant</label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.amount}
+              onChange={(e) =>
+                setFormData({ ...formData, amount: parseFloat(e.target.value) })
+              }
+              className="w-full rounded-md border p-2"
+              required
+              disabled={!isAdmin && entry?.is_validated}
+            />
+          </div>
+
+          {!accountTypes.find(t => t.id === formData.entry_type_id)?.code?.includes('BALANCE_RESET') && (
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Méthode de paiement
+              </label>
+              <select
+                value={formData.payment_method}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    payment_method: e.target.value as PaymentMethod,
+                  })
+                }
+                className="w-full rounded-md border p-2"
+                required
+                disabled={!isAdmin && entry?.is_validated}
+              >
+                <option value="ACCOUNT">Compte</option>
+                <option value="CASH">Espèces</option>
+                <option value="CHECK">Chèque</option>
+                <option value="CARD">Carte</option>
+                <option value="TRANSFER">Virement</option>
+              </select>
+            </div>
+          )}
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              className="w-full rounded-md border p-2"
+              rows={3}
+              disabled={!isAdmin && entry?.is_validated}
+            />
+          </div>
+
+          {isAdmin && (
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={formData.is_validated}
+                onChange={(e) =>
+                  setFormData({ ...formData, is_validated: e.target.checked })
+                }
+                className="h-4 w-4 rounded border-gray-300"
+                id="validated"
+              />
+              <label htmlFor="validated" className="text-sm">
+                Transaction validée
+              </label>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex items-center space-x-2 rounded-md bg-red-50 p-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-2">
+            {canDelete && entry && (
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
                 disabled={loading}
               >
-                {loading ? "Suppression..." : "Supprimer"}
+                Supprimer
               </button>
             )}
-
-            <div className="flex space-x-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                disabled={loading}
-              >
-                {(canEdit || !entry) ? "Annuler" : "Fermer"}
-              </button>
-              {(canEdit || !entry) && (
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors disabled:opacity-50"
-                  disabled={loading}
-                >
-                  {loading ? "Enregistrement..." : "Enregistrer"}
-                </button>
-              )}
-            </div>
+            <button
+              type="submit"
+              className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              disabled={loading || (!isAdmin && entry?.is_validated)}
+            >
+              {loading ? "Enregistrement..." : "Enregistrer"}
+            </button>
           </div>
         </form>
       </div>

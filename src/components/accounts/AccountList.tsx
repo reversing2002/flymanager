@@ -11,13 +11,20 @@ import {
   Trash2,
 } from "lucide-react";
 import type { AccountEntry, User } from "../../types/database";
-import { getAccountEntries, getUsers, deleteAccountEntry } from "../../lib/queries/index";
+import { 
+  getAccountEntries, 
+  deleteAccountEntry,
+  calculateMemberBalance,
+  calculatePendingBalance
+} from "../../lib/queries/accounts";
+import { getUsers } from "../../lib/queries/users";
 import AccountEntryModal from "./AccountEntryModal";
 import CreditAccountModal from "./CreditAccountModal";
 import { useAuth } from "../../contexts/AuthContext";
 import { dateUtils } from "../../lib/utils/dateUtils";
 import { toast } from "react-hot-toast";
 import { hasAnyGroup } from "../../lib/permissions";
+import { supabase } from '../../lib/supabase';
 
 const AccountList = () => {
   const { user } = useAuth();
@@ -37,6 +44,8 @@ const AccountList = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [validatedBalance, setValidatedBalance] = useState<number>(0);
+  const [pendingBalance, setPendingBalance] = useState<number>(0);
 
   const isAdmin = hasAnyGroup(user, ["ADMIN"]);
 
@@ -78,6 +87,35 @@ const AccountList = () => {
       navigate("/accounts", { replace: true });
     }
   }, [location.search]);
+
+  useEffect(() => {
+    const updateBalances = async () => {
+      try {
+        const userId = filters.assignedToId === "all" ? user?.id : filters.assignedToId;
+        if (!userId) return;
+
+        const currentDate = new Date().toISOString();
+
+        // Calculer les soldes en utilisant la nouvelle fonction RPC
+        const { data: balances, error } = await supabase
+          .rpc('calculate_pending_balance_from_date', {
+            p_user_id: userId,
+            p_date: currentDate
+          });
+
+        if (error) throw error;
+        
+        if (balances && balances[0]) {
+          setValidatedBalance(balances[0].validated_balance || 0);
+          setPendingBalance(balances[0].total_balance || 0);
+        }
+      } catch (error) {
+        console.error("Error calculating balances:", error);
+      }
+    };
+
+    updateBalances();
+  }, [entries, filters.assignedToId, user?.id]);
 
   const loadEntries = async () => {
     try {
@@ -409,18 +447,12 @@ const AccountList = () => {
                 </h2>
                 <p
                   className={`text-2xl font-bold ${
-                    entries
-                      .filter((entry) => entry.is_validated && !entry.is_club_paid)
-                      .reduce((acc, entry) => acc + entry.amount, 0) >= 0
+                    validatedBalance >= 0
                       ? "text-emerald-600"
                       : "text-red-600"
                   }`}
                 >
-                  {formatAmount(
-                    entries
-                      .filter((entry) => entry.is_validated && !entry.is_club_paid)
-                      .reduce((acc, entry) => acc + entry.amount, 0)
-                  )}
+                  {formatAmount(validatedBalance)}
                 </p>
               </div>
               <div>
@@ -428,11 +460,7 @@ const AccountList = () => {
                   Solde en attente
                 </h2>
                 <p className="text-2xl font-bold text-amber-600">
-                  {formatAmount(
-                    entries
-                      .filter((entry) => !entry.is_validated && !entry.is_club_paid)
-                      .reduce((acc, entry) => acc + entry.amount, 0)
-                  )}
+                  {formatAmount(pendingBalance)}
                 </p>
               </div>
             </div>
