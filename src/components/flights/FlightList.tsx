@@ -265,10 +265,23 @@ const FlightList = () => {
             <Check size={20} />
           </button>
         )}
+        {hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id && (
+          <button
+            onClick={() => {
+              setSelectedStudentId(flight.userId);
+              setSelectedFlightId(flight.id);
+              setShowCompetenciesModal(true);
+            }}
+            className="text-purple-600 hover:text-purple-800"
+            title="Gérer les compétences"
+          >
+            <GraduationCap size={20} />
+          </button>
+        )}
         {(hasAnyGroup(user, ["ADMIN"]) || 
           (!flight.isValidated && (
-            flight.userId === user?.id || // Le pilote du vol
-            (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id) // L'instructeur du vol
+            flight.userId === user?.id || 
+            (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
           ))
         ) && (
           <button
@@ -395,6 +408,19 @@ const FlightList = () => {
                       {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
                     </td>
                     <td className="p-4 text-center">
+                      {hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id && (
+                        <button
+                          onClick={() => {
+                            setSelectedStudentId(flight.userId);
+                            setSelectedFlightId(flight.id);
+                            setShowCompetenciesModal(true);
+                          }}
+                          className="text-purple-600 hover:text-purple-800"
+                          title="Gérer les compétences"
+                        >
+                          <GraduationCap size={20} />
+                        </button>
+                      )}
                       {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
                         <button
                           onClick={() => handleValidateFlight(flight)}
@@ -653,6 +679,19 @@ const FlightList = () => {
                               {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
                             </td>
                             <td className="p-4 text-center">
+                              {hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedStudentId(flight.userId);
+                                    setSelectedFlightId(flight.id);
+                                    setShowCompetenciesModal(true);
+                                  }}
+                                  className="text-purple-600 hover:text-purple-800"
+                                  title="Gérer les compétences"
+                                >
+                                  <GraduationCap size={20} />
+                                </button>
+                              )}
                               {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
                                 <button
                                   onClick={() => handleValidateFlight(flight)}
@@ -809,6 +848,19 @@ const FlightList = () => {
                             {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
                           </td>
                           <td className="p-4 text-center">
+                            {hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id && (
+                              <button
+                                onClick={() => {
+                                  setSelectedStudentId(flight.userId);
+                                  setSelectedFlightId(flight.id);
+                                  setShowCompetenciesModal(true);
+                                }}
+                                className="text-purple-600 hover:text-purple-800"
+                                title="Gérer les compétences"
+                              >
+                                <GraduationCap size={20} />
+                              </button>
+                            )}
                             {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
                               <button
                                 onClick={() => handleValidateFlight(flight)}
@@ -865,7 +917,7 @@ const FlightList = () => {
           )}
         </>
       )}
-      {showCompetenciesModal && selectedStudentId && (
+      {showCompetenciesModal && selectedStudentId && selectedFlightId && (
         <CompetenciesModal
           studentId={selectedStudentId}
           flightId={selectedFlightId}
