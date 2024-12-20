@@ -33,6 +33,8 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     image_url: pilot.image_url || "",
     instructor_rate: pilot.instructor_rate || null,
     instructor_fee: pilot.instructor_fee || null,
+    password: "",
+    confirmPassword: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -103,6 +105,29 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     setError(null);
 
     try {
+      // Vérification des mots de passe si fournis
+      if (formData.password || formData.confirmPassword) {
+        if (formData.password !== formData.confirmPassword) {
+          setError("Les mots de passe ne correspondent pas");
+          setLoading(false);
+          return;
+        }
+        if (formData.password.length < 6) {
+          setError("Le mot de passe doit contenir au moins 6 caractères");
+          setLoading(false);
+          return;
+        }
+
+        // Mise à jour du mot de passe
+        if (formData.password) {
+          const { error: passwordError } = await supabase.auth.updateUser({
+            password: formData.password
+          });
+          if (passwordError) throw passwordError;
+          toast.success("Mot de passe mis à jour avec succès");
+        }
+      }
+
       // Convertir instructor_rate en nombre ou null
      
       const dataToSubmit = {
@@ -380,6 +405,39 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
               onChange={handleChange}
               className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
             />
+          </div>
+        </div>
+
+        {/* Section mot de passe */}
+        <div className="border-t pt-6 mt-6">
+          <h3 className="text-lg font-medium mb-4">Changer le mot de passe</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nouveau mot de passe
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                minLength={6}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirmer le mot de passe
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                minLength={6}
+              />
+            </div>
           </div>
         </div>
 
