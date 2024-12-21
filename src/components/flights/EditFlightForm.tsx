@@ -192,8 +192,9 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
 
   const calculateDurationFromHourMeter = (start: number | null, end: number | null): number => {
     if (start === null || end === null) return 0;
-    const durationHours = end - start;
-    return Math.round(durationHours * 60); // Convertir en minutes
+    const selectedAircraft = aircraftList.find(a => a.id === formData.aircraftId);
+    const format = selectedAircraft?.hour_format || 'DECIMAL';
+    return hourMeterToMinutes(start, end, format);
   };
 
   const convertMinutesToDecimalHours = (minutes: number) => {
@@ -527,14 +528,17 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
         {/* Durée (calculée) */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Durée
+            Durée (minutes)
           </label>
-          <TimeInput
-            value={formData.duration / 60} // Convertir les minutes en heures
-            onChange={() => {}} // Read-only
-            format={selectedAircraft?.hour_format || "DECIMAL"}
+          <input
+            type="number"
+            value={formData.duration || ""}
+            className="w-full rounded-lg border-slate-200 bg-slate-50 text-slate-500"
             disabled
           />
+          <p className="mt-1 text-sm text-slate-500">
+            {formData.duration ? `${convertMinutesToDecimalHours(formData.duration)} heures` : ''}
+          </p>
         </div>
 
         {/* Destination */}
