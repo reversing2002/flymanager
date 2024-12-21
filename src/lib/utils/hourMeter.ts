@@ -82,3 +82,28 @@ export function parseHourMeter(value: string, format: 'DECIMAL' | 'CLASSIC' = 'D
     return hours + (minutes / 100);
   }
 }
+
+// Récupère le dernier horamètre d'un avion depuis la base de données
+export async function getLastHourMeter(supabase: SupabaseClient, aircraftId: string): Promise<number | null> {
+  // Récupérer le dernier vol de l'avion
+  const { data: lastFlight } = await supabase
+    .from('flights')
+    .select('end_hour_meter')
+    .eq('aircraft_id', aircraftId)
+    .order('date', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (lastFlight?.end_hour_meter) {
+    return lastFlight.end_hour_meter;
+  }
+
+  // Si aucun vol n'est trouvé, récupérer l'horamètre de base de l'avion
+  const { data: aircraft } = await supabase
+    .from('aircraft')
+    .select('last_hour_meter')
+    .eq('id', aircraftId)
+    .single();
+
+  return aircraft?.last_hour_meter || 0;
+}

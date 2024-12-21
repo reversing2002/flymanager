@@ -113,6 +113,27 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
     });
   }, [formData.start_hour_meter, formData.end_hour_meter, formData.aircraftId, aircraftList]);
 
+  useEffect(() => {
+    const loadLastHourMeter = async () => {
+      // Ne charger le dernier horamètre que si l'avion a changé par rapport au vol initial
+      if (formData.aircraftId && formData.aircraftId !== flight.aircraft_id) {
+        const lastHourMeter = await getLastHourMeter(supabase, formData.aircraftId);
+        if (lastHourMeter !== null) {
+          setHourMeterInputs(prev => ({
+            ...prev,
+            start: formatHourMeter(lastHourMeter)
+          }));
+          setFormData(prev => ({
+            ...prev,
+            start_hour_meter: lastHourMeter
+          }));
+        }
+      }
+    };
+
+    loadLastHourMeter();
+  }, [formData.aircraftId, flight.aircraft_id]);
+
   // Charger les définitions des champs personnalisés
   console.log("EditFlightForm: club_id du vol", currentUser.club.id);
   const { data: customFields = [] } = useCustomFlightFields(currentUser.club.id);

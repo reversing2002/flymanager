@@ -8,7 +8,7 @@ import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import { hasAnyGroup } from "../../lib/permissions";
-import { hourMeterToMinutes, validateHourMeter, formatHourMeter, parseHourMeter, validateHourMeterRange } from '@/lib/utils/hourMeter';
+import { hourMeterToMinutes, validateHourMeter, formatHourMeter, parseHourMeter, validateHourMeterRange, getLastHourMeter } from '@/lib/utils/hourMeter';
 import { useCustomFlightFields, useCreateCustomFlightFieldValues } from "../../lib/queries/customFlightFields";
 import { useCreateFlight } from "../../lib/queries/useFlightMutations";
 
@@ -95,6 +95,26 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
       end: formatHourMeter(formData.end_hour_meter, selectedAircraft?.hour_format) || ''
     });
   }, [formData.start_hour_meter, formData.end_hour_meter, formData.aircraftId, aircraft]);
+
+  useEffect(() => {
+    const loadLastHourMeter = async () => {
+      if (formData.aircraftId) {
+        const lastHourMeter = await getLastHourMeter(supabase, formData.aircraftId);
+        if (lastHourMeter !== null) {
+          setHourMeterInputs(prev => ({
+            ...prev,
+            start: formatHourMeter(lastHourMeter)
+          }));
+          setFormData(prev => ({
+            ...prev,
+            start_hour_meter: lastHourMeter
+          }));
+        }
+      }
+    };
+
+    loadLastHourMeter();
+  }, [formData.aircraftId]);
 
   useEffect(() => {
     const loadData = async () => {
