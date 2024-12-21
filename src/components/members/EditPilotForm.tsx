@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { AlertTriangle, Upload, X } from "lucide-react";
+import { AlertTriangle, Upload, X, Check } from "lucide-react";
 import type { User } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { Role, SYSTEM_ROLE_GROUPS } from "../../types/roles";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { getInitials } from "../../lib/utils/avatarUtils";
+import * as Checkbox from "@radix-ui/react-checkbox";
+import "../../styles/checkbox.css";
 
 interface EditPilotFormProps {
   pilot: User;
@@ -59,10 +61,10 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
           return;
         }
 
-        // Ensure groups are in uppercase
-        const normalizedGroups = data?.map(group => group.toUpperCase()) || [];
-        console.log("[EditPilotForm] Loaded user groups (normalized):", normalizedGroups);
-        setFormData(prev => ({ ...prev, roles: normalizedGroups }));
+        // Convertir les groupes en majuscules pour la cohérence
+        const groups = (data || []).map(group => group.toUpperCase());
+        console.log("[EditPilotForm] Loaded user groups:", groups);
+        setFormData(prev => ({ ...prev, roles: groups }));
       } catch (err) {
         console.error("[EditPilotForm] Exception loading user groups:", err);
       }
@@ -128,25 +130,11 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
         }
       }
 
-      // Convertir instructor_rate en nombre ou null
-     
-      const dataToSubmit = {
-        id: pilot.id,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        email: formData.email,
-        phone: formData.phone,
-        gender: formData.gender,
-        birth_date: formData.birth_date || null,
-        image_url: formData.image_url,
-        instructor_rate: formData.instructor_rate || null,
-        instructor_fee: formData.instructor_fee || null
-      };
+      const dataToSubmit = { ...formData };
+      
+      // Convertir les rôles en majuscules pour correspondre à la base de données
+      dataToSubmit.roles = formData.roles.map(role => role.toUpperCase());
 
-      console.log("[EditPilotForm] ====== SUBMIT DEBUG ======");
-      console.log("[EditPilotForm] Original form data:", formData);
-      console.log("[EditPilotForm] Data to submit:", dataToSubmit);
-      console.log("[EditPilotForm] Submit instructor_rate:", dataToSubmit.instructor_rate, typeof dataToSubmit.instructor_rate);
       console.log("[EditPilotForm] Full data:", JSON.stringify(dataToSubmit, null, 2));
 
       await onSubmit(dataToSubmit);
@@ -155,7 +143,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
         const { error: groupsError } = await supabase
           .rpc('update_user_groups', {
             p_user_id: pilot.id,
-            p_groups: formData.roles
+            p_groups: dataToSubmit.roles  // Utiliser les rôles en majuscules
           });
 
         if (groupsError) {
@@ -307,9 +295,9 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                     <input
                       type="checkbox"
                       id={`role-${role}`}
-                      checked={formData.roles.includes(role)}
+                      checked={formData.roles.includes(role.toUpperCase())}
                       onChange={() => handleRoleChange(role)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
                     />
                     <label
                       htmlFor={`role-${role}`}
