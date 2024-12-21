@@ -20,15 +20,37 @@ export function hourMeterToMinutes(start: number, end: number, format: 'DECIMAL'
 }
 
 // Valide une valeur d'horamètre selon le format
-export function validateHourMeter(value: number, format: 'DECIMAL' | 'CLASSIC' = 'DECIMAL'): boolean {
-  if (format === 'DECIMAL') {
-    // Format décimal : accepte n'importe quel nombre positif
-    return value >= 0;
-  } else {
-    // Format classique : les minutes ne peuvent pas dépasser 59
-    const minutes = Math.round((value % 1) * 100);
-    return value >= 0 && minutes <= 59;
+export function validateHourMeter(value: number | string, format: 'DECIMAL' | 'CLASSIC' = 'DECIMAL'): { isValid: boolean; error?: string } {
+  const numValue = typeof value === 'string' ? parseFloat(value.replace(',', '.')) : value;
+  
+  if (isNaN(numValue)) {
+    return { isValid: false, error: "La valeur doit être un nombre valide" };
   }
+  
+  if (numValue < 0) {
+    return { isValid: false, error: "L'horamètre ne peut pas être négatif" };
+  }
+
+  if (format === 'DECIMAL') {
+    return { isValid: true };
+  } else {
+    const minutes = Math.round((numValue % 1) * 100);
+    if (minutes > 59) {
+      return { isValid: false, error: "Les minutes ne peuvent pas dépasser 59" };
+    }
+    return { isValid: true };
+  }
+}
+
+// Vérifie que l'horamètre de fin est supérieur à celui de départ
+export function validateHourMeterRange(start: number, end: number): { isValid: boolean; error?: string } {
+  if (end < start) {
+    return { 
+      isValid: false, 
+      error: "L'horamètre de fin doit être supérieur à l'horamètre de départ" 
+    };
+  }
+  return { isValid: true };
 }
 
 // Formate une valeur d'horamètre pour l'affichage
