@@ -90,7 +90,7 @@ export async function getLastHourMeter(supabase: SupabaseClient, aircraftId: str
     .from('flights')
     .select('end_hour_meter')
     .eq('aircraft_id', aircraftId)
-    .order('date', { ascending: false })
+    .order('end_hour_meter', { ascending: false })
     .limit(1)
     .single();
 

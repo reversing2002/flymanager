@@ -101,13 +101,15 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
       if (formData.aircraftId) {
         const lastHourMeter = await getLastHourMeter(supabase, formData.aircraftId);
         if (lastHourMeter !== null) {
+          const formattedHourMeter = formatHourMeter(lastHourMeter);
           setHourMeterInputs(prev => ({
-            ...prev,
-            start: formatHourMeter(lastHourMeter)
+            start: formattedHourMeter,
+            end: formattedHourMeter
           }));
           setFormData(prev => ({
             ...prev,
-            start_hour_meter: lastHourMeter
+            start_hour_meter: lastHourMeter,
+            end_hour_meter: lastHourMeter
           }));
         }
       }
