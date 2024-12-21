@@ -282,7 +282,7 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
             >
               <option value="">Sélectionner un type</option>
               {accountTypes
-                .filter(type => isAdmin || (!type.is_system && type.code !== 'BALANCE_RESET'))
+                .filter(type => isAdmin || (type.code !== 'BALANCE_RESET'))
                 .map((type) => (
                   <option key={type.id} value={type.id}>
                     {type.name}
