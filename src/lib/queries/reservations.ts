@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import type { Reservation } from '../../types/database';
 import { v4 as uuidv4 } from 'uuid';
+import { sendReservationConfirmation, scheduleReservationReminder } from '../../services/reservationNotificationService';
 
 export async function getReservations(): Promise<Reservation[]> {
   const { data, error } = await supabase
@@ -43,9 +44,9 @@ export async function createReservation(data: Partial<Reservation>): Promise<voi
       throw new Error('User is not a member of any club');
     }
 
-    // Create reservation with club_id
-    const { error } = await supabase.from('reservations').insert({
-      id: data.id || uuidv4(),
+    const reservationId = data.id || uuidv4();
+    const reservationData = {
+      id: reservationId,
       user_id: data.userId,
       pilot_id: data.pilotId || data.userId,
       aircraft_id: data.aircraftId,
@@ -57,12 +58,48 @@ export async function createReservation(data: Partial<Reservation>): Promise<voi
       status: data.status || 'ACTIVE',
       comments: data.comments,
       club_id: userClub.club_id,
-    });
+    };
+
+    // Create reservation with club_id
+    const { data: newReservation, error } = await supabase
+      .from('reservations')
+      .insert(reservationData)
+      .select('*, club:club_id(*)')
+      .single();
 
     if (error) {
       console.error('Error creating reservation:', error);
       throw error;
     }
+
+    if (!newReservation) {
+      throw new Error('La réservation a été créée mais les données n\'ont pas été retournées');
+    }
+
+    // Convertir les données pour correspondre au type Reservation
+    const reservationForNotification: Reservation = {
+      id: newReservation.id,
+      userId: newReservation.user_id,
+      pilotId: newReservation.pilot_id,
+      aircraftId: newReservation.aircraft_id,
+      flightTypeId: newReservation.flight_type_id,
+      startTime: newReservation.start_time,
+      endTime: newReservation.end_time,
+      withInstructor: newReservation.with_instructor,
+      instructorId: newReservation.instructor_id,
+      status: newReservation.status,
+      comments: newReservation.comments,
+      clubId: newReservation.club_id,
+      createdAt: newReservation.created_at,
+      updatedAt: newReservation.updated_at
+    };
+
+    console.log('Données de réservation pour les notifications:', reservationForNotification);
+
+    // Envoyer les notifications par email
+    await sendReservationConfirmation(reservationForNotification);
+    await scheduleReservationReminder(reservationForNotification);
+
   } catch (error) {
     console.error('Error in createReservation:', error);
     throw error;
