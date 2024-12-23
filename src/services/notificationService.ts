@@ -111,6 +111,9 @@ export async function markNotificationAsSent(
   if (updateError) throw updateError;
 }
 
+// Variable de debug pour rediriger les emails
+const DEBUG_EMAIL = 'eddy@yopmail.com';
+
 // Fonction pour envoyer un email via Mailjet
 export async function sendEmail(
   notification: EmailNotification,
@@ -133,13 +136,13 @@ export async function sendEmail(
           },
           To: [
             {
-              Email: notification.user.email,
+              Email: DEBUG_EMAIL, // Utiliser l'email de debug au lieu de notification.user.email
               Name: `${notification.user.first_name} ${notification.user.last_name}`,
             },
           ],
-          TemplateID: notification.template_id,
-          TemplateLanguage: true,
-          Variables: notification.variables,
+          Subject: 'Test - ' + notification.type, // Préfixer avec "Test" pour identifier facilement
+          TextPart: `[DEBUG MODE - Email original destiné à: ${notification.user.email}]\n\n${notification.content}`,
+          HTMLPart: `<p style="color: red;">[DEBUG MODE - Email original destiné à: ${notification.user.email}]</p><br/>${notification.content}`,
         },
       ],
     }),
@@ -147,7 +150,9 @@ export async function sendEmail(
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(JSON.stringify(error));
+    throw new Error(
+      `Erreur lors de l'envoi de l'email: ${JSON.stringify(error)}`
+    );
   }
 }
 
@@ -227,4 +232,74 @@ export async function processScheduledNotifications(clubId: string): Promise<voi
       await markNotificationAsSent(notification.id, error.message);
     }
   }
+}
+
+// Fonction pour récupérer les templates de notification d'un club
+export async function getNotificationTemplates(clubId: string): Promise<NotificationTemplate[]> {
+  const { data, error } = await supabase
+    .from('notification_templates')
+    .select('*')
+    .eq('club_id', clubId)
+    .order('name');
+
+  if (error) throw error;
+  return data;
+}
+
+// Fonction pour récupérer un template spécifique
+export async function getNotificationTemplate(
+  clubId: string,
+  notificationType: string
+): Promise<NotificationTemplate | null> {
+  const { data, error } = await supabase
+    .from('notification_templates')
+    .select('*')
+    .eq('club_id', clubId)
+    .eq('notification_type', notificationType)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+  return data;
+}
+
+// Fonction pour mettre à jour un template
+export async function updateNotificationTemplate(
+  clubId: string,
+  template: NotificationTemplate
+): Promise<NotificationTemplate> {
+  const { data, error } = await supabase
+    .from('notification_templates')
+    .update({
+      name: template.name,
+      subject: template.subject,
+      template_id: template.template_id,
+      description: template.description,
+      variables: template.variables,
+      notification_type: template.notification_type
+    })
+    .eq('id', template.id)
+    .eq('club_id', clubId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Fonction pour créer un nouveau template
+export async function createNotificationTemplate(
+  clubId: string,
+  template: Omit<NotificationTemplate, 'id' | 'created_at' | 'updated_at'>
+): Promise<NotificationTemplate> {
+  const { data, error } = await supabase
+    .from('notification_templates')
+    .insert([{ ...template, club_id: clubId }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }

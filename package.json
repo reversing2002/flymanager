@@ -37,6 +37,7 @@
     "framer-motion": "^11.11.17",
     "lucide-react": "^0.323.0",
     "monaco-editor": "^0.52.0",
+    "node-cron": "^3.0.3",
     "node-mailjet": "^6.0.6",
     "nodemailer": "^6.9.16",
     "path-to-regexp": ">=0.1.12",

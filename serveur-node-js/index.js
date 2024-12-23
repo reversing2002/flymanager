@@ -6,6 +6,7 @@ const path = require('path');
 const twilio = require('twilio');
 const Mailjet = require('node-mailjet');
 const { createClient } = require('@supabase/supabase-js');
+const cron = require('node-cron');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -444,13 +445,230 @@ app.get('/api/conversations/:flightId/messages', async (req, res) => {
   }
 });
 
-// Configuration Mailjet
-const mailjet = process.env.MAILJET_API_KEY && process.env.MAILJET_API_SECRET
-  ? new Mailjet({
-      apiKey: process.env.MAILJET_API_KEY,
-      apiSecret: process.env.MAILJET_API_SECRET
-    })
-  : null;
+// Fonction utilitaire pour attendre
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Fonction pour envoyer un email avec retry
+async function sendEmailWithRetry(mailjetClient, emailData, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await mailjetClient
+        .post('send', { 
+          version: 'v3.1',
+          timeout: 10000 // 10 secondes timeout
+        })
+        .request(emailData);
+      
+      return result;
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Si c'est une erreur de connexion, attendre avant de réessayer
+      if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+        console.log(`⚠️ Tentative ${attempt}/${maxRetries} échouée, nouvelle tentative dans ${attempt * 2} secondes...`);
+        await wait(attempt * 2000); // Attendre 2s, puis 4s, puis 6s
+        continue;
+      }
+      
+      // Pour les autres types d'erreurs, les propager immédiatement
+      throw error;
+    }
+  }
+}
+
+// Fonction pour traiter les notifications en attente
+async function processNotifications() {
+  console.log('🔄 Démarrage du traitement des notifications...');
+  try {
+    // Récupérer tous les clubs
+    console.log('📥 Récupération des clubs...');
+    const { data: clubs, error } = await supabase
+      .from('clubs')
+      .select('id');
+
+    if (error) {
+      console.error('❌ Erreur lors de la récupération des clubs:', error);
+      throw error;
+    }
+
+    if (!clubs?.length) {
+      console.log('ℹ️ Aucun club trouvé');
+      return;
+    }
+
+    console.log(`📋 Traitement des notifications pour ${clubs.length} clubs`);
+
+    // Traiter les notifications pour chaque club
+    for (const club of clubs) {
+      console.log(`\n🏢 Traitement du club ${club.id}...`);
+      try {
+        // Récupérer d'abord les paramètres du club
+        console.log(`⚙️ Récupération des paramètres pour le club ${club.id}...`);
+        const { data: settings, error: settingsError } = await supabase
+          .from('notification_settings')
+          .select('*')
+          .eq('club_id', club.id)
+          .single();
+
+        if (settingsError) {
+          console.error(`❌ Erreur lors de la récupération des paramètres du club ${club.id}:`, settingsError);
+          continue;
+        }
+
+        if (!settings) {
+          console.error(`⚠️ Paramètres de notification non trouvés pour le club ${club.id}`);
+          continue;
+        }
+
+        console.log(`✅ Paramètres trouvés pour le club ${club.id}`);
+        console.log(`📧 Configuration email: ${settings.sender_email || 'Non défini'}`);
+
+        // Initialiser Mailjet avec les clés API du club
+        if (!settings.mailjet_api_key || !settings.mailjet_api_secret) {
+          console.error(`❌ Clés Mailjet manquantes pour le club ${club.id}`);
+          continue;
+        }
+
+        console.log(`🔑 Initialisation de Mailjet pour le club ${club.id}...`);
+        const mailjetClient = Mailjet.apiConnect(
+          settings.mailjet_api_key,
+          settings.mailjet_api_secret
+        );
+
+        console.log(`📬 Recherche des notifications en attente pour le club ${club.id}...`);
+        const { data: notifications, error: notifError } = await supabase
+          .from('notifications')
+          .select(`
+            *,
+            user:user_id (
+              id,
+              first_name,
+              last_name,
+              email
+            )
+          `)
+          .eq('club_id', club.id)
+          .eq('sent', false)
+          .lte('scheduled_date', new Date().toISOString());
+
+        if (notifError) {
+          console.error(`❌ Erreur lors de la récupération des notifications pour le club ${club.id}:`, notifError);
+          continue;
+        }
+
+        if (!notifications?.length) {
+          console.log(`ℹ️ Aucune notification en attente pour le club ${club.id}`);
+          continue;
+        }
+
+        console.log(`📬 ${notifications.length} notifications à envoyer pour le club ${club.id}`);
+
+        for (const notification of notifications) {
+          console.log(`\n📨 Traitement de la notification ${notification.id}...`);
+          try {
+            if (!notification.user?.email) {
+              console.error(`❌ Email manquant pour l'utilisateur de la notification ${notification.id}`);
+              continue;
+            }
+
+            // Récupérer le template correspondant au type de notification
+            const { data: template, error: templateError } = await supabase
+              .from('notification_templates')
+              .select('*')
+              .eq('club_id', club.id)
+              .eq('notification_type', notification.type)
+              .single();
+
+            if (templateError) {
+              console.error(`❌ Erreur lors de la récupération du template pour la notification ${notification.id}:`, templateError);
+              continue;
+            }
+
+            if (!template) {
+              console.error(`❌ Template non trouvé pour le type ${notification.type}`);
+              continue;
+            }
+
+            console.log(`📝 Préparation de l'email pour ${notification.user.email}...`);
+            console.log(`📋 Template: ${template.name}`);
+
+            // Remplacer les variables dans le HTML
+            let htmlContent = template.html_content;
+            for (const [key, value] of Object.entries(notification.variables)) {
+              htmlContent = htmlContent.replace(new RegExp(`{${key}}`, 'g'), value);
+            }
+
+            const emailData = {
+              Messages: [
+                {
+                  From: {
+                    Email: settings.sender_email || 'noreply@example.com',
+                    Name: settings.sender_name || 'Notification System'
+                  },
+                  To: [
+                    {
+                      Email: process.env.NODE_ENV === 'production' ? notification.user.email : 'eddy@yopmail.com',
+                      Name: `${notification.user.first_name} ${notification.user.last_name}`
+                    }
+                  ],
+                  Subject: template.subject,
+                  HTMLPart: htmlContent
+                }
+              ]
+            };
+
+            // Envoyer l'email avec retry
+            console.log(`📤 Envoi de l'email pour la notification ${notification.id}...`);
+            await sendEmailWithRetry(mailjetClient, emailData);
+
+            // Marquer la notification comme envoyée
+            console.log(`✍️ Mise à jour du statut de la notification ${notification.id}...`);
+            const { error: updateError } = await supabase
+              .from('notifications')
+              .update({ 
+                sent: true, 
+                sent_date: new Date().toISOString(),
+                status: 'SENT'
+              })
+              .eq('id', notification.id);
+
+            if (updateError) {
+              console.error(`❌ Erreur lors de la mise à jour de la notification ${notification.id}:`, updateError);
+              throw updateError;
+            }
+
+            console.log(`✅ Notification ${notification.id} envoyée avec succès`);
+          } catch (error) {
+            console.error(`❌ Erreur lors de l'envoi de la notification ${notification.id}:`, error);
+            // Mettre à jour le statut de la notification en erreur
+            await supabase
+              .from('notifications')
+              .update({ 
+                status: 'ERROR',
+                error: error.message || 'Une erreur est survenue lors de l\'envoi'
+              })
+              .eq('id', notification.id);
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Erreur lors du traitement des notifications pour le club ${club.id}:`, error);
+      }
+    }
+    console.log('\n✨ Cycle de traitement des notifications terminé');
+  } catch (error) {
+    console.error('❌ Erreur lors du traitement des notifications:', error);
+  }
+}
+
+// Cron job pour traiter les notifications en attente
+console.log('📧 Configuration du cron job pour les notifications...');
+cron.schedule('*/5 * * * *', processNotifications);
+
+// Traiter les notifications au démarrage du serveur
+console.log('📧 Traitement initial des notifications au démarrage...');
+processNotifications();
 
 app.use((req, res, next) => {
   if (req.originalUrl === '/api/webhooks/stripe') {
@@ -549,21 +767,32 @@ app.post("/api/send-email", async (req, res) => {
       });
     }
 
-    if (!mailjet) {
+    const { data: settings } = await supabase
+      .from('notification_settings')
+      .select('*')
+      .eq('id', 1)
+      .single();
+
+    if (!settings) {
       return res.status(500).json({ 
         success: false, 
         error: 'Configuration Mailjet manquante' 
       });
     }
 
-    const result = await mailjet
+    const mailjetClient = Mailjet.apiConnect(
+      settings.mailjet_api_key,
+      settings.mailjet_api_secret
+    );
+
+    const result = await mailjetClient
       .post('send', { version: 'v3.1' })
       .request({
         Messages: [
           {
             From: {
-              Email: process.env.MAILJET_FROM_EMAIL,
-              Name: process.env.MAILJET_FROM_NAME || "Vol Découverte"
+              Email: settings.sender_email,
+              Name: settings.sender_name,
             },
             To: [
               {

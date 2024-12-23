@@ -1,17 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Mail, AlertCircle, CheckCircle, XCircle, Settings, Bell } from 'lucide-react';
+import { Mail, AlertCircle, CheckCircle, XCircle, Settings, Bell, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getNotifications, getNotificationSettings, updateNotificationSettings } from '../../services/notificationService';
-import type { EmailNotification, NotificationSettings } from '../../types/notifications';
+import { 
+  getNotifications, 
+  getNotificationSettings, 
+  updateNotificationSettings,
+  getNotificationTemplates,
+  updateNotificationTemplate,
+  createNotificationTemplate
+} from '../../services/notificationService';
+import type { 
+  EmailNotification, 
+  NotificationSettings, 
+  NotificationTemplate 
+} from '../../types/notifications';
 import { toast } from 'react-hot-toast';
+import { Dialog } from '@mui/material';
+import Editor from '@monaco-editor/react';
 
 const NotificationList = () => {
   const { user } = useAuth();
   const [filter, setFilter] = useState<'all' | 'pending' | 'sent'>('pending');
   const [showSettings, setShowSettings] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
+  const [htmlContent, setHtmlContent] = useState<string>('');
   const queryClient = useQueryClient();
 
   // Récupération des notifications
@@ -43,6 +59,44 @@ const NotificationList = () => {
     },
   });
 
+  // Récupération des templates
+  const { data: templates, isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ['notificationTemplates', user?.club?.id],
+    queryFn: () => getNotificationTemplates(user?.club?.id!),
+    enabled: !!user?.club?.id,
+  });
+
+  // Mutation pour mettre à jour un template
+  const updateTemplateMutation = useMutation({
+    mutationFn: (template: NotificationTemplate) =>
+      updateNotificationTemplate(user?.club?.id!, template),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['notificationTemplates']);
+      toast.success('Template mis à jour');
+      setShowTemplates(false);
+      setSelectedTemplate(null);
+    },
+    onError: (error) => {
+      console.error('Error updating template:', error);
+      toast.error('Erreur lors de la mise à jour du template');
+    },
+  });
+
+  // Mutation pour créer un template
+  const createTemplateMutation = useMutation({
+    mutationFn: (template: Omit<NotificationTemplate, 'id'>) =>
+      createNotificationTemplate(user?.club?.id!, template),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['notificationTemplates']);
+      toast.success('Template créé');
+      setShowTemplates(false);
+    },
+    onError: (error) => {
+      console.error('Error creating template:', error);
+      toast.error('Erreur lors de la création du template');
+    },
+  });
+
   const handleSettingsSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -55,6 +109,96 @@ const NotificationList = () => {
       expiration_warning_days: parseInt(formData.get('expiration_warning_days') as string),
     });
   };
+
+  // Fonction pour obtenir les variables selon le type de notification
+  const getTemplateVariables = (type: string): string[] => {
+    switch (type) {
+      case 'expiration_warning':
+      case 'CONTRIBUTION_EXPIRATION':
+        return ['first_name', 'last_name', 'expiration_date'];
+      case 'license_expiring':
+        return ['first_name', 'last_name', 'license_name', 'expiration_date'];
+      case 'medical_expiring':
+        return ['first_name', 'last_name', 'expiration_date'];
+      case 'qualification_expiring':
+        return ['first_name', 'last_name', 'qualification_name', 'expiration_date'];
+      case 'reservation_confirmed':
+        return ['first_name', 'last_name', 'reservation_date', 'aircraft', 'instructor'];
+      case 'reservation_cancelled':
+        return ['first_name', 'last_name', 'reservation_date', 'aircraft', 'reason'];
+      default:
+        return ['first_name', 'last_name'];
+    }
+  };
+
+  const handleTemplateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    if (selectedTemplate) {
+      updateTemplateMutation.mutate({
+        id: selectedTemplate.id,
+        subject: formData.get('subject') as string,
+        html_content: htmlContent,
+        name: selectedTemplate.name,
+        description: selectedTemplate.description,
+        variables: selectedTemplate.variables,
+        notification_type: selectedTemplate.notification_type,
+        club_id: user?.club?.id!
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (selectedTemplate) {
+      setHtmlContent(selectedTemplate.html_content);
+    } else {
+      setHtmlContent(`<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Titre du mail</h1>
+    </div>
+    
+    <p>Bonjour {first_name} {last_name},</p>
+    
+    <p>Votre contenu ici...</p>
+    
+    <div class="footer">
+      <p>Cordialement,<br>L'équipe de votre club</p>
+    </div>
+  </div>
+</body>
+</html>`);
+    }
+  }, [selectedTemplate]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -101,18 +245,22 @@ const NotificationList = () => {
               Visualisez et gérez les notifications email programmées pour les membres.
             </p>
           </div>
-          <button
-            onClick={() => {
-              setShowSettings(!showSettings);
-              if (!showSettings) {
-                toast.success('Ouverture des paramètres');
-              }
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-          >
-            <Settings className="w-4 h-4" />
-            Paramètres
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowTemplates(true)}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              <FileText className="h-5 w-5 mr-2" />
+              Templates
+            </button>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              <Settings className="h-5 w-5 mr-2" />
+              Paramètres
+            </button>
+          </div>
         </div>
 
         {showSettings && (isLoadingSettings ? (
@@ -214,6 +362,149 @@ const NotificationList = () => {
             </div>
           </form>
         ) : null)}
+
+        {/* Modal des templates */}
+        <Dialog 
+          open={showTemplates} 
+          onClose={() => {
+            setShowTemplates(false);
+            setSelectedTemplate(null);
+          }}
+          maxWidth="md"
+          fullWidth
+        >
+          <div className="p-6">
+            {!selectedTemplate ? (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-medium">Templates de notification</h2>
+                  <button
+                    onClick={() => setShowTemplates(false)}
+                    className="text-gray-400 hover:text-gray-500"
+                  >
+                    <XCircle className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {templates?.map((template) => (
+                    <div
+                      key={template.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setSelectedTemplate(template)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{template.name}</h4>
+                          <p className="text-sm text-gray-500">{template.description}</p>
+                        </div>
+                        <button
+                          onClick={() => setSelectedTemplate(template)}
+                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+                        >
+                          Personnaliser
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-medium">
+                    Personnaliser : {selectedTemplate.name}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowTemplates(false);
+                      setSelectedTemplate(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-500"
+                  >
+                    <XCircle className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleTemplateSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+                      Sujet de l'email
+                    </label>
+                    <input
+                      type="text"
+                      name="subject"
+                      id="subject"
+                      defaultValue={selectedTemplate.subject}
+                      required
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="variables" className="block text-sm font-medium text-gray-700">
+                      Variables disponibles
+                    </label>
+                    <input
+                      type="text"
+                      id="variables"
+                      value={getTemplateVariables(selectedTemplate.notification_type).join(', ')}
+                      readOnly
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-50 text-gray-600 sm:text-sm"
+                    />
+                    <p className="mt-1 text-sm text-gray-500">
+                      Ces variables sont disponibles pour ce type de notification. Utilisez-les dans votre template HTML en les entourant d'accolades, par exemple : {'{first_name}'}.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="html_content" className="block text-sm font-medium text-gray-700">
+                      Contenu HTML
+                    </label>
+                    <div className="mt-1 border border-gray-300 rounded-md overflow-hidden">
+                      <Editor
+                        height="400px"
+                        defaultLanguage="html"
+                        value={htmlContent}
+                        onChange={(value) => setHtmlContent(value || '')}
+                        options={{
+                          minimap: { enabled: false },
+                          wordWrap: 'on',
+                          wrappingIndent: 'indent',
+                          lineNumbers: 'on',
+                          roundedSelection: false,
+                          scrollBeyondLastLine: false,
+                          automaticLayout: true,
+                          theme: 'vs-light'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowTemplates(false);
+                        setSelectedTemplate(null);
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      Enregistrer
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
+        </Dialog>
+
       </div>
 
       {/* Filtres */}

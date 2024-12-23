@@ -6,7 +6,9 @@ CREATE TABLE notification_settings (
     mailjet_api_secret TEXT NOT NULL,
     sender_email TEXT NOT NULL,
     sender_name TEXT NOT NULL,
-    expiration_warning_days INTEGER NOT NULL DEFAULT 30,
+    license_expiration_warning_days INTEGER NOT NULL DEFAULT 30,
+    qualification_expiration_warning_days INTEGER NOT NULL DEFAULT 30,
+    medical_expiration_warning_days INTEGER NOT NULL DEFAULT 30,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(club_id)
@@ -17,7 +19,7 @@ CREATE TABLE notification_templates (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     subject TEXT NOT NULL,
-    template_id INTEGER NOT NULL, -- Mailjet template ID
+    html_content TEXT NOT NULL,
     description TEXT,
     variables TEXT[] NOT NULL DEFAULT '{}',
     notification_type TEXT NOT NULL,
@@ -70,7 +72,7 @@ BEGIN
         l.user_id,
         lt.name as type,
         l.expiration_date::DATE
-    FROM licenses l
+    FROM pilot_licenses l
     JOIN license_types lt ON l.license_type_id = lt.id
     WHERE 
         l.club_id = p_club_id
@@ -96,13 +98,13 @@ BEGIN
     SELECT 
         q.user_id,
         qt.name as type,
-        q.expiration_date::DATE
-    FROM qualifications q
+        q.expires_at::DATE
+    FROM pilot_qualifications q
     JOIN qualification_types qt ON q.qualification_type_id = qt.id
     WHERE 
         q.club_id = p_club_id
-        AND q.expiration_date IS NOT NULL
-        AND q.expiration_date - CURRENT_DATE = p_days_before;
+        AND q.expires_at IS NOT NULL
+        AND q.expires_at - CURRENT_DATE = p_days_before;
 END;
 $$;
 
@@ -134,235 +136,247 @@ END;
 $$;
 
 -- Function to process scheduled notifications
-CREATE OR REPLACE FUNCTION process_scheduled_notifications()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
+CREATE OR REPLACE FUNCTION public.process_scheduled_notifications()
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
 DECLARE
-    v_club RECORD;
-    v_settings RECORD;
-    v_template RECORD;
-    v_user RECORD;
+    v_club          RECORD;
+    v_settings      RECORD;
+    v_user          RECORD;
     v_notification_id UUID;
 BEGIN
-    -- Pour chaque club
-    FOR v_club IN SELECT id FROM clubs LOOP
+    -- Parcourir chaque club
+    FOR v_club IN
+        SELECT id
+          FROM clubs
+    LOOP
         -- Récupérer les paramètres de notification du club
-        SELECT * INTO v_settings 
-        FROM notification_settings 
-        WHERE club_id = v_club.id 
-        AND is_enabled = true;
+        SELECT *
+          INTO v_settings
+          FROM notification_settings
+         WHERE club_id = v_club.id;
 
         IF v_settings IS NOT NULL THEN
-            -- Vérifier les licences qui expirent bientôt
-            FOR v_user IN 
-                SELECT 
-                    u.id as user_id,
+
+            /********************************************************************
+             * 1) Vérifier les cotisations (member_contributions)
+             ********************************************************************/
+            FOR v_user IN
+                SELECT
+                    u.id AS user_id,
                     u.email,
                     u.first_name,
                     u.last_name,
-                    pl.expiration_date,
-                    lt.name as license_name
+                    mc.id AS contribution_id,
+                    mc.valid_until AS expiration_date
+                FROM users u
+                JOIN member_contributions mc ON mc.user_id = u.id
+                JOIN club_members cm ON cm.user_id = u.id
+                WHERE cm.club_id = v_club.id
+                  AND mc.valid_until IS NOT NULL
+                  AND mc.valid_until <= CURRENT_DATE + 60
+                  AND mc.valid_until > CURRENT_DATE
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM notifications n
+                      WHERE n.user_id = u.id
+                        AND n.type = 'CONTRIBUTION_EXPIRATION'
+                        AND n.reference_id = mc.id::text
+                        AND n.status = 'PENDING'
+                  )
+            LOOP
+                INSERT INTO notifications (
+                    club_id,
+                    user_id,
+                    type,
+                    status,
+                    reference_id,
+                    scheduled_date,
+                    variables
+                ) VALUES (
+                    v_club.id,
+                    v_user.user_id,
+                    'CONTRIBUTION_EXPIRATION',
+                    'PENDING',
+                    v_user.contribution_id::text,
+                    CURRENT_TIMESTAMP,
+                    jsonb_build_object(
+                        'first_name', v_user.first_name,
+                        'last_name', v_user.last_name,
+                        'expiration_date', TO_CHAR(v_user.expiration_date, 'DD/MM/YYYY')
+                    )
+                )
+                RETURNING id INTO v_notification_id;
+            END LOOP;
+
+            /********************************************************************
+             * 2) Vérifier les licences
+             ********************************************************************/
+            FOR v_user IN
+                SELECT
+                    u.id AS user_id,
+                    u.email,
+                    u.first_name,
+                    u.last_name,
+                    pl.id AS license_id,
+                    lt.name AS license_name,
+                    pl.expires_at AS expiration_date
                 FROM users u
                 JOIN pilot_licenses pl ON pl.user_id = u.id
                 JOIN license_types lt ON lt.id = pl.license_type_id
                 JOIN club_members cm ON cm.user_id = u.id
                 WHERE cm.club_id = v_club.id
-                AND pl.expiration_date IS NOT NULL
-                AND pl.expiration_date <= CURRENT_DATE + v_settings.license_expiration_warning_days
-                AND pl.expiration_date > CURRENT_DATE
-                AND NOT EXISTS (
-                    SELECT 1 FROM notifications n 
-                    WHERE n.user_id = u.id 
-                    AND n.type = 'LICENSE_EXPIRATION'
-                    AND n.reference_id = pl.id::text
-                    AND n.status = 'PENDING'
-                )
+                  AND pl.expires_at IS NOT NULL
+                  AND pl.expires_at <= CURRENT_DATE + v_settings.license_expiration_warning_days
+                  AND pl.expires_at > CURRENT_DATE
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM notifications n
+                      WHERE n.user_id = u.id
+                        AND n.type = 'LICENSE_EXPIRATION'
+                        AND n.reference_id = pl.id::text
+                        AND n.status = 'PENDING'
+                  )
             LOOP
-                -- Récupérer le template
-                SELECT * INTO v_template 
-                FROM notification_templates 
-                WHERE club_id = v_club.id 
-                AND type = 'LICENSE_EXPIRATION'
-                AND is_enabled = true;
-
-                IF v_template IS NOT NULL THEN
-                    -- Créer la notification
-                    INSERT INTO notifications (
-                        club_id,
-                        user_id,
-                        type,
-                        status,
-                        reference_id,
-                        title,
-                        content,
-                        scheduled_for
-                    ) VALUES (
-                        v_club.id,
-                        v_user.user_id,
-                        'LICENSE_EXPIRATION',
-                        'PENDING',
-                        v_user.user_id::text,
-                        REPLACE(
-                            REPLACE(v_template.title, '{license_name}', v_user.license_name),
-                            '{expiration_date}', TO_CHAR(v_user.expiration_date, 'DD/MM/YYYY')
-                        ),
-                        REPLACE(
-                            REPLACE(
-                                REPLACE(
-                                    REPLACE(v_template.content, 
-                                        '{first_name}', v_user.first_name
-                                    ),
-                                    '{last_name}', v_user.last_name
-                                ),
-                                '{license_name}', v_user.license_name
-                            ),
-                            '{expiration_date}', TO_CHAR(v_user.expiration_date, 'DD/MM/YYYY')
-                        ),
-                        CURRENT_TIMESTAMP
-                    ) RETURNING id INTO v_notification_id;
-                END IF;
+                INSERT INTO notifications (
+                    club_id,
+                    user_id,
+                    type,
+                    status,
+                    reference_id,
+                    scheduled_date,
+                    variables
+                ) VALUES (
+                    v_club.id,
+                    v_user.user_id,
+                    'LICENSE_EXPIRATION',
+                    'PENDING',
+                    v_user.license_id::text,
+                    CURRENT_TIMESTAMP,
+                    jsonb_build_object(
+                        'first_name', v_user.first_name,
+                        'last_name', v_user.last_name,
+                        'license_name', v_user.license_name,
+                        'expiration_date', TO_CHAR(v_user.expiration_date, 'DD/MM/YYYY')
+                    )
+                )
+                RETURNING id INTO v_notification_id;
             END LOOP;
 
-            -- Vérifier les qualifications qui expirent bientôt
-            FOR v_user IN 
-                SELECT 
-                    u.id as user_id,
+            /********************************************************************
+             * 3) Vérifier les qualifications
+             ********************************************************************/
+            FOR v_user IN
+                SELECT
+                    u.id AS user_id,
                     u.email,
                     u.first_name,
                     u.last_name,
-                    pq.expiration_date,
-                    qt.name as qualification_name
+                    pq.id AS qualification_id,
+                    qt.name AS qualification_name,
+                    pq.expires_at AS expiration_date
                 FROM users u
-                JOIN pilot_qualifications pq ON pq.user_id = u.id
+                JOIN pilot_qualifications pq ON pq.pilot_id = u.id
                 JOIN qualification_types qt ON qt.id = pq.qualification_type_id
                 JOIN club_members cm ON cm.user_id = u.id
                 WHERE cm.club_id = v_club.id
-                AND pq.expiration_date IS NOT NULL
-                AND pq.expiration_date <= CURRENT_DATE + v_settings.qualification_expiration_warning_days
-                AND pq.expiration_date > CURRENT_DATE
-                AND NOT EXISTS (
-                    SELECT 1 FROM notifications n 
-                    WHERE n.user_id = u.id 
-                    AND n.type = 'QUALIFICATION_EXPIRATION'
-                    AND n.reference_id = pq.id::text
-                    AND n.status = 'PENDING'
-                )
+                  AND pq.expires_at IS NOT NULL
+                  AND pq.expires_at <= CURRENT_DATE + v_settings.qualification_expiration_warning_days
+                  AND pq.expires_at > CURRENT_DATE
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM notifications n
+                      WHERE n.user_id = u.id
+                        AND n.type = 'QUALIFICATION_EXPIRATION'
+                        AND n.reference_id = pq.id::text
+                        AND n.status = 'PENDING'
+                  )
             LOOP
-                -- Récupérer le template
-                SELECT * INTO v_template 
-                FROM notification_templates 
-                WHERE club_id = v_club.id 
-                AND type = 'QUALIFICATION_EXPIRATION'
-                AND is_enabled = true;
-
-                IF v_template IS NOT NULL THEN
-                    -- Créer la notification
-                    INSERT INTO notifications (
-                        club_id,
-                        user_id,
-                        type,
-                        status,
-                        reference_id,
-                        title,
-                        content,
-                        scheduled_for
-                    ) VALUES (
-                        v_club.id,
-                        v_user.user_id,
-                        'QUALIFICATION_EXPIRATION',
-                        'PENDING',
-                        v_user.user_id::text,
-                        REPLACE(
-                            REPLACE(v_template.title, '{qualification_name}', v_user.qualification_name),
-                            '{expiration_date}', TO_CHAR(v_user.expiration_date, 'DD/MM/YYYY')
-                        ),
-                        REPLACE(
-                            REPLACE(
-                                REPLACE(
-                                    REPLACE(v_template.content, 
-                                        '{first_name}', v_user.first_name
-                                    ),
-                                    '{last_name}', v_user.last_name
-                                ),
-                                '{qualification_name}', v_user.qualification_name
-                            ),
-                            '{expiration_date}', TO_CHAR(v_user.expiration_date, 'DD/MM/YYYY')
-                        ),
-                        CURRENT_TIMESTAMP
-                    ) RETURNING id INTO v_notification_id;
-                END IF;
+                INSERT INTO notifications (
+                    club_id,
+                    user_id,
+                    type,
+                    status,
+                    reference_id,
+                    scheduled_date,
+                    variables
+                ) VALUES (
+                    v_club.id,
+                    v_user.user_id,
+                    'QUALIFICATION_EXPIRATION',
+                    'PENDING',
+                    v_user.qualification_id::text,
+                    CURRENT_TIMESTAMP,
+                    jsonb_build_object(
+                        'first_name', v_user.first_name,
+                        'last_name', v_user.last_name,
+                        'qualification_name', v_user.qualification_name,
+                        'expiration_date', TO_CHAR(v_user.expiration_date, 'DD/MM/YYYY')
+                    )
+                )
+                RETURNING id INTO v_notification_id;
             END LOOP;
 
-            -- Vérifier les visites médicales qui expirent bientôt
-            FOR v_user IN 
-                SELECT 
-                    u.id as user_id,
+            /********************************************************************
+             * 4) Vérifier les visites médicales
+             ********************************************************************/
+            FOR v_user IN
+                SELECT
+                    u.id AS user_id,
                     u.email,
                     u.first_name,
                     u.last_name,
-                    m.expiration_date
+                    m.id AS medical_id,
+                    mt.name AS medical_type_name,
+                    m.expires_at AS expiration_date
                 FROM users u
                 JOIN medicals m ON m.user_id = u.id
+                JOIN medical_types mt ON mt.id = m.medical_type_id
                 JOIN club_members cm ON cm.user_id = u.id
                 WHERE cm.club_id = v_club.id
-                AND m.expiration_date IS NOT NULL
-                AND m.expiration_date <= CURRENT_DATE + v_settings.medical_expiration_warning_days
-                AND m.expiration_date > CURRENT_DATE
-                AND NOT EXISTS (
-                    SELECT 1 FROM notifications n 
-                    WHERE n.user_id = u.id 
-                    AND n.type = 'MEDICAL_EXPIRATION'
-                    AND n.reference_id = m.id::text
-                    AND n.status = 'PENDING'
-                )
+                  AND m.expires_at IS NOT NULL
+                  AND m.expires_at <= CURRENT_DATE + v_settings.medical_expiration_warning_days
+                  AND m.expires_at > CURRENT_DATE
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM notifications n
+                      WHERE n.user_id = u.id
+                        AND n.type = 'MEDICAL_EXPIRATION'
+                        AND n.reference_id = m.id::text
+                        AND n.status = 'PENDING'
+                  )
             LOOP
-                -- Récupérer le template
-                SELECT * INTO v_template 
-                FROM notification_templates 
-                WHERE club_id = v_club.id 
-                AND type = 'MEDICAL_EXPIRATION'
-                AND is_enabled = true;
-
-                IF v_template IS NOT NULL THEN
-                    -- Créer la notification
-                    INSERT INTO notifications (
-                        club_id,
-                        user_id,
-                        type,
-                        status,
-                        reference_id,
-                        title,
-                        content,
-                        scheduled_for
-                    ) VALUES (
-                        v_club.id,
-                        v_user.user_id,
-                        'MEDICAL_EXPIRATION',
-                        'PENDING',
-                        v_user.user_id::text,
-                        REPLACE(
-                            v_template.title, 
-                            '{expiration_date}', TO_CHAR(v_user.expiration_date, 'DD/MM/YYYY')
-                        ),
-                        REPLACE(
-                            REPLACE(
-                                REPLACE(v_template.content, 
-                                    '{first_name}', v_user.first_name
-                                ),
-                                '{last_name}', v_user.last_name
-                            ),
-                            '{expiration_date}', TO_CHAR(v_user.expiration_date, 'DD/MM/YYYY')
-                        ),
-                        CURRENT_TIMESTAMP
-                    ) RETURNING id INTO v_notification_id;
-                END IF;
+                INSERT INTO notifications (
+                    club_id,
+                    user_id,
+                    type,
+                    status,
+                    reference_id,
+                    scheduled_date,
+                    variables
+                ) VALUES (
+                    v_club.id,
+                    v_user.user_id,
+                    'MEDICAL_EXPIRATION',
+                    'PENDING',
+                    v_user.medical_id::text,
+                    CURRENT_TIMESTAMP,
+                    jsonb_build_object(
+                        'first_name', v_user.first_name,
+                        'last_name', v_user.last_name,
+                        'medical_type', v_user.medical_type_name,
+                        'expiration_date', TO_CHAR(v_user.expiration_date, 'DD/MM/YYYY')
+                    )
+                )
+                RETURNING id INTO v_notification_id;
             END LOOP;
-        END IF;
-    END LOOP;
+
+        END IF;  -- FIN du IF sur v_settings
+    END LOOP;    -- FIN de la boucle sur les clubs
 END;
-$$;
+$function$;
 
 -- Create cron job to process notifications daily
 SELECT cron.schedule(
@@ -376,7 +390,7 @@ INSERT INTO notification_templates (
     club_id,
     name,
     subject,
-    template_id,
+    html_content,
     description,
     variables,
     notification_type,
@@ -387,7 +401,7 @@ SELECT
     c.id as club_id,
     'Expiration Licence' as name,
     'Expiration de votre licence {license_name}' as subject,
-    1 as template_id, -- À remplacer par le vrai ID du template Mailjet
+    '<p>Bonjour {first_name} {last_name},</p><p>Votre licence {license_name} expire le {expiration_date}.</p>' as html_content,
     'Template pour les notifications d''expiration de licence' as description,
     ARRAY['first_name', 'last_name', 'license_name', 'expiration_date'] as variables,
     'LICENSE_EXPIRATION' as notification_type,
@@ -399,7 +413,7 @@ SELECT
     c.id as club_id,
     'Expiration Qualification' as name,
     'Expiration de votre qualification {qualification_name}' as subject,
-    2 as template_id, -- À remplacer par le vrai ID du template Mailjet
+    '<p>Bonjour {first_name} {last_name},</p><p>Votre qualification {qualification_name} expire le {expiration_date}.</p>' as html_content,
     'Template pour les notifications d''expiration de qualification' as description,
     ARRAY['first_name', 'last_name', 'qualification_name', 'expiration_date'] as variables,
     'QUALIFICATION_EXPIRATION' as notification_type,
@@ -411,7 +425,7 @@ SELECT
     c.id as club_id,
     'Expiration Visite Médicale' as name,
     'Expiration de votre visite médicale' as subject,
-    3 as template_id, -- À remplacer par le vrai ID du template Mailjet
+    '<p>Bonjour {first_name} {last_name},</p><p>Votre visite médicale expire le {expiration_date}.</p>' as html_content,
     'Template pour les notifications d''expiration de visite médicale' as description,
     ARRAY['first_name', 'last_name', 'expiration_date'] as variables,
     'MEDICAL_EXPIRATION' as notification_type,
