@@ -275,6 +275,7 @@ export async function updateNotificationTemplate(
     .update({
       name: template.name,
       subject: template.subject,
+      html_content: template.html_content,
       template_id: template.template_id,
       description: template.description,
       variables: template.variables,

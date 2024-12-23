@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Mail, AlertCircle, CheckCircle, XCircle, Settings, Bell, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,6 +20,7 @@ import type {
 import { toast } from 'react-hot-toast';
 import { Dialog } from '@mui/material';
 import Editor from '@monaco-editor/react';
+import DOMPurify from 'dompurify';
 
 const NotificationList = () => {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ const NotificationList = () => {
   const [showTemplates, setShowTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
   const [htmlContent, setHtmlContent] = useState<string>('');
+  const [previewMode, setPreviewMode] = useState(false);
   const queryClient = useQueryClient();
 
   // Récupération des notifications
@@ -136,7 +138,7 @@ const NotificationList = () => {
     const formData = new FormData(e.currentTarget);
     
     if (selectedTemplate) {
-      updateTemplateMutation.mutate({
+      const updatedTemplate = {
         id: selectedTemplate.id,
         subject: formData.get('subject') as string,
         html_content: htmlContent,
@@ -145,8 +147,57 @@ const NotificationList = () => {
         variables: selectedTemplate.variables,
         notification_type: selectedTemplate.notification_type,
         club_id: user?.club?.id!
-      });
+      };
+      
+      updateTemplateMutation.mutate(updatedTemplate);
     }
+  };
+
+  const handleEditorChange = (value: string | undefined) => {
+    if (value !== undefined) {
+      setHtmlContent(value);
+    }
+  };
+
+  const renderEditor = () => (
+    <Editor
+      height="500px"
+      defaultLanguage="html"
+      value={htmlContent}
+      onChange={handleEditorChange}
+      options={{
+        minimap: { enabled: false },
+        wordWrap: 'on',
+        fontSize: 14,
+        lineNumbers: 'on',
+        scrollBeyondLastLine: false,
+        automaticLayout: true,
+      }}
+    />
+  );
+
+  // Fonction pour remplacer les variables dans l'aperçu
+  const getPreviewContent = () => {
+    let preview = htmlContent;
+    const previewData = {
+      first_name: 'Jean',
+      last_name: 'Dupont',
+      expiration_date: format(addDays(new Date(), 30), 'dd/MM/yyyy'),
+      license_name: 'PPL',
+      qualification_name: 'SEP',
+      reservation_date: format(addDays(new Date(), 7), 'dd/MM/yyyy à HH:mm', { locale: fr }),
+      aircraft: 'F-GXXX',
+      instructor: 'Pierre Martin',
+      reason: 'Météo défavorable',
+    };
+
+    // Remplacer toutes les variables par leurs valeurs de prévisualisation
+    Object.entries(previewData).forEach(([key, value]) => {
+      const regex = new RegExp(`{${key}}`, 'g');
+      preview = preview.replace(regex, value);
+    });
+
+    return DOMPurify.sanitize(preview);
   };
 
   useEffect(() => {
@@ -458,26 +509,44 @@ const NotificationList = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="html_content" className="block text-sm font-medium text-gray-700">
-                      Contenu HTML
-                    </label>
+                    <div className="flex justify-between items-center mb-4">
+                      <label htmlFor="html_content" className="block text-sm font-medium text-gray-700">
+                        Contenu HTML
+                      </label>
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewMode(false)}
+                          className={`px-3 py-1 text-sm rounded-md ${
+                            !previewMode
+                              ? 'bg-primary-100 text-primary-700'
+                              : 'text-gray-500 hover:text-gray-700'
+                          }`}
+                        >
+                          Code
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewMode(true)}
+                          className={`px-3 py-1 text-sm rounded-md ${
+                            previewMode
+                              ? 'bg-primary-100 text-primary-700'
+                              : 'text-gray-500 hover:text-gray-700'
+                          }`}
+                        >
+                          Aperçu
+                        </button>
+                      </div>
+                    </div>
                     <div className="mt-1 border border-gray-300 rounded-md overflow-hidden">
-                      <Editor
-                        height="400px"
-                        defaultLanguage="html"
-                        value={htmlContent}
-                        onChange={(value) => setHtmlContent(value || '')}
-                        options={{
-                          minimap: { enabled: false },
-                          wordWrap: 'on',
-                          wrappingIndent: 'indent',
-                          lineNumbers: 'on',
-                          roundedSelection: false,
-                          scrollBeyondLastLine: false,
-                          automaticLayout: true,
-                          theme: 'vs-light'
-                        }}
-                      />
+                      {previewMode ? (
+                        <div 
+                          className="h-[500px] overflow-auto p-4 bg-white"
+                          dangerouslySetInnerHTML={{ __html: getPreviewContent() }}
+                        />
+                      ) : (
+                        renderEditor()
+                      )}
                     </div>
                   </div>
 
