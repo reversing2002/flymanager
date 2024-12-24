@@ -2,6 +2,7 @@ import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
+import toast from "react-hot-toast";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -22,7 +23,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles, allowA
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Sauvegarder la page demandée pour y revenir après la connexion
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   if (!allowAll && roles && !hasAnyGroup(user, roles)) {
@@ -32,6 +34,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles, allowA
       "Rôles utilisateur:",
       user.roles
     );
+    // Afficher un message d'erreur et rester sur la même page
+    toast.error("Vous n'avez pas les permissions nécessaires pour accéder à cette page");
     return <Navigate to="/" replace />;
   }
 

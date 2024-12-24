@@ -4,6 +4,16 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    historyApiFallback: true,
+    proxy: {
+      "/api": {
+        target: "https://stripe.linked.fr",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
@@ -23,14 +33,5 @@ export default defineConfig({
       },
     },
     chunkSizeWarningLimit: 1000
-  },
-  server: {
-    proxy: {
-      "/api": {
-        target: "https://stripe.linked.fr",
-        changeOrigin: true,
-        secure: false,
-      },
-    },
   },
 });
