@@ -46,6 +46,8 @@ import AircraftAvailabilityPage from "./components/availability/AircraftAvailabi
 import InstructorBillingList from "./components/billing/InstructorBillingList";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotificationList from "./components/admin/NotificationList";
+import ClubStatsPage from "./pages/ClubStatsPage";
+import InvoicesPage from "./pages/InvoicesPage";
 
 function App() {
   const queryClient = new QueryClient({
@@ -99,6 +101,26 @@ function App() {
               />
               <Route path="members/roles" element={<RoleManagement />} />
               <Route path="members/:id" element={<MemberProfile />} />
+
+              {/* Statistiques des clubs */}
+              <Route
+                path="club-stats"
+                element={
+                  <ProtectedRoute>
+                    <ClubStatsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Factures */}
+              <Route
+                path="invoices"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <InvoicesPage />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Instructor Students */}
               <Route

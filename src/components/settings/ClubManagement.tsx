@@ -13,6 +13,7 @@ interface ClubData {
   latitude: number | null;
   longitude: number | null;
   night_flights_enabled: boolean;
+  commission_rate: number;
 }
 
 const ClubManagement = () => {
@@ -73,6 +74,7 @@ const ClubManagement = () => {
       latitude: formData.get('latitude') ? Number(formData.get('latitude')) : null,
       longitude: formData.get('longitude') ? Number(formData.get('longitude')) : null,
       night_flights_enabled: formData.get('night_flights_enabled') === 'on',
+      commission_rate: formData.get('commission_rate') ? Number(formData.get('commission_rate')) : 3,
       updated_at: new Date().toISOString(),
     };
 
@@ -203,6 +205,25 @@ const ClubManagement = () => {
               defaultValue={clubData.email || ''}
               className="w-full rounded-lg border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Commission CB (%)
+            </label>
+            <input
+              type="number"
+              name="commission_rate"
+              min="0"
+              max="100"
+              step="0.1"
+              required
+              defaultValue={clubData.commission_rate || 3}
+              className="w-full rounded-lg border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
+            />
+            <p className="mt-1 text-sm text-slate-500">
+              Taux de commission appliqué sur les paiements par carte bancaire (par défaut : 3%)
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
