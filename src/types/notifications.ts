@@ -15,7 +15,6 @@ export interface EmailNotification {
   sent: boolean;
   sent_date?: string;
   error?: string;
-  template_id: number;
   variables: Record<string, any>;
   club_id: string;
   created_at: string;
@@ -26,7 +25,6 @@ export interface NotificationTemplate {
   id: number;
   name: string;
   subject: string;
-  template_id: number; // ID du template Mailjet
   description: string;
   variables: string[]; // Liste des variables attendues par le template
   notification_type: NotificationType;

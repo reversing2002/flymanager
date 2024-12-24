@@ -178,7 +178,7 @@ const Navbar = () => {
             </div>  
 
             {/* FORMATION section */}
-            {canAccessTraining && (
+            {showMyProgression || isInstructor && (
               <div className="py-4">
                 <div className="px-4 py-2 text-sm text-gray-500 uppercase">Formation</div>
                 {isInstructor && (

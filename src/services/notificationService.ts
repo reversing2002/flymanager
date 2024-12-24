@@ -187,7 +187,6 @@ export async function createExpirationNotifications(
           user_id: license.user_id,
           scheduled_date: new Date().toISOString(),
           sent: false,
-          template_id: templateId,
           variables: {
             LICENSE_TYPE: license.type,
             EXPIRATION_DATE: license.expiration_date,

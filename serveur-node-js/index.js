@@ -7,6 +7,8 @@ const twilio = require('twilio');
 const Mailjet = require('node-mailjet');
 const { createClient } = require('@supabase/supabase-js');
 const cron = require('node-cron');
+const { format, parseISO } = require('date-fns');
+const { fr } = require('date-fns/locale');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -597,15 +599,29 @@ async function processNotifications() {
             // Remplacer les variables dans le HTML
             let htmlContent = template.html_content;
             for (const [key, value] of Object.entries(notification.variables)) {
-              htmlContent = htmlContent.replace(new RegExp(`{${key}}`, 'g'), value);
+              let formattedValue = value;
+              
+              // Détecter si la valeur ressemble à une date ISO
+              if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+                try {
+                  const date = parseISO(value);
+                  // Format: "24 décembre 2024 à 09:15"
+                  formattedValue = format(date, "d MMMM yyyy 'à' HH:mm", { locale: fr });
+                } catch (e) {
+                  console.error(`Erreur lors du formatage de la date ${value}:`, e);
+                  formattedValue = value;
+                }
+              }
+              
+              htmlContent = htmlContent.replace(new RegExp(`{${key}}`, 'g'), formattedValue);
             }
 
             const emailData = {
               Messages: [
                 {
                   From: {
-                    Email: settings.sender_email || 'noreply@example.com',
-                    Name: settings.sender_name || 'Notification System'
+                    Email: settings.sender_email,
+                    Name: settings.sender_name,
                   },
                   To: [
                     {

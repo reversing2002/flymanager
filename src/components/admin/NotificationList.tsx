@@ -22,6 +22,71 @@ import { Dialog } from '@mui/material';
 import Editor from '@monaco-editor/react';
 import DOMPurify from 'dompurify';
 
+interface NotificationPreviewProps {
+  template: string;
+  variables: Record<string, any>;
+}
+
+const NotificationPreview: React.FC<NotificationPreviewProps> = ({ template, variables }) => {
+  const processTemplate = (template: string, variables: Record<string, any>): string => {
+    let processedContent = template;
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+      processedContent = processedContent.replace(regex, String(value));
+    });
+    return processedContent;
+  };
+
+  const sanitizedContent = DOMPurify.sanitize(processTemplate(template, variables));
+
+  return (
+    <Dialog 
+      open={true} 
+      maxWidth="md"
+      fullWidth
+      className="preview-dialog"
+    >
+      <div className="bg-white p-6 rounded-lg shadow-lg max-h-[80vh] overflow-auto">
+        <div 
+          className="preview-content"
+          dangerouslySetInnerHTML={{ __html: sanitizedContent }} 
+        />
+      </div>
+    </Dialog>
+  );
+};
+
+interface NotificationStatusProps {
+  sent: boolean;
+  error?: string | null;
+  sentDate?: string | null;
+}
+
+const NotificationStatus: React.FC<NotificationStatusProps> = ({ sent, error, sentDate }) => {
+  if (sent && !error && sentDate) {
+    return (
+      <div className="flex items-center text-green-600 text-xs">
+        <CheckCircle className="w-3 h-3 mr-1" />
+        <span>Envoyé le {format(new Date(sentDate), 'dd/MM/yyyy HH:mm', { locale: fr })}</span>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex items-center text-red-600 text-xs">
+        <XCircle className="w-3 h-3 mr-1" />
+        <span>{error}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center text-orange-600 text-xs">
+      <Bell className="w-3 h-3 mr-1" />
+      <span>En attente</span>
+    </div>
+  );
+};
+
 const NotificationList = () => {
   const { user } = useAuth();
   const [filter, setFilter] = useState<'all' | 'pending' | 'sent'>('pending');
@@ -30,6 +95,8 @@ const NotificationList = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [previewMode, setPreviewMode] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [expandedNotification, setExpandedNotification] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Récupération des notifications
@@ -285,6 +352,16 @@ const NotificationList = () => {
         return 'Notification';
     }
   };
+
+  const togglePreview = (id: string) => {
+    if (expandedNotification === id) {
+      setExpandedNotification(null);
+    } else {
+      setExpandedNotification(id);
+    }
+  };
+
+  const itemsPerPage = 50;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -626,63 +703,81 @@ const NotificationList = () => {
           </p>
         </div>
       ) : (
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200">
-            {notifications?.map((notification) => (
-              <li key={notification.id}>
-                <div className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      {getNotificationIcon(notification.type)}
-                      <div className="ml-4">
-                        <div className="flex items-center">
-                          <h4 className="text-sm font-medium text-gray-900">
-                            {getNotificationTitle(notification)}
-                          </h4>
-                          <span
-                            className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              notification.sent
-                                ? notification.error
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-green-100 text-green-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}
-                          >
-                            {notification.sent
-                              ? notification.error
-                                ? 'Erreur'
-                                : 'Envoyé'
-                              : 'En attente'}
+        <div className="space-y-2">
+          {notifications
+            ?.sort((a, b) => new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime())
+            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+            .map((notification) => {
+              const template = templates?.find(t => t.id === notification.template_id);
+              return (
+                <div key={notification.id} className="bg-white rounded shadow-sm p-3">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                        <h3 className="font-medium text-sm truncate">{notification.type}</h3>
+                        {template?.name && (
+                          <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">
+                            {template.name}
                           </span>
-                        </div>
-                        <p className="mt-1 text-sm text-gray-600">
-                          Destinataire : {notification.user?.first_name} {notification.user?.last_name}
-                        </p>
-                        {notification.error && (
-                          <p className="mt-1 text-sm text-red-600">
-                            Erreur : {notification.error}
-                          </p>
                         )}
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-900">
-                        {format(new Date(notification.scheduled_date), 'PPP', { locale: fr })}
+                      <div className="text-xs text-gray-600 truncate">
+                        {notification.user?.first_name} {notification.user?.last_name} ({notification.user?.email})
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {format(new Date(notification.scheduled_date), 'HH:mm')}
-                      </div>
-                      {notification.sent && notification.sent_date && (
+                      <div className="flex items-center gap-4 mt-1">
                         <div className="text-xs text-gray-500">
-                          Envoyé le {format(new Date(notification.sent_date), 'Pp', { locale: fr })}
+                          {format(new Date(notification.scheduled_date), 'dd/MM/yyyy HH:mm', { locale: fr })}
                         </div>
-                      )}
+                        <NotificationStatus 
+                          sent={notification.sent} 
+                          error={notification.error} 
+                          sentDate={notification.sent_date} 
+                        />
+                      </div>
                     </div>
+                    
+                    <button
+                      onClick={() => togglePreview(notification.id)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
                   </div>
+
+                  {/* Aperçu conditionnel */}
+                  {expandedNotification === notification.id && template?.html_content && (
+                    <div className="mt-2">
+                      <NotificationPreview 
+                        template={template.html_content}
+                        variables={notification.variables}
+                      />
+                    </div>
+                  )}
                 </div>
-              </li>
-            ))}
-          </ul>
+              );
+          })}
+
+          {/* Pagination */}
+          {notifications && notifications.length > itemsPerPage && (
+            <div className="mt-4 flex justify-center">
+              <nav className="flex items-center gap-2">
+                {Array.from({ length: Math.ceil(notifications.length / itemsPerPage) }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPage(index + 1)}
+                    className={`px-3 py-1 rounded ${
+                      currentPage === index + 1
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          )}
         </div>
       )}
     </div>

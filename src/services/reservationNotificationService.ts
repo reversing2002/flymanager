@@ -136,7 +136,6 @@ export async function sendReservationConfirmation(reservation: Reservation): Pro
       user_id: reservation.pilotId,
       scheduled_date: new Date().toISOString(),
       sent: false,
-      template_id: TEMPLATES.PILOT_CONFIRMATION,
       variables: {
         PILOT_NAME: emailData.pilotName,
         AIRCRAFT: emailData.aircraftRegistration,
@@ -157,7 +156,6 @@ export async function sendReservationConfirmation(reservation: Reservation): Pro
         user_id: reservation.instructorId,
         scheduled_date: new Date().toISOString(),
         sent: false,
-        template_id: TEMPLATES.INSTRUCTOR_CONFIRMATION,
         variables: {
           INSTRUCTOR_NAME: emailData.instructorName,
           PILOT_NAME: emailData.pilotName,
@@ -176,12 +174,22 @@ export async function sendReservationConfirmation(reservation: Reservation): Pro
 }
 
 export async function scheduleReservationReminder(reservation: Reservation): Promise<void> {
-  console.log('Début de la programmation du rappel de réservation');
-  
+  console.log('Planification du rappel de réservation');
+
+  // Vérifier si la réservation est dans moins de 2 heures
+  const reservationTime = new Date(reservation.startTime);
+  const now = new Date();
+  const twoHoursFromNow = addHours(now, 2);
+
+  if (reservationTime <= twoHoursFromNow) {
+    console.log('Réservation dans moins de 2 heures, pas de rappel planifié');
+    return;
+  }
+
   const emailData = await getReservationEmailData(reservation);
   
   if (!emailData) {
-    console.error('Impossible de programmer le rappel : données manquantes');
+    console.error('Impossible de planifier le rappel : données manquantes');
     return;
   }
 
@@ -190,16 +198,16 @@ export async function scheduleReservationReminder(reservation: Reservation): Pro
     return;
   }
 
-  const reminderTime = subHours(new Date(reservation.startTime), 1);
+  // Planifier le rappel 2 heures avant le début de la réservation
+  const reminderTime = subHours(new Date(reservation.startTime), 2);
 
+  // Créer la notification pour le pilote
   try {
-    // Créer la notification de rappel pour le pilote
     await createNotification({
       type: 'reservation_reminder',
       user_id: reservation.pilotId,
       scheduled_date: reminderTime.toISOString(),
       sent: false,
-      template_id: TEMPLATES.PILOT_REMINDER,
       variables: {
         PILOT_NAME: emailData.pilotName,
         AIRCRAFT: emailData.aircraftRegistration,
@@ -213,14 +221,13 @@ export async function scheduleReservationReminder(reservation: Reservation): Pro
 
     console.log('Notification de rappel créée pour le pilote');
 
-    // Si un instructeur est assigné, créer une notification de rappel pour lui aussi
+    // Si un instructeur est assigné, créer également une notification pour lui
     if (reservation.instructorId && emailData.instructorName && emailData.instructorEmail) {
       await createNotification({
         type: 'reservation_reminder_instructor',
         user_id: reservation.instructorId,
         scheduled_date: reminderTime.toISOString(),
         sent: false,
-        template_id: TEMPLATES.INSTRUCTOR_REMINDER,
         variables: {
           INSTRUCTOR_NAME: emailData.instructorName,
           PILOT_NAME: emailData.pilotName,
@@ -231,9 +238,11 @@ export async function scheduleReservationReminder(reservation: Reservation): Pro
         },
         club_id: reservation.clubId,
       });
+
       console.log('Notification de rappel créée pour l\'instructeur');
     }
   } catch (error) {
     console.error('Erreur lors de la création des notifications de rappel:', error);
+    throw error;
   }
 }
