@@ -21,6 +21,31 @@ export interface DiscoveryFlight {
   aircraft?: Aircraft;
 }
 
+export interface EmergencyContact {
+  nom: string;
+  adresse: string;
+  telephone: string;
+}
+
+export interface PassengerInfo {
+  nom: string;
+  prenom: string;
+  dateNaissance: string;
+  isMineur: boolean;
+  autorisationParentale?: string;
+  contactsUrgence: EmergencyContact[];
+}
+
+export interface PassengerInfoRecord {
+  id: string;
+  flight_id: string;
+  passenger_data: {
+    passengers: PassengerInfo[];
+  };
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Passenger {
   id: string;
   flight_id: string;

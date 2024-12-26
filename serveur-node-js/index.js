@@ -97,34 +97,33 @@ app.post("/api/webhooks/stripe",
               if (flightError) throw flightError;
               
               console.log(`Vol découverte ${session.metadata.flightId} marqué comme payé`);
-
-              // Create account entry for the discovery flight
-              /*
-              const { error: entryError } = await supabase
-                .from('account_entries')
-                .insert([{
-                  user_id: session.customer_details.email,  // Using email as temporary user_id
-                  entry_type_id: session.metadata.flightId, // Using flightId as entry_type_id
-                  payment_method: 'CARD',
-                  is_validated: true,
-                  is_club_paid: false,
-                  amount: session.amount_total / 100, // Convert from cents to euros
-                  date: new Date().toISOString(),
-                  description: 'Paiement vol découverte via Stripe'
-                }])
-                .select()
-                .single();
-
-              if (entryError) {
-                console.error('Error creating account entry for discovery flight:', entryError);
-              }
-              */
-
-              // Créer la conversation et envoyer le message de confirmation
-              await getOrCreateConversation(session.metadata.flightId, session.metadata.customerPhone);
-              await sendConfirmationMessage(session.metadata.flightId, flightData);
+        
+              // Attendre un peu avant de créer la conversation
+              await new Promise(resolve => setTimeout(resolve, 2000));
+        
+              // D'abord nettoyer les conversations existantes
+              await cleanupExistingConversations(session.metadata.flightId, session.metadata.customerPhone);
               
-              console.log('Message de confirmation envoyé avec succès');
+              // Attendre après le nettoyage
+              await new Promise(resolve => setTimeout(resolve, 2000));
+        
+              // Créer la conversation avec gestion des erreurs
+              try {
+                const conversation = await getOrCreateConversation(
+                  session.metadata.flightId, 
+                  session.metadata.customerPhone
+                );
+                
+                if (conversation) {
+                  // Attendre avant d'envoyer le message
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  await sendConfirmationMessage(session.metadata.flightId, flightData);
+                  console.log('Message de confirmation envoyé avec succès');
+                }
+              } catch (convError) {
+                console.error('Erreur lors de la gestion de la conversation:', convError);
+                // Ne pas propager l'erreur pour ne pas bloquer le webhook
+              }
             } catch (err) {
               console.error('Erreur lors du traitement du paiement:', err);
             }
@@ -173,52 +172,138 @@ if (!accountSid || !authToken) {
 
 const twilioClient = require('twilio')(accountSid, authToken);
 
-// Fonction utilitaire pour créer ou récupérer une conversation
-async function getOrCreateConversation(flightId, customerPhone) {
+// Fonction utilitaire pour le logging
+const log = (title, content) => {
+  console.log('\n' + '='.repeat(50));
+  console.log(title);
+  console.log('='.repeat(50));
+  console.log(content);
+};
+
+// Fonction pour nettoyer les conversations existantes
+async function cleanupExistingConversations(flightId, customerPhone) {
   try {
-    // Créer un identifiant unique pour la conversation
-    const conversationUniqueName = `flight_${flightId}`;
+    log('Nettoyage', 'Recherche des conversations existantes...');
     
-    let conversation;
-    try {
-      // Essayer de récupérer une conversation existante
-      conversation = await twilioClient.conversations.v1.conversations(conversationUniqueName).fetch();
-    } catch (error) {
-      // Si la conversation n'existe pas, en créer une nouvelle
-      conversation = await twilioClient.conversations.v1.conversations.create({
-        uniqueName: conversationUniqueName,
-        friendlyName: `Vol Découverte #${flightId}`
-      });
-
-      // Ajouter le numéro du client à la conversation
-      await conversation.participants.create({
-        identity: customerPhone,
-        messagingBinding: {
-          address: customerPhone,
-          proxyAddress: process.env.TWILIO_PHONE_NUMBER
+    const conversations = await twilioClient.conversations.v1.conversations
+      .list({limit: 20});
+    
+    const conversationUniqueName = `flight_${flightId}`;
+    for (const conversation of conversations) {
+      // Check if this is our target conversation or if it contains our customer
+      const shouldCheck = conversation.uniqueName === conversationUniqueName;
+      
+      if (shouldCheck || customerPhone) {
+        // Get participants for this conversation
+        const participants = await twilioClient.conversations.v1
+          .conversations(conversation.sid)
+          .participants
+          .list();
+          
+        // Check if any participant matches our customer's phone
+        const hasCustomer = customerPhone && participants.some(p => 
+          p.messagingBinding && p.messagingBinding.address === customerPhone
+        );
+        
+        if (shouldCheck || hasCustomer) {
+          log('Suppression Conversation', conversation.sid);
+          await twilioClient.conversations.v1.conversations(conversation.sid)
+            .remove();
+          if (shouldCheck) break; // If this was our target conversation, we can stop
         }
-      });
-
-      // Ajouter le numéro de service comme participant
-      await conversation.participants.create({
-        identity: 'service',
-        messagingBinding: {
-          address: process.env.TWILIO_PHONE_NUMBER,
-          proxyAddress: customerPhone
-        }
-      });
+      }
     }
     
-    return conversation;
+    log('Nettoyage Terminé', `Conversations nettoyées pour le vol ${flightId}`);
   } catch (error) {
-    console.error('Erreur lors de la création/récupération de la conversation:', error);
+    log('Erreur Nettoyage', error);
     throw error;
   }
 }
 
-// Fonction pour envoyer le message de confirmation
+// Fonction pour nettoyer les participants d'une conversation
+async function cleanupParticipants(conversationSid) {
+  try {
+    log('Nettoyage Participants', 'Recherche des participants existants...');
+    
+    const participants = await twilioClient.conversations.v1
+      .conversations(conversationSid)
+      .participants
+      .list();
+    
+    for (const participant of participants) {
+      log('Suppression Participant', participant.sid);
+      await twilioClient.conversations.v1
+        .conversations(conversationSid)
+        .participants(participant.sid)
+        .remove();
+    }
+    
+    log('Nettoyage Participants Terminé', `${participants.length} participants supprimés`);
+  } catch (error) {
+    log('Erreur Nettoyage Participants', error);
+    throw error;
+  }
+}
+
+// Fonction mise à jour pour créer ou récupérer une conversation
+async function getOrCreateConversation(flightId, customerPhone) {
+  try {
+    log('Configuration Conversation', `Début pour vol ${flightId}`);
+    
+    await cleanupExistingConversations(flightId, customerPhone);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const conversation = await twilioClient.conversations.v1.conversations
+      .create({
+        friendlyName: `Vol Découverte #${flightId}`,
+        uniqueName: `flight_${flightId}`
+      });
+    
+    log('Conversation Créée', conversation);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    try {
+      // Nettoyer les participants existants avant d'en ajouter de nouveaux
+      await cleanupParticipants(conversation.sid);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      log('Ajout Client', 'Ajout du participant client...');
+      const customer = await twilioClient.conversations.v1.conversations(conversation.sid)
+        .participants
+        .create({
+          "messagingBinding.address": customerPhone,
+          "messagingBinding.proxyAddress": process.env.TWILIO_PHONE_NUMBER
+        });
+      
+      log('Client Ajouté', customer);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      log('Ajout Service', 'Ajout du participant service...');
+      const agent = await twilioClient.conversations.v1.conversations(conversation.sid)
+        .participants
+        .create({
+          identity: 'service_agent_1'
+        });
+      
+      log('Service Ajouté', agent);
+    } catch (error) {
+      log('Erreur Participants', error);
+      throw error;
+    }
+    
+    return conversation;
+  } catch (error) {
+    log('Erreur Conversation', error);
+    throw error;
+  }
+}
+
+// Fonction mise à jour pour envoyer un message de confirmation
 async function sendConfirmationMessage(flightId, flightDetails) {
   try {
+    log('Envoi Message', 'Préparation du message de confirmation...');
+    
     const message = `🎉 Confirmation de votre vol découverte\n\n` +
       `Bonjour,\n\n` +
       `Nous avons bien reçu votre réservation et votre paiement pour votre vol découverte. ` +
@@ -230,30 +315,34 @@ async function sendConfirmationMessage(flightId, flightDetails) {
       `N'hésitez pas à utiliser cette conversation pour toute question concernant votre vol découverte.\n\n` +
       `À très bientôt !`;
 
-    const conversation = await twilioClient.conversations.v1
-      .conversations(`flight_${flightId}`)
-      .fetch();
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    await twilioClient.conversations.v1
+    const messageResult = await twilioClient.conversations.v1
       .conversations(`flight_${flightId}`)
       .messages
       .create({
-        author: 'service',
-        body: message
+        author: 'service_agent_1',
+        body: message,
+        attributes: JSON.stringify({
+          deliveryType: 'sms'
+        })
       });
 
-    // Mettre à jour le statut du vol dans Supabase
+    log('Message Envoyé', messageResult);
+
     const { error } = await supabase
       .from('discovery_flights')
       .update({ status: 'CONFIRMED' })
       .eq('id', flightId);
 
     if (error) {
-      console.error('Erreur lors de la mise à jour du statut:', error);
+      log('Erreur Update Status', error);
+      throw error;
     }
 
+    log('Status Mis à Jour', `Vol ${flightId} confirmé`);
   } catch (error) {
-    console.error('Erreur lors de l\'envoi du message de confirmation:', error);
+    log('Erreur Message', error);
     throw error;
   }
 }
@@ -297,11 +386,8 @@ app.post('/api/conversations/create', async (req, res) => {
         .conversations(conversation.sid)
         .participants
         .create({
-          identity: `customer_${customerPhone}`,
-          messagingBinding: {
-            address: customerPhone,
-            proxyAddress: process.env.TWILIO_PHONE_NUMBER
-          }
+          'messagingBinding.address': customerPhone,
+          'messagingBinding.proxyAddress': process.env.TWILIO_PHONE_NUMBER
         });
 
       // Ajouter le numéro de service comme participant
@@ -309,11 +395,8 @@ app.post('/api/conversations/create', async (req, res) => {
         .conversations(conversation.sid)
         .participants
         .create({
-          identity: 'service',
-          messagingBinding: {
-            address: process.env.TWILIO_PHONE_NUMBER,
-            proxyAddress: customerPhone
-          }
+          'messagingBinding.address': process.env.TWILIO_PHONE_NUMBER,
+          'messagingBinding.proxyAddress': customerPhone
         });
 
       console.log('Nouvelle conversation créée:', conversation.sid);

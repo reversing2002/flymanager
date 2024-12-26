@@ -48,6 +48,9 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotificationList from "./components/admin/NotificationList";
 import ClubStatsPage from "./pages/ClubStatsPage";
 import InvoicesPage from "./pages/InvoicesPage";
+import PassengerInfoForm from "./components/discovery/PassengerInfoForm";
+import PassengerInfoConfirmation from "./components/discovery/PassengerInfoConfirmation";
+import DiscoveryFlightClientPage from "./pages/DiscoveryFlightClientPage";
 
 function App() {
   const queryClient = new QueryClient({
@@ -74,6 +77,10 @@ function App() {
             <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
             <Route path="/discovery-flight/success" element={<DiscoveryFlightSuccess />} />
             <Route path="/discovery-flight/error" element={<DiscoveryFlightError />} />
+            <Route path="/discovery-flights/:flightId/passenger-info" element={<PassengerInfoForm />} />
+            <Route path="/discovery-flights/:flightId/passenger-confirmation" element={<PassengerInfoConfirmation />} />
+            <Route path="/discovery-flights/:flightId/client" element={<DiscoveryFlightClientPage />} />
+            <Route path="/discovery-flights/:flightId/confirmation" element={<DiscoveryFlightSuccess />} />
 
             {/* Protected routes - MainLayout */}
             <Route
