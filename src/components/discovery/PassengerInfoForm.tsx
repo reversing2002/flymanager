@@ -10,6 +10,7 @@ import { fr } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import { EmergencyContact, PassengerInfo, DiscoveryFlight } from '../../types/discovery';
 import { Plus, Trash2, Upload } from 'lucide-react';
+import SignatureCanvas from 'react-signature-canvas';
 
 // Schéma de validation
 const emergencyContactSchema = z.object({
@@ -49,6 +50,8 @@ export const PassengerInfoForm: React.FC = () => {
   const [showUploadModal, setShowUploadModal] = React.useState(false);
   const [currentPassengerIndex, setCurrentPassengerIndex] = React.useState<number>(0);
   const [currentParentIndex, setCurrentParentIndex] = React.useState<number>(1);
+  const [signatureRef1, setSignatureRef1] = React.useState<SignatureCanvas | null>(null);
+  const [signatureRef2, setSignatureRef2] = React.useState<SignatureCanvas | null>(null);
 
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -142,6 +145,23 @@ export const PassengerInfoForm: React.FC = () => {
     setCurrentPassengerIndex(passengerIndex);
     setCurrentParentIndex(parentIndex);
     setShowUploadModal(true);
+  };
+
+  const handleClearSignature = (index: number) => {
+    const ref = index === 1 ? signatureRef1 : signatureRef2;
+    if (ref) {
+      ref.clear();
+      setValue(`passengers.${currentPassengerIndex}.autorisationParentale${index}`, '');
+    }
+  };
+
+  const handleSaveSignature = (index: number) => {
+    const ref = index === 1 ? signatureRef1 : signatureRef2;
+    if (ref) {
+      const signatureData = ref.toDataURL();
+      setValue(`passengers.${currentPassengerIndex}.autorisationParentale${index}`, signatureData);
+      toast.success('Signature enregistrée');
+    }
   };
 
   if (isLoadingFlight) {
@@ -272,49 +292,95 @@ export const PassengerInfoForm: React.FC = () => {
                         Le passager est mineur, les autorisations parentales sont requises
                       </p>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Autorisation parentale - Parent 1
-                        </label>
-                        <div className="mt-1 flex items-center space-x-2">
-                          <input
-                            type="text"
-                            value={watch(`passengers.${passengerIndex}.autorisationParentale1`) || ''}
-                            readOnly
-                            placeholder="Aucun fichier sélectionné"
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => openUploadModal(passengerIndex, 1)}
-                            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            Upload
-                          </button>
+                      <div className="bg-white rounded-xl p-4 shadow-sm border space-y-4 mb-4">
+                        <h3 className="text-lg font-medium">Autorisation Parentale - Parent 1</h3>
+                        <div className="space-y-4">
+                          {watch(`passengers.${passengerIndex}.autorisationParentale1`) ? (
+                            <div className="relative">
+                              <img 
+                                src={watch(`passengers.${passengerIndex}.autorisationParentale1`)} 
+                                alt="Signature Parent 1" 
+                                className="w-full h-40 object-contain border rounded-xl"
+                              />
+                              <button 
+                                onClick={() => handleClearSignature(1)}
+                                className="absolute top-2 right-2 p-2 bg-red-100 rounded-full"
+                              >
+                                <Trash2 className="h-5 w-5 text-red-500" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="border rounded-xl">
+                              <SignatureCanvas
+                                ref={(ref) => setSignatureRef1(ref)}
+                                canvasProps={{
+                                  className: 'w-full h-40 rounded-xl'
+                                }}
+                              />
+                            </div>
+                          )}
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              type="button"
+                              onClick={() => handleClearSignature(1)}
+                              className="px-4 py-2 border rounded-lg text-sm"
+                            >
+                              Effacer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveSignature(1)}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+                            >
+                              Sauvegarder
+                            </button>
+                          </div>
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Autorisation parentale - Parent 2
-                        </label>
-                        <div className="mt-1 flex items-center space-x-2">
-                          <input
-                            type="text"
-                            value={watch(`passengers.${passengerIndex}.autorisationParentale2`) || ''}
-                            readOnly
-                            placeholder="Aucun fichier sélectionné"
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => openUploadModal(passengerIndex, 2)}
-                            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            Upload
-                          </button>
+                      <div className="bg-white rounded-xl p-4 shadow-sm border space-y-4 mb-4">
+                        <h3 className="text-lg font-medium">Autorisation Parentale - Parent 2</h3>
+                        <div className="space-y-4">
+                          {watch(`passengers.${passengerIndex}.autorisationParentale2`) ? (
+                            <div className="relative">
+                              <img 
+                                src={watch(`passengers.${passengerIndex}.autorisationParentale2`)} 
+                                alt="Signature Parent 2" 
+                                className="w-full h-40 object-contain border rounded-xl"
+                              />
+                              <button 
+                                onClick={() => handleClearSignature(2)}
+                                className="absolute top-2 right-2 p-2 bg-red-100 rounded-full"
+                              >
+                                <Trash2 className="h-5 w-5 text-red-500" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="border rounded-xl">
+                              <SignatureCanvas
+                                ref={(ref) => setSignatureRef2(ref)}
+                                canvasProps={{
+                                  className: 'w-full h-40 rounded-xl'
+                                }}
+                              />
+                            </div>
+                          )}
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              type="button"
+                              onClick={() => handleClearSignature(2)}
+                              className="px-4 py-2 border rounded-lg text-sm"
+                            >
+                              Effacer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveSignature(2)}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+                            >
+                              Sauvegarder
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
