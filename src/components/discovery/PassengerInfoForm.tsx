@@ -115,7 +115,7 @@ export const PassengerInfoForm: React.FC = () => {
     signatureRefs.current[key] = ref;
   };
 
-  const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormData>({
+  const { register, control, handleSubmit, watch, setValue, reset, formState: { errors }, trigger } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       passengers: [{ 
@@ -317,9 +317,12 @@ export const PassengerInfoForm: React.FC = () => {
     const ref = getSignatureRef(passengerIndex, parentIndex);
     if (ref) {
       ref.clear();
-      setValue(`passengers.${passengerIndex}.autorisationParentale${parentIndex}`, '');
-      setValue(`passengers.${passengerIndex}.signatureDate${parentIndex}`, '');
     }
+    // Toujours effacer les valeurs du formulaire, même si la référence n'existe pas
+    setValue(`passengers.${passengerIndex}.autorisationParentale${parentIndex}`, '');
+    setValue(`passengers.${passengerIndex}.signatureDate${parentIndex}`, '');
+    // Forcer la mise à jour du formulaire
+    trigger(`passengers.${passengerIndex}.autorisationParentale${parentIndex}`);
   };
 
   const handleSaveSignature = (passengerIndex: number, parentIndex: number) => {

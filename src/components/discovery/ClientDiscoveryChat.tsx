@@ -28,6 +28,7 @@ const ClientDiscoveryChat: React.FC<ClientDiscoveryChatProps> = ({ flightId }) =
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -40,10 +41,17 @@ const ClientDiscoveryChat: React.FC<ClientDiscoveryChatProps> = ({ flightId }) =
 
   useEffect(() => {
     loadMessages();
-    // Mettre en place un polling toutes les 10 secondes pour les nouveaux messages
-    const interval = setInterval(loadMessages, 10000);
-    return () => clearInterval(interval);
-  }, [flightId]);
+    // Ne mettre en place le polling que si nous n'avons pas d'erreur
+    let interval: NodeJS.Timeout | null = null;
+    if (!hasError) {
+      interval = setInterval(loadMessages, 10000);
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [flightId, hasError]);
 
   const loadMessages = async () => {
     try {
@@ -51,9 +59,13 @@ const ClientDiscoveryChat: React.FC<ClientDiscoveryChatProps> = ({ flightId }) =
       if (!response.ok) throw new Error('Erreur lors du chargement des messages');
       const data: ConversationResponse = await response.json();
       setMessages(data.conversation.messages);
+      setHasError(false); // Réinitialiser l'erreur en cas de succès
     } catch (error) {
       console.error('Erreur:', error);
-      toast.error('Impossible de charger les messages');
+      if (!hasError) {
+        toast.error('Impossible de charger les messages. Tentative de reconnexion dans 10 secondes...');
+        setHasError(true);
+      }
     }
   };
 
