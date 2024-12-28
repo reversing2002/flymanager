@@ -4,10 +4,10 @@ export interface DiscoveryFlight {
   id: string;
   pilot_id: string | null;
   aircraft_id: string | null;
-  date: string | null;
+  date: string;
   start_time: string | null;
   end_time: string | null;
-  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+  status: string;
   total_weight: number;
   comments: string;
   created_at: string;
@@ -22,9 +22,9 @@ export interface DiscoveryFlight {
 }
 
 export interface EmergencyContact {
-  nom: string;
-  adresse: string;
-  telephone: string;
+  nom?: string;
+  adresse?: string;
+  telephone?: string;
 }
 
 export interface PassengerInfo {
@@ -32,7 +32,10 @@ export interface PassengerInfo {
   prenom: string;
   dateNaissance: string;
   isMineur: boolean;
-  autorisationParentale?: string;
+  age?: number;
+  poids?: number;
+  autorisationParentale1?: string;
+  autorisationParentale2?: string;
   contactsUrgence: EmergencyContact[];
 }
 

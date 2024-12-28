@@ -3,7 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -12,6 +12,20 @@ import { EmergencyContact, PassengerInfo, DiscoveryFlight } from '../../types/di
 import { Plus, Trash2, Upload } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { AlertCircle } from 'lucide-react';
+
+// Fonction utilitaire pour calculer l'âge
+const calculateAge = (birthDate: string): number => {
+  if (!birthDate) return 0;
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
 
 // Schéma de validation
 const emergencyContactSchema = z.object({
@@ -30,8 +44,30 @@ const passengerSchema = z.object({
   age: z.number().min(0, 'L\'âge est requis'),
   poids: z.number().min(20, 'Le poids doit être d\'au moins 20 kg').max(200, 'Le poids ne peut pas dépasser 200 kg'),
   contactsUrgence: z.array(emergencyContactSchema).min(1, 'Au moins un contact d\'urgence est requis'),
-  autorisationParentale1: z.string().optional(),
-  autorisationParentale2: z.string().optional(),
+  autorisationParentale1: z.string(),
+  autorisationParentale2: z.string(),
+  parent1Nom: z.string().optional(),
+  parent1Prenom: z.string().optional(),
+  parent2Nom: z.string().optional(),
+  parent2Prenom: z.string().optional(),
+  signatureDate1: z.string().optional(),
+  signatureDate2: z.string().optional(),
+}).refine((data) => {
+  if (calculateAge(data.dateNaissance) < 18) {
+    return data.autorisationParentale1.length > 0;
+  }
+  return true;
+}, {
+  message: 'La signature du premier parent est requise pour un passager mineur',
+  path: ['autorisationParentale1']
+}).refine((data) => {
+  if (calculateAge(data.dateNaissance) < 18) {
+    return data.autorisationParentale2.length > 0;
+  }
+  return true;
+}, {
+  message: 'La signature du second parent est requise pour un passager mineur',
+  path: ['autorisationParentale2']
 });
 
 const formSchema = z.object({
@@ -44,19 +80,42 @@ type FormData = {
     poids: number;
     autorisationParentale1?: string;
     autorisationParentale2?: string;
+    parent1Nom?: string;
+    parent1Prenom?: string;
+    parent2Nom?: string;
+    parent2Prenom?: string;
+    signatureDate1?: string;
+    signatureDate2?: string;
   })[];
 };
 
 export const PassengerInfoForm: React.FC = () => {
   const { flightId } = useParams<{ flightId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [showUploadModal, setShowUploadModal] = React.useState(false);
   const [currentPassengerIndex, setCurrentPassengerIndex] = React.useState<number>(0);
   const [currentParentIndex, setCurrentParentIndex] = React.useState<number>(1);
-  const [signatureRef1, setSignatureRef1] = React.useState<SignatureCanvas | null>(null);
-  const [signatureRef2, setSignatureRef2] = React.useState<SignatureCanvas | null>(null);
+  const signatureRefs = React.useRef<{ [key: string]: SignatureCanvas | null }>({});
 
-  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
+  // Fonction pour obtenir la clé unique de la référence de signature
+  const getSignatureRefKey = (passengerIndex: number, parentIndex: number) => {
+    return `signature_${passengerIndex}_${parentIndex}`;
+  };
+
+  // Fonction pour obtenir la référence de signature
+  const getSignatureRef = (passengerIndex: number, parentIndex: number) => {
+    const key = getSignatureRefKey(passengerIndex, parentIndex);
+    return signatureRefs.current[key];
+  };
+
+  // Fonction pour définir la référence de signature
+  const setSignatureRef = (passengerIndex: number, parentIndex: number, ref: SignatureCanvas | null) => {
+    const key = getSignatureRefKey(passengerIndex, parentIndex);
+    signatureRefs.current[key] = ref;
+  };
+
+  const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       passengers: [{ 
@@ -67,7 +126,13 @@ export const PassengerInfoForm: React.FC = () => {
         poids: 0,
         contactsUrgence: [{}],
         autorisationParentale1: '',
-        autorisationParentale2: ''
+        autorisationParentale2: '',
+        parent1Nom: '',
+        parent1Prenom: '',
+        parent2Nom: '',
+        parent2Prenom: '',
+        signatureDate1: '',
+        signatureDate2: ''
       }]
     }
   });
@@ -75,6 +140,56 @@ export const PassengerInfoForm: React.FC = () => {
   const { fields: passengerFields, append: appendPassenger, remove: removePassenger } = useFieldArray({
     control,
     name: 'passengers'
+  });
+
+  // Récupération des informations existantes des passagers
+  const { data: existingPassengers, isLoading: isLoadingPassengers } = useQuery({
+    queryKey: ['passengerInfo', flightId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('passenger_info')
+        .select('passenger_data')
+        .eq('flight_id', flightId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') { // Code pour "aucun résultat trouvé"
+          return null;
+        }
+        throw error;
+      }
+      return data?.passenger_data as FormData;
+    }
+  });
+
+  // Initialiser le formulaire avec les données existantes ou les valeurs par défaut
+  React.useEffect(() => {
+    if (existingPassengers) {
+      // Réinitialiser le formulaire avec les données existantes
+      reset(existingPassengers);
+      
+      // Recalculer l'âge pour chaque passager
+      existingPassengers.passengers.forEach((passenger, index) => {
+        if (passenger.dateNaissance) {
+          handleDateChange(index, passenger.dateNaissance);
+        }
+      });
+    }
+  }, [existingPassengers, reset]);
+
+  // Récupération des informations du vol
+  const { data: flightData, isLoading: isLoadingFlight } = useQuery({
+    queryKey: ['discoveryFlight', flightId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('discovery_flights')
+        .select('*')
+        .eq('id', flightId)
+        .single();
+
+      if (error) throw error;
+      return data as DiscoveryFlight;
+    }
   });
 
   // Observer les changements du contact d'urgence du premier passager
@@ -106,44 +221,58 @@ export const PassengerInfoForm: React.FC = () => {
       poids: 0,
       contactsUrgence: [firstPassengerContact || {}],
       autorisationParentale1: '',
-      autorisationParentale2: ''
+      autorisationParentale2: '',
+      parent1Nom: '',
+      parent1Prenom: '',
+      parent2Nom: '',
+      parent2Prenom: '',
+      signatureDate1: '',
+      signatureDate2: ''
     });
   };
-
-  // Récupération des informations du vol
-  const { data: flightData, isLoading: isLoadingFlight } = useQuery({
-    queryKey: ['discoveryFlight', flightId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('discovery_flights')
-        .select('*')
-        .eq('id', flightId)
-        .single();
-
-      if (error) throw error;
-      return data as DiscoveryFlight;
-    }
-  });
 
   // Mutation pour sauvegarder les informations
   const saveMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const { error } = await supabase
+      // Vérifier d'abord si un enregistrement existe déjà
+      const { data: existingData, error: fetchError } = await supabase
         .from('passenger_info')
-        .insert([{
-          flight_id: flightId!,
-          passenger_data: data
-        }]);
+        .select('*')
+        .eq('flight_id', flightId!)
+        .single();
 
-      if (error) throw error;
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+
+      if (existingData) {
+        // Si l'enregistrement existe, faire une mise à jour
+        const { error: updateError } = await supabase
+          .from('passenger_info')
+          .update({ passenger_data: data })
+          .eq('flight_id', flightId!);
+
+        if (updateError) throw updateError;
+      } else {
+        // Si l'enregistrement n'existe pas, faire une insertion
+        const { error: insertError } = await supabase
+          .from('passenger_info')
+          .insert([{
+            flight_id: flightId!,
+            passenger_data: data
+          }]);
+
+        if (insertError) throw insertError;
+      }
     },
     onSuccess: () => {
       toast.success('Informations enregistrées avec succès');
-      navigate(`/discovery-flights/${flightId}/passenger-confirmation`);
+      // Rafraîchir les données
+      queryClient.invalidateQueries(['passengerInfo', flightId]);
     },
     onError: (error) => {
       toast.error('Erreur lors de l\'enregistrement des informations');
-      console.error(error);
+      console.error('Erreur de sauvegarde:', error);
     }
   });
 
@@ -184,19 +313,21 @@ export const PassengerInfoForm: React.FC = () => {
     setShowUploadModal(true);
   };
 
-  const handleClearSignature = (index: number) => {
-    const ref = index === 1 ? signatureRef1 : signatureRef2;
+  const handleClearSignature = (passengerIndex: number, parentIndex: number) => {
+    const ref = getSignatureRef(passengerIndex, parentIndex);
     if (ref) {
       ref.clear();
-      setValue(`passengers.${currentPassengerIndex}.autorisationParentale${index}`, '');
+      setValue(`passengers.${passengerIndex}.autorisationParentale${parentIndex}`, '');
+      setValue(`passengers.${passengerIndex}.signatureDate${parentIndex}`, '');
     }
   };
 
-  const handleSaveSignature = (index: number) => {
-    const ref = index === 1 ? signatureRef1 : signatureRef2;
+  const handleSaveSignature = (passengerIndex: number, parentIndex: number) => {
+    const ref = getSignatureRef(passengerIndex, parentIndex);
     if (ref) {
       const signatureData = ref.toDataURL();
-      setValue(`passengers.${currentPassengerIndex}.autorisationParentale${index}`, signatureData);
+      setValue(`passengers.${passengerIndex}.autorisationParentale${parentIndex}`, signatureData);
+      setValue(`passengers.${passengerIndex}.signatureDate${parentIndex}`, new Date().toISOString());
       toast.success('Signature enregistrée');
     }
   };
@@ -227,25 +358,12 @@ export const PassengerInfoForm: React.FC = () => {
       if (age >= 18) {
         setValue(`passengers.${index}.autorisationParentale1`, '');
         setValue(`passengers.${index}.autorisationParentale2`, '');
-        if (signatureRef1) signatureRef1.clear();
-        if (signatureRef2) signatureRef2.clear();
+        if (getSignatureRef(index, 1)) getSignatureRef(index, 1).clear();
+        if (getSignatureRef(index, 2)) getSignatureRef(index, 2).clear();
       }
     } else {
       setValue(`passengers.${index}.age`, 0);
     }
-  };
-
-  const calculateAge = (birthDate: string): number => {
-    if (!birthDate) return 0;
-    const birth = new Date(birthDate);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
   };
 
   const onSubmit = (data: FormData) => {
@@ -265,7 +383,7 @@ export const PassengerInfoForm: React.FC = () => {
     saveMutation.mutate(data);
   };
 
-  if (isLoadingFlight) {
+  if (isLoadingFlight || isLoadingPassengers) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -392,8 +510,28 @@ export const PassengerInfoForm: React.FC = () => {
                           </div>
                         </div>
                       </div>
+
+                      {/* Parent 1 */}
                       <div className="bg-white rounded-xl p-4 shadow-sm border space-y-4 mb-4">
                         <h3 className="text-lg font-medium">Autorisation Parentale - Parent 1</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Nom du parent 1</label>
+                            <input
+                              type="text"
+                              {...register(`passengers.${passengerIndex}.parent1Nom`)}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Prénom du parent 1</label>
+                            <input
+                              type="text"
+                              {...register(`passengers.${passengerIndex}.parent1Prenom`)}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
                         <div className="space-y-4">
                           {watch(`passengers.${passengerIndex}.autorisationParentale1`) ? (
                             <div className="relative">
@@ -402,8 +540,11 @@ export const PassengerInfoForm: React.FC = () => {
                                 alt="Signature Parent 1" 
                                 className="w-full h-40 object-contain border rounded-xl"
                               />
+                              <div className="mt-2 text-sm text-gray-500">
+                                Signé le: {new Date(watch(`passengers.${passengerIndex}.signatureDate1`) || '').toLocaleString('fr-FR')}
+                              </div>
                               <button 
-                                onClick={() => handleClearSignature(1)}
+                                onClick={() => handleClearSignature(passengerIndex, 1)}
                                 className="absolute top-2 right-2 p-2 bg-red-100 rounded-full"
                               >
                                 <Trash2 className="h-5 w-5 text-red-500" />
@@ -412,7 +553,7 @@ export const PassengerInfoForm: React.FC = () => {
                           ) : (
                             <div className="border rounded-xl">
                               <SignatureCanvas
-                                ref={(ref) => setSignatureRef1(ref)}
+                                ref={(ref) => setSignatureRef(passengerIndex, 1, ref)}
                                 canvasProps={{
                                   className: 'w-full h-40 rounded-xl'
                                 }}
@@ -422,14 +563,14 @@ export const PassengerInfoForm: React.FC = () => {
                           <div className="flex justify-end space-x-2">
                             <button
                               type="button"
-                              onClick={() => handleClearSignature(1)}
+                              onClick={() => handleClearSignature(passengerIndex, 1)}
                               className="px-4 py-2 border rounded-lg text-sm"
                             >
                               Effacer
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleSaveSignature(1)}
+                              onClick={() => handleSaveSignature(passengerIndex, 1)}
                               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
                             >
                               Sauvegarder
@@ -438,8 +579,27 @@ export const PassengerInfoForm: React.FC = () => {
                         </div>
                       </div>
 
+                      {/* Parent 2 */}
                       <div className="bg-white rounded-xl p-4 shadow-sm border space-y-4 mb-4">
                         <h3 className="text-lg font-medium">Autorisation Parentale - Parent 2</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Nom du parent 2</label>
+                            <input
+                              type="text"
+                              {...register(`passengers.${passengerIndex}.parent2Nom`)}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Prénom du parent 2</label>
+                            <input
+                              type="text"
+                              {...register(`passengers.${passengerIndex}.parent2Prenom`)}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
                         <div className="space-y-4">
                           {watch(`passengers.${passengerIndex}.autorisationParentale2`) ? (
                             <div className="relative">
@@ -448,8 +608,11 @@ export const PassengerInfoForm: React.FC = () => {
                                 alt="Signature Parent 2" 
                                 className="w-full h-40 object-contain border rounded-xl"
                               />
+                              <div className="mt-2 text-sm text-gray-500">
+                                Signé le: {new Date(watch(`passengers.${passengerIndex}.signatureDate2`) || '').toLocaleString('fr-FR')}
+                              </div>
                               <button 
-                                onClick={() => handleClearSignature(2)}
+                                onClick={() => handleClearSignature(passengerIndex, 2)}
                                 className="absolute top-2 right-2 p-2 bg-red-100 rounded-full"
                               >
                                 <Trash2 className="h-5 w-5 text-red-500" />
@@ -458,7 +621,7 @@ export const PassengerInfoForm: React.FC = () => {
                           ) : (
                             <div className="border rounded-xl">
                               <SignatureCanvas
-                                ref={(ref) => setSignatureRef2(ref)}
+                                ref={(ref) => setSignatureRef(passengerIndex, 2, ref)}
                                 canvasProps={{
                                   className: 'w-full h-40 rounded-xl'
                                 }}
@@ -468,14 +631,14 @@ export const PassengerInfoForm: React.FC = () => {
                           <div className="flex justify-end space-x-2">
                             <button
                               type="button"
-                              onClick={() => handleClearSignature(2)}
+                              onClick={() => handleClearSignature(passengerIndex, 2)}
                               className="px-4 py-2 border rounded-lg text-sm"
                             >
                               Effacer
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleSaveSignature(2)}
+                              onClick={() => handleSaveSignature(passengerIndex, 2)}
                               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
                             >
                               Sauvegarder
