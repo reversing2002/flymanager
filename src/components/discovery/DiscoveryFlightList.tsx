@@ -16,22 +16,20 @@ import {
   List,
   UserCircle,
   CheckCircle,
-  CheckCheck
+  CheckCheck,
+  ClipboardCheck,
+  FileCheck,
+  FileX
 } from 'lucide-react';
 import { 
   Button,
   useDisclosure,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
   Text,
   Badge,
   Tooltip,
   IconButton,
-  SimpleGrid
+  SimpleGrid,
+  Box
 } from '@chakra-ui/react';
 import type { DiscoveryFlight } from '../../types/discovery';
 import { supabase } from '../../lib/supabase';
@@ -54,6 +52,8 @@ interface DiscoveryFlightListProps {
 const DiscoveryFlightList: React.FC<DiscoveryFlightListProps> = ({ viewMode = 'list' }) => {
   const [selectedFlight, setSelectedFlight] = useState<DiscoveryFlight | null>(null);
   const [selectedChatFlight, setSelectedChatFlight] = useState<DiscoveryFlight | null>(null);
+  const [passengerInfoModal, setPassengerInfoModal] = useState(false);
+  const [selectedPassengerInfo, setSelectedPassengerInfo] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showMyFlights, setShowMyFlights] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,6 +68,7 @@ const DiscoveryFlightList: React.FC<DiscoveryFlightListProps> = ({ viewMode = 'l
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const canAddFlight = hasAnyGroup(user, ['ADMIN', 'DISCOVERY_PILOT']);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   const { data: flights, isLoading, error } = useQuery({
     queryKey: ['discoveryFlights'],
@@ -285,6 +286,28 @@ Dates préférées : ${flight.preferred_dates}`;
     onNotesOpen();
   };
 
+  const fetchPassengerInfo = async (flightId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('passenger_info')
+        .select('passenger_data')
+        .eq('flight_id', flightId)
+        .single();
+
+      if (error) {
+        console.error('Erreur lors de la récupération des informations passagers:', error);
+        toast.error('Impossible de récupérer les informations des passagers');
+        return;
+      }
+
+      setSelectedPassengerInfo(data?.passenger_data);
+      setPassengerInfoModal(true);
+    } catch (err) {
+      console.error('Erreur:', err);
+      toast.error('Une erreur est survenue');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -322,7 +345,7 @@ Dates préférées : ${flight.preferred_dates}`;
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div ref={containerRef} className="h-full overflow-hidden flex flex-col">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -526,6 +549,18 @@ Dates préférées : ${flight.preferred_dates}`;
                       </div>
 
                       <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end">
+                        <Tooltip label="Vérifier les informations passagers">
+                          <IconButton
+                            aria-label="Vérifier les informations passagers"
+                            icon={<ClipboardCheck className="h-5 w-5" />}
+                            size="md"
+                            colorScheme="green"
+                            variant="ghost"
+                            onClick={() => fetchPassengerInfo(flight.id)}
+                            className="hover:bg-green-50"
+                          />
+                        </Tooltip>
+
                         <Tooltip label="Conversation client">
                           <IconButton
                             aria-label="Conversation client"
@@ -690,6 +725,167 @@ Dates préférées : ${flight.preferred_dates}`;
           customerPhone={selectedChatFlight.contact_phone || ''}
           onClose={onChatClose}
         />
+      )}
+
+      {/* Modal des informations passagers */}
+      {passengerInfoModal && selectedPassengerInfo && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 overflow-y-auto"
+        >
+          <div className="min-h-screen px-4 text-center">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm"
+              onClick={() => setPassengerInfoModal(false)}
+            />
+            
+            <span className="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
+            
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="inline-block w-full max-w-lg p-6 my-8 overflow-hidden text-left align-middle bg-white shadow-xl rounded-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Informations des Passagers
+                </h3>
+                <button
+                  onClick={() => setPassengerInfoModal(false)}
+                  className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                >
+                  <span className="sr-only">Fermer</span>
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {selectedPassengerInfo.passengers.map((passenger: any, index: number) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-gray-50 p-4 rounded-lg shadow-sm"
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <UserCircle className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="text-base font-medium text-gray-900">
+                          {passenger.prenom} {passenger.nom}
+                        </h4>
+                        <p className="text-sm text-gray-500">Passager {index + 1}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="bg-white p-3 rounded-lg border border-gray-100">
+                        <p className="text-sm text-gray-500">Âge</p>
+                        <p className="font-medium">{passenger.age} ans</p>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg border border-gray-100">
+                        <p className="text-sm text-gray-500">Poids</p>
+                        <p className="font-medium">{passenger.poids} kg</p>
+                      </div>
+                    </div>
+
+                    {passenger.age < 18 && (
+                      <div className="mb-4">
+                        <h5 className="text-sm font-medium text-gray-900 mb-3">
+                          Autorisations Parentales
+                        </h5>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="bg-white p-3 rounded-lg border border-gray-100">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-500">Parent 1</span>
+                              {passenger.autorisationParentale1 ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  <FileCheck className="w-4 h-4 mr-1" />
+                                  Signé
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                  <FileX className="w-4 h-4 mr-1" />
+                                  Non signé
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm font-medium">
+                              {passenger.parent1Prenom} {passenger.parent1Nom}
+                            </p>
+                          </div>
+                          <div className="bg-white p-3 rounded-lg border border-gray-100">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-500">Parent 2</span>
+                              {passenger.autorisationParentale2 ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  <FileCheck className="w-4 h-4 mr-1" />
+                                  Signé
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                  <FileX className="w-4 h-4 mr-1" />
+                                  Non signé
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm font-medium">
+                              {passenger.parent2Prenom} {passenger.parent2Nom}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <h5 className="text-sm font-medium text-gray-900 mb-3">
+                        Contacts d'urgence
+                      </h5>
+                      <div className="space-y-3">
+                        {passenger.contactsUrgence.map((contact: any, contactIndex: number) => (
+                          <motion.div
+                            key={contactIndex}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: contactIndex * 0.1 }}
+                            className="bg-white p-3 rounded-lg border border-gray-100"
+                          >
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-sm text-gray-500">Nom</p>
+                                <p className="text-sm font-medium">{contact.nom}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-500">Téléphone</p>
+                                <p className="text-sm font-medium">{contact.telephone}</p>
+                              </div>
+                              <div className="sm:col-span-2">
+                                <p className="text-sm text-gray-500">Adresse</p>
+                                <p className="text-sm font-medium">{contact.adresse}</p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
       )}
     </div>
   );

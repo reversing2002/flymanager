@@ -19,6 +19,7 @@
     "@mui/material": "^6.1.10",
     "@mui/x-date-pickers": "^7.23.2",
     "@radix-ui/react-checkbox": "^1.1.2",
+    "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-tooltip": "^1.1.4",
     "@stripe/stripe-js": "^2.4.0",

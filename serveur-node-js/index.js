@@ -501,10 +501,45 @@ app.get('/api/conversations/:flightId/messages', async (req, res) => {
     const { flightId } = req.params;
     const conversationUniqueName = `flight_${flightId}`;
 
-    // Récupérer la conversation
-    const conversation = await twilioClient.conversations.v1
-      .conversations(conversationUniqueName)
-      .fetch();
+    let conversation;
+    try {
+      // Essayer de récupérer la conversation existante
+      conversation = await twilioClient.conversations.v1
+        .conversations(conversationUniqueName)
+        .fetch();
+    } catch (error) {
+      if (error.code === 20404) { // Conversation not found
+        // Récupérer les informations du vol depuis Supabase
+        const { data: flightData, error: flightError } = await supabase
+          .from('discovery_flights')
+          .select('*')
+          .eq('id', flightId)
+          .single();
+
+        if (flightError) throw flightError;
+        if (!flightData) {
+          return res.status(404).json({ error: 'Vol non trouvé' });
+        }
+
+        if (!flightData.customer_phone) {
+          return res.status(400).json({ error: 'Numéro de téléphone du client manquant' });
+        }
+
+        // Créer la conversation
+        conversation = await getOrCreateConversation(flightId, flightData.customer_phone);
+        
+        // Ajouter un message de bienvenue
+        await twilioClient.conversations.v1
+          .conversations(conversation.sid)
+          .messages
+          .create({
+            author: 'system',
+            body: 'Bienvenue dans votre conversation pour le vol découverte. Un agent vous répondra dans les plus brefs délais.'
+          });
+      } else {
+        throw error;
+      }
+    }
 
     // Récupérer les messages de la conversation
     const messages = await twilioClient.conversations.v1
