@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { EmergencyContact, PassengerInfo, DiscoveryFlight } from '../../types/discovery';
 import { Plus, Trash2, Upload } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
+import { AlertCircle } from 'lucide-react';
 
 // Schéma de validation
 const emergencyContactSchema = z.object({
@@ -27,6 +28,7 @@ const passengerSchema = z.object({
     return !isNaN(parsed.getTime());
   }, 'Date de naissance invalide'),
   age: z.number().min(0, 'L\'âge est requis'),
+  poids: z.number().min(20, 'Le poids doit être d\'au moins 20 kg').max(200, 'Le poids ne peut pas dépasser 200 kg'),
   contactsUrgence: z.array(emergencyContactSchema).min(1, 'Au moins un contact d\'urgence est requis'),
   autorisationParentale1: z.string().optional(),
   autorisationParentale2: z.string().optional(),
@@ -39,6 +41,7 @@ const formSchema = z.object({
 type FormData = {
   passengers: (PassengerInfo & {
     age: number;
+    poids: number;
     autorisationParentale1?: string;
     autorisationParentale2?: string;
   })[];
@@ -61,6 +64,7 @@ export const PassengerInfoForm: React.FC = () => {
         prenom: '',
         dateNaissance: '',
         age: 0,
+        poids: 0,
         contactsUrgence: [{}],
         autorisationParentale1: '',
         autorisationParentale2: ''
@@ -72,6 +76,39 @@ export const PassengerInfoForm: React.FC = () => {
     control,
     name: 'passengers'
   });
+
+  // Observer les changements du contact d'urgence du premier passager
+  React.useEffect(() => {
+    const subscription = watch((value, { name, type }) => {
+      if (name?.startsWith('passengers.0.contactsUrgence.0') && type === 'change') {
+        const firstPassengerContact = value.passengers?.[0]?.contactsUrgence?.[0];
+        if (firstPassengerContact && value.passengers && value.passengers.length > 1) {
+          // Copier vers les autres passagers
+          value.passengers.forEach((_, index) => {
+            if (index > 0) {
+              setValue(`passengers.${index}.contactsUrgence.0`, firstPassengerContact);
+            }
+          });
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
+
+  // Fonction pour ajouter un nouveau passager
+  const handleAddPassenger = () => {
+    const firstPassengerContact = watch('passengers.0.contactsUrgence.0');
+    appendPassenger({
+      nom: '',
+      prenom: '',
+      dateNaissance: '',
+      age: 0,
+      poids: 0,
+      contactsUrgence: [firstPassengerContact || {}],
+      autorisationParentale1: '',
+      autorisationParentale2: ''
+    });
+  };
 
   // Récupération des informations du vol
   const { data: flightData, isLoading: isLoadingFlight } = useQuery({
@@ -164,30 +201,51 @@ export const PassengerInfoForm: React.FC = () => {
     }
   };
 
-  if (isLoadingFlight) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  const handleDateChange = (index: number, date: string) => {
+    if (date) {
+      const birthDate = new Date(date);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      // Forcer la mise à jour de l'âge
+      setValue(`passengers.${index}.age`, age, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
+      
+      // Log pour debug
+      console.log('Date de naissance:', date);
+      console.log('Age calculé:', age);
+      
+      // Si l'âge est >= 18, on efface les autorisations parentales
+      if (age >= 18) {
+        setValue(`passengers.${index}.autorisationParentale1`, '');
+        setValue(`passengers.${index}.autorisationParentale2`, '');
+        if (signatureRef1) signatureRef1.clear();
+        if (signatureRef2) signatureRef2.clear();
+      }
+    } else {
+      setValue(`passengers.${index}.age`, 0);
+    }
+  };
 
-  const calculateAge = (birthDate: string) => {
-    const today = new Date();
+  const calculateAge = (birthDate: string): number => {
+    if (!birthDate) return 0;
     const birth = new Date(birthDate);
+    const today = new Date();
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
     
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
       age--;
     }
-    
     return age;
-  };
-
-  const handleDateChange = (index: number, value: string) => {
-    const age = calculateAge(value);
-    setValue(`passengers.${index}.age`, age);
   };
 
   const onSubmit = (data: FormData) => {
@@ -206,6 +264,14 @@ export const PassengerInfoForm: React.FC = () => {
 
     saveMutation.mutate(data);
   };
+
+  if (isLoadingFlight) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -267,31 +333,65 @@ export const PassengerInfoForm: React.FC = () => {
                       )}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Date de naissance
-                      </label>
-                      <input
-                        type="date"
-                        {...register(`passengers.${passengerIndex}.dateNaissance`)}
-                        onChange={(e) => handleDateChange(passengerIndex, e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                      {errors.passengers?.[passengerIndex]?.dateNaissance && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.passengers[passengerIndex]?.dateNaissance?.message}
-                        </p>
-                      )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Date de naissance
+                        </label>
+                        <input
+                          type="date"
+                          {...register(`passengers.${passengerIndex}.dateNaissance`)}
+                          onChange={(e) => handleDateChange(passengerIndex, e.target.value)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        {errors.passengers?.[passengerIndex]?.dateNaissance && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.passengers[passengerIndex]?.dateNaissance?.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Poids (kg)
+                        </label>
+                        <input
+                          type="number"
+                          min="20"
+                          max="200"
+                          step="0.1"
+                          {...register(`passengers.${passengerIndex}.poids`, { 
+                            valueAsNumber: true,
+                            min: { value: 20, message: 'Le poids minimum est de 20 kg' },
+                            max: { value: 200, message: 'Le poids maximum est de 200 kg' }
+                          })}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        {errors.passengers?.[passengerIndex]?.poids && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.passengers[passengerIndex]?.poids?.message}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   {/* Afficher les champs d'autorisation parentale si mineur */}
-                  {watch(`passengers.${passengerIndex}.age`) < 18 && (
-                    <div className="mt-6 space-y-4 border-t border-gray-200 pt-4">
-                      <p className="text-sm font-medium text-orange-600">
-                        Le passager est mineur, les autorisations parentales sont requises
-                      </p>
-                      
+                  {watch(`passengers.${passengerIndex}.dateNaissance`) && 
+                   (watch(`passengers.${passengerIndex}.age`) < 18 || calculateAge(watch(`passengers.${passengerIndex}.dateNaissance`)) < 18) && (
+                    <div className="space-y-4 mt-6">
+                      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                        <div className="flex">
+                          <div className="flex-shrink-0">
+                            <AlertCircle className="h-5 w-5 text-yellow-400" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm text-yellow-700">
+                              Le passager est mineur (âge: {watch(`passengers.${passengerIndex}.age`)} ans), les autorisations parentales sont requises
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                       <div className="bg-white rounded-xl p-4 shadow-sm border space-y-4 mb-4">
                         <h3 className="text-lg font-medium">Autorisation Parentale - Parent 1</h3>
                         <div className="space-y-4">
@@ -386,11 +486,15 @@ export const PassengerInfoForm: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-900">
-                      Contacts d'urgence
+                  <div className="mt-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Contact d'urgence
+                      {passengerIndex > 0 && (
+                        <span className="ml-2 text-sm text-gray-500">
+                          (Pré-rempli avec les informations du premier passager)
+                        </span>
+                      )}
                     </h3>
-                    
                     {field.contactsUrgence?.map((contact: any, contactIndex: number) => (
                       <div key={contactIndex} className="border rounded p-4 bg-white">
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -451,15 +555,7 @@ export const PassengerInfoForm: React.FC = () => {
               <div className="flex items-center justify-between">
                 <button
                   type="button"
-                  onClick={() => appendPassenger({ 
-                    nom: '',
-                    prenom: '',
-                    dateNaissance: '',
-                    age: 0,
-                    contactsUrgence: [{}],
-                    autorisationParentale1: '',
-                    autorisationParentale2: ''
-                  })}
+                  onClick={handleAddPassenger}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm"
                 >
                   <Plus className="h-5 w-5 mr-2" />
