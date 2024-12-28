@@ -25,14 +25,17 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   users,
   filters 
 }) => {
-  // Get unique aircraft types
-  const aircraftTypes = [...new Set(aircraft?.map(a => a.type) || [])];
-  const instructors = users?.filter(u => hasAnyGroup({ role: u.role } as User, ["INSTRUCTOR"])) || [];
+  // Get available aircraft only
+  const availableAircraft = aircraft?.filter(a => a.status === "AVAILABLE") || [];
+  const instructors = users?.filter(user => hasAnyGroup(user, ["INSTRUCTOR"])) || [];
 
-  const handleTypeChange = (type: string, checked: boolean) => {
+  const handleAircraftChange = (aircraftId: string, checked: boolean) => {
+    const aircraft = availableAircraft.find(a => a.id === aircraftId);
+    if (!aircraft) return;
+
     const newTypes = checked 
-      ? [...filters.aircraftTypes, type]
-      : filters.aircraftTypes.filter(t => t !== type);
+      ? [...filters.aircraftTypes, aircraftId]
+      : filters.aircraftTypes.filter(t => t !== aircraftId);
     onChange({ ...filters, aircraftTypes: newTypes });
   };
 
@@ -66,21 +69,19 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Type d'appareil
+            Appareils
           </label>
           <div className="space-y-2">
-            {aircraftTypes.map((type) => (
-              <label key={type} className="flex items-center space-x-2">
+            {availableAircraft.map((aircraft) => (
+              <label key={aircraft.id} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={filters.aircraftTypes.includes(type)}
-                  onChange={(e) => handleTypeChange(type, e.target.checked)}
+                  checked={filters.aircraftTypes.includes(aircraft.id)}
+                  onChange={(e) => handleAircraftChange(aircraft.id, e.target.checked)}
                   className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                 />
                 <span className="text-sm text-slate-600">
-                  {type === 'PLANE' ? 'Avion' : 
-                   type === 'ULM' ? 'ULM' : 
-                   type === 'HELICOPTER' ? 'Hélicoptère' : type}
+                  {aircraft.registration}
                 </span>
               </label>
             ))}
@@ -101,7 +102,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                   className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                 />
                 <span className="text-sm text-slate-600">
-                  {instructor.firstName} {instructor.lastName}
+                  {instructor.first_name} {instructor.last_name}
                 </span>
               </label>
             ))}

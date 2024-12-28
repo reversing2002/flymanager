@@ -15,6 +15,7 @@ import {
   parseISO,
   getHours,
   getMinutes,
+  endOfDay,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -25,12 +26,14 @@ import {
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import type { Aircraft, Reservation, User } from "../../types/database";
+import type { Availability } from "../../types/availability";
 import {
   getAircraft,
   getReservations,
   getUsers,
   updateReservation,
 } from "../../lib/queries";
+import { getAvailabilitiesForPeriod } from "../../lib/queries/availability";
 import { getAircraftOrder } from "../../services/aircraft";
 import ReservationModal from "./ReservationModal";
 import { toast } from "react-hot-toast";
@@ -41,6 +44,7 @@ import { cn } from "../../lib/utils";
 import SunTimesDisplay from "../common/SunTimesDisplay";
 import { getSunTimes } from "../../lib/sunTimes";
 import { FilterState } from "./FilterPanel";
+import { useMemo } from "react";
 
 // Générer les intervalles de 15 minutes
 const generateTimeSlots = (
@@ -131,9 +135,6 @@ const HorizontalReservationCalendar = ({
     useState<Reservation | null>(null);
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [filteredReservations, setFilteredReservations] = useState<
-    Reservation[]
-  >([]);
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [aircraftOrder, setAircraftOrder] = useState<{ [key: string]: number }>(
     {}
@@ -162,6 +163,8 @@ const HorizontalReservationCalendar = ({
   const [timeSlots, setTimeSlots] = useState<
     { hour: number; minutes: number }[]
   >([]);
+
+  const [instructorAvailabilities, setInstructorAvailabilities] = useState<Availability[]>([]);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -240,100 +243,59 @@ const HorizontalReservationCalendar = ({
   }, [selectedDate]);
 
   useEffect(() => {
-    if (!reservations) return;
-
-    let filtered = [...reservations];
-
-    // Filtrer les réservations pour la journée sélectionnée
-    filtered = filtered.filter((r) => {
-      const start = new Date(r.startTime);
-      const end = new Date(r.endTime);
-      const dayStart = startOfDay(selectedDate);
-      const dayEnd = new Date(dayStart);
-      dayEnd.setDate(dayEnd.getDate() + 1);
-
-      return (
-        (start >= dayStart && start < dayEnd) || // Commence ce jour
-        (end > dayStart && end <= dayEnd) || // Finit ce jour
-        (start <= dayStart && end >= dayEnd) // Chevauche le jour
-      );
-    });
-
-    // Filter reservations based on user role
-    if (
-      hasAnyGroup(currentUser, ["PILOT"]) &&
-      !hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR", "MECHANIC"])
-    ) {
-      filtered = filtered.filter((r) => r.userId === currentUser.id);
-    }
-
-    // Apply filters only if we have aircraft data
-    if (aircraft && filters?.aircraftTypes && filters.aircraftTypes.length > 0) {
-      filtered = filtered.filter((r) => {
-        const aircraftType = aircraft.find((a) => a.id === r.aircraftId)?.type;
-        return filters.aircraftTypes.includes(aircraftType || "");
-      });
-    }
-
-    if (filters?.instructors && filters.instructors.length > 0) {
-      filtered = filtered.filter((r) =>
-        filters.instructors.includes(r.instructorId || "")
-      );
-    }
-
-    if (filters?.status && filters.status !== "all") {
-      filtered = filtered.filter((r) => r.status === filters.status);
-    }
-
-    if (filters?.availability && filters.availability !== "all") {
-      switch (filters.availability) {
-        case "available":
-          filtered = filtered.filter((r) => {
-            const start = new Date(r.startTime);
-            const end = new Date(r.endTime);
-            return !isBefore(start, new Date()) && !isAfter(end, new Date());
-          });
-          break;
-        case "today":
-          filtered = filtered.filter((r) => isToday(new Date(r.startTime)));
-          break;
-        case "week":
-          filtered = filtered.filter((r) =>
-            isThisWeek(new Date(r.startTime), { locale: fr })
-          );
-          break;
+    const loadInstructorAvailabilities = async () => {
+      if (!filters.instructors || filters.instructors.length === 0) {
+        setInstructorAvailabilities([]);
+        return;
       }
-    }
 
-    setFilteredReservations(filtered);
-  }, [reservations, filters, aircraft, currentUser, selectedDate]);
+      try {
+        const dayStart = startOfDay(selectedDate);
+        const dayEnd = endOfDay(selectedDate);
 
-  useEffect(() => {
-    setCurrentDate(selectedDate);
-  }, [selectedDate]);
+        const availabilitiesPromises = filters.instructors.map(instructorId =>
+          getAvailabilitiesForPeriod(
+            dayStart.toISOString(),
+            dayEnd.toISOString(),
+            instructorId
+          )
+        );
+
+        const allAvailabilities = await Promise.all(availabilitiesPromises);
+        setInstructorAvailabilities(allAvailabilities.flat());
+      } catch (error) {
+        console.error('Error loading instructor availabilities:', error);
+        toast.error('Erreur lors du chargement des disponibilités des instructeurs');
+      }
+    };
+
+    loadInstructorAvailabilities();
+  }, [filters.instructors, selectedDate]);
 
   const loadInitialData = async () => {
     try {
       const aircraftData = await getAircraft();
-      setAircraft(aircraftData);
+      const userData = await getUsers();
 
-      if (aircraftData[0]?.club_id) {
-        const order = await getAircraftOrder(aircraftData[0].club_id);
+      // Filtrer les appareils disponibles uniquement
+      const availableAircraft = aircraftData.filter(a => a.status === "AVAILABLE");
+      setAircraft(availableAircraft);
+      setUsers(userData);
+
+      // Charger l'ordre des appareils seulement si on a un club_id
+      if (currentUser?.club?.id) {
+        const order = await getAircraftOrder(currentUser.club.id);
         setAircraftOrder(order);
       }
 
       // Ajuster les heures pour la requête en UTC
       const startTime = new Date(selectedDate);
-      startTime.setHours(7, 0, 0, 0);
+      startTime.setHours(0, 0, 0, 0);
       const endTime = new Date(selectedDate);
-      endTime.setHours(22, 0, 0, 0);
+      endTime.setHours(23, 59, 59, 999);
 
       const reservationsData = await getReservations(startTime, endTime);
       setReservations(reservationsData);
-
-      const usersData = await getUsers();
-      console.log("Loaded users:", usersData);
-      setUsers(usersData);
     } catch (error) {
       console.error("Error loading initial data:", error);
       toast.error("Erreur lors du chargement des données");
@@ -383,9 +345,38 @@ const HorizontalReservationCalendar = ({
     setShowReservationModal(true);
   };
 
-  const sortedAircraft = [...aircraft].sort((a, b) => {
-    return (aircraftOrder[a.id] || 0) - (aircraftOrder[b.id] || 0);
-  });
+  const sortedAircraft = useMemo(() => {
+    return [...aircraft].sort((a, b) => {
+      return (aircraftOrder[a.id] || 0) - (aircraftOrder[b.id] || 0);
+    });
+  }, [aircraft, aircraftOrder]);
+
+  const filteredReservations = useMemo(() => {
+    let filtered = [...reservations];
+
+    if (filters?.aircraftTypes?.length > 0) {
+      filtered = filtered.filter((r) =>
+        filters.aircraftTypes.includes(r.aircraftId)
+      );
+    }
+
+    if (filters?.instructors?.length > 0) {
+      filtered = filtered.filter((r) =>
+        filters.instructors.includes(r.instructorId || '')
+      );
+    }
+
+    if (filters?.status && filters.status !== "all") {
+      filtered = filtered.filter((r) => r.status === filters.status);
+    }
+
+    return filtered;
+  }, [filters, reservations]);
+
+  const filteredAircraft = useMemo(() => {
+    if (!filters?.aircraftTypes?.length) return aircraft;
+    return aircraft.filter((a) => filters.aircraftTypes.includes(a.id));
+  }, [aircraft, filters?.aircraftTypes]);
 
   const getReservationsForAircraft = (aircraftId: string) => {
     return filteredReservations.filter((r) => r.aircraftId === aircraftId);
@@ -674,6 +665,52 @@ const HorizontalReservationCalendar = ({
     return (hour - 7) * 4 + (minutes / 15);
   };
 
+  const getCellBackground = (hour: number, minute: number, aircraftId: string) => {
+    const currentTime = setMinutes(setHours(selectedDate, hour), minute);
+    
+    // Vérifier les réservations
+    const hasReservation = filteredReservations.some(reservation => {
+      const start = new Date(reservation.startTime);
+      const end = new Date(reservation.endTime);
+      return currentTime >= start && currentTime < end && reservation.aircraftId === aircraftId;
+    });
+
+    if (hasReservation) {
+      return "bg-red-100 hover:bg-red-200";
+    }
+
+    // Vérifier les disponibilités des instructeurs
+    if (filters.instructors && filters.instructors.length > 0) {
+      const hasInstructorAvailable = instructorAvailabilities.some(availability => {
+        const start = parseISO(availability.start_time);
+        const end = parseISO(availability.end_time);
+        return currentTime >= start && 
+               currentTime < end && 
+               filters.instructors.includes(availability.user_id) &&
+               availability.slot_type === 'available';
+      });
+
+      const hasInstructorUnavailable = instructorAvailabilities.some(availability => {
+        const start = parseISO(availability.start_time);
+        const end = parseISO(availability.end_time);
+        return currentTime >= start && 
+               currentTime < end && 
+               filters.instructors.includes(availability.user_id) &&
+               availability.slot_type === 'unavailable';
+      });
+
+      if (hasInstructorAvailable) {
+        return "bg-green-50 hover:bg-green-100";
+      }
+      if (hasInstructorUnavailable) {
+        return "bg-red-50 hover:bg-red-100";
+      }
+    }
+
+    // Couleur par défaut
+    return "hover:bg-slate-50";
+  };
+
   const timeSlotStyle = (hour: number, minutes: number, aircraftId: string) => {
     return cn(
       "h-12 border-l border-gray-200 flex-shrink-0",
@@ -682,6 +719,7 @@ const HorizontalReservationCalendar = ({
         "bg-gray-50": isNightTime(hour, minutes),
         "bg-blue-100": isSlotSelected(hour, minutes, aircraftId)
       },
+      getCellBackground(hour, minutes, aircraftId),
       "w-6" // Ajouter une largeur fixe
     );
   };
@@ -848,7 +886,7 @@ const HorizontalReservationCalendar = ({
             <div className="h-8" />{" "}
             {/* Espace pour aligner avec l'en-tête des heures */}
             <div className="flex flex-col">
-              {sortedAircraft.map((a) => (
+              {filteredAircraft.map((a) => (
                 <div
                   key={a.id}
                   className="flex flex-col justify-center h-12 px-2 border-b border-gray-200 bg-white"
@@ -881,7 +919,7 @@ const HorizontalReservationCalendar = ({
 
               {/* Grille des réservations */}
               <div className="relative">
-                {sortedAircraft.map((aircraft, aircraftIndex) => (
+                {filteredAircraft.map((aircraft, aircraftIndex) => (
                   <div
                     key={aircraft.id}
                     className="relative h-12 border-b border-gray-200"

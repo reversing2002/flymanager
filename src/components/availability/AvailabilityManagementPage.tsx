@@ -16,20 +16,19 @@ const AvailabilityManagementPage = () => {
 
   const isInstructor = user && hasAnyGroup(user, ['INSTRUCTOR']);
   const isAdmin = user && hasAnyGroup(user, ['ADMIN', 'MANAGER']);
+  const canEdit = isInstructor || isAdmin;
 
   // Si l'utilisateur est instructeur mais pas admin, on force son ID
   const effectiveInstructorId = isInstructor && !isAdmin ? user?.id : selectedInstructorId;
 
   const { data: aircraft = [], isLoading: loadingAircraft } = useQuery({
     queryKey: ['aircraft'],
-    queryFn: getAircraft,
-    enabled: isAdmin // Ne charge les avions que pour les admins
+    queryFn: getAircraft
   });
 
   const { data: users = [], isLoading: loadingUsers } = useQuery({
     queryKey: ['users'],
-    queryFn: getUsers,
-    enabled: isAdmin // Ne charge les utilisateurs que pour les admins
+    queryFn: getUsers
   });
 
   const instructors = users.filter(u => hasAnyGroup(u, ['INSTRUCTOR']));
@@ -45,28 +44,17 @@ const AvailabilityManagementPage = () => {
     `${i.first_name} ${i.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Si l'utilisateur est instructeur mais pas admin, on affiche directement son calendrier
-  if (isInstructor && !isAdmin) {
-    return (
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900">Mes disponibilités</h1>
-          <p className="text-slate-600">Gérez vos disponibilités</p>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <AvailabilityCalendar userId={user?.id} />
-        </div>
-      </div>
-    );
-  }
-
-  // Interface admin avec tous les filtres
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Gestion des disponibilités</h1>
-        <p className="text-slate-600">Gérez les disponibilités des instructeurs et des appareils</p>
+        <h1 className="text-2xl font-bold text-slate-900">
+          {canEdit ? "Gestion des disponibilités" : "Disponibilités"}
+        </h1>
+        <p className="text-slate-600">
+          {canEdit 
+            ? "Gérez les disponibilités des instructeurs et des appareils" 
+            : "Consultez les disponibilités des instructeurs et des appareils"}
+        </p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
@@ -145,7 +133,11 @@ const AvailabilityManagementPage = () => {
               <span>Disponibilités instructeur</span>
             </h2>
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <AvailabilityCalendar userId={effectiveInstructorId} />
+              <AvailabilityCalendar 
+                userId={effectiveInstructorId} 
+                hideAddButton={!canEdit}
+                readOnly={!canEdit}
+              />
             </div>
           </div>
         )}
@@ -157,8 +149,20 @@ const AvailabilityManagementPage = () => {
               <span>Disponibilités appareil</span>
             </h2>
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <AvailabilityCalendar aircraftId={selectedAircraftId} />
+              <AvailabilityCalendar 
+                aircraftId={selectedAircraftId}
+                hideAddButton={!canEdit}
+                readOnly={!canEdit}
+              />
             </div>
+          </div>
+        )}
+
+        {!effectiveInstructorId && !selectedAircraftId && (
+          <div className="text-center py-12 text-slate-600">
+            <Calendar className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+            <p className="text-lg font-medium">Sélectionnez un instructeur ou un appareil</p>
+            <p className="mt-1">pour voir leurs disponibilités</p>
           </div>
         )}
       </div>

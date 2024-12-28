@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { setMinutes, setHours, differenceInMinutes, format, isToday } from "date-fns";
 import { Aircraft, Reservation, User, Availability } from "../../types/database";
 import { useAuth } from "../../contexts/AuthContext";
@@ -23,6 +23,9 @@ interface TimeGridProps {
   flights: { reservationId: string }[];
   onDateChange?: (date: Date) => void;
   nightFlightsEnabled: boolean;
+  filters?: {
+    aircraftTypes?: string[];
+  };
 }
 
 const TimeGrid: React.FC<TimeGridProps> = ({
@@ -39,6 +42,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   flights,
   onDateChange,
   nightFlightsEnabled,
+  filters,
 }) => {
   const { user } = useAuth();
   const [clubCoordinates, setClubCoordinates] = useState<{
@@ -137,13 +141,24 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     setTimeSlots(generateTimeSlots());
   }, [selectedDate, clubCoordinates, nightFlightsEnabled]);
 
-  const availableAircraft = aircraft.filter((a) => a.status === "AVAILABLE");
+  // Filtrer les appareils disponibles en fonction des filtres
+  const filteredAircraft = useMemo(() => {
+    let filtered = aircraft.filter(a => a.status === "AVAILABLE");
+    
+    if (filters?.aircraftTypes?.length > 0) {
+      filtered = filtered.filter(a => filters.aircraftTypes.includes(a.id));
+    }
 
-  const sortedAircraft = [...availableAircraft].sort((a, b) => {
-    const positionA = aircraftOrder?.[a.id] ?? Infinity;
-    const positionB = aircraftOrder?.[b.id] ?? Infinity;
-    return positionA - positionB;
-  });
+    return filtered;
+  }, [aircraft, filters?.aircraftTypes]);
+
+  const sortedAircraft = useMemo(() => {
+    return [...filteredAircraft].sort((a, b) => {
+      const positionA = aircraftOrder?.[a.id] ?? Infinity;
+      const positionB = aircraftOrder?.[b.id] ?? Infinity;
+      return positionA - positionB;
+    });
+  }, [filteredAircraft, aircraftOrder]);
 
   const cleanSelectedDate = new Date(selectedDate);
   cleanSelectedDate.setHours(0, 0, 0, 0);

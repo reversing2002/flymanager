@@ -102,10 +102,9 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
 
     // Apply filters
     if (filters.aircraftTypes.length > 0) {
-      filtered = filtered.filter((r) => {
-        const aircraftType = aircraft.find((a) => a.id === r.aircraftId)?.type;
-        return filters.aircraftTypes.includes(aircraftType || "");
-      });
+      filtered = filtered.filter((r) =>
+        filters.aircraftTypes.includes(r.aircraftId)
+      );
     }
 
     if (filters.instructors.length > 0) {
@@ -397,7 +396,7 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
     // Filtre par type d'appareil
     if (
       filters.aircraftTypes.length > 0 &&
-      !filters.aircraftTypes.includes(a.type)
+      !filters.aircraftTypes.includes(a.id)
     ) {
       return false;
     }
@@ -537,13 +536,14 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
           onCreateFlight={handleCreateFlight}
           reservations={filteredReservations}
           availabilities={availabilities}
-          aircraft={filteredAircraft}
+          aircraft={aircraft}
           aircraftOrder={aircraftOrder}
           onAircraftOrderChange={handleAircraftOrderChange}
           users={users}
           flights={flights}
-          onDateChange={setSelectedDate}
-          nightFlightsEnabled={clubSettings?.night_flights_enabled || false}
+          onDateChange={handleDateChange}
+          nightFlightsEnabled={clubSettings?.night_flights_enabled ?? false}
+          filters={filters}
         />
       </div>
 

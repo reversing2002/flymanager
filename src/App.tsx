@@ -289,7 +289,7 @@ function App() {
               <Route
                 path="availability"
                 element={
-                  <ProtectedRoute roles={["admin", "instructor", "mechanic"]}>
+                  <ProtectedRoute roles={["admin", "instructor", "mechanic", "pilot"]}>
                     <AvailabilityManagementPage />
                   </ProtectedRoute>
                 }

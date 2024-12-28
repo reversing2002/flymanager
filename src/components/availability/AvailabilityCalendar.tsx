@@ -13,12 +13,14 @@ interface AvailabilityCalendarProps {
   userId?: string;
   aircraftId?: string;
   hideAddButton?: boolean;
+  readOnly?: boolean;
 }
 
 const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   userId,
   aircraftId,
   hideAddButton = false,
+  readOnly = false,
 }) => {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -177,7 +179,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
           </button>
         </div>
 
-        {!hideAddButton && (
+        {!hideAddButton && !readOnly && (
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg"
@@ -191,71 +193,61 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
         )}
       </div>
 
-      <div className="grid grid-cols-7 border-b">
-        {days.map((day) => (
-          <div
-            key={day.toISOString()}
-            className="p-4 text-center border-r last:border-r-0"
-          >
-            <div className="font-medium text-slate-900">
-              {format(day, 'EEEE', { locale: fr })}
-            </div>
-            <div className="text-sm text-slate-500">
-              {format(day, 'd MMMM', { locale: fr })}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 min-h-[400px]">
+      <div className="grid grid-cols-7">
         {days.map((day) => {
           const dayAvailabilities = getAvailabilitiesForDay(day);
-          
           return (
             <div
               key={day.toISOString()}
-              className="p-4 border-r last:border-r-0 border-b space-y-2"
+              className="min-h-[200px] p-2 border-r border-b last:border-r-0 relative"
             >
-              {dayAvailabilities.map((availability) => (
-                <button
-                  key={availability.id}
-                  onClick={() => {
-                    setSelectedAvailability(availability);
-                    setShowModal(true);
-                  }}
-                  className={`w-full p-2 rounded-lg border text-left text-sm transition-colors ${getSlotColor(availability)}`}
-                >
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{formatAvailabilityTime(availability)}</span>
-                  </div>
-                  {availability.is_recurring && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <RotateCcw className="h-3 w-3" />
-                      <span className="text-xs">
-                        Jusqu'au {format(parseISO(availability.recurrence_end_date!), 'd MMM', { locale: fr })}
-                      </span>
+              <div className="text-sm text-slate-500 mb-2">
+                {format(day, 'd', { locale: fr })}
+              </div>
+
+              <div className="space-y-2">
+                {dayAvailabilities.map((availability) => (
+                  <button
+                    key={availability.id}
+                    onClick={() => {
+                      if (!readOnly) {
+                        setSelectedAvailability(availability);
+                        setShowModal(true);
+                      }
+                    }}
+                    className={`w-full text-left p-2 text-xs rounded border ${getSlotColor(
+                      availability
+                    )} ${!readOnly ? 'hover:opacity-75 cursor-pointer' : 'cursor-default'}`}
+                    title={getSlotTitle(availability)}
+                  >
+                    <div className="font-medium">{getSlotTitle(availability)}</div>
+                    <div className="flex items-center gap-1 mt-1 text-slate-600">
+                      <Clock className="h-3 w-3" />
+                      <span>{formatAvailabilityTime(availability)}</span>
                     </div>
-                  )}
-                  <div className="text-xs mt-1">{getSlotTitle(availability)}</div>
-                </button>
-              ))}
+                  </button>
+                ))}
+              </div>
             </div>
           );
         })}
       </div>
 
-      {showModal && (
+      {showModal && !readOnly && (
         <AvailabilityModal
-          userId={userId}
-          aircraftId={aircraftId}
           availability={selectedAvailability}
           onClose={() => {
             setShowModal(false);
             setSelectedAvailability(null);
           }}
-          onSuccess={loadAvailabilities}
-          initialDefaultMode={defaultMode}
+          onSave={() => {
+            loadAvailabilities();
+            setShowModal(false);
+            setSelectedAvailability(null);
+          }}
+          userId={userId}
+          aircraftId={aircraftId}
+          defaultMode={defaultMode}
         />
       )}
     </div>
