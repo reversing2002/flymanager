@@ -74,28 +74,48 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center space-x-2 mb-2">
-            <User className="w-5 h-5 text-gray-400" />
-            <h3 
-              className="text-lg font-medium text-gray-900 hover:text-blue-600 cursor-pointer"
-              onClick={() => navigate(`/members/${member.id}`)}
-            >
-              {member.first_name} {member.last_name}
-            </h3>
-            {member.membership_status === 'expired' && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                Cotisation expirée
-              </span>
-            )}
+        <div className="flex-1 min-w-0"> 
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="relative h-10 w-10 rounded-full overflow-hidden flex-shrink-0">
+              {member?.image_url ? (
+                <img
+                  src={member.image_url}
+                  alt={`Photo de ${member.first_name} ${member.last_name}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = '';
+                    e.currentTarget.classList.add('bg-gray-100');
+                    e.currentTarget.parentElement?.classList.add('bg-gray-100');
+                  }}
+                />
+              ) : (
+                <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0"> 
+              <h3 
+                className="text-lg font-medium text-gray-900 hover:text-blue-600 cursor-pointer truncate"
+                onClick={() => navigate(`/members/${member.id}`)}
+                title={`${member.first_name} ${member.last_name}`}
+              >
+                {member.first_name} {member.last_name}
+              </h3>
+              {isAdmin && member.membership_status === 'expired' && (
+                <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 mt-1">
+                  Cotisation expirée
+                </span>
+              )}
+            </div>
           </div>
 
           {member.roles && member.roles.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex flex-wrap gap-1.5 mb-2">
               {member.roles.map((role, index) => (
                 <span
                   key={index}
-                  className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeColor(role as Role)}`}
+                  className={`px-2 py-0.5 text-xs font-medium rounded-full ${getRoleBadgeColor(role as Role)}`}
                 >
                   {getRoleLabel(role)}
                 </span>
@@ -103,17 +123,21 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
             </div>
           )}
 
-          <div className="space-y-1 text-sm text-gray-500">
+          <div className="space-y-1.5 text-sm text-gray-500">
             {member.email && (
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4" />
-                <span>{member.email}</span>
+              <div className="flex items-center space-x-2 overflow-hidden">
+                <Mail className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate" title={member.email}>
+                  {member.email}
+                </span>
               </div>
             )}
             {member.phone && (
               <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4" />
-                <span>{member.phone}</span>
+                <Phone className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate" title={member.phone}>
+                  {member.phone}
+                </span>
               </div>
             )}
           </div>
@@ -122,7 +146,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
         {isAdmin && (
           <button
             onClick={() => setShowDeleteDialog(true)}
-            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+            className="p-1 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2"
           >
             <Trash2 className="w-5 h-5" />
           </button>

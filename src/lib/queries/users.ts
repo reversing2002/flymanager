@@ -242,6 +242,7 @@ export async function getMembersWithBalance(): Promise<User[]> {
         phone,
         instructor_rate,
         auth_id,
+        image_url,
         club_members!inner(
           club:clubs(
             id,
