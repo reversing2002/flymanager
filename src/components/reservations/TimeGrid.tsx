@@ -499,17 +499,14 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     return (hour < currentHour) || (hour === currentHour && minute < currentMinute);
   };
 
-  const isInstructorAvailable = (instructorId: string, hour: number, minute: number): boolean => {
+  const isInstructorAvailable = (instructorId: string, hour: number, minute: number): { available: boolean; availability?: Availability } => {
     const instructorAvails = instructorAvailabilities[instructorId];
-    if (!instructorAvails?.length) return true;
+    if (!instructorAvails?.length) return { available: true };
 
     const slotTime = new Date(selectedDate);
     slotTime.setHours(hour, minute, 0, 0);
 
-    return !instructorAvails.some(avail => {
-      const startTime = new Date(avail.start_time);
-      const endTime = new Date(avail.end_time);
-
+    const blockingAvailability = instructorAvails.find(avail => {
       // Vérifier si le créneau est dans une indisponibilité récurrente
       if (avail.is_recurring && avail.recurrence_pattern) {
         const dayToNumber: { [key: string]: number } = {
@@ -522,17 +519,24 @@ const TimeGrid: React.FC<TimeGridProps> = ({
 
         if (recurringDays.some(day => dayToNumber[day] === currentDayNumber)) {
           const recurringStart = new Date(slotTime);
-          recurringStart.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+          recurringStart.setHours(new Date(avail.start_time).getHours(), new Date(avail.start_time).getMinutes(), 0, 0);
           const recurringEnd = new Date(slotTime);
-          recurringEnd.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+          recurringEnd.setHours(new Date(avail.end_time).getHours(), new Date(avail.end_time).getMinutes(), 0, 0);
 
           return slotTime >= recurringStart && slotTime < recurringEnd;
         }
       }
 
       // Vérifier si le créneau est dans une indisponibilité ponctuelle
+      const startTime = new Date(avail.start_time);
+      const endTime = new Date(avail.end_time);
       return slotTime >= startTime && slotTime < endTime;
     });
+
+    return { 
+      available: !blockingAvailability,
+      availability: blockingAvailability
+    };
   };
 
   const renderTimeSlot = (aircraft: Aircraft, hour: number, minute: number) => {
@@ -749,7 +753,18 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   className="relative border-r border-slate-200"
                 >
                   {timeSlots.map(({ hour, minute }) => {
-                    const isAvailable = isInstructorAvailable(instructor.id, hour, minute);
+                    const { available, availability } = isInstructorAvailable(instructor.id, hour, minute);
+                    
+                    // Vérifier si c'est le premier créneau de l'indisponibilité
+                    const isFirstSlotOfAvailability = availability && (
+                      minute === 0 ? 
+                        // Si on est au début d'une heure, vérifier le créneau précédent
+                        !isInstructorAvailable(instructor.id, hour - 1, 45).availability 
+                        : 
+                        // Sinon vérifier le créneau 15 minutes avant
+                        !isInstructorAvailable(instructor.id, hour, minute - 15).availability
+                    );
+                    
                     return (
                       <div
                         key={`${hour}-${minute}`}
@@ -762,16 +777,20 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                             ? "bg-gray-100"
                             : isNightTime(hour, minute)
                             ? "bg-gray-100"
-                            : !isAvailable
+                            : !available
                             ? "bg-red-100"
                             : "bg-white hover:bg-slate-50"
                         } ${
-                          isPastTimeSlot(hour, minute) || !isAvailable ? "cursor-not-allowed" : ""
+                          isPastTimeSlot(hour, minute) || !available ? "cursor-not-allowed" : ""
                         }`}
                         data-time={`${hour}-${minute}`}
                         data-instructor={instructor.id}
-                        title={!isAvailable ? "Instructeur indisponible" : ""}
                       >
+                        {isFirstSlotOfAvailability && (
+                          <div className="absolute left-0 right-0 px-1 text-xs text-red-700 truncate whitespace-nowrap z-10">
+                            {availability.reason || "Indisponible"}
+                          </div>
+                        )}
                         {isFirstNightSlot(hour, minute) && (
                           <div className="absolute -top-1 left-0 w-full flex items-center justify-center">
                             <Moon className="w-3 h-3 text-gray-400" />
