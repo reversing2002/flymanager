@@ -11,7 +11,7 @@ import { fr } from 'date-fns/locale';
 
 interface TimeGridProps {
   selectedDate: Date;
-  onTimeSlotClick: (start: Date, end: Date, aircraft?: Aircraft) => void;
+  onTimeSlotClick: (start: Date, end: Date, aircraft?: Aircraft, instructorId?: string) => void;
   onReservationClick: (reservation: Reservation) => void;
   onReservationUpdate: (reservation: Reservation) => void;
   reservations: Reservation[];
@@ -25,6 +25,7 @@ interface TimeGridProps {
   nightFlightsEnabled: boolean;
   filters?: {
     aircraftTypes?: string[];
+    instructors?: string[];
   };
 }
 
@@ -141,7 +142,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     setTimeSlots(generateTimeSlots());
   }, [selectedDate, clubCoordinates, nightFlightsEnabled]);
 
-  // Filtrer les appareils disponibles en fonction des filtres
+  // Filtrer les appareils disponibles et les instructeurs en fonction des filtres
   const filteredAircraft = useMemo(() => {
     let filtered = aircraft.filter(a => a.status === "AVAILABLE");
     
@@ -151,6 +152,11 @@ const TimeGrid: React.FC<TimeGridProps> = ({
 
     return filtered;
   }, [aircraft, filters?.aircraftTypes]);
+
+  const filteredInstructors = useMemo(() => {
+    if (!filters?.instructors?.length) return [];
+    return users.filter(user => filters.instructors?.includes(user.id));
+  }, [users, filters?.instructors]);
 
   const sortedAircraft = useMemo(() => {
     return [...filteredAircraft].sort((a, b) => {
@@ -554,7 +560,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
             <div
               className="sticky top-0 bg-white z-10 grid"
               style={{
-                gridTemplateColumns: `repeat(${sortedAircraft.length}, minmax(${sortedAircraft.length > 1 ? '150px' : '200px'}, 1fr))`,
+                gridTemplateColumns: `repeat(${sortedAircraft.length + filteredInstructors.length}, minmax(${(sortedAircraft.length + filteredInstructors.length) > 1 ? '150px' : '200px'}, 1fr))`,
               }}
             >
               {sortedAircraft.map((aircraft) => (
@@ -571,12 +577,25 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   </div>
                 </div>
               ))}
+              {filteredInstructors.map((instructor) => (
+                <div
+                  key={`header-instructor-${instructor.id}`}
+                  className="p-2 text-center border-b border-r border-slate-200"
+                >
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="font-medium">{instructor.first_name} {instructor.last_name}</span>
+                    </div>
+                    <span className="text-xs text-slate-500">Instructeur</span>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div
               className="grid"
               style={{
-                gridTemplateColumns: `repeat(${sortedAircraft.length}, minmax(${sortedAircraft.length > 1 ? '150px' : '200px'}, 1fr))`,
+                gridTemplateColumns: `repeat(${sortedAircraft.length + filteredInstructors.length}, minmax(${(sortedAircraft.length + filteredInstructors.length) > 1 ? '150px' : '200px'}, 1fr))`,
               }}
             >
               {sortedAircraft.map((aircraft) => (
@@ -613,18 +632,6 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                           <Moon className="w-3 h-3 text-gray-400" />
                         </div>
                       )}
-                      <div className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {isSlotSelected(hour, minute, aircraft.id)
-                          ? (() => {
-                              const times = getSelectionTimes();
-                              return times
-                                ? `${times.startTime} à ${times.endTime}`
-                                : "";
-                            })()
-                          : `${hour.toString().padStart(2, "0")}:${minute
-                              .toString()
-                              .padStart(2, "0")}`}
-                      </div>
                       {renderTimeSlot(aircraft, hour, minute)}
                     </div>
                   ))}
@@ -632,6 +639,42 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   {getReservationsForAircraft(aircraft.id).map((reservation) =>
                     renderReservation(reservation)
                   )}
+                </div>
+              ))}
+              {filteredInstructors.map((instructor) => (
+                <div
+                  key={`column-instructor-${instructor.id}`}
+                  className="relative border-r border-slate-200"
+                >
+                  {timeSlots.map(({ hour, minute }) => (
+                    <div
+                      key={`${hour}-${minute}`}
+                      className={`h-4 border-b border-slate-100 relative group ${
+                        minute === 45 ? "border-b-2 border-b-slate-200" : ""
+                      } ${
+                        isCurrentTimeSlot(hour, minute)
+                          ? "bg-gray-200"
+                          : isPastTimeSlot(hour, minute)
+                          ? "bg-gray-100"
+                          : isNightTime(hour, minute)
+                          ? "bg-gray-100"
+                          : "bg-white hover:bg-slate-50"
+                      } ${
+                        isPastTimeSlot(hour, minute) ? "cursor-not-allowed" : ""
+                      }`}
+                      data-time={`${hour}-${minute}`}
+                      data-instructor={instructor.id}
+                    >
+                      {isFirstNightSlot(hour, minute) && (
+                        <div className="absolute -top-1 left-0 w-full flex items-center justify-center">
+                          <Moon className="w-3 h-3 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {reservations
+                    .filter(res => res.instructorId === instructor.id)
+                    .map((reservation) => renderReservation(reservation))}
                 </div>
               ))}
             </div>
