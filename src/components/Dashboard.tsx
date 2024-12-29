@@ -430,7 +430,7 @@ const Dashboard = () => {
       if (startTime <= now) return false;
 
       // Filter for valid aircraft
-      const aircraftExists = fleetStats?.aircraft.some(a => a.id === r.aircraftId);
+      const aircraftExists = fleetStats?.aircraft_stats?.some(a => a.id === r.aircraftId);
       if (!aircraftExists) return false;
 
       // Filter for reservations relevant to the current user
@@ -524,7 +524,7 @@ const Dashboard = () => {
         <h2 className="text-lg font-semibold text-slate-900">Mes prochaines réservations</h2>
         <div className="space-y-4">
           {nextReservations.map((reservation) => {
-            const aircraftItem = fleetStats?.aircraft.find(
+            const aircraftItem = fleetStats?.aircraft_stats.find(
               (a) => a.id === reservation.aircraftId
             );
             return (
@@ -612,7 +612,7 @@ const Dashboard = () => {
             setSelectedReservation(null);
             loadAnnouncementsAndSunTimes();
           }}
-          aircraft={fleetStats?.aircraft}
+          aircraft={fleetStats?.aircraft_stats}
           users={memberStats?.users}
           existingReservation={selectedReservation}
         />
