@@ -9,8 +9,11 @@ import {
   getMemberBalance,
 } from "../lib/queries/index";
 import {
-  hasAnyGroup
+  hasAnyGroup,
+  usePermissions,
+  hasPermission
 } from "../lib/permissions";
+import { PERMISSIONS } from "../types/permissions";
 
 import type {
   Aircraft,
@@ -558,11 +561,22 @@ const Dashboard = () => {
       {/* Grille 2 colonnes pour les vols découverte et remarques avions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Vols découverte */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-          <div className="h-[400px] overflow-y-auto">
-            <PendingDiscoveryFlights />
+        {hasPermission(user, PERMISSIONS.DISCOVERY_FLIGHT_VIEW) && (
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-slate-900">Vols découverte en attente</h2>
+              <Link 
+                to="/discovery-flights"
+                className="text-sm text-sky-600 hover:text-sky-700"
+              >
+                Voir tout
+              </Link>
+            </div>
+            <div className="h-[400px] overflow-y-auto">
+              <PendingDiscoveryFlights />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Remarques avions */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
