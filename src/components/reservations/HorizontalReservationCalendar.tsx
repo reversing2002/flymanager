@@ -573,6 +573,14 @@ const HorizontalReservationCalendar = ({
     minutes: number,
     aircraftId: string
   ) => {
+    // Vérifier si le créneau est passé
+    const currentTime = new Date();
+    const slotTime = setMinutes(setHours(selectedDate, hour), minutes);
+    const isPastTime = isToday(selectedDate) && isBefore(slotTime, currentTime);
+
+    // Ne pas permettre la sélection si le créneau est passé
+    if (isPastTime) return;
+
     // Vérifier si une réservation existe déjà à cet emplacement
     const existingReservation = filteredReservations.find((r) => {
       const slotTime = setMinutes(setHours(selectedDate, hour), minutes);
@@ -716,12 +724,17 @@ const HorizontalReservationCalendar = ({
   };
 
   const timeSlotStyle = (hour: number, minutes: number, aircraftId: string) => {
+    const currentTime = new Date();
+    const slotTime = setMinutes(setHours(selectedDate, hour), minutes);
+    const isPastTime = isToday(selectedDate) && isBefore(slotTime, currentTime);
+
     return cn(
       "h-12 border-l border-gray-200 flex-shrink-0",
       {
         "border-l-2 border-l-gray-300": shouldShowBorder(hour, minutes),
         "bg-gray-50": isNightTime(hour, minutes),
-        "bg-blue-100": isSlotSelected(hour, minutes, aircraftId)
+        "bg-blue-100": isSlotSelected(hour, minutes, aircraftId),
+        "bg-gray-200": isPastTime // Ajouter le grisage pour les créneaux passés
       },
       getCellBackground(hour, minutes, aircraftId),
       "w-6" // Ajouter une largeur fixe
@@ -733,80 +746,6 @@ const HorizontalReservationCalendar = ({
       "flex-shrink-0 h-8 border-l border-gray-200 text-xs text-gray-500 flex items-center justify-center",
       shouldShowBorder(hour, minutes) && "border-l-2 border-l-gray-300",
       "w-6" // Ajouter une largeur fixe
-    );
-  };
-
-  const CurrentTimeLine = ({ selectedDate }: { selectedDate: Date }) => {
-    const [position, setPosition] = useState<number>(0);
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-      const updatePosition = () => {
-        const now = new Date();
-        if (!isToday(selectedDate)) return;
-
-        // Obtenir les heures aéronautiques précises
-        const sunTimes = clubCoordinates
-          ? getSunTimes(
-              selectedDate,
-              clubCoordinates.latitude,
-              clubCoordinates.longitude
-            )
-          : null;
-
-        if (!sunTimes) {
-          setIsVisible(false);
-          return;
-        }
-
-        // Calculer l'heure de début du planning en minutes
-        let planningStartMinutes;
-        if (sunTimes) {
-          planningStartMinutes =
-            sunTimes.aeroStart.getHours() * 60 + sunTimes.aeroStart.getMinutes();
-          // Arrondir au quart d'heure inférieur
-          planningStartMinutes = Math.floor(planningStartMinutes / 15) * 15;
-        } else {
-          planningStartMinutes = START_HOUR * 60;
-        }
-
-        // Convertir l'heure actuelle en minutes depuis minuit
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
-        const currentMinutesSinceMidnight = currentHour * 60 + currentMinute;
-
-        // Calculer les minutes depuis le début du planning
-        const minutesSincePlanningStart = currentMinutesSinceMidnight - planningStartMinutes;
-
-        // Masquer la ligne si hors limites de la journée aéronautique
-        if (minutesSincePlanningStart < 0) {
-          setIsVisible(false);
-          return;
-        }
-
-        setIsVisible(true);
-
-        // Calculer la position en pixels
-        const position = (minutesSincePlanningStart / 15) * CELL_WIDTH;
-        setPosition(position);
-      };
-
-      updatePosition();
-      const interval = setInterval(updatePosition, 60000); // Mise à jour toutes les minutes
-
-      return () => clearInterval(interval);
-    }, [selectedDate, clubCoordinates]);
-
-    if (!isToday(selectedDate) || !isVisible) return null;
-
-    return (
-      <div
-        className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-20 pointer-events-none"
-        style={{
-          left: `${position}px`,
-          opacity: 0.75,
-        }}
-      />
     );
   };
 
@@ -917,9 +856,6 @@ const HorizontalReservationCalendar = ({
                   </div>
                 ))}
               </div>
-
-              {/* Ligne de l'heure actuelle */}
-              <CurrentTimeLine selectedDate={selectedDate} />
 
               {/* Grille des réservations */}
               <div className="relative">
