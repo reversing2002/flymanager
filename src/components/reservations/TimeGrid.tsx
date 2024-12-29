@@ -8,6 +8,7 @@ import { getSunTimes } from "../../lib/sunTimes";
 import { supabase } from "../../lib/supabase";
 import toast from 'react-hot-toast';
 import { fr } from 'date-fns/locale';
+import { getAvailabilitiesForPeriod } from "../../lib/queries/availability";
 
 interface TimeGridProps {
   selectedDate: Date;
@@ -166,6 +167,79 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     });
   }, [filteredAircraft, aircraftOrder]);
 
+  const getReservationsForAircraft = (aircraftId: string) => {
+    return reservations.filter((reservation) => {
+      const reservationStart = new Date(reservation.startTime);
+      const reservationEnd = new Date(reservation.endTime);
+      const dayStart = new Date(selectedDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(selectedDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      // Vérifier si la réservation est dans la journée sélectionnée
+      const isInSelectedDay = 
+        (reservationStart <= dayEnd && reservationStart >= dayStart) ||
+        (reservationEnd <= dayEnd && reservationEnd >= dayStart) ||
+        (reservationStart <= dayStart && reservationEnd >= dayEnd);
+
+      // Vérifier si c'est la bonne réservation d'avion
+      return reservation.aircraftId === aircraftId && isInSelectedDay;
+    });
+  };
+
+  const getReservationsForInstructor = (instructorId: string) => {
+    return reservations.filter((reservation) => {
+      const reservationStart = new Date(reservation.startTime);
+      const reservationEnd = new Date(reservation.endTime);
+      const dayStart = new Date(selectedDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(selectedDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      // Vérifier si la réservation est dans la journée sélectionnée
+      const isInSelectedDay = 
+        (reservationStart <= dayEnd && reservationStart >= dayStart) ||
+        (reservationEnd <= dayEnd && reservationEnd >= dayStart) ||
+        (reservationStart <= dayStart && reservationEnd >= dayEnd);
+
+      return reservation.instructorId === instructorId && isInSelectedDay;
+    });
+  };
+
+  const [instructorAvailabilities, setInstructorAvailabilities] = useState<{ [key: string]: Availability[] }>({});
+
+  useEffect(() => {
+    const loadInstructorAvailabilities = async () => {
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const availabilitiesMap: { [key: string]: Availability[] } = {};
+
+      if (filters?.instructors?.length) {
+        await Promise.all(
+          filters.instructors.map(async (instructorId) => {
+            try {
+              const availabilities = await getAvailabilitiesForPeriod(
+                startOfDay.toISOString(),
+                endOfDay.toISOString(),
+                instructorId
+              );
+              availabilitiesMap[instructorId] = availabilities;
+            } catch (error) {
+              console.error(`Error loading availabilities for instructor ${instructorId}:`, error);
+            }
+          })
+        );
+      }
+
+      setInstructorAvailabilities(availabilitiesMap);
+    };
+
+    loadInstructorAvailabilities();
+  }, [selectedDate, filters?.instructors]);
+
   const cleanSelectedDate = new Date(selectedDate);
   cleanSelectedDate.setHours(0, 0, 0, 0);
 
@@ -277,24 +351,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     );
   };
 
-  const getReservationsForAircraft = (aircraftId: string) => {
-    return reservations.filter((reservation) => {
-      const reservationStart = new Date(reservation.startTime);
-      const reservationEnd = new Date(reservation.endTime);
-      const dayStart = new Date(cleanSelectedDate);
-      const dayEnd = new Date(cleanSelectedDate);
-      dayEnd.setHours(23, 59, 59, 999);
-
-      return (
-        reservation.aircraftId === aircraftId &&
-        ((reservationStart <= dayEnd && reservationStart >= dayStart) ||
-          (reservationEnd <= dayEnd && reservationEnd >= dayStart) ||
-          (reservationStart <= dayStart && reservationEnd >= dayEnd))
-      );
-    });
-  };
-
-  const renderReservation = (reservation: Reservation) => {
+  const renderReservation = (reservation: Reservation, isInstructorColumn: boolean = false) => {
     const startTime = new Date(reservation.startTime);
     const endTime = new Date(reservation.endTime);
     const duration = differenceInMinutes(endTime, startTime);
@@ -304,6 +361,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       1;
 
     const pilot = users.find((u) => u.id === reservation.pilotId);
+    const instructor = users.find((u) => u.id === reservation.instructorId);
     const hasAssociatedFlight = flights.some(
       (f) => f.reservationId === reservation.id
     );
@@ -313,15 +371,24 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       bgColor = "bg-emerald-100";
       textColor = "text-emerald-900";
       borderColor = "border-emerald-200";
-    } else if (reservation.instructorId) {
-      bgColor = "bg-amber-100";
-      textColor = "text-amber-900";
-      borderColor = "border-amber-200";
+    } else if (reservation.instructorId && !isInstructorColumn) {
+      const isInstructorSelected = filters?.instructors?.includes(reservation.instructorId);
+      if (isInstructorSelected) {
+        bgColor = "bg-amber-100";
+        textColor = "text-amber-900";
+        borderColor = "border-amber-200";
+      } else {
+        bgColor = "bg-sky-100";
+        textColor = "text-sky-900";
+        borderColor = "border-sky-200";
+      }
     } else {
       bgColor = "bg-sky-100";
       textColor = "text-sky-900";
       borderColor = "border-sky-200";
     }
+
+    const showInstructor = !isInstructorColumn && instructor;
 
     return (
       <div
@@ -339,11 +406,10 @@ const TimeGrid: React.FC<TimeGridProps> = ({
           </div>
           <div className="mt-1 line-clamp-2">
             {pilot ? pilot.first_name : "Pilote inconnu"}
-            {reservation.instructorId && (
+            {showInstructor && (
               <>
                 {" + "}
-                {users.find((u) => u.id === reservation.instructorId)
-                  ?.first_name || "Instructeur inconnu"}
+                {instructor.first_name || "Instructeur inconnu"}
               </>
             )}
           </div>
@@ -433,9 +499,45 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     return (hour < currentHour) || (hour === currentHour && minute < currentMinute);
   };
 
+  const isInstructorAvailable = (instructorId: string, hour: number, minute: number): boolean => {
+    const instructorAvails = instructorAvailabilities[instructorId];
+    if (!instructorAvails?.length) return true;
+
+    const slotTime = new Date(selectedDate);
+    slotTime.setHours(hour, minute, 0, 0);
+
+    return !instructorAvails.some(avail => {
+      const startTime = new Date(avail.start_time);
+      const endTime = new Date(avail.end_time);
+
+      // Vérifier si le créneau est dans une indisponibilité récurrente
+      if (avail.is_recurring && avail.recurrence_pattern) {
+        const dayToNumber: { [key: string]: number } = {
+          'MO': 1, 'TU': 2, 'WE': 3, 'TH': 4, 'FR': 5, 'SA': 6, 'SU': 0
+        };
+
+        const match = avail.recurrence_pattern.match(/BYDAY=([A-Z,]+)/);
+        const recurringDays = match ? match[1].split(',') : [];
+        const currentDayNumber = slotTime.getDay();
+
+        if (recurringDays.some(day => dayToNumber[day] === currentDayNumber)) {
+          const recurringStart = new Date(slotTime);
+          recurringStart.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+          const recurringEnd = new Date(slotTime);
+          recurringEnd.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+
+          return slotTime >= recurringStart && slotTime < recurringEnd;
+        }
+      }
+
+      // Vérifier si le créneau est dans une indisponibilité ponctuelle
+      return slotTime >= startTime && slotTime < endTime;
+    });
+  };
+
   const renderTimeSlot = (aircraft: Aircraft, hour: number, minute: number) => {
-    const slotStart = setMinutes(setHours(selectedDate, hour), minute);
-    const slotEnd = setMinutes(setHours(selectedDate, hour), minute + 30);
+    const slotStart = setMinutes(setHours(new Date(selectedDate), hour), minute);
+    const slotEnd = setMinutes(setHours(new Date(selectedDate), hour), minute + 30);
 
     // Trouver l'indisponibilité qui bloque ce créneau
     const blockingAvailability = availabilities.find((availability) => {
@@ -637,7 +739,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   ))}
 
                   {getReservationsForAircraft(aircraft.id).map((reservation) =>
-                    renderReservation(reservation)
+                    renderReservation(reservation, false)
                   )}
                 </div>
               ))}
@@ -646,35 +748,41 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   key={`column-instructor-${instructor.id}`}
                   className="relative border-r border-slate-200"
                 >
-                  {timeSlots.map(({ hour, minute }) => (
-                    <div
-                      key={`${hour}-${minute}`}
-                      className={`h-4 border-b border-slate-100 relative group ${
-                        minute === 45 ? "border-b-2 border-b-slate-200" : ""
-                      } ${
-                        isCurrentTimeSlot(hour, minute)
-                          ? "bg-gray-200"
-                          : isPastTimeSlot(hour, minute)
-                          ? "bg-gray-100"
-                          : isNightTime(hour, minute)
-                          ? "bg-gray-100"
-                          : "bg-white hover:bg-slate-50"
-                      } ${
-                        isPastTimeSlot(hour, minute) ? "cursor-not-allowed" : ""
-                      }`}
-                      data-time={`${hour}-${minute}`}
-                      data-instructor={instructor.id}
-                    >
-                      {isFirstNightSlot(hour, minute) && (
-                        <div className="absolute -top-1 left-0 w-full flex items-center justify-center">
-                          <Moon className="w-3 h-3 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {reservations
-                    .filter(res => res.instructorId === instructor.id)
-                    .map((reservation) => renderReservation(reservation))}
+                  {timeSlots.map(({ hour, minute }) => {
+                    const isAvailable = isInstructorAvailable(instructor.id, hour, minute);
+                    return (
+                      <div
+                        key={`${hour}-${minute}`}
+                        className={`h-4 border-b border-slate-100 relative group ${
+                          minute === 45 ? "border-b-2 border-b-slate-200" : ""
+                        } ${
+                          isCurrentTimeSlot(hour, minute)
+                            ? "bg-gray-200"
+                            : isPastTimeSlot(hour, minute)
+                            ? "bg-gray-100"
+                            : isNightTime(hour, minute)
+                            ? "bg-gray-100"
+                            : !isAvailable
+                            ? "bg-red-100"
+                            : "bg-white hover:bg-slate-50"
+                        } ${
+                          isPastTimeSlot(hour, minute) || !isAvailable ? "cursor-not-allowed" : ""
+                        }`}
+                        data-time={`${hour}-${minute}`}
+                        data-instructor={instructor.id}
+                        title={!isAvailable ? "Instructeur indisponible" : ""}
+                      >
+                        {isFirstNightSlot(hour, minute) && (
+                          <div className="absolute -top-1 left-0 w-full flex items-center justify-center">
+                            <Moon className="w-3 h-3 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {getReservationsForInstructor(instructor.id).map((reservation) =>
+                    renderReservation(reservation, true)
+                  )}
                 </div>
               ))}
             </div>

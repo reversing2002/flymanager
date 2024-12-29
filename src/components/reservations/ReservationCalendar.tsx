@@ -108,9 +108,12 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
     }
 
     if (filters.instructors.length > 0) {
-      filtered = filtered.filter((r) =>
-        filters.instructors.includes(r.instructorId || "")
-      );
+      filtered = filtered.filter((r) => {
+        // Si la réservation n'a pas d'instructeur, on la garde
+        if (!r.instructorId) return true;
+        // Sinon on vérifie si l'instructeur est dans les filtres
+        return filters.instructors.includes(r.instructorId);
+      });
     }
 
     if (filters.status !== "all") {
