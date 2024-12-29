@@ -796,19 +796,143 @@ async function processNotifications() {
   }
 }
 
+// Fonction pour synchroniser les calendriers des instructeurs
+async function syncInstructorCalendars() {
+  console.log('🗓️ Début de la synchronisation des calendriers...');
+  try {
+    // Récupérer tous les instructeurs avec leurs calendriers Google
+    const { data: instructors, error: instructorsError } = await supabase
+      .from('instructor_calendars')
+      .select(`
+        calendar_id,
+        user_id,
+        members:user_id (
+          club_id
+        )
+      `)
+      .not('calendar_id', 'is', null);
+
+    if (instructorsError) throw instructorsError;
+
+    console.log(`📊 ${instructors?.length || 0} instructeurs avec calendriers trouvés`);
+
+    // Pour chaque instructeur, synchroniser son calendrier
+    for (const instructor of (instructors || [])) {
+      try {
+        console.log(`🔄 Synchronisation du calendrier pour l'instructeur ${instructor.user_id}...`);
+        
+        // Supprimer les anciennes indisponibilités Google Calendar
+        const { error: deleteError } = await supabase
+          .from('availabilities')
+          .delete()
+          .eq('user_id', instructor.user_id)
+          .eq('slot_type', 'unavailability')
+          .like('reason', '[Google Calendar]%');
+
+        if (deleteError) throw deleteError;
+
+        // Récupérer les événements du calendrier
+        const now = new Date();
+        const timeMin = now.toISOString();
+        const timeMax = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString();
+
+        const response = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${instructor.calendar_id}/events?` +
+          new URLSearchParams({
+            key: process.env.VITE_GOOGLE_CALENDAR_API_KEY,
+            timeMin,
+            timeMax,
+            singleEvents: 'true',
+            orderBy: 'startTime'
+          })
+        );
+
+        if (!response.ok) throw new Error(`Erreur API Google Calendar: ${response.statusText}`);
+
+        const data = await response.json();
+        const events = data.items || [];
+
+        // Convertir les événements en indisponibilités
+        const availabilities = events.map(event => ({
+          user_id: instructor.user_id,
+          start_time: new Date(event.start.dateTime || event.start.date),
+          end_time: new Date(event.end.dateTime || event.end.date),
+          slot_type: 'unavailability',
+          is_recurring: false,
+          reason: `[Google Calendar] ${event.summary || 'Indispo'}`,
+          club_id: instructor.members.club_id
+        }));
+
+        // Fusionner les indisponibilités qui se chevauchent
+        const mergedAvailabilities = mergeOverlappingUnavailabilities(availabilities);
+
+        // Insérer par lots de 50
+        const batchSize = 50;
+        for (let i = 0; i < mergedAvailabilities.length; i += batchSize) {
+          const batch = mergedAvailabilities.slice(i, i + batchSize);
+          const { error: batchError } = await supabase
+            .from('availabilities')
+            .insert(batch);
+
+          if (batchError) throw batchError;
+        }
+
+        console.log(`✅ Calendrier synchronisé pour l'instructeur ${instructor.user_id}`);
+      } catch (err) {
+        console.error(`❌ Erreur lors de la synchronisation pour l'instructeur ${instructor.user_id}:`, err);
+      }
+    }
+
+    console.log('✅ Synchronisation des calendriers terminée');
+  } catch (error) {
+    console.error('❌ Erreur lors de la synchronisation des calendriers:', error);
+  }
+}
+
+// Fonction pour fusionner les indisponibilités qui se chevauchent
+function mergeOverlappingUnavailabilities(availabilities) {
+  if (availabilities.length === 0) return [];
+  
+  const sorted = [...availabilities].sort((a, b) => 
+    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+  );
+  
+  const merged = [sorted[0]];
+  
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    const last = merged[merged.length - 1];
+    
+    if (new Date(current.start_time) <= new Date(last.end_time)) {
+      last.end_time = new Date(Math.max(
+        new Date(last.end_time).getTime(),
+        new Date(current.end_time).getTime()
+      ));
+      if (current.reason !== last.reason) {
+        last.reason = `${last.reason} + ${current.reason}`;
+      }
+    } else {
+      merged.push(current);
+    }
+  }
+  
+  return merged;
+}
+
 // Cron job pour traiter les notifications en attente
 console.log('📧 Configuration du cron job pour les notifications...');
 cron.schedule('*/5 * * * *', processNotifications);
 
-// Traiter les notifications au démarrage du serveur
-console.log('📧 Traitement initial des notifications au démarrage...');
-processNotifications();
-
-app.use((req, res, next) => {
-  if (req.originalUrl === '/api/webhooks/stripe') {
-    next();
-  } else {
-    express.json()(req, res, next);
+// Cron job pour synchroniser les calendriers (toutes les 10 minutes entre 7h et 22h)
+console.log('🗓️ Configuration du cron job pour la synchronisation des calendriers...');
+cron.schedule('*/10 7-22 * * *', () => {
+  const now = new Date();
+  const hour = now.getHours();
+  
+  // Double vérification que nous sommes bien dans la plage horaire souhaitée
+  if (hour >= 7 && hour <= 22) {
+    console.log(`🗓️ Lancement de la synchronisation planifiée à ${now.toLocaleTimeString('fr-FR')}`);
+    syncInstructorCalendars();
   }
 });
 
@@ -1155,6 +1279,21 @@ app.post("/api/stripe/create-discovery-flight-session", async (req, res) => {
   } catch (error) {
     console.error('Erreur lors de la création de la session:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Route pour déclencher manuellement la synchronisation des calendriers
+app.post("/api/sync-calendars", async (req, res) => {
+  try {
+    await syncInstructorCalendars();
+    res.json({ success: true, message: 'Synchronisation des calendriers terminée' });
+  } catch (error) {
+    console.error('Erreur lors de la synchronisation manuelle:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur lors de la synchronisation des calendriers',
+      error: error.message 
+    });
   }
 });
 
