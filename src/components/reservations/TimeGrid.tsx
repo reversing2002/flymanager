@@ -264,9 +264,6 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     end.setMinutes(end.getMinutes() + 60); // Par défaut 1h de réservation
     
     onTimeSlotClick(start, end, aircraftId);
-    setIsSelecting(false);
-    setSelectionStart(null);
-    setSelectionEnd(null);
   };
 
   const handleMouseDown = (
@@ -593,7 +590,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       slotClasses.push("hover:bg-gray-100");
     }
 
-    const handleClick = () => {
+    const handleSlotClick = () => {
       if (isUnavailable && blockingAvailability) {
         const start = new Date(blockingAvailability.start_time);
         const end = new Date(blockingAvailability.end_time);
@@ -608,32 +605,17 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       if (reservation) {
         onReservationClick(reservation);
       } else {
-        onTimeSlotClick(slotStart, slotEnd, aircraft);
+        handleClick(hour, minute, aircraft.id);
       }
-    };
-
-    const getSlotTitle = () => {
-      if (isUnavailable && blockingAvailability) {
-        const start = new Date(blockingAvailability.start_time);
-        const end = new Date(blockingAvailability.end_time);
-        const reason = blockingAvailability.reason || "Aucune raison spécifiée";
-        return `Indisponible : ${reason}\nDu ${format(start, "dd/MM/yyyy HH:mm", { locale: fr })} au ${format(end, "dd/MM/yyyy HH:mm", { locale: fr })}`;
-      }
-      if (reservation) {
-        return `Réservé par ${
-          users.find((u) => u.id === reservation.userId)?.name ||
-          "Utilisateur inconnu"
-        }`;
-      }
-      return "Disponible";
     };
 
     return (
       <div
         key={`${aircraft.id}-${hour}-${minute}`}
         className={slotClasses.join(" ")}
-        onClick={handleClick}
-        title={getSlotTitle()}
+        onClick={handleSlotClick}
+        data-time={`${hour}-${minute}`}
+        data-aircraft={aircraft.id}
       />
     );
   };

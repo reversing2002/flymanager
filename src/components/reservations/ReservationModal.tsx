@@ -619,224 +619,221 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-full items-center justify-center p-4 text-center">
-        <div
-          className="fixed inset-0 bg-black bg-opacity-25"
-          onClick={onClose}
-        />
+      <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
+        
+        <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+          <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                {existingReservation ? "Modifier la réservation" : "Nouvelle réservation"}
+              </h3>
+              <button
+                onClick={onClose}
+                className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                <span className="sr-only">Fermer</span>
+                <X className="h-6 w-6" aria-hidden="true" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-4 p-4">
+                {error && (
+                  <div className="mb-4 flex items-center rounded-md bg-red-50 p-3 text-red-700">
+                    <AlertTriangle className="mr-2 h-5 w-5" />
+                    {error}
+                  </div>
+                )}
 
-        <div className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all relative">
-          <div className="absolute top-4 right-4">
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
-            {existingReservation
-              ? "Modifier la réservation"
-              : "Nouvelle réservation"}
-          </h3>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-4 p-4">
-              {error && (
-                <div className="mb-4 flex items-center rounded-md bg-red-50 p-3 text-red-700">
-                  <AlertTriangle className="mr-2 h-5 w-5" />
-                  {error}
+                <div className="space-y-4">
+                  <TimeControl
+                    label="Début"
+                    value={formData.startTime}
+                    onChange={(value) => handleTimeChange('startTime', value)}
+                    disabled={!canModifyReservation()}
+                  />
+                  
+                  <TimeControl
+                    label="Fin"
+                    value={formData.endTime}
+                    onChange={(value) => handleTimeChange('endTime', value)}
+                    disabled={!canModifyReservation()}
+                  />
                 </div>
-              )}
 
-              <div className="space-y-4">
-                <TimeControl
-                  label="Début"
-                  value={formData.startTime}
-                  onChange={(value) => handleTimeChange('startTime', value)}
-                  disabled={!canModifyReservation()}
-                />
-                
-                <TimeControl
-                  label="Fin"
-                  value={formData.endTime}
-                  onChange={(value) => handleTimeChange('endTime', value)}
-                  disabled={!canModifyReservation()}
-                />
-              </div>
-
-              {/* Sélection de l'avion */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Avion
-                </label>
-                <select
-                  name="aircraftId"
-                  value={formData.aircraftId}
-                  onChange={handleInputChange}
-                  disabled={!canModifyReservation()}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                    ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                >
-                  {aircraft
-                    .filter((a) => a.status === "AVAILABLE")
-                    .map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.registration} - {a.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              {/* Type de vol */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Type de vol
-                </label>
-                <select
-                  name="flightTypeId"
-                  value={formData.flightTypeId}
-                  onChange={handleInputChange}
-                  disabled={!canModifyReservation()}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                    ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                >
-                  <option value="">Sélectionnez un type de vol</option>
-                  {flightTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Pilote */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Pilote
-                </label>
-                <select
-                  name="pilotId"
-                  value={formData.pilotId}
-                  onChange={handleInputChange}
-                  disabled={!canModifyReservation()}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                    ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                  required
-                >
-                  <option value="">Sélectionner un pilote</option>
-                  {availablePilots.map((pilot) => (
-                    <option key={pilot.id} value={pilot.id}>
-                      {pilot.first_name} {pilot.last_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Instructeur */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Instructeur
-                </label>
-                <div className="flex gap-2">
+                {/* Sélection de l'avion */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Avion
+                  </label>
                   <select
-                    name="instructorId"
-                    value={formData.instructorId}
-                    onChange={(e) => {
-                      handleInputChange(e);
-                      const instructor = instructors.find(i => i.id === e.target.value);
-                      setSelectedInstructor(instructor || null);
-                    }}
+                    name="aircraftId"
+                    value={formData.aircraftId}
+                    onChange={handleInputChange}
                     disabled={!canModifyReservation()}
                     className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
                       ${!canModifyReservation() ? "bg-gray-100" : ""}`}
                   >
-                    <option value="">Aucun</option>
-                    {instructors.map((instructor) => (
-                      <option key={instructor.id} value={instructor.id}>
-                        {instructor.first_name} {instructor.last_name}
+                    {aircraft
+                      .filter((a) => a.status === "AVAILABLE")
+                      .map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.registration} - {a.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                {/* Type de vol */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Type de vol
+                  </label>
+                  <select
+                    name="flightTypeId"
+                    value={formData.flightTypeId}
+                    onChange={handleInputChange}
+                    disabled={!canModifyReservation()}
+                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                      ${!canModifyReservation() ? "bg-gray-100" : ""}`}
+                  >
+                    <option value="">Sélectionnez un type de vol</option>
+                    {flightTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
                       </option>
                     ))}
                   </select>
-                  {formData.instructorId && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAvailabilityModal(true)}
-                      className="mt-1 inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-sky-700 hover:text-sky-800 hover:bg-sky-50 rounded-md"
+                </div>
+
+                {/* Pilote */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Pilote
+                  </label>
+                  <select
+                    name="pilotId"
+                    value={formData.pilotId}
+                    onChange={handleInputChange}
+                    disabled={!canModifyReservation()}
+                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                      ${!canModifyReservation() ? "bg-gray-100" : ""}`}
+                    required
+                  >
+                    <option value="">Sélectionner un pilote</option>
+                    {availablePilots.map((pilot) => (
+                      <option key={pilot.id} value={pilot.id}>
+                        {pilot.first_name} {pilot.last_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Instructeur */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Instructeur
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      name="instructorId"
+                      value={formData.instructorId}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        const instructor = instructors.find(i => i.id === e.target.value);
+                        setSelectedInstructor(instructor || null);
+                      }}
+                      disabled={!canModifyReservation()}
+                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                        ${!canModifyReservation() ? "bg-gray-100" : ""}`}
                     >
-                      <Calendar className="h-4 w-4" />
-                      <span>Planning</span>
-                    </button>
-                  )}
+                      <option value="">Aucun</option>
+                      {instructors.map((instructor) => (
+                        <option key={instructor.id} value={instructor.id}>
+                          {instructor.first_name} {instructor.last_name}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.instructorId && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAvailabilityModal(true)}
+                        className="mt-1 inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-sky-700 hover:text-sky-800 hover:bg-sky-50 rounded-md"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        <span>Planning</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Commentaires */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Commentaires
+                  </label>
+                  <textarea
+                    name="comments"
+                    value={formData.comments}
+                    onChange={handleInputChange}
+                    disabled={!canModifyReservation()}
+                    rows={2}
+                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                      ${!canModifyReservation() ? "bg-gray-100" : ""}`}
+                  />
                 </div>
               </div>
 
-              {/* Commentaires */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Commentaires
-                </label>
-                <textarea
-                  name="comments"
-                  value={formData.comments}
-                  onChange={handleInputChange}
-                  disabled={!canModifyReservation()}
-                  rows={2}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                    ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-between space-x-3">
-              <div className="flex space-x-3">
-                {existingReservation && canModifyReservation() && (
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={loading}
-                    className={`rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2
-                      ${
-                        loading
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-red-600 hover:bg-red-700 focus:ring-red-500"
-                      }`}
-                  >
-                    {loading ? "En cours..." : "Supprimer"}
-                  </button>
-                )}
-                {existingReservation &&
-                  onCreateFlight &&
-                  canTransformToFlight &&
-                  !hasExistingFlight && (
+              <div className="mt-6 flex justify-between space-x-3">
+                <div className="flex space-x-3">
+                  {existingReservation && canModifyReservation() && (
                     <button
                       type="button"
-                      onClick={() => setShowNewFlightForm(true)}
-                      className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                      onClick={handleDelete}
+                      disabled={loading}
+                      className={`rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2
+                        ${
+                          loading
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                        }`}
                     >
-                      Transformer en vol
+                      {loading ? "En cours..." : "Supprimer"}
                     </button>
                   )}
+                  {existingReservation &&
+                    onCreateFlight &&
+                    canTransformToFlight &&
+                    !hasExistingFlight && (
+                      <button
+                        type="button"
+                        onClick={() => setShowNewFlightForm(true)}
+                        className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                      >
+                        Transformer en vol
+                      </button>
+                    )}
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading || !canModifyReservation()}
+                  className={`rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2
+                    ${
+                      loading || !canModifyReservation()
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+                    }`}
+                >
+                  {loading
+                    ? "En cours..."
+                    : existingReservation
+                    ? "Modifier"
+                    : "Créer"}
+                </button>
               </div>
-              <button
-                type="submit"
-                disabled={loading || !canModifyReservation()}
-                className={`rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2
-                  ${
-                    loading || !canModifyReservation()
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
-                  }`}
-              >
-                {loading
-                  ? "En cours..."
-                  : existingReservation
-                  ? "Modifier"
-                  : "Créer"}
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
       {showAvailabilityModal && selectedInstructor && (

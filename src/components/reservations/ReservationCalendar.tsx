@@ -197,11 +197,11 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
 
   const handleTimeSlotClick = (start: Date, end: Date, aircraftId: string) => {
     if (!isTimeSlotAvailable(start, end, aircraftId)) {
-      // Suppression du toast ici car il est maintenant géré dans le TimeGrid
       return;
     }
     
     setSelectedTimeSlot({ start, end, aircraftId });
+    setSelectedReservation(null);
     setShowReservationModal(true);
   };
 
@@ -209,6 +209,12 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
     setSelectedReservation(reservation);
     setSelectedTimeSlot(null);
     setShowReservationModal(true);
+  };
+
+  const handleModalClose = () => {
+    setShowReservationModal(false);
+    setSelectedTimeSlot(null);
+    setSelectedReservation(null);
   };
 
   const handleCreateFlight = (reservation: Reservation) => {
@@ -554,12 +560,11 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
         <ReservationModal
           startTime={selectedTimeSlot?.start || new Date()}
           endTime={selectedTimeSlot?.end || new Date()}
-          onClose={() => {
-            setShowReservationModal(false);
-            setSelectedTimeSlot(null);
-            setSelectedReservation(null);
+          onClose={handleModalClose}
+          onSuccess={() => {
+            handleModalClose();
+            loadData();
           }}
-          onSuccess={loadData}
           aircraft={aircraft}
           users={users}
           preselectedAircraftId={selectedTimeSlot?.aircraftId}
