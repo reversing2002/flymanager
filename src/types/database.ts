@@ -9,7 +9,7 @@ export interface User {
   first_name: string;
   last_name: string;
   phone_number?: string;
-  avatar_url?: string;
+  image_url?: string;
   default_mode: UserDefaultMode;
   roles: Role[];
   club?: {

@@ -271,8 +271,23 @@ const MemberProfile = () => {
             <div className="bg-white shadow rounded-lg overflow-hidden">
               <div className="px-6 py-8">
                 <div className="flex items-center space-x-6">
-                  <div className="bg-gray-100 rounded-full p-4">
-                    <User className="h-12 w-12 text-gray-400" />
+                  <div className="relative h-20 w-20 rounded-full overflow-hidden">
+                    {pilot?.image_url ? (
+                      <img
+                        src={pilot.image_url}
+                        alt={`Photo de ${pilot.first_name} ${pilot.last_name}`}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '';
+                          e.currentTarget.classList.add('bg-gray-100');
+                          e.currentTarget.parentElement?.classList.add('bg-gray-100');
+                        }}
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+                        <User className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">
