@@ -9,6 +9,8 @@ const { createClient } = require('@supabase/supabase-js');
 const cron = require('node-cron');
 const { format, parseISO } = require('date-fns');
 const { fr } = require('date-fns/locale');
+const ical = require('ical-generator');
+const crypto = require('crypto');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -349,41 +351,39 @@ async function sendConfirmationMessage(flightId, flightDetails) {
 
 // Route pour créer une nouvelle conversation pour un vol découverte
 app.post('/api/conversations/create', async (req, res) => {
+  const { flightId, customerPhone } = req.body;
+  console.log('Création de conversation pour:', { flightId, customerPhone });
+
+  if (!flightId || !customerPhone) {
+    return res.status(400).json({ 
+      error: 'flightId et customerPhone sont requis' 
+    });
+  }
+
+  const conversationUniqueName = `flight_${flightId}`;
+  
   try {
-    console.log('Requête reçue:', req.body);
-    const { flightId, customerPhone } = req.body;
-
-    if (!flightId || !customerPhone) {
-      console.error('Données manquantes:', { flightId, customerPhone });
-      return res.status(400).json({ 
-        error: 'flightId et customerPhone sont requis',
-        receivedData: req.body 
-      });
-    }
-
-    const conversationUniqueName = `flight_${flightId}`;
+    let conversation = await twilioClient.conversations.v1.conversations
+      .list({uniqueName: conversationUniqueName});
     
-    try {
-      let conversation = await twilioClient.conversations.v1
-        .conversations(conversationUniqueName)
-        .fetch();
-      
+    if (conversation.length > 0) {
+      conversation = conversation[0];
       console.log('Conversation existante trouvée:', conversation.sid);
       return res.json({
         success: true,
         conversationSid: conversation.sid,
         message: 'Conversation existante récupérée'
       });
-    } catch (error) {
+    } else {
       console.log('Création d\'une nouvelle conversation...');
-      const conversation = await twilioClient.conversations.v1.conversations.create({
+      const newConversation = await twilioClient.conversations.v1.conversations.create({
         uniqueName: conversationUniqueName,
         friendlyName: `Vol Découverte #${flightId}`
       });
 
       // Ajouter le numéro du client à la conversation
       await twilioClient.conversations.v1
-        .conversations(conversation.sid)
+        .conversations(newConversation.sid)
         .participants
         .create({
           'messagingBinding.address': customerPhone,
@@ -392,23 +392,23 @@ app.post('/api/conversations/create', async (req, res) => {
 
       // Ajouter le numéro de service comme participant
       await twilioClient.conversations.v1
-        .conversations(conversation.sid)
+        .conversations(newConversation.sid)
         .participants
         .create({
           'messagingBinding.address': process.env.TWILIO_PHONE_NUMBER,
           'messagingBinding.proxyAddress': customerPhone
         });
 
-      console.log('Nouvelle conversation créée:', conversation.sid);
-      res.json({
+      console.log('Nouvelle conversation créée:', newConversation.sid);
+      return res.json({
         success: true,
-        conversationSid: conversation.sid,
+        conversationSid: newConversation.sid,
         message: 'Nouvelle conversation créée'
       });
     }
   } catch (error) {
     console.error('Erreur lors de la création de la conversation:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Erreur lors de la création de la conversation',
       details: error.message 
     });
@@ -662,7 +662,7 @@ async function processNotifications() {
           .from('notifications')
           .select(`
             *,
-            user:user_id (
+            users!notifications_user_id_fkey (
               id,
               first_name,
               last_name,
@@ -688,7 +688,7 @@ async function processNotifications() {
         for (const notification of notifications) {
           console.log(`\n📨 Traitement de la notification ${notification.id}...`);
           try {
-            if (!notification.user?.email) {
+            if (!notification.users?.email) {
               console.error(`❌ Email manquant pour l'utilisateur de la notification ${notification.id}`);
               continue;
             }
@@ -711,7 +711,7 @@ async function processNotifications() {
               continue;
             }
 
-            console.log(`📝 Préparation de l'email pour ${notification.user.email}...`);
+            console.log(`📝 Préparation de l'email pour ${notification.users.email}...`);
             console.log(`📋 Template: ${template.name}`);
 
             // Remplacer les variables dans le HTML
@@ -743,8 +743,8 @@ async function processNotifications() {
                   },
                   To: [
                     {
-                      Email: process.env.NODE_ENV === 'production' ? notification.user.email : 'eddy@yopmail.com',
-                      Name: `${notification.user.first_name} ${notification.user.last_name}`
+                      Email: process.env.NODE_ENV === 'production' ? notification.users.email : 'eddy@yopmail.com',
+                      Name: `${notification.users.first_name} ${notification.users.last_name}`
                     }
                   ],
                   Subject: template.subject,
@@ -803,13 +803,7 @@ async function syncInstructorCalendars() {
     // Récupérer tous les instructeurs avec leurs calendriers Google
     const { data: instructors, error: instructorsError } = await supabase
       .from('instructor_calendars')
-      .select(`
-        calendar_id,
-        user_id,
-        members:user_id (
-          club_id
-        )
-      `)
+      .select('*')
       .not('calendar_id', 'is', null);
 
     if (instructorsError) throw instructorsError;
@@ -819,13 +813,31 @@ async function syncInstructorCalendars() {
     // Pour chaque instructeur, synchroniser son calendrier
     for (const instructor of (instructors || [])) {
       try {
-        console.log(`🔄 Synchronisation du calendrier pour l'instructeur ${instructor.user_id}...`);
+        console.log(`🔄 Synchronisation du calendrier pour l'instructeur ${instructor.instructor_id}...`);
         
+        // Récupérer le club_id de l'instructeur
+        const { data: memberData, error: memberError } = await supabase
+          .from('club_members')
+          .select('club_id')
+          .eq('user_id', instructor.instructor_id)
+          .eq('status', 'ACTIVE')
+          .single();
+
+        if (memberError) {
+          console.error(`❌ Erreur lors de la récupération du club pour l'instructeur ${instructor.instructor_id}:`, memberError);
+          continue;
+        }
+
+        if (!memberData?.club_id) {
+          console.error(`❌ L'instructeur ${instructor.instructor_id} n'est associé à aucun club actif`);
+          continue;
+        }
+
         // Supprimer les anciennes indisponibilités Google Calendar
         const { error: deleteError } = await supabase
           .from('availabilities')
           .delete()
-          .eq('user_id', instructor.user_id)
+          .eq('user_id', instructor.instructor_id)
           .eq('slot_type', 'unavailability')
           .like('reason', '[Google Calendar]%');
 
@@ -836,10 +848,14 @@ async function syncInstructorCalendars() {
         const timeMin = now.toISOString();
         const timeMax = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString();
 
+        if (!process.env.GOOGLE_CALENDAR_API_KEY) {
+          throw new Error('Clé API Google Calendar non configurée');
+        }
+
         const response = await fetch(
           `https://www.googleapis.com/calendar/v3/calendars/${instructor.calendar_id}/events?` +
           new URLSearchParams({
-            key: process.env.VITE_GOOGLE_CALENDAR_API_KEY,
+            key: process.env.GOOGLE_CALENDAR_API_KEY,
             timeMin,
             timeMax,
             singleEvents: 'true',
@@ -847,20 +863,23 @@ async function syncInstructorCalendars() {
           })
         );
 
-        if (!response.ok) throw new Error(`Erreur API Google Calendar: ${response.statusText}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Erreur API Google Calendar: ${response.statusText} - ${JSON.stringify(errorData)}`);
+        }
 
         const data = await response.json();
         const events = data.items || [];
 
         // Convertir les événements en indisponibilités
         const availabilities = events.map(event => ({
-          user_id: instructor.user_id,
+          user_id: instructor.instructor_id,
           start_time: new Date(event.start.dateTime || event.start.date),
           end_time: new Date(event.end.dateTime || event.end.date),
           slot_type: 'unavailability',
           is_recurring: false,
           reason: `[Google Calendar] ${event.summary || 'Indispo'}`,
-          club_id: instructor.members.club_id
+          club_id: memberData.club_id
         }));
 
         // Fusionner les indisponibilités qui se chevauchent
@@ -877,9 +896,9 @@ async function syncInstructorCalendars() {
           if (batchError) throw batchError;
         }
 
-        console.log(`✅ Calendrier synchronisé pour l'instructeur ${instructor.user_id}`);
+        console.log(`✅ Calendrier synchronisé pour l'instructeur ${instructor.instructor_id}`);
       } catch (err) {
-        console.error(`❌ Erreur lors de la synchronisation pour l'instructeur ${instructor.user_id}:`, err);
+        console.error(`❌ Erreur lors de la synchronisation pour l'instructeur ${instructor.instructor_id}:`, err);
       }
     }
 
@@ -1297,7 +1316,130 @@ app.post("/api/sync-calendars", async (req, res) => {
   }
 });
 
+// Fonction pour générer un token unique pour un instructeur
+async function generateInstructorCalendarToken(instructorId) {
+  const token = crypto.randomBytes(32).toString('hex');
+  
+  // Sauvegarder le token dans la base de données
+  const { error } = await supabase
+    .from('instructor_calendars')
+    .update({ calendar_token: token })
+    .eq('instructor_id', instructorId);
+    
+  if (error) throw error;
+  
+  return token;
+}
+
+// Fonction pour générer le flux iCal des réservations
+async function generateInstructorCalendar(instructorId) {
+  const calendar = ical({
+    name: '4fly - Réservations',
+    timezone: 'Europe/Paris'
+  });
+
+  try {
+    // Récupérer les réservations de l'instructeur
+    const { data: reservations, error: reservationsError } = await supabase
+      .from('reservations')
+      .select(`
+        *,
+        users!reservations_user_id_fkey (
+          first_name,
+          last_name
+        ),
+        aircrafts (
+          registration
+        )
+      `)
+      .eq('instructor_id', instructorId)
+      .gte('start_time', new Date().toISOString())
+      .order('start_time', { ascending: true });
+
+    if (reservationsError) throw reservationsError;
+
+    // Ajouter chaque réservation au calendrier
+    for (const reservation of (reservations || [])) {
+      calendar.createEvent({
+        start: new Date(reservation.start_time),
+        end: new Date(reservation.end_time),
+        summary: `4fly - ${reservation.aircrafts.registration}`,
+        description: `Élève: ${reservation.users.first_name} ${reservation.users.last_name}\nAvion: ${reservation.aircrafts.registration}\nType: ${reservation.reservation_type}`,
+        location: reservation.departure_airport || 'LFPO',
+        url: `${process.env.FRONTEND_URL}/reservations/${reservation.id}`
+      });
+    }
+
+    return calendar;
+  } catch (error) {
+    console.error('Erreur lors de la génération du calendrier:', error);
+    throw error;
+  }
+}
+
+// Route pour obtenir l'URL du calendrier
+app.post("/api/instructor-calendar/get-url", async (req, res) => {
+  try {
+    const { user_id } = req.body;
+    if (!user_id) {
+      return res.status(400).json({ error: 'ID instructeur requis' });
+    }
+
+    // Générer ou récupérer le token existant
+    let { data: instructor } = await supabase
+      .from('instructor_calendars')
+      .select('calendar_token')
+      .eq('instructor_id', user_id)
+      .single();
+
+    let token = instructor?.calendar_token;
+    if (!token) {
+      token = await generateInstructorCalendarToken(user_id);
+    }
+
+    const calendarUrl = `${process.env.BACKEND_URL}/api/instructor-calendar/${token}/reservations.ics`;
+    
+    return res.json({
+      success: true,
+      calendar_url: calendarUrl,
+      google_calendar_url: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(calendarUrl)}`
+    });
+  } catch (error) {
+    console.error('Erreur lors de la génération de l\'URL du calendrier:', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Route pour accéder au flux iCal
+app.get("/api/instructor-calendar/:token/reservations.ics", async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Vérifier le token et récupérer l'ID de l'instructeur
+    const { data: instructor, error } = await supabase
+      .from('instructor_calendars')
+      .select('instructor_id')
+      .eq('calendar_token', token)
+      .single();
+
+    if (error || !instructor) {
+      return res.status(404).json({ error: 'Calendrier non trouvé' });
+    }
+
+    const calendar = await generateInstructorCalendar(instructor.instructor_id);
+    res.type('text/calendar');
+    return res.send(calendar.toString());
+  } catch (error) {
+    console.error('Erreur lors de la génération du calendrier:', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+  
+  // Synchronisation immédiate des calendriers au démarrage
+  console.log('🗓️ Lancement de la synchronisation initiale des calendriers...');
+  await syncInstructorCalendars();
 });

@@ -8,6 +8,8 @@ import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { getInitials } from "../../lib/utils/avatarUtils";
 import * as Checkbox from "@radix-ui/react-checkbox";
 import "../../styles/checkbox.css";
+import { Button } from "@mui/material";
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 interface EditPilotFormProps {
   pilot: User;
@@ -211,6 +213,28 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   };
 
   const isInstructor = formData.roles.includes("INSTRUCTOR");
+
+  const getCalendarUrl = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/instructor-calendar/get-url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: pilot.id }),
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        window.open(data.google_calendar_url, '_blank');
+      } else {
+        toast.error('Erreur lors de la récupération du lien du calendrier');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      toast.error('Erreur lors de la récupération du lien du calendrier');
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -444,6 +468,14 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                   <Check className="h-5 w-5 mr-2" />
                   Ajouter un calendrier
                 </button>
+                <Button
+                  variant="outlined"
+                  onClick={getCalendarUrl}
+                  className="ml-2"
+                  startIcon={<CalendarMonthIcon />}
+                >
+                  Voir mes réservations dans Google Calendar
+                </Button>
               </div>
             </div>
           )}
