@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Calendar, Plane, Users, Filter, Search } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Calendar, Plane, Users, Filter, Search, RefreshCw } from 'lucide-react';
 import { getAircraft } from '../../lib/queries/aircraft';
 import { getUsers } from '../../lib/queries/users';
 import { hasAnyGroup } from '../../lib/permissions';
 import { useAuth } from '../../contexts/AuthContext';
+import { syncInstructorCalendars } from '../../lib/services/calendarSync';
 import AvailabilityCalendar from './AvailabilityCalendar';
+import { toast } from 'react-hot-toast';
 
 const AvailabilityManagementPage = () => {
   const { user } = useAuth();
@@ -20,6 +22,25 @@ const AvailabilityManagementPage = () => {
 
   // Si l'utilisateur est instructeur mais pas admin, on force son ID
   const effectiveInstructorId = isInstructor && !isAdmin ? user?.id : selectedInstructorId;
+
+  const queryClient = useQueryClient();
+
+  const syncCalendarMutation = useMutation({
+    mutationFn: (instructorId: string) => syncInstructorCalendars(instructorId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['availabilities']);
+      toast.success('Calendriers synchronisés avec succès');
+    },
+    onError: (error) => {
+      console.error('Erreur de synchronisation:', error);
+      toast.error('Erreur lors de la synchronisation des calendriers');
+    }
+  });
+
+  const handleSyncCalendars = async () => {
+    if (!effectiveInstructorId) return;
+    await syncCalendarMutation.mutateAsync(effectiveInstructorId);
+  };
 
   const { data: aircraft = [], isLoading: loadingAircraft } = useQuery({
     queryKey: ['aircraft'],
@@ -57,42 +78,19 @@ const AvailabilityManagementPage = () => {
         </p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`p-2 rounded-lg transition-colors ${
-                showFilters ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <Filter className="h-5 w-5" />
-            </button>
-            
-            <div className="relative">
-              <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Rechercher..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        {showFilters && (
-          <div className="mt-4 p-4 bg-slate-50 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {showFilters && (
+        <div className="mb-6 bg-white rounded-lg shadow p-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Filtre des instructeurs */}
+            {(isAdmin || !isInstructor) && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Instructeur
                 </label>
                 <select
                   value={selectedInstructorId || ''}
                   onChange={(e) => setSelectedInstructorId(e.target.value || null)}
-                  className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">Tous les instructeurs</option>
                   {filteredInstructors.map((instructor) => (
@@ -102,28 +100,60 @@ const AvailabilityManagementPage = () => {
                   ))}
                 </select>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Appareil
-                </label>
-                <select
-                  value={selectedAircraftId || ''}
-                  onChange={(e) => setSelectedAircraftId(e.target.value || null)}
-                  className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                >
-                  <option value="">Tous les appareils</option>
-                  {filteredAircraft.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.registration} - {a.name}
-                    </option>
-                  ))}
-                </select>
+            {/* Filtre des avions */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Avion
+              </label>
+              <select
+                value={selectedAircraftId || ''}
+                onChange={(e) => setSelectedAircraftId(e.target.value || null)}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Tous les avions</option>
+                {filteredAircraft.map((aircraft) => (
+                  <option key={aircraft.id} value={aircraft.id}>
+                    {aircraft.registration} - {aircraft.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Barre de recherche */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Recherche
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher..."
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-10"
+                />
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
             </div>
+
+            {/* Bouton de synchronisation des calendriers */}
+            {effectiveInstructorId && (
+              <div className="flex items-end">
+                <button
+                  onClick={handleSyncCalendars}
+                  disabled={syncCalendarMutation.isLoading}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-5 w-5 mr-2 ${syncCalendarMutation.isLoading ? 'animate-spin' : ''}`} />
+                  Synchroniser les calendriers
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="space-y-6">
         {effectiveInstructorId && (

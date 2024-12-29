@@ -539,9 +539,9 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     const slotStart = setMinutes(setHours(new Date(selectedDate), hour), minute);
     const slotEnd = setMinutes(setHours(new Date(selectedDate), hour), minute + 30);
 
-    // Trouver l'indisponibilité qui bloque ce créneau
+    // Ne garder que les indisponibilités liées à l'avion
     const blockingAvailability = availabilities.find((availability) => {
-      if (availability.aircraft_id && availability.aircraft_id !== aircraft.id) {
+      if (!availability.aircraft_id || availability.aircraft_id !== aircraft.id) {
         return false;
       }
       

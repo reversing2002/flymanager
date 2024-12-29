@@ -37,40 +37,56 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     instructor_fee: pilot.instructor_fee || null,
     password: "",
     confirmPassword: "",
+    calendars: [] as { id: string, name: string }[]
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [newCalendar, setNewCalendar] = useState({ id: "", name: "" });
 
   const availableGroups = SYSTEM_ROLE_GROUPS.ALL;
 
   useEffect(() => {
-    const loadUserGroups = async () => {
-      if (!pilot.id) {
-        console.log("[EditPilotForm] No userId provided, skipping group load");
-        return;
-      }
-      console.log("[EditPilotForm] Loading groups for user:", pilot.id);
+    const loadUserData = async () => {
+      if (!pilot.id) return;
       
       try {
-        const { data, error } = await supabase
+        // Charger les groupes
+        const { data: groupData, error: groupError } = await supabase
           .rpc('get_user_groups', { user_id: pilot.id });
 
-        if (error) {
-          console.error("[EditPilotForm] Error loading user groups:", error);
-          return;
-        }
+        if (groupError) throw groupError;
 
-        // Convertir les groupes en majuscules pour la cohérence
-        const groups = (data || []).map(group => group.toUpperCase());
-        console.log("[EditPilotForm] Loaded user groups:", groups);
-        setFormData(prev => ({ ...prev, roles: groups }));
+        const groups = (groupData || []).map(group => group.toUpperCase());
+        
+        // Charger les calendriers si c'est un instructeur
+        if (groups.includes('INSTRUCTOR')) {
+          const { data: calendarData, error: calendarError } = await supabase
+            .from('instructor_calendars')
+            .select('calendar_id, calendar_name')
+            .eq('instructor_id', pilot.id);
+
+          if (calendarError) throw calendarError;
+
+          setFormData(prev => ({ 
+            ...prev, 
+            roles: groups,
+            calendars: calendarData?.map(cal => ({ 
+              id: cal.calendar_id, 
+              name: cal.calendar_name 
+            })) || []
+          }));
+        } else {
+          setFormData(prev => ({ ...prev, roles: groups }));
+        }
       } catch (err) {
-        console.error("[EditPilotForm] Exception loading user groups:", err);
+        console.error("Erreur lors du chargement des données:", err);
+        setError("Erreur lors du chargement des données");
       }
     };
 
-    loadUserGroups();
+    loadUserData();
   }, [pilot.id]);
 
   const handleChange = (
@@ -107,7 +123,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     setError(null);
 
     try {
-      // Vérification des mots de passe si fournis
+      // Mise à jour du mot de passe si nécessaire
       if (formData.password || formData.confirmPassword) {
         if (formData.password !== formData.confirmPassword) {
           setError("Les mots de passe ne correspondent pas");
@@ -120,7 +136,6 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
           return;
         }
 
-        // Mise à jour du mot de passe
         if (formData.password) {
           const { error: passwordError } = await supabase.auth.updateUser({
             password: formData.password
@@ -131,11 +146,22 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
       }
 
       const dataToSubmit = { ...formData };
-      
-      // Convertir les rôles en majuscules pour correspondre à la base de données
       dataToSubmit.roles = formData.roles.map(role => role.toUpperCase());
 
-      console.log("[EditPilotForm] Full data:", JSON.stringify(dataToSubmit, null, 2));
+      // Mise à jour des calendriers si c'est un instructeur
+      if (dataToSubmit.roles.includes('INSTRUCTOR')) {
+        const { error: calendarError } = await supabase
+          .from('instructor_calendars')
+          .upsert(
+            formData.calendars.map(cal => ({
+              instructor_id: pilot.id,
+              calendar_id: cal.id,
+              calendar_name: cal.name
+            }))
+          );
+
+        if (calendarError) throw calendarError;
+      }
 
       await onSubmit(dataToSubmit);
 
@@ -143,12 +169,10 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
         const { error: groupsError } = await supabase
           .rpc('update_user_groups', {
             p_user_id: pilot.id,
-            p_groups: dataToSubmit.roles  // Utiliser les rôles en majuscules
+            p_groups: dataToSubmit.roles
           });
 
-        if (groupsError) {
-          throw groupsError;
-        }
+        if (groupsError) throw groupsError;
       }
 
       toast.success("Profil mis à jour avec succès");
@@ -191,13 +215,12 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 text-red-800 rounded-lg flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5" />
-          <p>{error}</p>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+          {error}
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex items-center gap-4">
           <div className="relative">
             {formData.image_url ? (
@@ -363,6 +386,66 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                 </div>
               </div>
             </>
+          )}
+
+          {/* Section Calendriers Google (visible uniquement pour les instructeurs) */}
+          {formData.roles.includes('INSTRUCTOR') && (
+            <div className="col-span-2">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Calendriers Google
+              </h3>
+              <div className="space-y-4">
+                {formData.calendars.map((calendar, index) => (
+                  <div key={index} className="flex items-center space-x-4">
+                    <input
+                      type="text"
+                      value={calendar.name}
+                      onChange={(e) => {
+                        const newCalendars = [...formData.calendars];
+                        newCalendars[index].name = e.target.value;
+                        setFormData(prev => ({ ...prev, calendars: newCalendars }));
+                      }}
+                      placeholder="Nom du calendrier"
+                      className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      value={calendar.id}
+                      onChange={(e) => {
+                        const newCalendars = [...formData.calendars];
+                        newCalendars[index].id = e.target.value;
+                        setFormData(prev => ({ ...prev, calendars: newCalendars }));
+                      }}
+                      placeholder="ID du calendrier Google"
+                      className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newCalendars = formData.calendars.filter((_, i) => i !== index);
+                        setFormData(prev => ({ ...prev, calendars: newCalendars }));
+                      }}
+                      className="p-2 text-red-600 hover:text-red-800"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      calendars: [...prev.calendars, { id: "", name: "" }]
+                    }));
+                  }}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <Check className="h-5 w-5 mr-2" />
+                  Ajouter un calendrier
+                </button>
+              </div>
+            </div>
           )}
 
           <div>
