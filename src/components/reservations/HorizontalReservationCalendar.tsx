@@ -288,11 +288,15 @@ const HorizontalReservationCalendar = ({
         setAircraftOrder(order);
       }
 
-      // Ajuster les heures pour la requête en UTC
-      const startTime = new Date(selectedDate);
-      startTime.setHours(0, 0, 0, 0);
-      const endTime = new Date(selectedDate);
-      endTime.setHours(23, 59, 59, 999);
+      // Ajuster les heures pour la requête
+      const startTime = startOfDay(selectedDate);
+      const endTime = endOfDay(selectedDate);
+
+      console.log('Fetching reservations for:', {
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        selectedDate: selectedDate.toISOString()
+      });
 
       const reservationsData = await getReservations(startTime, endTime);
       setReservations(reservationsData);

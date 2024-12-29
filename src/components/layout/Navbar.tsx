@@ -137,7 +137,7 @@ const Navbar = () => {
               )}
               
               {/* Availability Management */}
-              {canAccessFlights  && (
+              {canManageAvailability && (
                 <Link 
                   to="/availability" 
                   className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400"

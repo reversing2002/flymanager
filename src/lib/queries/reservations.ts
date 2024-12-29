@@ -3,10 +3,18 @@ import type { Reservation } from '../../types/database';
 import { v4 as uuidv4 } from 'uuid';
 import { sendReservationConfirmation, scheduleReservationReminder } from '../../services/reservationNotificationService';
 
-export async function getReservations(): Promise<Reservation[]> {
-  const { data, error } = await supabase
+export async function getReservations(startTime?: Date, endTime?: Date): Promise<Reservation[]> {
+  let query = supabase
     .from('reservations')
     .select('*');
+
+  if (startTime && endTime) {
+    query = query
+      .gte('start_time', startTime.toISOString())
+      .lte('end_time', endTime.toISOString());
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return data.map((reservation) => ({
