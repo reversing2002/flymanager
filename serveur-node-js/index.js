@@ -9,7 +9,7 @@ const { createClient } = require('@supabase/supabase-js');
 const cron = require('node-cron');
 const { format, parseISO } = require('date-fns');
 const { fr } = require('date-fns/locale');
-const ical = require('ical-generator');
+const icalGenerator = require('ical-generator');
 const crypto = require('crypto');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
@@ -1320,20 +1320,32 @@ app.post("/api/sync-calendars", async (req, res) => {
 async function generateInstructorCalendarToken(instructorId) {
   const token = crypto.randomBytes(32).toString('hex');
   
-  // Sauvegarder le token dans la base de données
-  const { error } = await supabase
+  // Récupérer tous les calendriers de l'instructeur
+  const { data: calendars, error: fetchError } = await supabase
+    .from('instructor_calendars')
+    .select('*')
+    .eq('instructor_id', instructorId);
+
+  if (fetchError) throw fetchError;
+  
+  if (!calendars || calendars.length === 0) {
+    throw new Error('Aucun calendrier trouvé pour cet instructeur');
+  }
+
+  // Mettre à jour le token pour le premier calendrier
+  const { error: updateError } = await supabase
     .from('instructor_calendars')
     .update({ calendar_token: token })
-    .eq('instructor_id', instructorId);
+    .eq('id', calendars[0].id);
     
-  if (error) throw error;
+  if (updateError) throw updateError;
   
   return token;
 }
 
 // Fonction pour générer le flux iCal des réservations
 async function generateInstructorCalendar(instructorId) {
-  const calendar = ical({
+  const calendar = icalGenerator.default({
     name: '4fly - Réservations',
     timezone: 'Europe/Paris'
   });
@@ -1348,7 +1360,7 @@ async function generateInstructorCalendar(instructorId) {
           first_name,
           last_name
         ),
-        aircrafts (
+        aircraft (
           registration
         )
       `)
@@ -1363,8 +1375,8 @@ async function generateInstructorCalendar(instructorId) {
       calendar.createEvent({
         start: new Date(reservation.start_time),
         end: new Date(reservation.end_time),
-        summary: `4fly - ${reservation.aircrafts.registration}`,
-        description: `Élève: ${reservation.users.first_name} ${reservation.users.last_name}\nAvion: ${reservation.aircrafts.registration}\nType: ${reservation.reservation_type}`,
+        summary: `4fly - ${reservation.aircraft.registration}`,
+        description: `Élève: ${reservation.users.first_name} ${reservation.users.last_name}\nAvion: ${reservation.aircraft.registration}\nType: ${reservation.reservation_type}`,
         location: reservation.departure_airport || 'LFPO',
         url: `${process.env.FRONTEND_URL}/reservations/${reservation.id}`
       });

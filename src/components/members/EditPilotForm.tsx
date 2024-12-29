@@ -216,7 +216,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
 
   const getCalendarUrl = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/instructor-calendar/get-url`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/instructor-calendar/get-url`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -226,7 +226,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
       
       const data = await response.json();
       if (data.success) {
-        window.open(data.google_calendar_url, '_blank');
+        window.open(data.google_calendar_url, '_blank', 'noopener noreferrer');
       } else {
         toast.error('Erreur lors de la récupération du lien du calendrier');
       }
