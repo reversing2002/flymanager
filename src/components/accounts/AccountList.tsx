@@ -25,6 +25,7 @@ import { dateUtils } from "../../lib/utils/dateUtils";
 import { toast } from "react-hot-toast";
 import { hasAnyGroup } from "../../lib/permissions";
 import { supabase } from '../../lib/supabase';
+import { useBackups } from '@/hooks/useBackups';
 
 const AccountList = () => {
   const { user } = useAuth();
@@ -48,6 +49,9 @@ const AccountList = () => {
   const [pendingBalance, setPendingBalance] = useState<number>(0);
 
   const isAdmin = hasAnyGroup(user, ["ADMIN"]);
+
+  const { useCreateBackup } = useBackups();
+  const { mutate: createBackup } = useCreateBackup();
 
   useEffect(() => {
     loadEntries();
@@ -169,11 +173,19 @@ const AccountList = () => {
 
   const handleDelete = async (id: string) => {
     try {
+      // Créer une sauvegarde avant la suppression
+      createBackup({
+        type: 'accounts',
+        description: 'Sauvegarde automatique avant suppression de compte',
+        is_auto: true,
+        data: entries
+      });
+      
       await deleteAccountEntry(id);
       toast.success('Compte supprimé avec succès.');
       loadEntries(); // Recharge les entrées après suppression
-    } catch (error) {
-      toast.error('Erreur lors de la suppression du compte.');
+    } catch (error: any) {
+      toast.error(`Erreur lors de la suppression: ${error.message}`);
     }
   };
 

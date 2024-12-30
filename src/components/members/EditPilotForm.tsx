@@ -466,7 +466,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   <Check className="h-5 w-5 mr-2" />
-                  Ajouter un calendrier
+                  Ajouter un calendrier Google pour mes indisponibilités
                 </button>
                 <Button
                   variant="outlined"
@@ -474,7 +474,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                   className="ml-2"
                   startIcon={<CalendarMonthIcon />}
                 >
-                  Voir mes réservations dans Google Calendar
+                  Exporter mes réservations 4fly dans Google calendar
                 </Button>
               </div>
             </div>

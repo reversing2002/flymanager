@@ -15,6 +15,13 @@ import {
   Users,
   Lock,
   Bell,
+  DatabaseBackup,
+  Briefcase,
+  FileText,
+  User,
+  Building2,
+  Clock,
+  Shield,
 } from "lucide-react";
 import AnnouncementList from "../announcements/AnnouncementList";
 import AnnouncementForm from "../announcements/AnnouncementForm";
@@ -28,6 +35,7 @@ import CustomAircraftFieldsSettings from "../settings/CustomAircraftFieldsSettin
 import CustomFlightFieldsSettings from "../settings/CustomFlightFieldsSettings";
 import RolesSettings from "../settings/RolesSettings";
 import PagePermissionsSettings from "../settings/PagePermissionsSettings";
+import BackupSettings from "../settings/BackupSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -53,7 +61,8 @@ type TabType =
   | "roles"
   | "permissions"
   | "notifications"
-  | "api";
+  | "api"
+  | "backups";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<TabType>("club");
@@ -82,6 +91,7 @@ const SettingsPage = () => {
     { id: "permissions", label: "Permissions", icon: Lock },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "api", label: "API", icon: Terminal },
+    { id: "backups", label: "Sauvegardes", icon: DatabaseBackup },
   ] as const;
 
   useEffect(() => {
@@ -203,6 +213,7 @@ const SettingsPage = () => {
           {activeTab === "roles" && <RolesSettings />}
           {activeTab === "permissions" && <PagePermissionsSettings />}
           {activeTab === "api" && <ApiExplorer />}
+          {activeTab === "backups" && <BackupSettings />}
         </div>
       </div>
     </div>

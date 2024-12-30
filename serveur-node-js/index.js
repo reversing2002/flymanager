@@ -1345,13 +1345,16 @@ async function generateInstructorCalendarToken(instructorId) {
 
 // Fonction pour générer le flux iCal des réservations
 async function generateInstructorCalendar(instructorId) {
+  console.log(`📅 Début de la génération du calendrier ICS pour l'instructeur ${instructorId}`);
   const calendar = icalGenerator.default({
     name: '4fly - Réservations',
     timezone: 'Europe/Paris'
   });
+  console.log('✨ Calendrier ICS initialisé avec les paramètres de base');
 
   try {
     // Récupérer les réservations de l'instructeur
+    console.log('🔍 Recherche des réservations pour l\'instructeur...');
     const { data: reservations, error: reservationsError } = await supabase
       .from('reservations')
       .select(`
@@ -1368,23 +1371,37 @@ async function generateInstructorCalendar(instructorId) {
       .gte('start_time', new Date().toISOString())
       .order('start_time', { ascending: true });
 
-    if (reservationsError) throw reservationsError;
-
-    // Ajouter chaque réservation au calendrier
-    for (const reservation of (reservations || [])) {
-      calendar.createEvent({
-        start: new Date(reservation.start_time),
-        end: new Date(reservation.end_time),
-        summary: `4fly - ${reservation.aircraft.registration}`,
-        description: `Élève: ${reservation.users.first_name} ${reservation.users.last_name}\nAvion: ${reservation.aircraft.registration}\nType: ${reservation.reservation_type}`,
-        location: reservation.departure_airport || 'LFPO',
-        url: `${process.env.FRONTEND_URL}/reservations/${reservation.id}`
-      });
+    if (reservationsError) {
+      console.error('❌ Erreur lors de la récupération des réservations:', reservationsError);
+      throw reservationsError;
     }
 
+    console.log(`📊 ${reservations?.length || 0} réservations trouvées`);
+
+    if (reservations) {
+      for (const reservation of reservations) {
+        console.log(`➕ Ajout de la réservation ${reservation.id} au calendrier`);
+        const studentName = reservation.users ? 
+          `${reservation.users.first_name} ${reservation.users.last_name}` : 
+          'Étudiant inconnu';
+        const aircraft = reservation.aircraft ? 
+          `${reservation.aircraft.registration}` : 
+          'Avion non spécifié';
+
+        calendar.createEvent({
+          start: new Date(reservation.start_time),
+          end: new Date(reservation.end_time),
+          summary: `Vol avec ${studentName}`,
+          description: `Avion: ${aircraft}\nType de vol: ${reservation.flight_type || 'Non spécifié'}`,
+          location: reservation.location || '4fly'
+        });
+      }
+    }
+
+    console.log('✅ Génération du calendrier ICS terminée avec succès');
     return calendar;
   } catch (error) {
-    console.error('Erreur lors de la génération du calendrier:', error);
+    console.error('❌ Erreur lors de la génération du calendrier:', error);
     throw error;
   }
 }
