@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4fly - Annulation de réservation</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f8; font-family: Arial, sans-serif;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f8;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <!-- Container principal -->
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #24272E; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 40px 20px; background-image: linear-gradient(to bottom, #2c3039, #24272E);">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="center" style="padding-bottom: 20px;">
+                                        <span style="font-size: 32px; color: #FFFFFF; font-weight: bold;">4<span style="color: #4F77FF;">fly</span></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="color: #9CA3AF; font-size: 16px; padding-bottom: 20px;">
+                                        Pilotez facilement votre aéroclub
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="color: #E5E7EB; font-size: 24px; font-weight: 600;">
+                                        Annulation de réservation
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Decorative element -->
+                    <tr>
+                        <td style="padding: 0 20px;">
+                            <div style="height: 2px; background-image: linear-gradient(to right, #24272E, #ef4444, #24272E);"></div>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 30px 20px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td style="color: #E5E7EB; padding-bottom: 20px; font-size: 16px; line-height: 1.5;">
+                                        Bonjour {PILOT_NAME},
+                                    </td>
+                                </tr>
+
+                                <!-- Cancellation Message -->
+                                <tr>
+                                    <td style="padding: 20px; background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-bottom: 20px;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td style="color: #E5E7EB;">
+                                                    <img src="https://img.icons8.com/ios-filled/50/ef4444/cancel.png" alt="Cancel" width="16" height="16" style="vertical-align: middle; margin-right: 8px;">
+                                                    <span style="color: #ef4444; font-weight: 600;">Réservation annulée</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="color: #E5E7EB; padding: 20px 0; font-size: 16px; line-height: 1.5;">
+                                        La réservation suivante a été annulée :
+                                    </td>
+                                </tr>
+
+                                <!-- Flight Details -->
+                                <tr>
+                                    <td style="padding: 25px; background-color: #1A1D24; border-radius: 8px; margin: 20px 0;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td style="color: #9CA3AF; padding: 12px 0; border-bottom: 1px solid #2D3139;">
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                        <tr>
+                                                            <td style="color: #9CA3AF;">
+                                                                <img src="https://img.icons8.com/ios-filled/50/9CA3AF/airplane-mode-on.png" alt="Aircraft" width="16" height="16" style="vertical-align: middle; margin-right: 8px;">
+                                                                Appareil
+                                                            </td>
+                                                            <td align="right" style="color: #E5E7EB; font-weight: 600;">{AIRCRAFT}</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #9CA3AF; padding: 12px 0; border-bottom: 1px solid #2D3139;">
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                        <tr>
+                                                            <td style="color: #9CA3AF;">
+                                                                <img src="https://img.icons8.com/ios-filled/50/9CA3AF/type.png" alt="Type" width="16" height="16" style="vertical-align: middle; margin-right: 8px;">
+                                                                Type de vol
+                                                            </td>
+                                                            <td align="right" style="color: #E5E7EB; font-weight: 600;">{FLIGHT_TYPE}</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #9CA3AF; padding: 12px 0; border-bottom: 1px solid #2D3139;">
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                        <tr>
+                                                            <td style="color: #9CA3AF;">
+                                                                <img src="https://img.icons8.com/ios-filled/50/9CA3AF/calendar--v1.png" alt="Start" width="16" height="16" style="vertical-align: middle; margin-right: 8px;">
+                                                                Début
+                                                            </td>
+                                                            <td align="right" style="color: #E5E7EB; font-weight: 600;">{START_TIME}</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #9CA3AF; padding: 12px 0; {INSTRUCTOR_NAME ? 'border-bottom: 1px solid #2D3139;' : ''}">
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                        <tr>
+                                                            <td style="color: #9CA3AF;">
+                                                                <img src="https://img.icons8.com/ios-filled/50/9CA3AF/calendar--v1.png" alt="End" width="16" height="16" style="vertical-align: middle; margin-right: 8px;">
+                                                                Fin
+                                                            </td>
+                                                            <td align="right" style="color: #E5E7EB; font-weight: 600;">{END_TIME}</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            {INSTRUCTOR_NAME ? `
+                                            <tr>
+                                                <td style="color: #9CA3AF; padding: 12px 0;">
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                                        <tr>
+                                                            <td style="color: #9CA3AF;">
+                                                                <img src="https://img.icons8.com/ios-filled/50/9CA3AF/user.png" alt="Instructor" width="16" height="16" style="vertical-align: middle; margin-right: 8px;">
+                                                                Instructeur
+                                                            </td>
+                                                            <td align="right" style="color: #E5E7EB; font-weight: 600;">{INSTRUCTOR_NAME}</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            ` : ''}
+                                        </table>
+                                    </td>
+                                </tr>
+
+                                <!-- Button -->
+                                <tr>
+                                    <td align="center" style="padding-top: 30px;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="border-radius: 8px; background-color: #4F77FF; box-shadow: 0 4px 6px rgba(79, 119, 255, 0.25);">
+                                                    <a href="https://app.4fly.io/reservations/new" 
+                                                       style="color: #ffffff; display: inline-block; padding: 14px 28px; text-decoration: none; font-weight: 600; font-size: 16px;">
+                                                        Faire une nouvelle réservation
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #1A1D24;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="center" style="color: #9CA3AF; font-size: 14px; padding: 20px 0 10px;">
+                                        © 2024 4Fly.io - Tous droits réservés
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="color: #9CA3AF; font-size: 12px; padding-bottom: 30px;">
+                                        Ceci est un message automatique. Pour toute question, contactez le secrétariat de votre club.
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Spacing under the main container -->
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                        <td style="height: 40px;"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

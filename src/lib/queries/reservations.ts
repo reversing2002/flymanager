@@ -1,7 +1,7 @@
 import { supabase } from '../supabase';
 import type { Reservation } from '../../types/database';
 import { v4 as uuidv4 } from 'uuid';
-import { sendReservationConfirmation, scheduleReservationReminder } from '../../services/reservationNotificationService';
+import { sendReservationConfirmation, scheduleReservationReminder, sendReservationModification, sendReservationCancellation } from '../../services/reservationNotificationService';
 
 export async function getReservations(startTime?: Date, endTime?: Date): Promise<Reservation[]> {
   let query = supabase
@@ -114,53 +114,90 @@ export async function createReservation(data: Partial<Reservation>): Promise<voi
   }
 }
 
+// Fonction utilitaire pour convertir snake_case en camelCase
+function toCamelCase(reservation: any): Reservation {
+  return {
+    id: reservation.id,
+    userId: reservation.user_id,
+    pilotId: reservation.pilot_id,
+    aircraftId: reservation.aircraft_id,
+    flightTypeId: reservation.flight_type_id,
+    startTime: reservation.start_time,
+    endTime: reservation.end_time,
+    withInstructor: reservation.with_instructor,
+    instructorId: reservation.instructor_id,
+    status: reservation.status,
+    clubId: reservation.club_id,
+    notes: reservation.notes,
+    createdAt: reservation.created_at,
+    updatedAt: reservation.updated_at
+  };
+}
+
+const toSnakeCase = (data: Partial<Reservation>) => {
+  const snakeCaseData: any = {};
+  Object.entries(data).forEach(([key, value]) => {
+    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    snakeCaseData[snakeKey] = value;
+  });
+  return snakeCaseData;
+};
+
 export async function updateReservation(id: string, data: Partial<Reservation>): Promise<void> {
   try {
-    const { error } = await supabase
+    // Récupérer la réservation actuelle
+    const { data: currentReservation, error: fetchError } = await supabase
       .from('reservations')
-      .update({
-        aircraft_id: data.aircraftId,
-        start_time: data.startTime,
-        end_time: data.endTime,
-        pilot_id: data.pilotId || data.userId,
-        with_instructor: data.withInstructor,
-        instructor_id: data.instructorId || null,
-        comments: data.comments,
-        status: data.status,
-        flight_type_id: data.flightTypeId,
-        updated_at: new Date().toISOString(),
-      })
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Convertir les données en snake_case avant la mise à jour
+    const snakeCaseData = toSnakeCase(data);
+
+    // Mettre à jour la réservation
+    const { error: updateError } = await supabase
+      .from('reservations')
+      .update(snakeCaseData)
       .eq('id', id);
 
-    if (error) {
-      console.error('Error updating reservation:', error);
-      throw error;
-    }
+    if (updateError) throw updateError;
+
+    // Convertir en camelCase avant d'envoyer la notification
+    const camelCaseReservation = toCamelCase(currentReservation);
+    await sendReservationModification(camelCaseReservation, data);
   } catch (error) {
-    console.error('Error in updateReservation:', error);
+    console.error('Erreur lors de la mise à jour de la réservation:', error);
     throw error;
   }
 }
 
 export async function deleteReservation(id: string): Promise<void> {
   try {
-    // First delete any associated flight records
-    const { error: flightError } = await supabase
-      .from('flights')
-      .delete()
-      .eq('reservation_id', id);
+    // Récupérer la réservation avant de la supprimer
+    const { data: reservation, error: fetchError } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (flightError) throw flightError;
+    if (fetchError) throw fetchError;
 
-    // Then delete the reservation
-    const { error: reservationError } = await supabase
+    // Supprimer la réservation
+    const { error: deleteError } = await supabase
       .from('reservations')
       .delete()
       .eq('id', id);
 
-    if (reservationError) throw reservationError;
+    if (deleteError) throw deleteError;
+
+    // Convertir en camelCase avant d'envoyer la notification
+    const camelCaseReservation = toCamelCase(reservation);
+    await sendReservationCancellation(camelCaseReservation);
   } catch (error) {
-    console.error('Error deleting reservation:', error);
+    console.error('Erreur lors de la suppression de la réservation:', error);
     throw error;
   }
 }

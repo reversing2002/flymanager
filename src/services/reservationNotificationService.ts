@@ -1,15 +1,19 @@
 import { supabase } from '../lib/supabase';
-import { createNotification } from './notificationService';
+import { createNotification, getNotificationTemplate, sendEmail, getNotificationSettings } from './notificationService';
 import type { Reservation } from '../types/database';
 import { addHours, subHours } from 'date-fns';
 
-// Templates Mailjet
-const TEMPLATES = {
-  PILOT_CONFIRMATION: 4242424,    // Template pour la confirmation au pilote
-  INSTRUCTOR_CONFIRMATION: 4242425, // Template pour la confirmation à l'instructeur
-  PILOT_REMINDER: 4242426,        // Template pour le rappel au pilote
-  INSTRUCTOR_REMINDER: 4242427    // Template pour le rappel à l'instructeur
-};
+// Types de notifications
+export const NOTIFICATION_TYPES = {
+  PILOT_CONFIRMATION: 'reservation_confirmation_pilot',
+  INSTRUCTOR_CONFIRMATION: 'reservation_confirmation_instructor',
+  PILOT_REMINDER: 'reservation_reminder_pilot',
+  INSTRUCTOR_REMINDER: 'reservation_reminder_instructor',
+  PILOT_MODIFICATION: 'reservation_modification',
+  INSTRUCTOR_MODIFICATION: 'reservation_modification_instructor',
+  PILOT_CANCELLATION: 'reservation_cancellation',
+  INSTRUCTOR_CANCELLATION: 'reservation_cancellation_instructor'
+} as const;
 
 interface ReservationEmailData {
   pilotName: string;
@@ -25,9 +29,38 @@ interface ReservationEmailData {
 async function getReservationEmailData(reservation: Reservation): Promise<ReservationEmailData | null> {
   try {
     console.log('Récupération des données pour l\'email de réservation:', reservation);
+    console.log('Données brutes de la réservation:', JSON.stringify(reservation, null, 2));
+    console.log('Format snake_case:', {
+      pilot_id: reservation.pilot_id,
+      user_id: reservation.user_id,
+      instructor_id: reservation.instructor_id,
+      aircraft_id: reservation.aircraft_id,
+      flight_type_id: reservation.flight_type_id,
+      club_id: reservation.club_id,
+      start_time: reservation.start_time,
+      end_time: reservation.end_time
+    });
+    console.log('Format camelCase:', {
+      pilotId: (reservation as any).pilotId,
+      userId: (reservation as any).userId,
+      instructorId: (reservation as any).instructorId,
+      aircraftId: (reservation as any).aircraftId,
+      flightTypeId: (reservation as any).flightTypeId,
+      clubId: (reservation as any).clubId,
+      startTime: (reservation as any).startTime,
+      endTime: (reservation as any).endTime
+    });
 
-    if (!reservation.pilotId) {
-      console.error('ID du pilote manquant dans la réservation');
+    // Support both camelCase and snake_case formats
+    const pilotId = reservation.pilot_id || (reservation as any).pilotId;
+    const userId = reservation.user_id || (reservation as any).userId;
+    const instructorId = reservation.instructor_id || (reservation as any).instructorId;
+    const aircraftId = reservation.aircraft_id || (reservation as any).aircraftId;
+    const flightTypeId = reservation.flight_type_id || (reservation as any).flightTypeId;
+    const clubId = reservation.club_id || (reservation as any).clubId;
+
+    if (!pilotId && !userId) {
+      console.error('ID du pilote et ID de l\'utilisateur manquants dans la réservation');
       return null;
     }
 
@@ -35,7 +68,7 @@ async function getReservationEmailData(reservation: Reservation): Promise<Reserv
     const { data: pilot, error: pilotError } = await supabase
       .from('users')
       .select('first_name, last_name, email')
-      .eq('id', reservation.pilotId)
+      .eq('id', pilotId || userId)
       .single();
 
     if (pilotError || !pilot) {
@@ -45,12 +78,12 @@ async function getReservationEmailData(reservation: Reservation): Promise<Reserv
 
     // Récupérer les informations de l'instructeur si présent
     let instructor = null;
-    if (reservation.instructorId) {
-      console.log('Récupération des informations de l\'instructeur:', reservation.instructorId);
+    if (instructorId) {
+      console.log('Récupération des informations de l\'instructeur:', instructorId);
       const { data: instructorData, error: instructorError } = await supabase
         .from('users')
         .select('first_name, last_name, email')
-        .eq('id', reservation.instructorId)
+        .eq('id', instructorId)
         .single();
       
       if (instructorError) {
@@ -60,7 +93,7 @@ async function getReservationEmailData(reservation: Reservation): Promise<Reserv
       }
     }
 
-    if (!reservation.aircraftId) {
+    if (!aircraftId) {
       console.error('ID de l\'avion manquant dans la réservation');
       return null;
     }
@@ -69,7 +102,7 @@ async function getReservationEmailData(reservation: Reservation): Promise<Reserv
     const { data: aircraft, error: aircraftError } = await supabase
       .from('aircraft')
       .select('registration')
-      .eq('id', reservation.aircraftId)
+      .eq('id', aircraftId)
       .single();
 
     if (aircraftError || !aircraft) {
@@ -77,7 +110,7 @@ async function getReservationEmailData(reservation: Reservation): Promise<Reserv
       return null;
     }
 
-    if (!reservation.flightTypeId) {
+    if (!flightTypeId) {
       console.error('ID du type de vol manquant dans la réservation');
       return null;
     }
@@ -86,7 +119,7 @@ async function getReservationEmailData(reservation: Reservation): Promise<Reserv
     const { data: flightType, error: flightTypeError } = await supabase
       .from('flight_types')
       .select('name')
-      .eq('id', reservation.flightTypeId)
+      .eq('id', flightTypeId)
       .single();
 
     if (flightTypeError || !flightType) {
@@ -100,8 +133,8 @@ async function getReservationEmailData(reservation: Reservation): Promise<Reserv
       instructorName: instructor ? `${instructor.first_name} ${instructor.last_name}` : undefined,
       instructorEmail: instructor?.email,
       aircraftRegistration: aircraft.registration,
-      startTime: reservation.startTime,
-      endTime: reservation.endTime,
+      startTime: reservation.start_time || (reservation as any).startTime,
+      endTime: reservation.end_time || (reservation as any).endTime,
       flightType: flightType.name
     };
 
@@ -116,6 +149,7 @@ async function getReservationEmailData(reservation: Reservation): Promise<Reserv
 
 export async function sendReservationConfirmation(reservation: Reservation): Promise<void> {
   console.log('Début de l\'envoi de la confirmation de réservation');
+  console.log('Données de la réservation (confirmation):', JSON.stringify(reservation, null, 2));
   
   const emailData = await getReservationEmailData(reservation);
   
@@ -124,7 +158,7 @@ export async function sendReservationConfirmation(reservation: Reservation): Pro
     return;
   }
 
-  if (!reservation.clubId) {
+  if (!reservation.club_id && !(reservation as any).clubId) {
     console.error('ID du club manquant dans la réservation');
     return;
   }
@@ -132,8 +166,8 @@ export async function sendReservationConfirmation(reservation: Reservation): Pro
   // Créer la notification pour le pilote
   try {
     await createNotification({
-      type: 'reservation_confirmation',
-      user_id: reservation.pilotId,
+      type: NOTIFICATION_TYPES.PILOT_CONFIRMATION,
+      user_id: reservation.pilot_id || (reservation as any).pilotId || reservation.user_id || (reservation as any).userId,
       scheduled_date: new Date().toISOString(),
       sent: false,
       variables: {
@@ -144,16 +178,16 @@ export async function sendReservationConfirmation(reservation: Reservation): Pro
         FLIGHT_TYPE: emailData.flightType,
         INSTRUCTOR_NAME: emailData.instructorName || 'Aucun instructeur',
       },
-      club_id: reservation.clubId,
+      club_id: reservation.club_id || (reservation as any).clubId,
     });
 
     console.log('Notification de confirmation créée pour le pilote');
 
     // Si un instructeur est assigné, créer une notification pour lui aussi
-    if (reservation.instructorId && emailData.instructorName && emailData.instructorEmail) {
+    if ((reservation.instructor_id || (reservation as any).instructorId) && emailData.instructorName && emailData.instructorEmail) {
       await createNotification({
-        type: 'reservation_confirmation_instructor',
-        user_id: reservation.instructorId,
+        type: NOTIFICATION_TYPES.INSTRUCTOR_CONFIRMATION,
+        user_id: reservation.instructor_id || (reservation as any).instructorId,
         scheduled_date: new Date().toISOString(),
         sent: false,
         variables: {
@@ -164,7 +198,7 @@ export async function sendReservationConfirmation(reservation: Reservation): Pro
           END_TIME: emailData.endTime,
           FLIGHT_TYPE: emailData.flightType,
         },
-        club_id: reservation.clubId,
+        club_id: reservation.club_id || (reservation as any).clubId,
       });
       console.log('Notification de confirmation créée pour l\'instructeur');
     }
@@ -175,9 +209,10 @@ export async function sendReservationConfirmation(reservation: Reservation): Pro
 
 export async function scheduleReservationReminder(reservation: Reservation): Promise<void> {
   console.log('Planification du rappel de réservation');
+  console.log('Données de la réservation (rappel):', JSON.stringify(reservation, null, 2));
 
   // Vérifier si la réservation est dans moins de 2 heures
-  const reservationTime = new Date(reservation.startTime);
+  const reservationTime = new Date(reservation.start_time || (reservation as any).startTime);
   const now = new Date();
   const twoHoursFromNow = addHours(now, 2);
 
@@ -193,19 +228,19 @@ export async function scheduleReservationReminder(reservation: Reservation): Pro
     return;
   }
 
-  if (!reservation.clubId) {
+  if (!reservation.club_id && !(reservation as any).clubId) {
     console.error('ID du club manquant dans la réservation');
     return;
   }
 
   // Planifier le rappel 2 heures avant le début de la réservation
-  const reminderTime = subHours(new Date(reservation.startTime), 2);
+  const reminderTime = subHours(new Date(reservation.start_time || (reservation as any).startTime), 2);
 
   // Créer la notification pour le pilote
   try {
     await createNotification({
-      type: 'reservation_reminder',
-      user_id: reservation.pilotId,
+      type: NOTIFICATION_TYPES.PILOT_REMINDER,
+      user_id: reservation.pilot_id || (reservation as any).pilotId || reservation.user_id || (reservation as any).userId,
       scheduled_date: reminderTime.toISOString(),
       sent: false,
       variables: {
@@ -216,16 +251,16 @@ export async function scheduleReservationReminder(reservation: Reservation): Pro
         FLIGHT_TYPE: emailData.flightType,
         INSTRUCTOR_NAME: emailData.instructorName || 'Aucun instructeur',
       },
-      club_id: reservation.clubId,
+      club_id: reservation.club_id || (reservation as any).clubId,
     });
 
     console.log('Notification de rappel créée pour le pilote');
 
     // Si un instructeur est assigné, créer également une notification pour lui
-    if (reservation.instructorId && emailData.instructorName && emailData.instructorEmail) {
+    if ((reservation.instructor_id || (reservation as any).instructorId) && emailData.instructorName && emailData.instructorEmail) {
       await createNotification({
-        type: 'reservation_reminder_instructor',
-        user_id: reservation.instructorId,
+        type: NOTIFICATION_TYPES.INSTRUCTOR_REMINDER,
+        user_id: reservation.instructor_id || (reservation as any).instructorId,
         scheduled_date: reminderTime.toISOString(),
         sent: false,
         variables: {
@@ -236,7 +271,7 @@ export async function scheduleReservationReminder(reservation: Reservation): Pro
           END_TIME: emailData.endTime,
           FLIGHT_TYPE: emailData.flightType,
         },
-        club_id: reservation.clubId,
+        club_id: reservation.club_id || (reservation as any).clubId,
       });
 
       console.log('Notification de rappel créée pour l\'instructeur');
@@ -244,5 +279,149 @@ export async function scheduleReservationReminder(reservation: Reservation): Pro
   } catch (error) {
     console.error('Erreur lors de la création des notifications de rappel:', error);
     throw error;
+  }
+}
+
+export async function sendReservationModification(reservation: Reservation, changes: Partial<Reservation>): Promise<void> {
+  try {
+    console.log('Envoi de la notification de modification');
+    console.log('Données de la réservation (modification):', JSON.stringify(reservation, null, 2));
+    console.log('Changements:', JSON.stringify(changes, null, 2));
+    
+    const emailData = await getReservationEmailData(reservation);
+    if (!emailData) return;
+
+    const clubId = reservation.club_id || (reservation as any).clubId;
+    if (!clubId) {
+      console.error('ID du club manquant dans la réservation');
+      return;
+    }
+
+    // Créer la notification pour le pilote
+    await createNotification({
+      type: NOTIFICATION_TYPES.PILOT_MODIFICATION,
+      user_id: reservation.pilot_id || (reservation as any).pilotId || reservation.user_id || (reservation as any).userId,
+      scheduled_date: new Date().toISOString(),
+      sent: false,
+      variables: {
+        PILOT_NAME: emailData.pilotName,
+        AIRCRAFT: emailData.aircraftRegistration,
+        FLIGHT_TYPE: emailData.flightType,
+        START_TIME: emailData.startTime,
+        END_TIME: emailData.endTime,
+        INSTRUCTOR_NAME: emailData.instructorName || '',
+        CHANGES: formatChangesForEmail(changes)
+      },
+      club_id: clubId
+    });
+
+    // Si un instructeur est assigné, créer une notification pour lui aussi
+    if ((reservation.instructor_id || (reservation as any).instructorId) && emailData.instructorEmail) {
+      await createNotification({
+        type: NOTIFICATION_TYPES.INSTRUCTOR_MODIFICATION,
+        user_id: reservation.instructor_id || (reservation as any).instructorId,
+        scheduled_date: new Date().toISOString(),
+        sent: false,
+        variables: {
+          PILOT_NAME: emailData.pilotName,
+          AIRCRAFT: emailData.aircraftRegistration,
+          FLIGHT_TYPE: emailData.flightType,
+          START_TIME: emailData.startTime,
+          END_TIME: emailData.endTime,
+          INSTRUCTOR_NAME: emailData.instructorName,
+          CHANGES: formatChangesForEmail(changes)
+        },
+        club_id: clubId
+      });
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi des notifications de modification:', error);
+  }
+}
+
+function formatChangesForEmail(changes: Partial<Reservation>): string {
+  const translations: Record<string, string> = {
+    startTime: 'Heure de début',
+    endTime: 'Heure de fin',
+    aircraftId: 'Avion',
+    instructorId: 'Instructeur',
+    flightTypeId: 'Type de vol',
+    withInstructor: 'Avec instructeur',
+    comments: 'Commentaires'
+  };
+
+  const formatValue = (key: string, value: any): string => {
+    if (key === 'startTime' || key === 'endTime') {
+      return new Date(value).toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    if (key === 'withInstructor') {
+      return value ? 'Oui' : 'Non';
+    }
+    return value?.toString() || 'Non spécifié';
+  };
+
+  return Object.entries(changes)
+    .filter(([key]) => translations[key]) // Ne garder que les champs qu'on veut afficher
+    .map(([key, value]) => `${translations[key] || key}: ${formatValue(key, value)}`)
+    .join('\n');
+}
+
+export async function sendReservationCancellation(reservation: Reservation): Promise<void> {
+  try {
+    console.log('Envoi de la notification d\'annulation');
+    console.log('Données de la réservation (annulation):', JSON.stringify(reservation, null, 2));
+    
+    const emailData = await getReservationEmailData(reservation);
+    if (!emailData) return;
+
+    const clubId = reservation.club_id || (reservation as any).clubId;
+    if (!clubId) {
+      console.error('ID du club manquant dans la réservation');
+      return;
+    }
+
+    // Créer la notification pour le pilote
+    await createNotification({
+      type: NOTIFICATION_TYPES.PILOT_CANCELLATION,
+      user_id: reservation.pilot_id || (reservation as any).pilotId || reservation.user_id || (reservation as any).userId,
+      scheduled_date: new Date().toISOString(),
+      sent: false,
+      variables: {
+        PILOT_NAME: emailData.pilotName,
+        AIRCRAFT: emailData.aircraftRegistration,
+        FLIGHT_TYPE: emailData.flightType,
+        START_TIME: emailData.startTime,
+        END_TIME: emailData.endTime,
+        INSTRUCTOR_NAME: emailData.instructorName || ''
+      },
+      club_id: clubId
+    });
+
+    // Si un instructeur est assigné, créer une notification pour lui aussi
+    if ((reservation.instructor_id || (reservation as any).instructorId) && emailData.instructorEmail) {
+      await createNotification({
+        type: NOTIFICATION_TYPES.INSTRUCTOR_CANCELLATION,
+        user_id: reservation.instructor_id || (reservation as any).instructorId,
+        scheduled_date: new Date().toISOString(),
+        sent: false,
+        variables: {
+          PILOT_NAME: emailData.pilotName,
+          AIRCRAFT: emailData.aircraftRegistration,
+          FLIGHT_TYPE: emailData.flightType,
+          START_TIME: emailData.startTime,
+          END_TIME: emailData.endTime,
+          INSTRUCTOR_NAME: emailData.instructorName
+        },
+        club_id: clubId
+      });
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi des notifications d\'annulation:', error);
   }
 }
