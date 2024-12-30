@@ -111,27 +111,12 @@ const MetarVisualizer: React.FC<MetarVisualizerProps> = ({ data, userMinima }) =
         </div>
         
         <div className="flex flex-col">
-          <span className="text-sm text-slate-500">Visibilité</span>
-          <span className="text-lg font-medium">{formatVisibility(data.visib)}</span>
+          <span className="text-sm text-slate-500">QNH</span>
+          <span className="text-lg font-medium">
+            {data.altim !== null ? `${data.altim}hPa` : 'N/A'}
+          </span>
         </div>
       </div>
-
-      {/* Affichage des nuages */}
-      {data.clouds && data.clouds.length > 0 && (
-        <div className="mt-4">
-          <span className="text-sm text-slate-500">Couverture nuageuse</span>
-          <div className="flex flex-col gap-1 mt-1">
-            {data.clouds.map((cloud, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Cloud className="h-4 w-4 text-slate-400" />
-                <span className="text-sm">
-                  {cloud.cover.toUpperCase()} {cloud.base !== null ? `à ${cloud.base}ft` : ''}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* METAR brut */}
       <div className="mt-4 pt-4 border-t border-slate-100">
