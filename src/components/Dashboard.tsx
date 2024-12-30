@@ -34,6 +34,7 @@ import { format } from "date-fns";
 import SunTimesDisplay from "./common/SunTimesDisplay";
 import AircraftRemarks from "./remarks/AircraftRemarks";
 import PendingDiscoveryFlights from "./discovery/PendingDiscoveryFlights";
+import WeatherWidget from "./weather/WeatherWidget";
 
 const StatCard = ({
   icon,
@@ -596,7 +597,12 @@ const Dashboard = () => {
       </div>
 
       {/* Autres sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        {/* Widget Météo */}
+        <div className="col-span-1">
+          <WeatherWidget />
+        </div>
+        
         {/* Messages récents */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
 

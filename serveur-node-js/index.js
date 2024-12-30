@@ -1464,6 +1464,92 @@ app.get("/api/instructor-calendar/:token/reservations.ics", async (req, res) => 
   }
 });
 
+// Route pour récupérer les données météo
+app.get('/api/weather', async (req, res) => {
+  try {
+    const { bbox, date } = req.query;
+    
+    // Headers complets comme un navigateur
+    const headers = {
+      'accept': '*/*',
+      'accept-language': 'en-US,en;q=0.9',
+      'cache-control': 'no-cache',
+      'pragma': 'no-cache',
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"macOS"',
+      'sec-fetch-dest': 'empty',
+      'sec-fetch-mode': 'cors',
+      'sec-fetch-site': 'same-origin',
+    };
+
+    // Construire l'URL exactement comme dans l'exemple
+    const url = `https://aviationweather.gov/api/data/metar?format=json&taf=true&bbox=${encodeURIComponent(bbox)}&date=${encodeURIComponent(date)}`;
+    
+    console.log('Requête météo:', {
+      url,
+      headers,
+      params: { bbox, date }
+    });
+
+    const response = await fetch(url, { 
+      headers,
+      method: 'GET'
+    });
+
+    // Récupérer les headers de la réponse
+    const responseHeaders = Object.fromEntries(response.headers.entries());
+    console.log('Headers de réponse:', responseHeaders);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Erreur API météo:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: responseHeaders,
+        error: errorText
+      });
+      throw new Error(`Erreur ${response.status}: ${errorText}`);
+    }
+
+    // Récupérer et logger le contenu brut avant de le parser
+    const rawText = await response.text();
+    console.log('Réponse brute:', rawText);
+
+    let data;
+    try {
+      data = JSON.parse(rawText);
+      // Log détaillé de la structure des données
+      if (Array.isArray(data) && data.length > 0) {
+        console.log('Structure du premier élément:', {
+          keys: Object.keys(data[0]),
+          sample: data[0],
+          metar: data[0].metar ? Object.keys(data[0].metar) : 'pas de metar',
+          taf: data[0].taf ? Object.keys(data[0].taf) : 'pas de taf'
+        });
+      }
+    } catch (e) {
+      console.error('Erreur de parsing JSON:', e);
+      throw new Error('La réponse n\'est pas un JSON valide');
+    }
+
+    console.log('Données météo reçues:', {
+      count: Array.isArray(data) ? data.length : 0,
+      sample: Array.isArray(data) && data.length > 0 ? data[0] : null,
+      type: typeof data
+    });
+
+    res.json(data);
+  } catch (error) {
+    console.error('Erreur météo complète:', error);
+    res.status(500).json({ 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
