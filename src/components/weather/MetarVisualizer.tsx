@@ -2,6 +2,8 @@ import React from 'react';
 import { Cloud, CloudDrizzle, CloudLightning, CloudRain, CloudSnow, Sun, Wind, Clock } from 'lucide-react';
 import type { WeatherData } from '../../types/weather';
 import FlightConditions from './FlightConditions';
+import TafVisualizer from './TafVisualizer';
+import MetarText from './MetarText';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -120,8 +122,11 @@ const MetarVisualizer: React.FC<MetarVisualizerProps> = ({ data, userMinima }) =
 
       {/* METAR brut */}
       <div className="mt-4 pt-4 border-t border-slate-100">
-        <span className="text-xs font-mono text-slate-500 break-all">{data.rawOb}</span>
+        <MetarText metar={data.rawOb} />
       </div>
+
+      {/* TAF si disponible */}
+      {data.rawTaf && <TafVisualizer rawTaf={data.rawTaf} />}
     </div>
   );
 };

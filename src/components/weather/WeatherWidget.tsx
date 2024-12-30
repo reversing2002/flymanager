@@ -4,7 +4,9 @@ import { supabase } from '../../lib/supabase';
 import type { WeatherData } from '../../types/weather';
 import MetarVisualizer from './MetarVisualizer';
 import FlightConditions from './FlightConditions';
-import { Loader2 } from 'lucide-react';
+import TafVisualizer from './TafVisualizer';
+import MetarText from './MetarText'; // Import MetarText
+import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 
 const WeatherWidget = () => {
   const [loading, setLoading] = useState(true);
@@ -22,6 +24,8 @@ const WeatherWidget = () => {
       visibility: 5000, // 5000 m
     }
   });
+
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     const loadUserMinima = async () => {
@@ -178,41 +182,62 @@ const WeatherWidget = () => {
       {/* Station la plus proche avec visualisation détaillée */}
       <MetarVisualizer data={weatherData[0]} userMinima={userMinima} />
       
-      {/* Liste des autres stations proches */}
-      {weatherData.length > 1 && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold mb-4">Autres aérodromes proches</h3>
-          <div className="space-y-4">
-            {weatherData.slice(1).map((station) => (
-              <div key={station.metar_id} className="border-b pb-4 last:border-b-0">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <FlightConditions 
-                        data={station} 
-                        userMinima={userMinima}
-                        compact={true} 
-                      />
-                      <h4 className="font-medium">{station.icaoId}</h4>
-                    </div>
-                    <p className="text-sm text-gray-600">{station.name.split(',')[0]}</p>
+      {/* Aérodromes proches */}
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-4">Autres aérodromes proches</h3>
+        <div className="space-y-4">
+          {weatherData.slice(1, expanded ? undefined : 3).map((station) => (
+            <div key={station.metar_id} className="border-b pb-4 last:border-b-0">
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <FlightConditions 
+                      data={station} 
+                      userMinima={userMinima}
+                      compact={true} 
+                    />
+                    <h4 className="font-medium">{station.icaoId}</h4>
                   </div>
-                  <div className="text-right">
-                    {station.temp !== null && (
-                      <span className="text-lg font-semibold">
-                        {station.temp}°C
-                      </span>
-                    )}
-                  </div>
+                  <p className="text-sm text-gray-600">{station.name.split(',')[0]}</p>
                 </div>
-                <p className="font-mono text-sm text-gray-600 break-all mt-2">
-                  {station.rawOb}
-                </p>
+                <div className="text-right">
+                  {station.temp !== null && (
+                    <span className="text-lg font-semibold">
+                      {station.temp}°C
+                    </span>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
+              <div className="mt-2">
+                <MetarText metar={station.rawOb} compact={true} />
+              </div>
+              {station.rawTaf && (
+                <div className="mt-2 pt-2 border-t border-slate-100">
+                  <TafVisualizer rawTaf={station.rawTaf} compact={true} />
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-      )}
+        {weatherData.length > 3 && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="mt-4 w-full flex items-center justify-center gap-2 py-2 px-4 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
+          >
+            {expanded ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                Voir moins d'aérodromes
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                Voir {weatherData.length - 3} aérodromes supplémentaires
+              </>
+            )}
+          </button>
+        )}
+      </div>
     </div>
   );
 };
