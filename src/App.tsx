@@ -51,6 +51,7 @@ import InvoicesPage from "./pages/InvoicesPage";
 import PassengerInfoForm from "./components/discovery/PassengerInfoForm";
 import PassengerInfoConfirmation from "./components/discovery/PassengerInfoConfirmation";
 import DiscoveryFlightClientPage from "./pages/DiscoveryFlightClientPage";
+import Weather from './pages/Weather';
 
 function App() {
   const queryClient = new QueryClient({
@@ -320,6 +321,16 @@ function App() {
                 element={
                   <ProtectedRoute roles={["admin"]}>
                     <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Weather */}
+              <Route
+                path="weather"
+                element={
+                  <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
+                    <Weather />
                   </ProtectedRoute>
                 }
               />
