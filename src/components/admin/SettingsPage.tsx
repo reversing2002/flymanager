@@ -22,6 +22,8 @@ import {
   Building2,
   Clock,
   Shield,
+  Cloud,
+  ChevronDown,
 } from "lucide-react";
 import AnnouncementList from "../announcements/AnnouncementList";
 import AnnouncementForm from "../announcements/AnnouncementForm";
@@ -44,6 +46,7 @@ import FlightTypeManager from "./FlightTypeManager";
 import AccountingCategoryManager from "./AccountingCategoryManager";
 import ImportManager from "./imports/ImportManager";
 import NotificationList from "./NotificationList";
+import WeatherSettings from "./WeatherSettings";
 
 type TabType =
   | "club"
@@ -62,7 +65,8 @@ type TabType =
   | "permissions"
   | "notifications"
   | "api"
-  | "backups";
+  | "backups"
+  | "weather";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<TabType>("club");
@@ -70,6 +74,7 @@ const SettingsPage = () => {
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] =
     useState<Announcement | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const tabs = [
     // Gestion du club
@@ -78,6 +83,7 @@ const SettingsPage = () => {
     // Imports
     { id: "imports", label: "Imports", icon: Upload },
     // Configuration
+    { id: "weather", label: "Seuils météo", icon: Cloud },
     { id: "flightTypes", label: "Types de vol", icon: ListOrdered },
     { id: "accountTypes", label: "Types de compte", icon: Receipt },
     { id: "accountingCategories", label: "Catégories comptables", icon: Calculator },
@@ -109,98 +115,180 @@ const SettingsPage = () => {
     }
   };
 
+  const handleAnnouncementSave = async (announcement: Partial<Announcement>) => {
+    try {
+      if (editingAnnouncement) {
+        // Mise à jour
+        const { error } = await supabase
+          .from('announcements')
+          .update({
+            ...announcement,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingAnnouncement.id);
+
+        if (error) throw error;
+        toast.success('Annonce mise à jour');
+      } else {
+        // Création
+        const { error } = await supabase
+          .from('announcements')
+          .insert({
+            ...announcement,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+
+        if (error) throw error;
+        toast.success('Annonce créée');
+      }
+
+      setShowAnnouncementForm(false);
+      setEditingAnnouncement(null);
+      loadAnnouncements();
+    } catch (error) {
+      console.error('Error saving announcement:', error);
+      toast.error('Erreur lors de la sauvegarde de l\'annonce');
+    }
+  };
+
+  const handleAnnouncementDelete = async (id: number) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('Annonce supprimée');
+      loadAnnouncements();
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      toast.error('Erreur lors de la suppression de l\'annonce');
+    }
+  };
+
   const handleEditAnnouncement = (announcement: Announcement) => {
     setEditingAnnouncement(announcement);
     setShowAnnouncementForm(true);
   };
 
-  const handleDeleteAnnouncement = async (id: string) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette annonce ?")) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("announcements")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setAnnouncements((prev) => prev.filter((a) => a.id !== id));
-      toast.success("Annonce supprimée");
-    } catch (err) {
-      console.error("Error deleting announcement:", err);
-      toast.error("Erreur lors de la suppression");
-    }
-  };
-
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <div className="bg-white rounded-xl shadow-sm">
-        <div className="p-6 border-b">
-          <h1 className="text-2xl font-bold text-slate-900">Paramètres</h1>
-          <p className="text-slate-600">Configuration et imports</p>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center gap-2 mb-8">
+        <Building2 className="h-6 w-6 text-blue-600" />
+        <h1 className="text-2xl font-bold text-slate-900">Paramètres</h1>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[250px,1fr] gap-8">
+        {/* Menu mobile */}
+        <div className="lg:hidden">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium bg-white border rounded-lg shadow-sm hover:bg-slate-50"
+          >
+            <div className="flex items-center gap-2">
+              {(() => {
+                const activeTabData = tabs.find(tab => tab.id === activeTab);
+                if (activeTabData) {
+                  const Icon = activeTabData.icon;
+                  return <Icon className="h-4 w-4" />;
+                }
+                return null;
+              })()}
+              <span>{tabs.find(tab => tab.id === activeTab)?.label}</span>
+            </div>
+            <ChevronDown className={`h-4 w-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {isMenuOpen && (
+            <div className="absolute z-10 mt-2 w-[calc(100%-2rem)] bg-white border rounded-lg shadow-lg">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id as TabType);
+                      setIsMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-medium ${
+                      activeTab === tab.id
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        <div className="border-b overflow-x-auto">
-          <nav className="flex -mb-px min-w-full">
-            {tabs.map(({ id, label, icon: Icon }) => (
+        {/* Menu desktop */}
+        <div className="hidden lg:block space-y-1">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
               <button
-                key={id}
-                onClick={() => setActiveTab(id as TabType)}
-                className={`flex items-center gap-1 px-3 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                  activeTab === id
-                    ? "border-sky-500 text-sky-600"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg ${
+                  activeTab === tab.id
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-slate-700 hover:bg-slate-50"
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                <span>{label}</span>
+                {tab.label}
               </button>
-            ))}
-          </nav>
+            );
+          })}
         </div>
 
-        <div className="p-6">
+        {/* Contenu */}
+        <div className="bg-white rounded-xl shadow-sm">
           {activeTab === "club" && <ClubManagement />}
           {activeTab === "announcements" && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Annonces du club</h2>
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold text-slate-900">Annonces</h2>
                 <button
-                  onClick={() => setShowAnnouncementForm(true)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors flex items-center gap-2"
+                  onClick={() => {
+                    setEditingAnnouncement(null);
+                    setShowAnnouncementForm(true);
+                  }}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  <Megaphone className="h-4 w-4" />
-                  <span>Nouvelle annonce</span>
+                  Nouvelle annonce
                 </button>
               </div>
 
-              <AnnouncementList
-                announcements={announcements}
-                onEdit={handleEditAnnouncement}
-                onDelete={handleDeleteAnnouncement}
-              />
-
               {showAnnouncementForm && (
                 <AnnouncementForm
+                  onClose={() => setShowAnnouncementForm(false)}
+                  onSave={handleAnnouncementSave}
                   announcement={editingAnnouncement}
-                  onClose={() => {
-                    setShowAnnouncementForm(false);
-                    setEditingAnnouncement(null);
-                  }}
-                  onSuccess={() => {
-                    setShowAnnouncementForm(false);
-                    setEditingAnnouncement(null);
-                    loadAnnouncements();
-                  }}
                 />
               )}
+
+              <AnnouncementList
+                announcements={announcements}
+                onEdit={(announcement) => {
+                  setEditingAnnouncement(announcement);
+                  setShowAnnouncementForm(true);
+                }}
+                onDelete={handleAnnouncementDelete}
+              />
             </div>
           )}
-          {activeTab === "notifications" && <NotificationList />}
           {activeTab === "imports" && <ImportManager />}
+          {activeTab === "weather" && <WeatherSettings />}
           {activeTab === "flightTypes" && <FlightTypeManager />}
           {activeTab === "accountTypes" && <AccountTypesSettings />}
           {activeTab === "accountingCategories" && <AccountingCategoryManager />}
@@ -212,6 +300,7 @@ const SettingsPage = () => {
           {activeTab === "flightFields" && <CustomFlightFieldsSettings />}
           {activeTab === "roles" && <RolesSettings />}
           {activeTab === "permissions" && <PagePermissionsSettings />}
+          {activeTab === "notifications" && <NotificationList />}
           {activeTab === "api" && <ApiExplorer />}
           {activeTab === "backups" && <BackupSettings />}
         </div>
