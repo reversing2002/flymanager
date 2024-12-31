@@ -19,7 +19,8 @@ import {
   CheckCheck,
   ClipboardCheck,
   FileCheck,
-  FileX
+  FileX,
+  Lock
 } from 'lucide-react';
 import { 
   Button,
@@ -29,7 +30,8 @@ import {
   Tooltip,
   IconButton,
   SimpleGrid,
-  Box
+  Box,
+  HStack
 } from '@chakra-ui/react';
 import type { DiscoveryFlight } from '../../types/discovery';
 import { supabase } from '../../lib/supabase';
@@ -38,10 +40,10 @@ import NewDiscoveryFlightModal from './NewDiscoveryFlightModal';
 import ReservationModal from '../reservations/ReservationModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { hasAnyGroup } from '../../lib/permissions';
-import CreateDiscoveryNoteModal from './CreateDiscoveryNoteModal';
 import DiscoveryNotes from './DiscoveryNotes';
 import DiscoveryFlightChatModal from './DiscoveryFlightChatModal';
 import HorizontalReservationCalendar from '../reservations/HorizontalReservationCalendar';
+import DiscoveryPrivateNotes from './DiscoveryPrivateNotes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, UserPlus, Plane } from 'lucide-react';
 
@@ -58,12 +60,9 @@ const DiscoveryFlightList: React.FC<DiscoveryFlightListProps> = ({ viewMode = 'l
   const [showMyFlights, setShowMyFlights] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [discoveryFlightTypeId] = useState<string>('77777777-3333-3333-3333-333333333333');
-  const [selectedNoteType, setSelectedNoteType] = useState<'CLIENT_COMMUNICATION' | 'INTERNAL' | null>(null);
   const [expandedNotes, setExpandedNotes] = useState<{ [key: string]: boolean }>({});
-  const [quickNotes, setQuickNotes] = useState<{ [key: string]: string }>({});
   const { isOpen: isNewFlightOpen, onOpen: onNewFlightOpen, onClose: onNewFlightClose } = useDisclosure();
   const { isOpen: isReservationOpen, onOpen: onReservationOpen, onClose: onReservationClose } = useDisclosure();
-  const { isOpen: isNotesOpen, onOpen: onNotesOpen, onClose: onNotesClose } = useDisclosure();
   const { isOpen: isChatOpen, onOpen: onChatOpen, onClose: onChatClose } = useDisclosure();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -125,6 +124,7 @@ const DiscoveryFlightList: React.FC<DiscoveryFlightListProps> = ({ viewMode = 'l
   const { data: notesMap } = useQuery({
     queryKey: ['discoveryNotes'],
     queryFn: async () => {
+      // D'abord, récupérer toutes les notes
       const { data: notes, error: notesError } = await supabase
         .from('discovery_notes')
         .select('*')
@@ -132,14 +132,20 @@ const DiscoveryFlightList: React.FC<DiscoveryFlightListProps> = ({ viewMode = 'l
 
       if (notesError) throw notesError;
 
-      // Récupérer les auteurs
-      const authorIds = [...new Set(notes.map(note => note.author_id))];
-      const { data: authors, error: authorsError } = await supabase
-        .from('users')
-        .select('id, first_name, last_name')
-        .in('id', authorIds);
+      // Récupérer les auteurs uniques
+      const authorIds = [...new Set(notes.filter(note => note.author_id).map(note => note.author_id))];
+      
+      // Récupérer les informations des auteurs si nécessaire
+      let authors = [];
+      if (authorIds.length > 0) {
+        const { data: authorsData, error: authorsError } = await supabase
+          .from('users')
+          .select('id, first_name, last_name')
+          .in('id', authorIds);
 
-      if (authorsError) throw authorsError;
+        if (authorsError) throw authorsError;
+        authors = authorsData || [];
+      }
 
       // Créer un map des auteurs pour un accès rapide
       const authorsMap = new Map(authors.map(author => [author.id, author]));
@@ -147,14 +153,16 @@ const DiscoveryFlightList: React.FC<DiscoveryFlightListProps> = ({ viewMode = 'l
       // Organiser les notes par vol avec les informations d'auteur
       const map = new Map();
       notes.forEach(note => {
+        const noteWithAuthor = {
+          ...note,
+          author: note.author_id ? authorsMap.get(note.author_id) : null
+        };
         if (!map.has(note.flight_id)) {
           map.set(note.flight_id, []);
         }
-        map.get(note.flight_id).push({
-          ...note,
-          author: authorsMap.get(note.author_id)
-        });
+        map.get(note.flight_id).push(noteWithAuthor);
       });
+
       return map;
     }
   });
@@ -208,82 +216,9 @@ Dates préférées : ${flight.preferred_dates}`;
     return comment;
   };
 
-  // Fonction pour gérer l'ajout rapide de note
-  const handleQuickNoteSubmit = async (flightId: string, type: 'CLIENT_COMMUNICATION' | 'INTERNAL') => {
-    if (!quickNotes[flightId]?.trim() || !user?.id) return;
-
-    try {
-      const { data: note, error } = await supabase
-        .from('discovery_notes')
-        .insert({
-          flight_id: flightId,
-          content: quickNotes[flightId].trim(),
-          type,
-          author_id: user.id,
-          notification_settings: {
-            email_sent: false,
-            sms_sent: false
-          }
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Réinitialiser le champ de note rapide
-      setQuickNotes(prev => ({
-        ...prev,
-        [flightId]: ''
-      }));
-
-      // Rafraîchir les notes
-      queryClient.invalidateQueries(['discoveryNotes']);
-      toast.success('Note ajoutée avec succès');
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout de la note:', error);
-      toast.error('Erreur lors de l\'ajout de la note');
-    }
-  };
-
-  const handleSubmit = async (content: string, type: 'CLIENT_COMMUNICATION' | 'INTERNAL', sendEmail: boolean, sendSMS: boolean) => {
-    if (!selectedFlight || !user?.id) return;
-
-    try {
-      const { error } = await supabase
-        .from('discovery_notes')
-        .insert({
-          flight_id: selectedFlight.id,
-          content,
-          type,
-          author_id: user.id,
-          notification_settings: {
-            send_email: sendEmail,
-            send_sms: sendSMS,
-            email_sent: false,
-            sms_sent: false
-          }
-        });
-
-      if (error) throw error;
-
-      // Rafraîchir les notes
-      queryClient.invalidateQueries(['discoveryNotes']);
-      toast.success('Note créée avec succès');
-    } catch (err) {
-      console.error('Erreur lors de la création de la note:', err);
-      toast.error('Erreur lors de la création de la note');
-    }
-  };
-
   const handleChatClick = (flight: DiscoveryFlight) => {
     setSelectedChatFlight(flight);
     onChatOpen();
-  };
-
-  const handleCreateNote = (flight: DiscoveryFlight) => {
-    setSelectedFlight(flight);
-    setSelectedNoteType('INTERNAL');  // Forcer les notes en interne uniquement
-    onNotesOpen();
   };
 
   const fetchPassengerInfo = async (flightId: string) => {
@@ -549,53 +484,57 @@ Dates préférées : ${flight.preferred_dates}`;
                       </div>
 
                       <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end">
-                        <Tooltip label="Vérifier les informations passagers">
-                          <IconButton
-                            aria-label="Vérifier les informations passagers"
-                            icon={<ClipboardCheck className="h-5 w-5" />}
-                            size="md"
-                            colorScheme="green"
-                            variant="ghost"
-                            onClick={() => fetchPassengerInfo(flight.id)}
-                            className="hover:bg-green-50"
-                          />
-                        </Tooltip>
+                        <HStack spacing={2} mt={2}>
+                          <Tooltip label="Vérifier les informations passagers">
+                            <IconButton
+                              aria-label="Vérifier les informations passagers"
+                              icon={<ClipboardCheck className="h-5 w-5" />}
+                              size="md"
+                              colorScheme="green"
+                              variant="ghost"
+                              onClick={() => fetchPassengerInfo(flight.id)}
+                              className="hover:bg-green-50"
+                            />
+                          </Tooltip>
 
-                        <Tooltip label="Conversation client">
-                          <IconButton
-                            aria-label="Conversation client"
-                            icon={<MessageCircle className="h-5 w-5" />}
-                            size="md"
-                            colorScheme="blue"
-                            variant="ghost"
-                            onClick={() => handleChatClick(flight)}
-                            className="hover:bg-blue-50"
-                          />
-                        </Tooltip>
+                          <Tooltip label="Conversation client">
+                            <IconButton
+                              aria-label="Conversation client"
+                              icon={<MessageCircle className="h-5 w-5" />}
+                              size="md"
+                              colorScheme="blue"
+                              variant="ghost"
+                              onClick={() => handleChatClick(flight)}
+                              className="hover:bg-blue-50"
+                            />
+                          </Tooltip>
 
-                        <Tooltip label="Notes privées">
-                          <IconButton
-                            aria-label="Ajouter une note privée"
-                            icon={<MessageSquare className="h-5 w-5" />}
-                            size="md"
-                            colorScheme="gray"
-                            variant="ghost"
-                            onClick={() => handleCreateNote(flight)}
-                            className="hover:bg-gray-50"
-                          />
-                        </Tooltip>
-
-                        {canAddFlight && !flight.pilot_id && (
-                          <Button
-                            size="md"
-                            colorScheme="blue"
-                            onClick={() => handleAssignClick(flight)}
-                            leftIcon={<UserPlus className="h-5 w-5" />}
-                            className="shadow-sm hover:shadow-md transition-all duration-200"
-                          >
-                            S'assigner
-                          </Button>
-                        )}
+                          {canAddFlight && (
+                            <Button
+                              size="md"
+                              colorScheme="blue"
+                              onClick={() => handleAssignClick(flight)}
+                              leftIcon={<UserPlus className="h-5 w-5" />}
+                              className="shadow-sm hover:shadow-md transition-all duration-200"
+                            >
+                              S'assigner
+                            </Button>
+                          )}
+                        </HStack>
+                        <HStack spacing={2} mt={2}>
+                          <Tooltip label="Notes privées">
+                            <IconButton
+                              aria-label="Voir les notes privées"
+                              icon={<Lock size={18} />}
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // setShowPrivateNotes(showPrivateNotes === flight.id ? null : flight.id);
+                              }}
+                            />
+                          </Tooltip>
+                        </HStack>
                       </div>
                     </div>
 
@@ -633,23 +572,12 @@ Dates préférées : ${flight.preferred_dates}`;
                       </div>
                     </div>
 
-                    {notesMap?.get(flight.id)?.length > 0 && (
-                      <motion.div
-                        initial={false}
-                        animate={{ height: expandedNotes[flight.id] ? 'auto' : '0' }}
-                        className="overflow-hidden"
-                      >
-                        <DiscoveryNotes
-                          flight={flight}
-                          notes={notesMap.get(flight.id) || []}
-                          expanded={expandedNotes[flight.id]}
-                          onToggleExpand={() => setExpandedNotes(prev => ({
-                            ...prev,
-                            [flight.id]: !prev[flight.id]
-                          }))}
-                        />
-                      </motion.div>
-                    )}
+                    <Box mt={3}>
+                      <DiscoveryNotes
+                        flight={flight}
+                        notes={notesMap?.get(flight.id) || []}
+                      />
+                    </Box>
                   </div>
                 </motion.div>
               ))}
@@ -702,19 +630,6 @@ Dates préférées : ${flight.preferred_dates}`;
           preselectedAircraftId={selectedFlight.aircraft_id}
           preselectedFlightTypeId={discoveryFlightTypeId}
           comments={formatClientComment(selectedFlight)}
-        />
-      )}
-
-      {/* Modal pour les notes privées */}
-      {selectedFlight && isNotesOpen && (
-        <CreateDiscoveryNoteModal
-          flightId={selectedFlight.id}
-          onClose={onNotesClose}
-          onSuccess={(content) => {
-            queryClient.invalidateQueries(['discoveryNotes']);
-            onNotesClose();
-          }}
-          defaultType="INTERNAL"
         />
       )}
 
@@ -865,15 +780,15 @@ Dates préférées : ${flight.preferred_dates}`;
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               <div>
                                 <p className="text-sm text-gray-500">Nom</p>
-                                <p className="text-sm font-medium">{contact.nom}</p>
+                                <p className="font-medium">{contact.nom}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-gray-500">Téléphone</p>
-                                <p className="text-sm font-medium">{contact.telephone}</p>
+                                <p className="font-medium">{contact.telephone}</p>
                               </div>
                               <div className="sm:col-span-2">
                                 <p className="text-sm text-gray-500">Adresse</p>
-                                <p className="text-sm font-medium">{contact.adresse}</p>
+                                <p className="font-medium">{contact.adresse}</p>
                               </div>
                             </div>
                           </motion.div>

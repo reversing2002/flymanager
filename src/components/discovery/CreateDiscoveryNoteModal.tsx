@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Props {
   flightId: string;
@@ -14,10 +15,11 @@ export default function CreateDiscoveryNoteModal({ flightId, onClose, onSuccess 
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() || !user?.id) return;
     
     setIsSubmitting(true);
     try {
@@ -27,11 +29,12 @@ export default function CreateDiscoveryNoteModal({ flightId, onClose, onSuccess 
           flight_id: flightId,
           content: content.trim(),
           type: 'INTERNAL',
+          author_id: user.id,
         });
 
       if (error) throw error;
 
-      queryClient.invalidateQueries(['discoveryNotes', flightId]);
+      queryClient.invalidateQueries(['discoveryNotes']);
       toast.success('Note créée');
       onSuccess(content);
       onClose();
@@ -84,7 +87,7 @@ export default function CreateDiscoveryNoteModal({ flightId, onClose, onSuccess 
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors disabled:opacity-50"
-              disabled={isSubmitting || !content.trim()}
+              disabled={isSubmitting || !content.trim() || !user?.id}
             >
               {isSubmitting ? 'Création...' : 'Créer la note'}
             </button>
