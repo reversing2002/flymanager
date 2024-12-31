@@ -34,6 +34,7 @@ const stripe = new Stripe(stripeKey, {
 const allowedOrigins = [
   process.env.FRONTEND_URL,  // URL de production
   'http://localhost:5173',   // URL de développement
+  'https://4fly.io' // URL de production
 ];
 
 // Stripe webhook should be before any parsing middleware
@@ -1520,15 +1521,6 @@ app.get('/api/weather', async (req, res) => {
     let data;
     try {
       data = JSON.parse(rawText);
-      // Log détaillé de la structure des données
-      if (Array.isArray(data) && data.length > 0) {
-        console.log('Structure du premier élément:', {
-          keys: Object.keys(data[0]),
-          sample: data[0],
-          metar: data[0].metar ? Object.keys(data[0].metar) : 'pas de metar',
-          taf: data[0].taf ? Object.keys(data[0].taf) : 'pas de taf'
-        });
-      }
     } catch (e) {
       console.error('Erreur de parsing JSON:', e);
       throw new Error('La réponse n\'est pas un JSON valide');
@@ -1539,6 +1531,13 @@ app.get('/api/weather', async (req, res) => {
       sample: Array.isArray(data) && data.length > 0 ? data[0] : null,
       type: typeof data
     });
+
+    // Vérifier si la réponse est un tableau vide ou un objet vide
+    if (Array.isArray(data) && data.length === 0) {
+      console.warn('Tableau vide reçu de l\'API météo');
+    } else if (typeof data === 'object' && Object.keys(data).length === 0) {
+      console.warn('Objet vide reçu de l\'API météo');
+    }
 
     res.json(data);
   } catch (error) {
