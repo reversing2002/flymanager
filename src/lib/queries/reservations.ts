@@ -3,6 +3,46 @@ import type { Reservation } from '../../types/database';
 import { v4 as uuidv4 } from 'uuid';
 import { sendReservationConfirmation, scheduleReservationReminder, sendReservationModification, sendReservationCancellation } from '../../services/reservationNotificationService';
 
+// Fonction pour vérifier les préférences de notification d'un utilisateur
+async function checkNotificationPreferences(userId: string) {
+  const { data, error } = await supabase
+    .from('notification_preferences')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (error) {
+    console.error('Erreur lors de la récupération des préférences de notification:', error);
+    // Par défaut, on active toutes les notifications si on ne peut pas récupérer les préférences
+    return {
+      new_reservation: true,
+      modified_reservation: true,
+      cancelled_reservation: true,
+      hour_before_reminder: true
+    };
+  }
+
+  return data || {
+    new_reservation: true,
+    modified_reservation: true,
+    cancelled_reservation: true,
+    hour_before_reminder: true
+  };
+}
+
+// Fonction pour envoyer une notification en respectant les préférences
+async function sendNotificationWithPreferences(
+  userId: string,
+  notificationType: 'new_reservation' | 'modified_reservation' | 'cancelled_reservation' | 'hour_before_reminder',
+  notificationFunction: Function,
+  ...args: any[]
+) {
+  const preferences = await checkNotificationPreferences(userId);
+  if (preferences[notificationType]) {
+    await notificationFunction(...args);
+  }
+}
+
 export async function getReservations(startTime?: Date, endTime?: Date): Promise<Reservation[]> {
   let query = supabase
     .from('reservations')
@@ -104,9 +144,37 @@ export async function createReservation(data: Partial<Reservation>): Promise<voi
 
     console.log('Données de réservation pour les notifications:', reservationForNotification);
 
-    // Envoyer les notifications par email
-    await sendReservationConfirmation(reservationForNotification);
-    await scheduleReservationReminder(reservationForNotification);
+    // Envoyer les notifications au pilote
+    await sendNotificationWithPreferences(
+      newReservation.pilot_id,
+      'new_reservation',
+      sendReservationConfirmation,
+      reservationForNotification
+    );
+    
+    await sendNotificationWithPreferences(
+      newReservation.pilot_id,
+      'hour_before_reminder',
+      scheduleReservationReminder,
+      reservationForNotification
+    );
+
+    // Si un instructeur est assigné, lui envoyer aussi les notifications
+    if (newReservation.instructor_id) {
+      await sendNotificationWithPreferences(
+        newReservation.instructor_id,
+        'new_reservation',
+        sendReservationConfirmation,
+        reservationForNotification
+      );
+      
+      await sendNotificationWithPreferences(
+        newReservation.instructor_id,
+        'hour_before_reminder',
+        scheduleReservationReminder,
+        reservationForNotification
+      );
+    }
 
   } catch (error) {
     console.error('Error in createReservation:', error);
@@ -167,7 +235,26 @@ export async function updateReservation(id: string, data: Partial<Reservation>):
 
     // Convertir en camelCase avant d'envoyer la notification
     const camelCaseReservation = toCamelCase(currentReservation);
-    await sendReservationModification(camelCaseReservation, data);
+    
+    // Envoyer la notification au pilote
+    await sendNotificationWithPreferences(
+      currentReservation.pilot_id,
+      'modified_reservation',
+      sendReservationModification,
+      camelCaseReservation,
+      data
+    );
+
+    // Si un instructeur est assigné, lui envoyer aussi la notification
+    if (currentReservation.instructor_id) {
+      await sendNotificationWithPreferences(
+        currentReservation.instructor_id,
+        'modified_reservation',
+        sendReservationModification,
+        camelCaseReservation,
+        data
+      );
+    }
   } catch (error) {
     console.error('Erreur lors de la mise à jour de la réservation:', error);
     throw error;
@@ -195,7 +282,24 @@ export async function deleteReservation(id: string): Promise<void> {
 
     // Convertir en camelCase avant d'envoyer la notification
     const camelCaseReservation = toCamelCase(reservation);
-    await sendReservationCancellation(camelCaseReservation);
+    
+    // Envoyer la notification au pilote
+    await sendNotificationWithPreferences(
+      reservation.pilot_id,
+      'cancelled_reservation',
+      sendReservationCancellation,
+      camelCaseReservation
+    );
+
+    // Si un instructeur est assigné, lui envoyer aussi la notification
+    if (reservation.instructor_id) {
+      await sendNotificationWithPreferences(
+        reservation.instructor_id,
+        'cancelled_reservation',
+        sendReservationCancellation,
+        camelCaseReservation
+      );
+    }
   } catch (error) {
     console.error('Erreur lors de la suppression de la réservation:', error);
     throw error;

@@ -5,9 +5,9 @@ import { addHours, subHours } from 'date-fns';
 
 // Types de notifications
 export const NOTIFICATION_TYPES = {
-  PILOT_CONFIRMATION: 'reservation_confirmation_pilot',
+  PILOT_CONFIRMATION: 'reservation_confirmation',
   INSTRUCTOR_CONFIRMATION: 'reservation_confirmation_instructor',
-  PILOT_REMINDER: 'reservation_reminder_pilot',
+  PILOT_REMINDER: 'reservation_reminder',
   INSTRUCTOR_REMINDER: 'reservation_reminder_instructor',
   PILOT_MODIFICATION: 'reservation_modification',
   INSTRUCTOR_MODIFICATION: 'reservation_modification_instructor',

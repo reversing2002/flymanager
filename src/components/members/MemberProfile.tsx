@@ -15,6 +15,7 @@ import ContributionCard from "./ContributionCard";
 import QualificationsCard from "./QualificationsCard";
 import LicensesCard from "./LicensesCard";
 import CustomFieldsCard from "./CustomFieldsCard";
+import NotificationPreferences from './NotificationPreferences';
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
 import { toast } from "react-hot-toast";
@@ -439,6 +440,14 @@ const MemberProfile = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Préférences de notification */}
+              {(hasAnyGroup(currentUser, ['ADMIN']) || currentUser?.id === pilot?.id) && (
+                <NotificationPreferences 
+                  userId={pilot?.id || ''} 
+                  isEditable={true}
+                />
+              )}
             </div>
 
             {/* Recent Activity */}
