@@ -47,6 +47,10 @@ const fetchLicenses = async (userId: string) => {
   return data;
 };
 
+const isFuture = (date: Date) => {
+  return date > new Date();
+};
+
 const LicensesCard: React.FC<LicensesCardProps> = ({
   userId,
   onLicensesChange,
@@ -64,6 +68,10 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
     queryKey: ['licenses', userId],
     queryFn: () => fetchLicenses(userId),
   });
+
+  const isLicenseValid = (license: PilotLicense) => {
+    return !license.expires_at || isFuture(new Date(license.expires_at));
+  };
 
   const handleEditSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['licenses', userId] });
@@ -125,24 +133,26 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
       {licenses.map((license) => (
         <div key={license.id} className="bg-white border rounded-lg p-4">
           <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2">
-                <BadgeCheck className="h-5 w-5 text-green-500" />
+            <div className="flex items-center space-x-3">
+              <div className={`p-2 rounded-full ${isLicenseValid(license) ? 'bg-green-50' : 'bg-red-50'}`}>
+                <BadgeCheck className={`h-5 w-5 ${isLicenseValid(license) ? 'text-green-500' : 'text-red-500'}`} />
+              </div>
+              <div>
                 <h4 className="text-sm font-medium text-gray-900">
                   {license.license_types?.name}
                 </h4>
-              </div>
-              <div className="mt-2 space-y-1 text-sm text-gray-500">
-                <p>N° {license.number}</p>
-                <p>Délivré par {license.authority}</p>
-                <p>
-                  Délivré le {format(new Date(license.issued_at), 'dd MMMM yyyy', { locale: fr })}
-                </p>
-                {license.expires_at && (
+                <div className="mt-2 space-y-1 text-sm text-gray-500">
+                  <p>N° {license.number}</p>
+                  <p>Délivré par {license.authority}</p>
                   <p>
-                    Expire le {format(new Date(license.expires_at), 'dd MMMM yyyy', { locale: fr })}
+                    Délivré le {format(new Date(license.issued_at), 'dd MMMM yyyy', { locale: fr })}
                   </p>
-                )}
+                  {license.expires_at && (
+                    <p>
+                      Expire le {format(new Date(license.expires_at), 'dd MMMM yyyy', { locale: fr })}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
             {canEdit && (
