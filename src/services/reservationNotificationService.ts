@@ -1,7 +1,8 @@
 import { supabase } from '../lib/supabase';
 import { createNotification, getNotificationTemplate, sendEmail, getNotificationSettings } from './notificationService';
 import type { Reservation } from '../types/database';
-import { addHours, subHours } from 'date-fns';
+import { addHours, subHours, format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 // Types de notifications
 export const NOTIFICATION_TYPES = {
@@ -24,6 +25,12 @@ interface ReservationEmailData {
   startTime: string;
   endTime: string;
   flightType: string;
+}
+
+// Fonction pour convertir UTC en heure locale et formater
+function formatLocalDateTime(utcDateString: string): string {
+  const date = parseISO(utcDateString);
+  return format(date, "d MMMM yyyy 'à' HH'h'mm", { locale: fr });
 }
 
 async function getReservationEmailData(reservation: Reservation): Promise<ReservationEmailData | null> {
@@ -127,14 +134,18 @@ async function getReservationEmailData(reservation: Reservation): Promise<Reserv
       return null;
     }
 
+    // Convertir les heures UTC en heures locales et formater
+    const formattedStartTime = formatLocalDateTime(reservation.start_time || (reservation as any).startTime);
+    const formattedEndTime = formatLocalDateTime(reservation.end_time || (reservation as any).endTime);
+
     const emailData = {
       pilotName: `${pilot.first_name} ${pilot.last_name}`,
       pilotEmail: pilot.email,
       instructorName: instructor ? `${instructor.first_name} ${instructor.last_name}` : undefined,
       instructorEmail: instructor?.email,
       aircraftRegistration: aircraft.registration,
-      startTime: reservation.start_time || (reservation as any).startTime,
-      endTime: reservation.end_time || (reservation as any).endTime,
+      startTime: formattedStartTime,
+      endTime: formattedEndTime,
       flightType: flightType.name
     };
 
@@ -340,36 +351,31 @@ export async function sendReservationModification(reservation: Reservation, chan
 }
 
 function formatChangesForEmail(changes: Partial<Reservation>): string {
-  const translations: Record<string, string> = {
-    startTime: 'Heure de début',
-    endTime: 'Heure de fin',
-    aircraftId: 'Avion',
-    instructorId: 'Instructeur',
-    flightTypeId: 'Type de vol',
-    withInstructor: 'Avec instructeur',
-    comments: 'Commentaires'
-  };
+  const formattedChanges: string[] = [];
 
-  const formatValue = (key: string, value: any): string => {
-    if (key === 'startTime' || key === 'endTime') {
-      return new Date(value).toLocaleString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    }
-    if (key === 'withInstructor') {
-      return value ? 'Oui' : 'Non';
-    }
-    return value?.toString() || 'Non spécifié';
-  };
+  if (changes.startTime || changes.start_time) {
+    formattedChanges.push(`Nouvelle heure de début : ${formatLocalDateTime(changes.startTime || changes.start_time)}`);
+  }
+  if (changes.endTime || changes.end_time) {
+    formattedChanges.push(`Nouvelle heure de fin : ${formatLocalDateTime(changes.endTime || changes.end_time)}`);
+  }
+  if (changes.aircraftId || changes.aircraft_id) {
+    formattedChanges.push(`Nouvel avion : ${changes.aircraftId || changes.aircraft_id}`);
+  }
+  if (changes.instructorId || changes.instructor_id) {
+    formattedChanges.push(`Nouvel instructeur : ${changes.instructorId || changes.instructor_id}`);
+  }
+  if (changes.flightTypeId || changes.flight_type_id) {
+    formattedChanges.push(`Nouveau type de vol : ${changes.flightTypeId || changes.flight_type_id}`);
+  }
+  if (changes.withInstructor || changes.with_instructor) {
+    formattedChanges.push(`Avec instructeur : ${changes.withInstructor || changes.with_instructor}`);
+  }
+  if (changes.comments || changes.comments) {
+    formattedChanges.push(`Commentaires : ${changes.comments || changes.comments}`);
+  }
 
-  return Object.entries(changes)
-    .filter(([key]) => translations[key]) // Ne garder que les champs qu'on veut afficher
-    .map(([key, value]) => `${translations[key] || key}: ${formatValue(key, value)}`)
-    .join('\n');
+  return formattedChanges.join('\n');
 }
 
 export async function sendReservationCancellation(reservation: Reservation): Promise<void> {
