@@ -24,6 +24,8 @@ import type { Medical } from "./MedicalCard";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "../../lib/supabase";
+import FFACredentialsForm from "./FFACredentialsForm";
+import FFPLUMCredentialsForm from "./FFPLUMCredentialsForm";
 
 const getRoleBadgeColor = (role: Role) => {
   switch (role) {
@@ -450,11 +452,18 @@ const MemberProfile = () => {
               )}
             </div>
 
-            {/* Recent Activity */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-6">Activité récente</h2>
-              <ActivityTimeline userId={id || ""} />
-            </div>
+            {/* Section des identifiants SMILE FFA */}
+            {(isAdmin || isOwnProfile) && (
+              <FFACredentialsForm userId={id} />
+            )}
+
+            {/* Section des identifiants FFPLUM */}
+            {(isAdmin || isOwnProfile) && (
+              <FFPLUMCredentialsForm userId={id} />
+            )}
+
+            {/* Section de l'historique d'activité */}
+            <ActivityTimeline userId={id} />
 
             {/* Contributions */}
             {canManageContributions && (
