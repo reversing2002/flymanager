@@ -177,19 +177,23 @@ const WeatherMap: React.FC = () => {
       let color = 'green';
       const visibilityNum = typeof station.visib === 'string' ? parseFloat(station.visib) : station.visib;
       const lowestCeiling = station.clouds?.find(cloud => 
-        ['BKN', 'OVC'].includes(cloud.cover.toUpperCase()) && cloud.base !== null
+        ['BKN', 'OVC'].includes(cloud.cover.toUpperCase())
       )?.base;
 
-      if (
+      const isIFR = (
         (visibilityNum !== null && visibilityNum * 1000 < weatherSettings.marginal_visibility) ||
         (lowestCeiling !== undefined && lowestCeiling < weatherSettings.marginal_ceiling)
-      ) {
-        color = 'red';
-        flightCondition = 'IFR';
-      } else if (
+      );
+
+      const isMVFR = (
         (visibilityNum !== null && visibilityNum * 1000 < weatherSettings.visual_visibility) ||
         (lowestCeiling !== undefined && lowestCeiling < weatherSettings.visual_ceiling)
-      ) {
+      );
+
+      if (isIFR) {
+        color = 'red';
+        flightCondition = 'IFR';
+      } else if (isMVFR) {
         color = 'blue';
         flightCondition = 'MVFR';
       }

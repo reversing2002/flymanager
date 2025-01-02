@@ -35,22 +35,31 @@ export const getFlightCategory = (
   minima = DEFAULT_MINIMA
 ) => {
   // Convertir la visibilité en nombre si c'est une chaîne
-  const visibilityNum = typeof visibility === 'string' ? parseInt(visibility) : visibility;
+  const visibilityNum = typeof visibility === 'string' ? parseFloat(visibility) : visibility;
   
   if (!visibilityNum) return 'UNKNOWN';
 
   // Trouver le plafond le plus bas (première couche BKN ou OVC)
   const ceiling = clouds.find(cloud => 
-    ['BKN', 'OVC'].includes(cloud.cover.toUpperCase()) && cloud.base !== null
+    ['BKN', 'OVC'].includes(cloud.cover.toUpperCase())
   )?.base;
 
+  // Convertir la visibilité en mètres
+  const visibilityMeters = visibilityNum * 1000;
+
   // Conditions IFR
-  if (visibilityNum < minima.marginal.visibility || (ceiling !== undefined && ceiling < minima.marginal.ceiling)) {
+  if (
+    visibilityMeters < minima.marginal.visibility ||
+    (ceiling !== undefined && ceiling < minima.marginal.ceiling)
+  ) {
     return 'IFR';
   }
   
   // Conditions MVFR
-  if (visibilityNum < minima.visual.visibility || (ceiling !== undefined && ceiling < minima.visual.ceiling)) {
+  if (
+    visibilityMeters < minima.visual.visibility ||
+    (ceiling !== undefined && ceiling < minima.visual.ceiling)
+  ) {
     return 'MVFR';
   }
 
@@ -64,7 +73,7 @@ const FlightConditions: React.FC<FlightConditionsProps> = ({
   compact = false 
 }) => {
   // Convertir la visibilité en nombre
-  const visibilityNum = typeof data.visib === 'string' ? parseInt(data.visib) : data.visib;
+  const visibilityNum = typeof data.visib === 'string' ? parseFloat(data.visib) : data.visib;
   
   // Trouver le plafond le plus bas
   const lowestCeiling = data.clouds.find(cloud => 
@@ -107,8 +116,8 @@ const FlightConditions: React.FC<FlightConditionsProps> = ({
       return 'text-slate-700';
     } else if (paramName === 'visibility') {
       if (!visibilityNum) return 'text-slate-700';
-      if (visibilityNum < userMinima.marginal.visibility) return 'text-red-500 font-bold';
-      if (visibilityNum < userMinima.visual.visibility) return 'text-blue-500 font-bold';
+      if (visibilityNum * 1000 < userMinima.marginal.visibility) return 'text-red-500 font-bold';
+      if (visibilityNum * 1000 < userMinima.visual.visibility) return 'text-blue-500 font-bold';
       return 'text-slate-700';
     }
     return 'text-slate-700';
