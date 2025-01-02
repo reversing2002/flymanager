@@ -1,0 +1,150 @@
+{
+  "username": {
+    "label": "Identifiant (login)",
+    "value": "LicenciésModifierNouveau licenciéImpressionsFiche historiqueFiche préparation viergeAssurancesSouscrire une assurance FI-FE"
+  },
+  "password": {
+    "label": "Mot de passe",
+    "value": ""
+  },
+  "loginButton": {
+    "label": "Bouton connexion",
+    "value": null
+  },
+  "numeroLicence": {
+    "label": "N° Licence FFA",
+    "value": "7822034"
+  },
+  "civilite": {
+    "label": "Civilité",
+    "value": "M."
+  },
+  "nom": {
+    "label": "Nom",
+    "value": "FAYET"
+  },
+  "prenom": {
+    "label": "Prénom",
+    "value": "EDDY"
+  },
+  "dateNaissance": {
+    "label": "Date de naissance",
+    "value": "09/06/1982"
+  },
+  "adresse1": {
+    "label": "Adresse (ligne 1)",
+    "value": "5 ROUTE DE CUSSIEUX"
+  },
+  "adresse2": {
+    "label": "Adresse (ligne 2)",
+    "value": ""
+  },
+  "adresse3": {
+    "label": "Adresse (ligne 3)",
+    "value": ""
+  },
+  "codePostal": {
+    "label": "Code postal",
+    "value": "42400"
+  },
+  "ville": {
+    "label": "Ville",
+    "value": "SAINT CHAMOND"
+  },
+  "pays": {
+    "label": "Pays",
+    "value": "FRANCE"
+  },
+  "profession": {
+    "label": "Profession",
+    "value": "Autre"
+  },
+  "email": {
+    "label": "Email",
+    "value": "eddy@linked.fr"
+  },
+  "telephoneMobile": {
+    "label": "Téléphone mobile",
+    "value": "0633381459"
+  },
+  "telephoneDomicile": {
+    "label": "Téléphone domicile",
+    "value": ""
+  },
+  "telephoneTravail": {
+    "label": "Téléphone travail",
+    "value": ""
+  },
+  "licencePPL": {
+    "label": "N° PPL",
+    "value": "FRA.FCL.PA00359124"
+  },
+  "licenceLAPL": {
+    "label": "N° LAPL",
+    "value": ""
+  },
+  "licenceCA": {
+    "label": "N° CPL (CA)",
+    "value": ""
+  },
+  "licenceA": {
+    "label": "N° ATPL (A)",
+    "value": ""
+  },
+  "numeroFI": {
+    "label": "N° FI(A)",
+    "value": ""
+  },
+  "validiteFI": {
+    "label": "Validité FI(A)",
+    "value": ""
+  },
+  "numeroFE": {
+    "label": "N° FE",
+    "value": ""
+  },
+  "validiteFE": {
+    "label": "Validité FE",
+    "value": ""
+  },
+  "numeroCRI": {
+    "label": "N° CRI",
+    "value": ""
+  },
+  "validiteCRI": {
+    "label": "Validité CRI",
+    "value": ""
+  },
+  "qcSepT": {
+    "label": "Qualification SEP(T)",
+    "value": true
+  },
+  "validiteSepT": {
+    "label": "Validité SEP(T)",
+    "value": "31/07/2025"
+  },
+  "qcSepHydro": {
+    "label": "Qualification SEP(Hydro)",
+    "value": true
+  },
+  "validiteSepHydro": {
+    "label": "Validité SEP(Hydro)",
+    "value": "31/07/2025"
+  },
+  "qcSepTmg": {
+    "label": "Qualification SEP(TMG)",
+    "value": false
+  },
+  "validiteSepTmg": {
+    "label": "Validité SEP(TMG)",
+    "value": ""
+  },
+  "nuit": {
+    "label": "Qualification Nuit",
+    "value": true
+  },
+  "voltige": {
+    "label": "Qualification Voltige",
+    "value": false
+  }
+}

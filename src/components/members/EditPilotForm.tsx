@@ -10,6 +10,7 @@ import * as Checkbox from "@radix-ui/react-checkbox";
 import "../../styles/checkbox.css";
 import { Button } from "@mui/material";
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import Typography from '@mui/material/Typography';
 
 interface EditPilotFormProps {
   pilot: User;
@@ -39,7 +40,10 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     instructor_fee: pilot.instructor_fee || null,
     password: "",
     confirmPassword: "",
-    calendars: [] as { id: string, name: string }[]
+    calendars: [] as { id: string, name: string }[],
+    smile_login: pilot.smile_login || "",
+    smile_password: pilot.smile_password || "",
+    last_smile_sync: pilot.last_smile_sync || null
   });
 
   const [loading, setLoading] = useState(false);
@@ -479,6 +483,44 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
               </div>
             </div>
           )}
+
+          {/* Section SMILE */}
+          <div className="space-y-4 mt-6">
+            <Typography variant="h6">Synchronisation SMILE</Typography>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="smile_login" className="block text-sm font-medium text-gray-700">
+                  Identifiant SMILE
+                </label>
+                <input
+                  type="text"
+                  id="smile_login"
+                  name="smile_login"
+                  value={formData.smile_login}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="smile_password" className="block text-sm font-medium text-gray-700">
+                  Mot de passe SMILE
+                </label>
+                <input
+                  type="password"
+                  id="smile_password"
+                  name="smile_password"
+                  value={formData.smile_password}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                />
+              </div>
+            </div>
+            {formData.last_smile_sync && (
+              <Typography variant="body2" className="text-gray-500">
+                Dernière synchronisation : {new Date(formData.last_smile_sync).toLocaleString()}
+              </Typography>
+            )}
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">

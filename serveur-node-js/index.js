@@ -11,6 +11,7 @@ const { format, parseISO } = require('date-fns');
 const { fr } = require('date-fns/locale');
 const icalGenerator = require('ical-generator');
 const crypto = require('crypto');
+const puppeteer = require('puppeteer');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -601,7 +602,7 @@ async function sendEmailWithRetry(mailjetClient, emailData, maxRetries = 3) {
 
 // Fonction pour traiter les notifications en attente
 async function processNotifications() {
-  console.log('🔄 Démarrage du traitement des notifications...');
+  console.log('📧 Configuration du cron job pour les notifications...');
   try {
     // Récupérer tous les clubs
     console.log('📥 Récupération des clubs...');
@@ -1317,6 +1318,493 @@ app.post("/api/sync-calendars", async (req, res) => {
   }
 });
 
+// Route pour la synchronisation SMILE
+app.post('/api/smile/sync', async (req, res) => {
+  try {
+    // Récupérer les pilotes avec des identifiants SMILE
+    console.log('Récupération des pilotes avec des identifiants SMILE...');
+    const { data: credentials, error: credError } = await supabase
+      .from('ffa_credentials')
+      .select(`
+        id,
+        user_id,
+        ffa_login,
+        ffa_password,
+        users!ffa_credentials_user_id_fkey1 (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .not('ffa_login', 'is', null)
+      .not('ffa_password', 'is', null);
+
+    if (credError) {
+      console.error('Erreur lors de la récupération des credentials:', {
+        error: credError,
+        code: credError.code,
+        details: credError.details,
+        hint: credError.hint,
+        message: credError.message
+      });
+      throw credError;
+    }
+
+    console.log('Nombre de pilotes à traiter:', credentials.length);
+    
+    const results = [];
+    for (const cred of credentials) {
+      try {
+        console.log('Traitement du pilote avec login:', cred.ffa_login);
+        
+        // Extraire les données du pilote depuis SMILE
+        const pilotData = await extractPilotData(cred.ffa_login, cred.ffa_password, cred.user_id);
+        console.log('Données extraites:', JSON.stringify(pilotData, null, 2));
+        
+        // Gestion de la qualification SEP(T)
+        console.log('Début de la gestion de la qualification SEP(T)...');
+        console.log('Données qualificationsPilote complètes:', pilotData.qualificationsPilote);
+        
+        // Accéder aux données SEP(T) avec la bonne structure
+        const sepTData = {
+          checked: pilotData.qualificationsPilote?.qcSepT === true,
+          validiteJusquau: pilotData.qualificationsPilote?.validiteSepT
+        };
+        console.log('Données SEP(T) extraites:', sepTData);
+        
+        // Vérifier si la case SEP(T) est cochée
+        const isSepTChecked = sepTData.checked;
+        console.log('La case SEP(T) est-elle cochée ?', isSepTChecked);
+
+        if (isSepTChecked && sepTData.validiteJusquau) {
+          console.log('Préparation des données pour la qualification SEP(T)...');
+          console.log('Date de validité SEP(T):', sepTData.validiteJusquau);
+          
+          const sepTQualificationData = {
+            pilot_id: cred.user_id,
+            qualification_type_id: 'a6587ca1-053e-4bbd-9463-29da5b5ed235',
+            obtained_at: new Date().toISOString(),
+            expires_at: parseSmileDate(sepTData.validiteJusquau).toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log('Données de qualification SEP(T) préparées:', sepTQualificationData);
+          console.log('Tentative d\'insertion/mise à jour dans la base de données...');
+          
+          const { data: sepTQualificationResult, error: sepTQualificationError } = await supabase
+            .from('pilot_qualifications')
+            .upsert(sepTQualificationData, {
+              onConflict: 'pilot_id,qualification_type_id',
+              ignoreDuplicates: false
+            });
+
+          if (sepTQualificationError) {
+            console.error('Erreur lors de la mise à jour de la qualification SEP(T):', sepTQualificationError);
+            console.error('Détails de l\'erreur:', JSON.stringify(sepTQualificationError, null, 2));
+          } else {
+            console.log('Qualification SEP(T) mise à jour avec succès');
+            console.log('Résultat:', sepTQualificationResult);
+          }
+        }
+
+        // Gestion de la qualification SEP(H)
+        if (pilotData.qualificationsPilote?.qcSepHydro && pilotData.qualificationsPilote?.validiteSepHydro) {
+          console.log('Préparation des données pour la qualification SEP(H)...');
+          console.log('Date de validité SEP(H):', pilotData.qualificationsPilote.validiteSepHydro);
+          
+          const sepHQualificationData = {
+            pilot_id: cred.user_id,
+            qualification_type_id: '20d6a61d-919e-4be3-b361-fbded2be9e39',
+            obtained_at: new Date().toISOString(),
+            expires_at: parseSmileDate(pilotData.qualificationsPilote.validiteSepHydro).toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log('Données de qualification SEP(H) préparées:', sepHQualificationData);
+          
+          const { data: sepHQualificationResult, error: sepHQualificationError } = await supabase
+            .from('pilot_qualifications')
+            .upsert(sepHQualificationData, {
+              onConflict: 'pilot_id,qualification_type_id',
+              ignoreDuplicates: false
+            });
+
+          if (sepHQualificationError) {
+            console.error('Erreur lors de la mise à jour de la qualification SEP(H):', sepHQualificationError);
+          } else {
+            console.log('Qualification SEP(H) mise à jour avec succès');
+            console.log('Résultat:', sepHQualificationResult);
+          }
+        }
+
+        // Gestion de la qualification Nuit
+        if (pilotData.qualificationsPilote?.nuit) {
+          console.log('Préparation des données pour la qualification Nuit...');
+          
+          const nuitQualificationData = {
+            pilot_id: cred.user_id,
+            qualification_type_id: 'b248341d-a837-420d-bd86-c169f3f2a195',
+            obtained_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log('Données de qualification Nuit préparées:', nuitQualificationData);
+          
+          const { data: nuitQualificationResult, error: nuitQualificationError } = await supabase
+            .from('pilot_qualifications')
+            .upsert(nuitQualificationData, {
+              onConflict: 'pilot_id,qualification_type_id',
+              ignoreDuplicates: false
+            });
+
+          if (nuitQualificationError) {
+            console.error('Erreur lors de la mise à jour de la qualification Nuit:', nuitQualificationError);
+          } else {
+            console.log('Qualification Nuit mise à jour avec succès');
+            console.log('Résultat:', nuitQualificationResult);
+          }
+        }
+
+        // Gestion de la qualification Voltige
+        if (pilotData.qualificationsPilote?.voltige) {
+          console.log('Préparation des données pour la qualification Voltige...');
+          
+          const voltigeQualificationData = {
+            pilot_id: cred.user_id,
+            qualification_type_id: '5c1703da-349a-43e0-90b3-86c288b45d98',
+            obtained_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log('Données de qualification Voltige préparées:', voltigeQualificationData);
+          
+          const { data: voltigeQualificationResult, error: voltigeQualificationError } = await supabase
+            .from('pilot_qualifications')
+            .upsert(voltigeQualificationData, {
+              onConflict: 'pilot_id,qualification_type_id',
+              ignoreDuplicates: false
+            });
+
+          if (voltigeQualificationError) {
+            console.error('Erreur lors de la mise à jour de la qualification Voltige:', voltigeQualificationError);
+          } else {
+            console.log('Qualification Voltige mise à jour avec succès');
+            console.log('Résultat:', voltigeQualificationResult);
+          }
+        }
+
+        // Gestion de la qualification Montagne Roues
+        if (pilotData.qualificationsPilote?.montagneRoues) {
+          console.log('Préparation des données pour la qualification Montagne Roues...');
+          
+          const montagneRouesQualificationData = {
+            pilot_id: cred.user_id,
+            qualification_type_id: '8161e84f-5a3d-4c23-978c-e893fc698a31',
+            obtained_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log('Données de qualification Montagne Roues préparées:', montagneRouesQualificationData);
+          
+          const { data: montagneRouesQualificationResult, error: montagneRouesQualificationError } = await supabase
+            .from('pilot_qualifications')
+            .upsert(montagneRouesQualificationData, {
+              onConflict: 'pilot_id,qualification_type_id',
+              ignoreDuplicates: false
+            });
+
+          if (montagneRouesQualificationError) {
+            console.error('Erreur lors de la mise à jour de la qualification Montagne Roues:', montagneRouesQualificationError);
+          } else {
+            console.log('Qualification Montagne Roues mise à jour avec succès');
+            console.log('Résultat:', montagneRouesQualificationResult);
+          }
+        }
+
+        // Gestion de la qualification Montagne Skis
+        if (pilotData.qualificationsPilote?.montagneSkis) {
+          console.log('Préparation des données pour la qualification Montagne Skis...');
+          
+          const montagneSkisQualificationData = {
+            pilot_id: cred.user_id,
+            qualification_type_id: '292683cd-4532-48dd-8b0f-0882cac2dc85',
+            obtained_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log('Données de qualification Montagne Skis préparées:', montagneSkisQualificationData);
+          
+          const { data: montagneSkisQualificationResult, error: montagneSkisQualificationError } = await supabase
+            .from('pilot_qualifications')
+            .upsert(montagneSkisQualificationData, {
+              onConflict: 'pilot_id,qualification_type_id',
+              ignoreDuplicates: false
+            });
+
+          if (montagneSkisQualificationError) {
+            console.error('Erreur lors de la mise à jour de la qualification Montagne Skis:', montagneSkisQualificationError);
+          } else {
+            console.log('Qualification Montagne Skis mise à jour avec succès');
+            console.log('Résultat:', montagneSkisQualificationResult);
+          }
+        }
+
+        results.push({
+          user_id: cred.user_id,
+          success: true,
+          data: pilotData
+        });
+
+      } catch (error) {
+        console.error('Erreur pour le pilote', cred.ffa_login, ':', {
+          error: error,
+          stack: error.stack,
+          message: error.message
+        });
+        results.push({
+          user_id: cred.user_id,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+    res.json({
+      success: true,
+      results
+    });
+  } catch (error) {
+    console.error('Erreur de synchronisation SMILE:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Fonction pour parser une date au format DD/MM/YYYY
+function parseSmileDate(dateStr) {
+  const [day, month, year] = dateStr.split('/');
+  return new Date(year, month - 1, day);
+}
+
+// Fonction pour extraire les données SMILE
+async function extractPilotData(login, password, user_id) {
+  let browser;
+  try {
+    console.log('Démarrage du navigateur...');
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--dns-servers=8.8.8.8,8.8.4.4'  // Add Google's DNS servers
+      ]
+    });
+
+    const page = await browser.newPage();
+    
+    // Navigation vers la page de connexion SMILE
+    console.log('Navigation vers SMILE...');
+    await page.goto('https://smile.ff-aero.fr/SMILE_II/', { 
+      waitUntil: 'networkidle2',
+      timeout: 60000 
+    });
+
+    // Connexion
+    console.log('Remplissage des champs de connexion...');
+    await page.type('#A2', login);
+    await page.type('#A4', password);
+
+    console.log('Tentative de connexion...');
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }),
+      page.click('#A10')
+    ]);
+
+    // Attendre que la page soit chargée
+    await page.evaluate(() => new Promise(r => setTimeout(r, 2000)));
+    
+    // Extraire les données de licence
+    console.log('Extraction des données de licence...');
+    const data = {
+      user_id: user_id,
+      informationsPersonnelles: {}
+    };
+
+    // Attendre que la page soit complètement chargée
+    await page.waitForSelector('input');
+
+    const fields = {
+      numeroLicence: '#A515',
+      titre: '#A518',
+      nom: '#A519',
+      prenom: '#A517',
+      dateNaissance: '#A520',
+      lieuNaissance: '#A519',
+      adresse: '#A528',
+      codePostal: '#A540',
+      ville: '#A539',
+      pays: '#A586',
+      profession: '#A587',
+      email: '#A590',
+      telephoneMobile: '#A583',
+      telephoneDomicile: '#A584',
+      telephoneTravail: '#A585',
+      aeroclub: '#A57',
+    };
+
+
+    
+    for (const [key, selector] of Object.entries(fields)) {
+      try {
+        const value = await page.$eval(selector, el => {
+          if (el.tagName === 'SELECT') {
+            return el.options[el.selectedIndex].text;
+          }
+          return el.value;
+        });
+        if (value) {
+          data.informationsPersonnelles[key] = value;
+        }
+      } catch (error) {
+        console.log(`Impossible de trouver l'élément ${key} avec le sélecteur ${selector}`);
+      }
+    }
+
+    // Qualifications pilote
+    data.qualificationsPilote = {
+      ppl: {
+        numero: await page.$eval('#A594', el => el.value),
+        validiteJusquau: await page.$eval('#A430', el => el.value)
+      },
+      medical: {
+        validiteJusquau: await page.$eval('#A428', el => el.value),
+        classe2ValiditeJusquau: await page.$eval('#A533', el => el.value),
+        questionnaireRempli: await isChecked(page, 'input[type="checkbox"]', { useContains: true, containsText: 'questionnaire de santé SPORT' })
+      }
+    };
+
+    // Extraire les données SEP(T)
+    const qcSepTElement = await page.$('#A442_1');
+    const validiteSepTElement = await page.$('#A430');
+    
+    const qcSepT = qcSepTElement ? await page.evaluate(el => el.checked, qcSepTElement) : false;
+    const validiteSepT = validiteSepTElement ? await page.evaluate(el => el.value, validiteSepTElement) : null;
+    
+    console.log('Extraction SEP(T) - Case à cocher:', qcSepT);
+    console.log('Extraction SEP(T) - Date de validité:', validiteSepT);
+
+    // SEP(H)
+    const qcSepHydroElement = await page.$('#A435_1');
+    const validiteSepHydroElement = await page.$('#A428');
+    const qcSepHydro = qcSepHydroElement ? await page.evaluate(el => el.checked, qcSepHydroElement) : false;
+    const validiteSepHydro = validiteSepHydroElement ? await page.evaluate(el => el.value, validiteSepHydroElement) : null;
+    console.log('Extraction SEP(H) - Case à cocher:', qcSepHydro);
+    console.log('Extraction SEP(H) - Date de validité:', validiteSepHydro);
+
+    // Nuit
+    const nuitElement = await page.$('#A549_1');
+    const nuit = nuitElement ? await page.evaluate(el => el.checked, nuitElement) : false;
+    console.log('Extraction Nuit - Case à cocher:', nuit);
+
+    // Voltige
+    const voltigeElement = await page.$('#A546_1');
+    const voltige = voltigeElement ? await page.evaluate(el => el.checked, voltigeElement) : false;
+    console.log('Extraction Voltige - Case à cocher:', voltige);
+
+    // Montagne roues
+    const montagneRouesElement = await page.$('#A541_1');
+    const montagneRoues = montagneRouesElement ? await page.evaluate(el => el.checked, montagneRouesElement) : false;
+    console.log('Extraction Montagne Roues - Case à cocher:', montagneRoues);
+
+    // Montagne skis
+    const montagneSkisElement = await page.$('#A448_1');
+    const montagneSkis = montagneSkisElement ? await page.evaluate(el => el.checked, montagneSkisElement) : false;
+    console.log('Extraction Montagne Skis - Case à cocher:', montagneSkis);
+
+    // Ajouter les données à l'objet qualificationsPilote
+    data.qualificationsPilote.qcSepT = qcSepT;
+    data.qualificationsPilote.validiteSepT = validiteSepT;
+    data.qualificationsPilote.qcSepHydro = qcSepHydro;
+    data.qualificationsPilote.validiteSepHydro = validiteSepHydro;
+    data.qualificationsPilote.nuit = nuit;
+    data.qualificationsPilote.voltige = voltige;
+    data.qualificationsPilote.montagneRoues = montagneRoues;
+    data.qualificationsPilote.montagneSkis = montagneSkis;
+
+    // Récupérer l'historique des cotisations
+    console.log('Navigation vers l\'onglet historique...');
+    await page.click('#A5_3');
+    await page.waitForSelector('#A88_TB');
+
+    // Extraction des données du tableau d'historique
+    console.log('Extraction des données de cotisations...');
+    data.historiqueCotisations = [];
+    const rows = await page.$$('#A88_TB tr[id^="A88_"]');
+
+    for (const row of rows) {
+      try {
+        const annee = await row.$eval('td[id^="c"][id$="-A89"] div div', el => el.textContent.trim());
+        const club = await row.$eval('td[id^="c"][id$="-A90"] div div', el => el.textContent.trim());
+        const montant = await row.$eval('td[id^="c"][id$="-A81"] div div', el => el.textContent.trim());
+        
+        if (annee && club && montant) {
+          data.historiqueCotisations.push({
+            annee,
+            club,
+            montant
+          });
+        }
+      } catch (error) {
+        // Ignorer les lignes vides ou mal formatées
+        continue;
+      }
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Erreur lors de l\'extraction des données:', error);
+    throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
+// Fonction pour vérifier si une case est cochée
+async function isChecked(page, selector, options = {}) {
+  try {
+    return await page.evaluate((sel, opts) => {
+      let elements;
+      if (opts.useContains) {
+        // Recherche par texte contenu
+        const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+        elements = Array.from(allCheckboxes).filter(el => {
+          const parentText = el.parentElement?.textContent?.trim() || '';
+          return parentText.includes(opts.containsText || '');
+        });
+      } else {
+        elements = document.querySelectorAll(sel);
+      }
+      for (const el of elements) {
+        if (el.checked) return true;
+      }
+      return false;
+    }, selector, options);
+  } catch (error) {
+    console.log(`Erreur lors de la vérification de la case à cocher ${selector}:`, error.message);
+    return false;
+  }
+}
+
 // Fonction pour générer un token unique pour un instructeur
 async function generateInstructorCalendarToken(instructorId) {
   const token = crypto.randomBytes(32).toString('hex');
@@ -1361,6 +1849,7 @@ async function generateInstructorCalendar(instructorId) {
       .select(`
         *,
         users!reservations_user_id_fkey (
+          id,
           first_name,
           last_name
         ),

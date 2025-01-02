@@ -38,6 +38,7 @@ import CustomFlightFieldsSettings from "../settings/CustomFlightFieldsSettings";
 import RolesSettings from "../settings/RolesSettings";
 import PagePermissionsSettings from "../settings/PagePermissionsSettings";
 import BackupSettings from "../settings/BackupSettings";
+import SmileSettings from "../settings/SmileSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -66,7 +67,8 @@ type TabType =
   | "notifications"
   | "api"
   | "backups"
-  | "weather";
+  | "weather"
+  | "smile";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<TabType>("club");
@@ -96,6 +98,7 @@ const SettingsPage = () => {
     { id: "roles", label: "Rôles", icon: Users },
     { id: "permissions", label: "Permissions", icon: Lock },
     { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "smile", label: "Synchro SMILE", icon: Cloud },
     { id: "api", label: "API", icon: Terminal },
     { id: "backups", label: "Sauvegardes", icon: DatabaseBackup },
   ] as const;
@@ -301,6 +304,7 @@ const SettingsPage = () => {
           {activeTab === "roles" && <RolesSettings />}
           {activeTab === "permissions" && <PagePermissionsSettings />}
           {activeTab === "notifications" && <NotificationList />}
+          {activeTab === "smile" && <SmileSettings />}
           {activeTab === "api" && <ApiExplorer />}
           {activeTab === "backups" && <BackupSettings />}
         </div>
