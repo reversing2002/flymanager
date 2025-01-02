@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { setMinutes, getMinutes } from "date-fns";
-import { X, AlertTriangle, Calendar } from "lucide-react";
+import { X, AlertTriangle, Calendar, MessageSquare } from "lucide-react";
 import type { Aircraft, User, Reservation } from "../../types/database";
 import {
   createReservation,
@@ -14,6 +14,7 @@ import { toast } from "react-hot-toast";
 import { hasAnyGroup } from "../../lib/permissions";
 import NewFlightForm from "../flights/NewFlightForm";
 import LightAvailabilityCalendarModal from "../availability/LightAvailabilityCalendarModal";
+import AircraftRemarksList from "../aircraft/AircraftRemarksList";
 import { useNavigate } from "react-router-dom";
 
 // Utility functions
@@ -242,6 +243,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   const [aircraft, setAircraft] = useState<Aircraft[]>(propAircraft || []);
   const [showNewFlightForm, setShowNewFlightForm] = useState(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [selectedInstructor, setSelectedInstructor] = useState<User | null>(null);
   const [hasExistingFlight, setHasExistingFlight] = useState(false);
   const [existingReservations, setExistingReservations] = useState<
@@ -667,22 +669,34 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                   <label className="block text-sm font-medium text-gray-700">
                     Avion
                   </label>
-                  <select
-                    name="aircraftId"
-                    value={formData.aircraftId}
-                    onChange={handleInputChange}
-                    disabled={!canModifyReservation()}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                      ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                  >
-                    {aircraft
-                      .filter((a) => a.status === "AVAILABLE")
-                      .map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.registration} - {a.name}
-                        </option>
-                      ))}
-                  </select>
+                  <div className="flex gap-2">
+                    <select
+                      name="aircraftId"
+                      value={formData.aircraftId}
+                      onChange={handleInputChange}
+                      disabled={!canModifyReservation()}
+                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                        ${!canModifyReservation() ? "bg-gray-100" : ""}`}
+                    >
+                      {aircraft
+                        .filter((a) => a.status === "AVAILABLE")
+                        .map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.registration} - {a.name}
+                          </option>
+                        ))}
+                    </select>
+                    {formData.aircraftId && (
+                      <button
+                        type="button"
+                        onClick={() => setShowRemarksModal(true)}
+                        className="mt-1 inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-sky-700 hover:text-sky-800 hover:bg-sky-50 rounded-md"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        <span>Remarques</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Type de vol */}
@@ -841,6 +855,12 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
           userId={selectedInstructor.id}
           userName={`${selectedInstructor.first_name} ${selectedInstructor.last_name}`}
           onClose={() => setShowAvailabilityModal(false)}
+        />
+      )}
+      {showRemarksModal && (
+        <AircraftRemarksList
+          aircraftId={formData.aircraftId}
+          onClose={() => setShowRemarksModal(false)}
         />
       )}
     </div>
