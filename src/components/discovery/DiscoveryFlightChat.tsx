@@ -13,6 +13,8 @@ import {
 } from '@chakra-ui/react';
 import { Send, RefreshCw } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface Message {
   sid: string;
   body: string;
@@ -60,7 +62,7 @@ const DiscoveryFlightChat: React.FC<DiscoveryFlightChatProps> = ({
 
   const loadMessages = async () => {
     try {
-      const response = await fetch(`/api/conversations/${flightId}/messages`);
+      const response = await fetch(`${API_URL}/api/conversations/${flightId}/messages`);
       if (!response.ok) throw new Error('Erreur lors du chargement des messages');
       const data: ConversationResponse = await response.json();
       setMessages(data.conversation.messages);
@@ -80,7 +82,7 @@ const DiscoveryFlightChat: React.FC<DiscoveryFlightChatProps> = ({
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/conversations/send-message', {
+      const response = await fetch(`${API_URL}/api/conversations/send-message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

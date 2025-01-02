@@ -27,6 +27,8 @@ interface DiscoveryFlightNotesProps {
   customerPhone: string;
 }
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const DiscoveryFlightNotes: React.FC<DiscoveryFlightNotesProps> = ({
   flightId,
   customerPhone,
@@ -40,7 +42,7 @@ const DiscoveryFlightNotes: React.FC<DiscoveryFlightNotesProps> = ({
 
   const loadLastMessage = async () => {
     try {
-      const response = await fetch(`/api/conversations/${flightId}/messages`);
+      const response = await fetch(`${API_URL}/api/conversations/${flightId}/messages`);
       if (!response.ok) throw new Error('Erreur lors du chargement des messages');
       const messages: Message[] = await response.json();
       if (messages.length > 0) {

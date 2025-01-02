@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Container, Box, Heading, Text, Button, VStack, Divider } from '@chakra-ui/react';
 import { CheckCircle } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface Message {
   sid: string;
   author: string;
@@ -29,7 +31,7 @@ const DiscoveryFlightSuccess: React.FC = () => {
       if (!flightId) return;
       
       try {
-        const response = await fetch(`/api/conversations/${flightId}/messages`);
+        const response = await fetch(`${API_URL}/api/conversations/${flightId}/messages`);
         if (!response.ok) throw new Error('Erreur lors de la récupération des messages');
         
         const data = await response.json();

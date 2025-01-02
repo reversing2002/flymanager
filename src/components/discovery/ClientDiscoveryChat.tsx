@@ -5,6 +5,8 @@ import { Send, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface Message {
   sid: string;
   body: string;
@@ -55,7 +57,7 @@ const ClientDiscoveryChat: React.FC<ClientDiscoveryChatProps> = ({ flightId }) =
 
   const loadMessages = async () => {
     try {
-      const response = await fetch(`/api/conversations/${flightId}/messages`);
+      const response = await fetch(`${API_URL}/api/conversations/${flightId}/messages`);
       if (!response.ok) throw new Error('Erreur lors du chargement des messages');
       const data: ConversationResponse = await response.json();
       setMessages(data.conversation.messages);
@@ -74,7 +76,7 @@ const ClientDiscoveryChat: React.FC<ClientDiscoveryChatProps> = ({ flightId }) =
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/conversations/send-message', {
+      const response = await fetch(`${API_URL}/api/conversations/send-message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
