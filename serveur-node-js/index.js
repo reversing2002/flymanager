@@ -749,7 +749,9 @@ async function processNotifications() {
                       Name: `${notification.users.first_name} ${notification.users.last_name}`
                     }
                   ],
-                  Subject: template.subject,
+                  Subject: notification.type === 'bulk_email' 
+                    ? notification.variables.subject 
+                    : template.subject,
                   HTMLPart: htmlContent
                 }
               ]
