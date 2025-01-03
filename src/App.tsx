@@ -52,6 +52,7 @@ import PassengerInfoForm from "./components/discovery/PassengerInfoForm";
 import PassengerInfoConfirmation from "./components/discovery/PassengerInfoConfirmation";
 import DiscoveryFlightClientPage from "./pages/DiscoveryFlightClientPage";
 import Weather from './pages/Weather';
+import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 
 function App() {
   const queryClient = new QueryClient({
@@ -73,6 +74,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/create-club" element={<CreateClubPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/update-password" element={<UpdatePasswordPage />} />
             <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
             <Route path="/discovery/qr2" element={<EnhancedDiscoveryPage />} />
             <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
