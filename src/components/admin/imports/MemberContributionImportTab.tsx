@@ -227,11 +227,23 @@ const MemberContributionImportTab = () => {
 
         // Créer l'entrée comptable si elle existe
         if (contribution.account_entry) {
+          // Récupérer l'ID du type d'entrée
+          const { data: entryType, error: entryTypeError } = await supabase
+            .from('account_entry_types')
+            .select('id')
+            .eq('code', contribution.account_entry.entry_type_code)
+            .single();
+
+          if (entryTypeError) throw new Error(`Type d'entrée non trouvé: ${contribution.account_entry.entry_type_code}`);
+
           const { data: accountEntry, error: accountError } = await supabase
             .from('account_entries')
             .insert([{
               user_id: user.found.id,
-              ...contribution.account_entry
+              amount: contribution.account_entry.amount,
+              payment_method: contribution.account_entry.payment_method,
+              date: contribution.account_entry.date,
+              entry_type_id: entryType.id
             }])
             .select()
             .single();

@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "../../lib/supabase";
 import FFACredentialsForm from "./FFACredentialsForm";
 import FFPLUMCredentialsForm from "./FFPLUMCredentialsForm";
+// import { BiometricAuth } from "../auth/BiometricAuth";
 
 const getRoleBadgeColor = (role: Role) => {
   switch (role) {
@@ -497,6 +498,16 @@ const MemberProfile = () => {
                 </div>
               </div>
             )}
+            
+            {/* Section d'authentification biométrique */}
+            {/* Temporairement désactivé
+            {isOwnProfile && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold mb-4">Authentification biométrique</h3>
+                <BiometricAuth onSuccess={() => toast.success('Configuration biométrique mise à jour')} />
+              </div>
+            )}
+            */}
           </div>
         )}
       </main>
