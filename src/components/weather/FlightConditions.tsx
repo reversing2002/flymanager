@@ -29,36 +29,63 @@ const DEFAULT_MINIMA = {
   }
 };
 
+// Fonction utilitaire pour convertir la visibilité
+const parseVisibility = (visibility: number | string | null): number | null => {
+  if (visibility === null) return null;
+  if (typeof visibility === 'number') return visibility;
+  
+  // Gestion du cas ">6km"
+  if (visibility === '>6km' || visibility === '6+') return 6;
+  
+  // Conversion des autres valeurs numériques
+  const numValue = parseFloat(visibility);
+  return isNaN(numValue) ? null : numValue;
+};
+
 export const getFlightCategory = (
   visibility: number | string | null,
   clouds: Array<{ cover: string; base: number | null }>,
   minima = DEFAULT_MINIMA
 ) => {
-  // Convertir la visibilité en nombre si c'est une chaîne
-  const visibilityNum = typeof visibility === 'string' ? parseFloat(visibility) : visibility;
+  // Convertir la visibilité
+  const visibilityNum = parseVisibility(visibility);
   
   if (!visibilityNum) return 'UNKNOWN';
 
   // Trouver le plafond le plus bas (première couche BKN ou OVC)
   const ceiling = clouds.find(cloud => 
     ['BKN', 'OVC'].includes(cloud.cover.toUpperCase())
-  )?.base;
+  )?.base || null;
 
-  // Convertir la visibilité en mètres
+  // Convertir la visibilité en mètres (multiplication par 1000 car l'entrée est en km)
   const visibilityMeters = visibilityNum * 1000;
+
+  // Si la visibilité est ">6km", c'est automatiquement VFR pour la visibilité
+  if (visibility === '>6km' || visibility === '6+') {
+    // Ne vérifier que le plafond pour les conditions IFR/MVFR
+    if (ceiling !== null) {
+      if (ceiling < minima.marginal.ceiling) {
+        return 'IFR';
+      }
+      if (ceiling < minima.visual.ceiling) {
+        return 'MVFR';
+      }
+    }
+    return 'VFR';
+  }
 
   // Conditions IFR
   if (
-    visibilityMeters < minima.marginal.visibility ||
-    (ceiling !== undefined && ceiling < minima.marginal.ceiling)
+    (visibilityMeters < minima.marginal.visibility) ||
+    (ceiling !== null && ceiling < minima.marginal.ceiling)
   ) {
     return 'IFR';
   }
-  
+
   // Conditions MVFR
   if (
-    visibilityMeters < minima.visual.visibility ||
-    (ceiling !== undefined && ceiling < minima.visual.ceiling)
+    (visibilityMeters < minima.visual.visibility && visibilityMeters >= minima.marginal.visibility) ||
+    (ceiling !== null && ceiling < minima.visual.ceiling && ceiling >= minima.marginal.ceiling)
   ) {
     return 'MVFR';
   }
@@ -72,13 +99,13 @@ const FlightConditions: React.FC<FlightConditionsProps> = ({
   userMinima = DEFAULT_MINIMA,
   compact = false 
 }) => {
-  // Convertir la visibilité en nombre
-  const visibilityNum = typeof data.visib === 'string' ? parseFloat(data.visib) : data.visib;
+  // Convertir la visibilité
+  const visibilityNum = parseVisibility(data.visib);
   
   // Trouver le plafond le plus bas
   const lowestCeiling = data.clouds.find(cloud => 
-    ['BKN', 'OVC'].includes(cloud.cover.toUpperCase()) && cloud.base !== null
-  )?.base;
+    ['BKN', 'OVC'].includes(cloud.cover.toUpperCase())
+  )?.base || null;
 
   const category = getFlightCategory(visibilityNum, data.clouds, userMinima);
 
@@ -126,7 +153,7 @@ const FlightConditions: React.FC<FlightConditionsProps> = ({
   // Convertir la visibilité en format lisible
   const formatVisibility = (visib: number | string | null): string => {
     if (visib === null) return 'N/A';
-    const numVisib = typeof visib === 'string' ? parseFloat(visib) : visib;
+    const numVisib = parseVisibility(visib);
     if (numVisib < 1) {
       return `${Math.round(numVisib * 1000)}m`;
     }
@@ -153,23 +180,15 @@ const FlightConditions: React.FC<FlightConditionsProps> = ({
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col">
           <span className="text-sm text-slate-500">Plafond</span>
-          {data.clouds.map((cloud, index) => {
-            const isCeiling = ['BKN', 'OVC'].includes(cloud.cover.toUpperCase());
-            return (
-              <span 
-                key={index}
-                className={isCeiling ? getParameterStyle('ceiling') : 'text-slate-700'}
-              >
-                {cloud.cover.toUpperCase()} {cloud.base !== null ? `${cloud.base}ft` : 'N/A'}
-              </span>
-            );
-          })}
+          <span className={getParameterStyle('ceiling')}>
+            {lowestCeiling !== null ? `${lowestCeiling}ft` : 'N/A'}
+          </span>
         </div>
 
         <div className="flex flex-col">
           <span className="text-sm text-slate-500">Visibilité</span>
           <span className={getParameterStyle('visibility')}>
-            {formatVisibility(visibilityNum)}
+            {formatVisibility(data.visib)}
           </span>
         </div>
       </div>

@@ -29,18 +29,27 @@ const WeatherWidget = () => {
 
   useEffect(() => {
     const loadUserMinima = async () => {
-      if (!user?.id) return;
+      if (!user?.club?.id) return;
 
       try {
         const { data, error } = await supabase
-          .from('user_settings')
-          .select('weather_minima')
-          .eq('user_id', user.id)
+          .from('clubs')
+          .select('weather_settings')
+          .eq('id', user.club.id)
           .single();
 
         if (error) throw error;
-        if (data?.weather_minima) {
-          setUserMinima(data.weather_minima);
+        if (data?.weather_settings) {
+          setUserMinima({
+            visual: {
+              ceiling: data.weather_settings.visual_ceiling,
+              visibility: data.weather_settings.visual_visibility,
+            },
+            marginal: {
+              ceiling: data.weather_settings.marginal_ceiling,
+              visibility: data.weather_settings.marginal_visibility,
+            }
+          });
         }
       } catch (err) {
         console.error('Erreur lors du chargement des minima:', err);
@@ -48,7 +57,7 @@ const WeatherWidget = () => {
     };
 
     loadUserMinima();
-  }, [user?.id]);
+  }, [user?.club?.id]);
 
   useEffect(() => {
     const fetchClubCoordinates = async () => {
