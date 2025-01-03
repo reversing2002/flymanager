@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { Button, TextField, Paper, Typography, Box } from "@mui/material";
 import toast from "react-hot-toast";
@@ -9,15 +9,19 @@ export default function UpdatePasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
-    // Vérifie si nous avons un token de réinitialisation dans l'URL
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    if (!hashParams.get("access_token")) {
-      toast.error("Lien de réinitialisation invalide");
-      navigate("/login");
-    }
+    const handlePasswordRecovery = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error || !data.session) {
+        toast.error("Session invalide ou expirée");
+        navigate("/login");
+        return;
+      }
+    };
+
+    handlePasswordRecovery();
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,6 +47,9 @@ export default function UpdatePasswordPage() {
       if (error) throw error;
 
       toast.success("Mot de passe mis à jour avec succès");
+      
+      // Se déconnecter pour forcer une nouvelle connexion avec le nouveau mot de passe
+      await supabase.auth.signOut();
       navigate("/login");
     } catch (error) {
       console.error("Erreur lors de la mise à jour du mot de passe:", error);

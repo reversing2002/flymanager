@@ -11,6 +11,8 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     storage: window.localStorage,
     autoRefreshToken: true,
     debug: true,
+    flowType: "pkce",
+    redirectTo: window.location.origin + "/update-password"
   },
 });
 
