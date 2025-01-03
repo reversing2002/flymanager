@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import { Mail, Send } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@mui/material';
+import { Card, CardContent, CardHeader } from '@mui/material';
+import { TextField, FormControl, FormLabel, FormGroup, Checkbox, FormControlLabel, MenuItem, Select as MuiSelect } from '@mui/material';
+import { Editor } from '@tinymce/tinymce-react';
 import { toast } from 'react-hot-toast';
-import { getNotificationSettings } from '@/services/notificationService';
-import { sendBulkEmail, getMembersByFilters } from '@/services/emailService';
+import { getNotificationSettings, createNotification, getMembersByFilters } from '@/services/notificationService';
+import { addHours, format } from 'date-fns';
 
 interface EmailForm {
   subject: string;
@@ -22,7 +21,18 @@ interface EmailForm {
 const EmailMembersPage = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<EmailForm>();
+  const { control, handleSubmit, formState: { errors } } = useForm<EmailForm>({
+    defaultValues: {
+      selectedGroups: [],
+      contributionYear: new Date().getFullYear().toString(),
+      content: `
+        <h1>Bienvenue sur 4Fly</h1>
+        <p>Cher membre,</p>
+        <p>Nous sommes ravis de vous accueillir sur la plateforme 4Fly.</p>
+        <p>Cordialement,<br>L'équipe 4Fly</p>
+      `
+    }
+  });
 
   // Récupération des paramètres de notification
   const { data: settings } = useQuery({
@@ -32,11 +42,11 @@ const EmailMembersPage = () => {
   });
 
   const groups = [
-    { id: 'admin', label: 'Administrateurs' },
-    { id: 'instructor', label: 'Instructeurs' },
-    { id: 'student', label: 'Élèves' },
-    { id: 'pilot', label: 'Pilotes' },
-    { id: 'mechanic', label: 'Mécaniciens' }
+    { id: '11111111-1111-1111-1111-111111111111', label: 'Administrateurs' },
+    { id: '22222222-2222-2222-2222-222222222222', label: 'Instructeurs' },
+    { id: '33333333-3333-3333-3333-333333333333', label: 'Pilotes' },
+    { id: '44444444-4444-4444-4444-444444444444', label: 'Mécaniciens' },
+    { id: '55555555-5555-5555-5555-555555555555', label: 'Élèves' }
   ];
 
   const years = [
@@ -62,22 +72,34 @@ const EmailMembersPage = () => {
         return;
       }
 
-      await sendBulkEmail({
-        subject: data.subject,
-        content: data.content,
-        recipients,
-        settings: {
-          mailjet_api_key: settings.mailjet_api_key,
-          mailjet_api_secret: settings.mailjet_api_secret,
-          sender_email: settings.sender_email,
-          sender_name: settings.sender_name,
-        },
-      });
+      // Programmer l'envoi dans 1 heure
+      const scheduledDate = addHours(new Date(), 1);
+      
+      // Créer une notification pour chaque destinataire
+      const notificationPromises = recipients.map(recipient => 
+        createNotification({
+          type: 'bulk_email' as any, // Ajouter ce type dans NotificationType
+          user_id: recipient.id, // Utiliser l'ID au lieu de l'email
+          scheduled_date: format(scheduledDate, "yyyy-MM-dd'T'HH:mm:ssXXX"),
+          sent: false,
+          variables: {
+            subject: data.subject,
+            content: data.content,
+            recipient: {
+              email: recipient.email,
+              name: recipient.name
+            }
+          },
+          club_id: user?.club?.id!
+        })
+      );
 
-      toast.success(`Emails envoyés avec succès à ${recipients.length} membres`);
+      await Promise.all(notificationPromises);
+
+      toast.success(`${recipients.length} emails programmés pour ${format(scheduledDate, 'HH:mm')}`);
     } catch (error) {
-      console.error('Erreur lors de l\'envoi des emails:', error);
-      toast.error('Erreur lors de l\'envoi des emails');
+      console.error('Erreur lors de la programmation des emails:', error);
+      toast.error('Erreur lors de la programmation des emails');
     } finally {
       setIsLoading(false);
     }
@@ -85,74 +107,125 @@ const EmailMembersPage = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Envoyer un email aux membres</h1>
-      
-      <Card className="p-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div>
-            <Label htmlFor="subject">Sujet</Label>
-            <input
-              id="subject"
-              type="text"
-              className="w-full p-2 border rounded"
-              {...register('subject', { required: 'Le sujet est requis' })}
-            />
-            {errors.subject && (
-              <p className="text-red-500 text-sm">{errors.subject.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="content">Contenu</Label>
-            <Textarea
-              id="content"
-              className="w-full h-40"
-              {...register('content', { required: 'Le contenu est requis' })}
-            />
-            {errors.content && (
-              <p className="text-red-500 text-sm">{errors.content.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label>Filtrer par groupe</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-              {groups.map((group) => (
-                <div key={group.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`group-${group.id}`}
-                    {...register('selectedGroups')}
-                    value={group.id}
+      <Card>
+        <CardHeader 
+          title="Programmer des emails aux membres"
+          subheader="Les emails seront envoyés dans 1 heure"
+          avatar={<Mail className="h-6 w-6 text-primary" />}
+        />
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <FormControl fullWidth>
+              <FormLabel>Destinataires</FormLabel>
+              <FormGroup row>
+                {groups.map((group) => (
+                  <Controller
+                    key={group.id}
+                    name="selectedGroups"
+                    control={control}
+                    render={({ field }) => (
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={field.value?.includes(group.id)}
+                            onChange={(e) => {
+                              const newValue = e.target.checked
+                                ? [...(field.value || []), group.id]
+                                : (field.value || []).filter((id: string) => id !== group.id);
+                              field.onChange(newValue);
+                            }}
+                          />
+                        }
+                        label={group.label}
+                      />
+                    )}
                   />
-                  <Label htmlFor={`group-${group.id}`}>{group.label}</Label>
-                </div>
-              ))}
+                ))}
+              </FormGroup>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <FormLabel>Année de cotisation</FormLabel>
+              <Controller
+                name="contributionYear"
+                control={control}
+                render={({ field }) => (
+                  <MuiSelect {...field}>
+                    {years.map((year) => (
+                      <MenuItem key={year.value} value={year.value}>
+                        {year.label}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                )}
+              />
+            </FormControl>
+
+            <FormControl fullWidth>
+              <FormLabel>Sujet</FormLabel>
+              <Controller
+                name="subject"
+                control={control}
+                rules={{ required: 'Le sujet est requis' }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    error={!!errors.subject}
+                    helperText={errors.subject?.message}
+                    fullWidth
+                  />
+                )}
+              />
+            </FormControl>
+
+            <FormControl fullWidth>
+              <FormLabel>Contenu</FormLabel>
+              <Controller
+                name="content"
+                control={control}
+                rules={{ required: 'Le contenu est requis' }}
+                render={({ field }) => (
+                  <Editor
+                    apiKey="a2n3jmwpjgutthe8gc0w2odt7jqkh537sv261emnc52ffdgh"
+                    init={{
+                      height: 400,
+                      menubar: true,
+                      plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                      ],
+                      toolbar: 'undo redo | blocks | ' +
+                        'bold italic forecolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | help',
+                      content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+                      language: 'fr_FR',
+                    }}
+                    value={field.value}
+                    onEditorChange={(content) => {
+                      field.onChange(content);
+                    }}
+                  />
+                )}
+              />
+              {errors.content && (
+                <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>
+              )}
+            </FormControl>
+
+            <div className="flex justify-end">
+              <Button
+                variant="contained"
+                type="submit"
+                disabled={isLoading}
+                startIcon={<Send />}
+              >
+                {isLoading ? 'Programmation en cours...' : 'Programmer les emails'}
+              </Button>
             </div>
-          </div>
-
-          <div>
-            <Label htmlFor="contributionYear">Année de cotisation</Label>
-            <Select
-              id="contributionYear"
-              {...register('contributionYear')}
-              className="w-full"
-            >
-              {years.map((year) => (
-                <option key={year.value} value={year.value}>
-                  {year.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Envoi en cours...' : 'Envoyer les emails'}
-          </Button>
-        </form>
+          </form>
+        </CardContent>
       </Card>
     </div>
   );

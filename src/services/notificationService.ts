@@ -136,13 +136,18 @@ export async function sendEmail(
           },
           To: [
             {
-              Email: DEBUG_EMAIL, // Utiliser l'email de debug au lieu de notification.user.email
-              Name: `${notification.user.first_name} ${notification.user.last_name}`,
+              Email: DEBUG_EMAIL || notification.user.email,
+              Name: notification.type === 'bulk_email' 
+                ? notification.variables.recipient.name 
+                : `${notification.user.first_name} ${notification.user.last_name}`,
             },
           ],
-          Subject: 'Test - ' + notification.type, // Préfixer avec "Test" pour identifier facilement
-          TextPart: `[DEBUG MODE - Email original destiné à: ${notification.user.email}]\n\n${notification.content}`,
-          HTMLPart: `<p style="color: red;">[DEBUG MODE - Email original destiné à: ${notification.user.email}]</p><br/>${notification.content}`,
+          Subject: notification.type === 'bulk_email'
+            ? notification.variables.subject
+            : 'Test - ' + notification.type,
+          HTMLPart: notification.type === 'bulk_email'
+            ? notification.variables.content
+            : `<p style="color: red;">[DEBUG MODE - Email original destiné à: ${notification.user.email}]</p><br/>${notification.content}`,
         },
       ],
     }),
@@ -302,4 +307,53 @@ export async function createNotificationTemplate(
 
   if (error) throw error;
   return data;
+}
+
+interface EmailRecipient {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export async function getMembersByFilters(
+  clubId: string,
+  groups?: string[],
+  contributionYear?: string
+): Promise<EmailRecipient[]> {
+  let query = supabase
+    .from('users')
+    .select(`
+      id,
+      email,
+      first_name,
+      last_name,
+      user_group_memberships!inner(group_id),
+      member_contributions!inner(valid_from, valid_until),
+      club_members!inner(club_id)
+    `)
+    .eq('club_members.club_id', clubId);
+
+  if (groups && groups.length > 0) {
+    query = query.in('user_group_memberships.group_id', groups);
+  }
+
+  if (contributionYear) {
+    const startOfYear = `${contributionYear}-01-01`;
+    const endOfYear = `${contributionYear}-12-31`;
+    query = query
+      .lte('member_contributions.valid_from', endOfYear)
+      .gte('member_contributions.valid_until', startOfYear);
+  }
+
+  const { data: members, error } = await query;
+
+  if (error) {
+    throw new Error(`Erreur lors de la récupération des membres: ${error.message}`);
+  }
+
+  return members.map((member) => ({
+    id: member.id,
+    email: member.email,
+    name: `${member.first_name} ${member.last_name}`,
+  }));
 }

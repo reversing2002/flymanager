@@ -53,6 +53,7 @@ import PassengerInfoConfirmation from "./components/discovery/PassengerInfoConfi
 import DiscoveryFlightClientPage from "./pages/DiscoveryFlightClientPage";
 import Weather from './pages/Weather';
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
+import EmailMembersPage from "./components/admin/EmailMembersPage";
 
 function App() {
   const queryClient = new QueryClient({
@@ -323,6 +324,16 @@ function App() {
                 element={
                   <ProtectedRoute roles={["admin"]}>
                     <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Email - Admin only */}
+              <Route
+                path="admin/email"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <EmailMembersPage />
                   </ProtectedRoute>
                 }
               />

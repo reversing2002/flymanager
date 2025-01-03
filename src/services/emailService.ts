@@ -65,16 +65,21 @@ export async function getMembersByFilters(
       first_name,
       last_name,
       user_group_memberships!inner(group_id),
-      member_contributions!inner(year)
+      member_contributions!inner(valid_from, valid_until),
+      club_members!inner(club_id)
     `)
-    .eq('club_id', clubId);
+    .eq('club_members.club_id', clubId);
 
   if (groups && groups.length > 0) {
     query = query.in('user_group_memberships.group_id', groups);
   }
 
   if (contributionYear) {
-    query = query.eq('member_contributions.year', contributionYear);
+    const startOfYear = `${contributionYear}-01-01`;
+    const endOfYear = `${contributionYear}-12-31`;
+    query = query
+      .lte('member_contributions.valid_from', endOfYear)
+      .gte('member_contributions.valid_until', startOfYear);
   }
 
   const { data: members, error } = await query;
