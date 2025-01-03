@@ -117,7 +117,7 @@ interface HorizontalReservationCalendarProps {
 }
 
 const HorizontalReservationCalendar = ({
-  filters,
+  filters = { instructors: [], aircraft: [], types: [] },
 }: HorizontalReservationCalendarProps) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
@@ -244,7 +244,7 @@ const HorizontalReservationCalendar = ({
 
   useEffect(() => {
     const loadInstructorAvailabilities = async () => {
-      if (!filters.instructors || filters.instructors.length === 0) {
+      if (!filters?.instructors || !Array.isArray(filters.instructors) || filters.instructors.length === 0) {
         setInstructorAvailabilities([]);
         return;
       }

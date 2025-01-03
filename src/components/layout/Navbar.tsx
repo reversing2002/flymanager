@@ -228,10 +228,12 @@ const Navbar = () => {
                   <span>Membres</span>
                 </Link>
               )}
+              {canAccessTraining && (
               <Link to={canAccessTrainingAdmin ? "/training-admin" : "/training"} className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                 <Book className="w-5 h-5 mr-3" />
                 <span>QCM</span>
               </Link>
+              )}
               {canAccessTrainingAdmin && (
                 <Link to="/progression/admin" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                   <Book className="w-5 h-5 mr-3" />

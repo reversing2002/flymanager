@@ -521,20 +521,7 @@ Dates préférées : ${flight.preferred_dates}`;
                             </Button>
                           )}
                         </HStack>
-                        <HStack spacing={2} mt={2}>
-                          <Tooltip label="Notes privées">
-                            <IconButton
-                              aria-label="Voir les notes privées"
-                              icon={<Lock size={18} />}
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // setShowPrivateNotes(showPrivateNotes === flight.id ? null : flight.id);
-                              }}
-                            />
-                          </Tooltip>
-                        </HStack>
+                        
                       </div>
                     </div>
 
