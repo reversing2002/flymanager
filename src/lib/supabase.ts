@@ -12,7 +12,15 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     autoRefreshToken: true,
     debug: true,
     flowType: "pkce",
-    redirectTo: window.location.origin + "/update-password"
+    redirectTo: `${window.location.origin}/update-password`,
+    detectSessionInUrl: true,
+    cookieOptions: {
+      name: "flymanager_auth",
+      lifetime: 60 * 60 * 24 * 7, // 7 jours
+      domain: window.location.hostname,
+      sameSite: "lax",
+      secure: window.location.protocol === "https:"
+    }
   },
 });
 
