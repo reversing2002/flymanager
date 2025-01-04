@@ -57,19 +57,40 @@ export const getFlightCategory = (
     ['BKN', 'OVC'].includes(cloud.cover.toUpperCase())
   )?.base || null;
 
+  // Traitement spécial pour les visibilités supérieures à 6km
+  if (visibility === '>6km' || visibility === '6+') {
+    // On ne vérifie que le plafond car la visibilité est suffisante pour VFR
+    if (ceiling === null || ceiling >= minima.visual.ceiling) {
+      return 'VFR';
+    }
+    
+    // Vérification du plafond selon les minima
+    if (ceiling < minima.marginal.ceiling) {
+      return 'IFR';
+    }
+    if (ceiling < minima.visual.ceiling) {
+      return 'MVFR';
+    }
+    return 'VFR';
+  }
+
   // Convertir la visibilité en mètres (multiplication par 1000 car l'entrée est en km)
   const visibilityMeters = visibilityNum * 1000;
 
-  // Si la visibilité est ">6km", c'est automatiquement VFR pour la visibilité
-  if (visibility === '>6km' || visibility === '6+') {
-    // Ne vérifier que le plafond pour les conditions IFR/MVFR
-    if (ceiling !== null) {
-      if (ceiling < minima.marginal.ceiling) {
-        return 'IFR';
-      }
-      if (ceiling < minima.visual.ceiling) {
-        return 'MVFR';
-      }
+  // Pour les autres cas de visibilité
+  // Si la visibilité est de 6km ou plus, on la considère comme VFR pour la visibilité
+  if (visibilityNum >= 6) {
+    // On ne vérifie que le plafond car la visibilité est suffisante pour VFR
+    if (ceiling === null || ceiling >= minima.visual.ceiling) {
+      return 'VFR';
+    }
+    
+    // Vérification du plafond selon les minima
+    if (ceiling < minima.marginal.ceiling) {
+      return 'IFR';
+    }
+    if (ceiling < minima.visual.ceiling) {
+      return 'MVFR';
     }
     return 'VFR';
   }
@@ -153,6 +174,7 @@ const FlightConditions: React.FC<FlightConditionsProps> = ({
   // Convertir la visibilité en format lisible
   const formatVisibility = (visib: number | string | null): string => {
     if (visib === null) return 'N/A';
+    if (visib === '>6km' || visib === '6+') return '>6km';
     const numVisib = parseVisibility(visib);
     if (numVisib < 1) {
       return `${Math.round(numVisib * 1000)}m`;

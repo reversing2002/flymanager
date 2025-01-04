@@ -15,7 +15,7 @@ const REQUIRED_FIELDS = {
 // Contraintes et options pour les champs
 const FIELD_CONSTRAINTS = {
   payment_method: ['CARD', 'CASH', 'TRANSFER', 'CHECK', 'ACCOUNT'],
-  amount: { min: 0, precision: 2 },
+  amount: { precision: 2 },
   date: { pattern: /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z)?$/ },
 };
 
