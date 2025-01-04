@@ -25,6 +25,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
   const isAdmin = hasAnyGroup(currentUser, ["ADMIN"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
   const canViewFinancials = isAdmin || isInstructor;
+  const hasFullAccess = isAdmin || isInstructor;
 
   const getRoleBadgeColor = (role: Role) => {
     switch (role) {
@@ -41,6 +42,16 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const formatEmail = (email: string | null, hasFullAccess: boolean) => {
+    if (!email) return "Non renseigné";
+    if (hasFullAccess) {
+      return email;
+    }
+    // Masquer l'email en ne montrant que le domaine
+    const [localPart, domain] = email.split('@');
+    return `***@${domain}`;
   };
 
   const handleDelete = async () => {
@@ -127,8 +138,8 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
             {member.email && (
               <div className="flex items-center space-x-2 overflow-hidden">
                 <Mail className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate" title={member.email}>
-                  {member.email}
+                <span className="truncate" title={hasFullAccess ? member.email : formatEmail(member.email, hasFullAccess)}>
+                  {formatEmail(member.email, hasFullAccess)}
                 </span>
               </div>
             )}

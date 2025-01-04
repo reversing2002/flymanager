@@ -45,6 +45,27 @@ const getRoleBadgeColor = (role: Role) => {
   }
 };
 
+// Fonction utilitaire pour formater la date de naissance
+const formatBirthDate = (date: string | null, hasFullAccess: boolean) => {
+  if (!date) return "Non renseignée";
+  const birthDate = new Date(date);
+  if (hasFullAccess) {
+    return birthDate.toLocaleDateString('fr-FR');
+  }
+  return birthDate.getFullYear().toString();
+};
+
+// Fonction utilitaire pour formater l'email
+const formatEmail = (email: string | null, hasFullAccess: boolean) => {
+  if (!email) return "Non renseigné";
+  if (hasFullAccess) {
+    return email;
+  }
+  // Masquer l'email en ne montrant que le domaine
+  const [localPart, domain] = email.split('@');
+  return `***@${domain}`;
+};
+
 const MemberProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -75,6 +96,7 @@ const MemberProfile = () => {
   const isOwnProfile = currentUser?.id === id;
   const canEdit = isAdmin || isInstructor || isOwnProfile;
   const canManageContributions = isAdmin || isInstructor;
+  const hasFullAccess = isAdmin || isInstructor;
 
   useEffect(() => {
     loadData();
@@ -314,7 +336,9 @@ const MemberProfile = () => {
                 <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Email</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{pilot?.email}</dd>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {formatEmail(pilot?.email, hasFullAccess)}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Téléphone</dt>
@@ -323,9 +347,7 @@ const MemberProfile = () => {
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Date de naissance</dt>
                     <dd className="mt-1 text-sm text-gray-900">
-                      {pilot?.birth_date
-                        ? new Date(pilot.birth_date).toLocaleDateString()
-                        : "Non renseignée"}
+                      {formatBirthDate(pilot.birth_date, hasFullAccess)}
                     </dd>
                   </div>
                 </div>
