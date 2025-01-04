@@ -92,14 +92,6 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
 
     let filtered = [...reservations];
 
-    // Filter reservations based on user role
-    if (
-      hasAnyGroup(currentUser, ["PILOT"]) &&
-      !hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR", "MECHANIC"])
-    ) {
-      filtered = filtered.filter((r) => r.userId === currentUser.id);
-    }
-
     // Apply filters
     if (filters.aircraftTypes.length > 0) {
       filtered = filtered.filter((r) =>
