@@ -7,7 +7,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
 import AircraftCard from "./AircraftCard";
 import EditAircraftModal from "./EditAircraftModal";
-import AircraftDetailsModal from "./AircraftDetailsModal";
+
 import AircraftOrderModal from "./AircraftOrderModal";
 import { toast } from "react-hot-toast";
 
@@ -234,20 +234,7 @@ const AircraftList = () => {
         />
       )}
 
-      {selectedAircraft && !isEditing && !isCreating && (
-        <AircraftDetailsModal
-          aircraft={selectedAircraft}
-          onClose={() => setSelectedAircraft(null)}
-          onEdit={
-            canEdit
-              ? () => {
-                  setIsEditing(true);
-                }
-              : undefined
-          }
-          onUpdate={handleAircraftUpdate}
-        />
-      )}
+
 
       {isReordering && (
         <AircraftOrderModal

@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Clock, AlertTriangle, Wrench, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Aircraft } from "../../types/database";
 import AircraftRemarks from "./AircraftRemarks";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
+import { getMaintenanceStats, type MaintenanceStats } from "../../lib/queries/aircraft";
 
 interface AircraftCardProps {
   aircraft: Aircraft;
@@ -23,9 +24,24 @@ const AircraftCard: React.FC<AircraftCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const [showRemarks, setShowRemarks] = useState(false);
+  const [maintenanceStats, setMaintenanceStats] = useState<MaintenanceStats | null>(null);
   const { user } = useAuth();
   
   const canAccessMaintenance = hasAnyGroup(user, ['MECHANIC', 'ADMIN']);
+
+  useEffect(() => {
+    if (canAccessMaintenance) {
+      const loadMaintenanceStats = async () => {
+        try {
+          const stats = await getMaintenanceStats();
+          setMaintenanceStats(stats);
+        } catch (error) {
+          console.error("Error loading maintenance stats:", error);
+        }
+      };
+      loadMaintenanceStats();
+    }
+  }, [canAccessMaintenance]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -54,30 +70,66 @@ const AircraftCard: React.FC<AircraftCardProps> = ({
   };
 
   const getMaintenanceStatus = () => {
-    if (aircraft.hoursBeforeMaintenance <= 5) {
+    if (!maintenanceStats) {
       return {
-        color: "text-red-600",
-        bgColor: "bg-red-50",
-        icon: <AlertTriangle className="h-4 w-4" />,
-        label: "Maintenance urgente",
-        hours: `${aircraft.hoursBeforeMaintenance}h restantes`,
-      };
-    } else if (aircraft.hoursBeforeMaintenance <= 10) {
-      return {
-        color: "text-amber-600",
-        bgColor: "bg-amber-50",
+        color: "text-slate-600",
+        bgColor: "bg-slate-50",
         icon: <Clock className="h-4 w-4" />,
-        label: "Maintenance à prévoir",
-        hours: `${aircraft.hoursBeforeMaintenance}h restantes`,
+        label: "Chargement...",
+        hours: "",
       };
     }
-    return {
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
-      icon: <Wrench className="h-4 w-4" />,
-      label: "Maintenance OK",
-      hours: `${aircraft.hoursBeforeMaintenance}h restantes`,
-    };
+
+    const aircraftStats = maintenanceStats.aircraft_stats.find(
+      stats => stats.id === aircraft.id
+    );
+
+    if (!aircraftStats) {
+      return {
+        color: "text-slate-600",
+        bgColor: "bg-slate-50",
+        icon: <Clock className="h-4 w-4" />,
+        label: "Données non disponibles",
+        hours: "",
+      };
+    }
+
+    const { maintenance_status, hours_before_maintenance } = aircraftStats;
+
+    switch (maintenance_status) {
+      case 'OVERDUE':
+        return {
+          color: "text-red-600",
+          bgColor: "bg-red-50",
+          icon: <AlertTriangle className="h-4 w-4" />,
+          label: "Maintenance dépassée",
+          hours: `${hours_before_maintenance}h restantes`,
+        };
+      case 'URGENT':
+        return {
+          color: "text-red-600",
+          bgColor: "bg-red-50",
+          icon: <AlertTriangle className="h-4 w-4" />,
+          label: "Maintenance urgente",
+          hours: `${hours_before_maintenance}h restantes`,
+        };
+      case 'WARNING':
+        return {
+          color: "text-amber-600",
+          bgColor: "bg-amber-50",
+          icon: <Clock className="h-4 w-4" />,
+          label: "Maintenance à prévoir",
+          hours: `${hours_before_maintenance}h restantes`,
+        };
+      default:
+        return {
+          color: "text-emerald-600",
+          bgColor: "bg-emerald-50",
+          icon: <Wrench className="h-4 w-4" />,
+          label: "Maintenance OK",
+          hours: `${hours_before_maintenance}h restantes`,
+        };
+    }
   };
 
   const maintenanceStatus = getMaintenanceStatus();
