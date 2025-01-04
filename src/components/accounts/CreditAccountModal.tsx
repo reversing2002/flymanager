@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 import type { AccountEntryType } from "../../types/accounts";
 
 const stripePromise = loadStripe(
-  "pk_test_51M4MGHATJFXCdMjoIpPFnd7LkQePPOcSGAOZUlhh70wGFetUVQlvxYB7KqaTABP91s0wIinKe8ZEnv5H0K4UwFI900qELly5kX"
+  "pk_live_51M4MGHATJFXCdMjoq1CTqE7hb86qT8ssv6XXJIIExHAf5CVXKQ25mKAcuOjzWjClzDp2aNtfrriNae4na0UJ5lWd00sWTIrLtD"
 );
 
 interface CreditAccountModalProps {
