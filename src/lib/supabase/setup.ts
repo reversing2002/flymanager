@@ -2,12 +2,10 @@ import { createAuthUsers } from "./auth";
 import { migrateData } from "./migrations";
 import { initializeDefaultChatRooms } from "./chat";
 import { supabase } from "../supabase";
-import { fetchDatabaseSchema } from "./schema";
 
 export async function setupSupabase() {
   try {
     console.log("Starting Supabase setup...");
-    await fetchDatabaseSchema();
 
     // First check if tables exist and have data
     const { data: tableInfo, error: tableError } = await supabase
