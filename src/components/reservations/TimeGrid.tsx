@@ -257,11 +257,26 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   }, []);
 
   const handleClick = (hour: number, minute: number, aircraftId: string) => {
+    console.log("=== handleClick dans TimeGrid ===");
+    console.log("Hour:", hour);
+    console.log("Minute:", minute);
+    console.log("AircraftId:", aircraftId);
+    
     const start = new Date(selectedDate);
     start.setHours(hour, minute, 0, 0);
     
+    // Vérifier si le créneau est dans le passé pour aujourd'hui
+    if (isToday(selectedDate) && start < new Date()) {
+      console.log("Créneau dans le passé");
+      toast.error("Impossible de réserver un créneau dans le passé", { duration: 4000 });
+      return;
+    }
+    
     const end = new Date(start);
     end.setMinutes(end.getMinutes() + 60); // Par défaut 1h de réservation
+    
+    console.log("Start:", start.toISOString());
+    console.log("End:", end.toISOString());
     
     onTimeSlotClick(start, end, aircraftId);
   };
@@ -591,10 +606,23 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     }
 
     const handleSlotClick = () => {
+      console.log("=== handleSlotClick dans TimeGrid ===");
+      console.log("Hour:", hour);
+      console.log("Minute:", minute);
+      console.log("AircraftId:", aircraft.id);
+      console.log("IsUnavailable:", isUnavailable);
+      console.log("HasReservation:", !!reservation);
+      
       if (isUnavailable && blockingAvailability) {
         const start = new Date(blockingAvailability.start_time);
         const end = new Date(blockingAvailability.end_time);
         const reason = blockingAvailability.reason || "Aucune raison spécifiée";
+        
+        console.log("Créneau indisponible:", {
+          start: start.toISOString(),
+          end: end.toISOString(),
+          reason
+        });
         
         toast.error(
           `Créneau indisponible : ${reason}\nDu ${format(start, "dd/MM/yyyy HH:mm", { locale: fr })} au ${format(end, "dd/MM/yyyy HH:mm", { locale: fr })}`,
@@ -603,8 +631,10 @@ const TimeGrid: React.FC<TimeGridProps> = ({
         return;
       }
       if (reservation) {
+        console.log("Clic sur réservation existante");
         onReservationClick(reservation);
       } else {
+        console.log("Clic sur créneau libre");
         handleClick(hour, minute, aircraft.id);
       }
     };

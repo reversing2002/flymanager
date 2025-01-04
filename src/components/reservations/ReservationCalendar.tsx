@@ -196,10 +196,17 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
   };
 
   const handleTimeSlotClick = (start: Date, end: Date, aircraftId: string) => {
+    console.log("=== handleTimeSlotClick ===");
+    console.log("Start:", start.toISOString());
+    console.log("End:", end.toISOString());
+    console.log("AircraftId:", aircraftId);
+    
     if (!isTimeSlotAvailable(start, end, aircraftId)) {
+      console.log("Créneau non disponible");
       return;
     }
     
+    console.log("Créneau disponible, ouverture modal");
     setSelectedTimeSlot({ start, end, aircraftId });
     setSelectedReservation(null);
     setShowReservationModal(true);
@@ -339,23 +346,48 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
   };
 
   const isTimeSlotAvailable = (start: Date, end: Date, aircraftId: string) => {
-    // Vérifier les indisponibilités
+    console.log("=== isTimeSlotAvailable ===");
+    console.log("Start:", start.toISOString());
+    console.log("End:", end.toISOString());
+    console.log("Current time:", new Date().toISOString());
+    
+    // Vérifier si le créneau est dans le passé
+    const now = new Date();
+    if (start < now) {
+      console.log("Créneau dans le passé");
+      toast.error("Impossible de réserver un créneau dans le passé");
+      return false;
+    }
+
+    // Vérifier uniquement les indisponibilités liées à l'avion
     const hasConflictingAvailability = availabilities.some((availability) => {
-      if (availability.aircraft_id && availability.aircraft_id !== aircraftId) {
+      // Ne prendre en compte que les indisponibilités de l'avion sélectionné
+      if (!availability.aircraft_id || availability.aircraft_id !== aircraftId) {
         return false;
       }
       
       const availStart = new Date(availability.start_time);
       const availEnd = new Date(availability.end_time);
       
-      return (
+      const hasConflict = (
         (start >= availStart && start < availEnd) ||
         (end > availStart && end <= availEnd) ||
         (start <= availStart && end >= availEnd)
       );
+
+      if (hasConflict) {
+        console.log("Conflit avec indisponibilité d'avion:", {
+          availStart: availStart.toISOString(),
+          availEnd: availEnd.toISOString(),
+          aircraftId: availability.aircraft_id
+        });
+      }
+      
+      return hasConflict;
     });
 
     if (hasConflictingAvailability) {
+      console.log("Créneau indisponible (conflit avec indisponibilité d'avion)");
       return false;
     }
 
@@ -368,13 +400,24 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
       const resStart = new Date(reservation.startTime);
       const resEnd = new Date(reservation.endTime);
       
-      return (
+      const hasConflict = (
         (start >= resStart && start < resEnd) ||
         (end > resStart && end <= resEnd) ||
         (start <= resStart && end >= resEnd)
       );
+
+      if (hasConflict) {
+        console.log("Conflit avec réservation:", {
+          id: reservation.id,
+          start: resStart.toISOString(),
+          end: resEnd.toISOString()
+        });
+      }
+      
+      return hasConflict;
     });
 
+    console.log("Créneau", hasConflictingReservation ? "non disponible (conflit réservation)" : "disponible");
     return !hasConflictingReservation;
   };
 
