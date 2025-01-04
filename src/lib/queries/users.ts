@@ -174,7 +174,9 @@ export async function getUsers(): Promise<User[]> {
           name
         )
       )
-    `);
+    `)
+    .order('first_name', { ascending: true })
+    .order('last_name', { ascending: true });
 
   if (error) throw error;
 

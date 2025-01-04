@@ -357,7 +357,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
             )
           `
           )
-          .order("last_name");
+          .order("first_name, last_name");
 
         if (usersError) throw usersError;
         if (usersData) {
