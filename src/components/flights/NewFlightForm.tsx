@@ -242,7 +242,7 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
     console.log('Aircraft:', aircraft);
     console.log('Instructor:', instructor);
 
-    const aircraftCost = aircraft ? (aircraft.hourlyRate * duration) / 60 : 0;
+    const aircraftCost = aircraft ? Number((duration * (aircraft.hourlyRate / 60)).toFixed(2)) : 0;
     let instructorCost = 0;
     let instructorFee = 0;
 

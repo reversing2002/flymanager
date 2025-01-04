@@ -156,17 +156,28 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
 
       // Mise à jour des calendriers si c'est un instructeur
       if (dataToSubmit.roles.includes('INSTRUCTOR')) {
-        const { error: calendarError } = await supabase
+        // D'abord, supprimer les anciennes entrées
+        const { error: deleteError } = await supabase
           .from('instructor_calendars')
-          .upsert(
-            formData.calendars.map(cal => ({
-              instructor_id: pilot.id,
-              calendar_id: cal.id,
-              calendar_name: cal.name
-            }))
-          );
+          .delete()
+          .eq('instructor_id', pilot.id);
 
-        if (calendarError) throw calendarError;
+        if (deleteError) throw deleteError;
+
+        // Ensuite, insérer les nouvelles entrées
+        if (formData.calendars.length > 0) {
+          const { error: calendarError } = await supabase
+            .from('instructor_calendars')
+            .insert(
+              formData.calendars.map(cal => ({
+                instructor_id: pilot.id,
+                calendar_id: cal.id,
+                calendar_name: cal.name
+              }))
+            );
+
+          if (calendarError) throw calendarError;
+        }
       }
 
       await onSubmit(dataToSubmit);

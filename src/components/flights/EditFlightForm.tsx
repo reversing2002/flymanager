@@ -228,7 +228,7 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
     console.log('Aircraft:', aircraft);
     console.log('Instructor:', instructor);
     
-    const aircraftCost = aircraft ? duration * (aircraft.hourlyRate / 60) : 0;
+    const aircraftCost = aircraft ? Number((duration * (aircraft.hourlyRate / 60)).toFixed(2)) : 0;
     let instructorCost = 0;
     let instructorFee = 0;
 
@@ -326,26 +326,29 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
       [type === 'start' ? 'start_hour_meter' : 'end_hour_meter']: numValue
     };
 
-    // Calculer la durée si les deux valeurs sont présentes
     if (type === 'start' && formData.end_hour_meter !== null) {
       const duration = hourMeterToMinutes(numValue, formData.end_hour_meter, format);
       updates.duration = duration;
-      updates.cost = Math.round(duration * (formData.hourlyRate / 60));
+      const aircraft = aircraftList.find(a => a.id === formData.aircraftId);
+      const instructor = formData.instructorId ? users.find(u => u.id === formData.instructorId) : undefined;
+      const { aircraftCost, instructorCost, instructorFee } = calculateCosts(duration, aircraft, instructor);
+      updates.cost = aircraftCost;
+      updates.instructor_cost = instructorCost;
+      updates.instructor_fee = instructorFee;
     } else if (type === 'end' && formData.start_hour_meter !== null) {
       const duration = hourMeterToMinutes(formData.start_hour_meter, numValue, format);
       updates.duration = duration;
-      updates.cost = Math.round(duration * (formData.hourlyRate / 60));
+      const aircraft = aircraftList.find(a => a.id === formData.aircraftId);
+      const instructor = formData.instructorId ? users.find(u => u.id === formData.instructorId) : undefined;
+      const { aircraftCost, instructorCost, instructorFee } = calculateCosts(duration, aircraft, instructor);
+      updates.cost = aircraftCost;
+      updates.instructor_cost = instructorCost;
+      updates.instructor_fee = instructorFee;
     }
-
-    const aircraft = aircraftList.find(a => a.id === formData.aircraftId);
-    const instructor = formData.instructorId ? users.find(u => u.id === formData.instructorId) : undefined;
-    const { aircraftCost, instructorCost, instructorFee } = calculateCosts(updates.duration || 0, aircraft, instructor);
 
     setFormData(prev => ({
       ...prev,
       ...updates,
-      instructor_cost: instructorCost,
-      instructor_fee: instructorFee
     }));
   };
 

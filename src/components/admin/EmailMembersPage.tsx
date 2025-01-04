@@ -9,7 +9,7 @@ import { TextField, FormControl, FormLabel, FormGroup, Checkbox, FormControlLabe
 import { Editor } from '@tinymce/tinymce-react';
 import { toast } from 'react-hot-toast';
 import { getNotificationSettings, createNotification, getMembersByFilters } from '@/services/notificationService';
-import { addHours, format } from 'date-fns';
+import { addMinutes, addHours, format } from 'date-fns';
 
 interface EmailForm {
   subject: string;
@@ -73,8 +73,9 @@ const EmailMembersPage = () => {
       }
 
       // Programmer l'envoi dans 1 heure
-      const scheduledDate = addHours(new Date(), 1);
-      
+      //const scheduledDate = addHours(new Date(), 1);
+      const scheduledDate = addMinutes(new Date(), 10);
+
       // Créer une notification pour chaque destinataire
       const notificationPromises = recipients.map(recipient => 
         createNotification({
@@ -110,7 +111,7 @@ const EmailMembersPage = () => {
       <Card>
         <CardHeader 
           title="Programmer des emails aux membres"
-          subheader="Les emails seront envoyés dans 1 heure"
+          subheader="Les emails seront envoyés dans 10 minutes"
           avatar={<Mail className="h-6 w-6 text-primary" />}
         />
         <CardContent>
