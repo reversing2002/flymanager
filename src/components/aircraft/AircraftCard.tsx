@@ -30,18 +30,16 @@ const AircraftCard: React.FC<AircraftCardProps> = ({
   const canAccessMaintenance = hasAnyGroup(user, ['MECHANIC', 'ADMIN']);
 
   useEffect(() => {
-    if (canAccessMaintenance) {
-      const loadMaintenanceStats = async () => {
-        try {
-          const stats = await getMaintenanceStats();
-          setMaintenanceStats(stats);
-        } catch (error) {
-          console.error("Error loading maintenance stats:", error);
-        }
-      };
-      loadMaintenanceStats();
-    }
-  }, [canAccessMaintenance]);
+    const loadMaintenanceStats = async () => {
+      try {
+        const stats = await getMaintenanceStats();
+        setMaintenanceStats(stats);
+      } catch (error) {
+        console.error("Error loading maintenance stats:", error);
+      }
+    };
+    loadMaintenanceStats();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -206,13 +204,13 @@ const AircraftCard: React.FC<AircraftCardProps> = ({
           <div className="mt-6 pt-4 border-t flex flex-col sm:flex-row gap-2 sm:gap-4">
             <div className="flex flex-wrap gap-2">
               {canAccessMaintenance && (
-                <button
-                  onClick={() => navigate(`/aircraft/${aircraft.id}/maintenance`)}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors min-w-[120px]"
-                >
-                  <Wrench className="h-3.5 w-3.5" />
-                  <span>Maintenance</span>
-                </button>
+              <button
+                onClick={() => navigate(`/aircraft/${aircraft.id}/maintenance`)}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors min-w-[120px]"
+              >
+                <Wrench className="h-3.5 w-3.5" />
+                <span>Maintenance</span>
+              </button>
               )}
               <button
                 onClick={() => setShowRemarks(true)}
