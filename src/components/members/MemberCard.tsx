@@ -138,17 +138,25 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
             {member.email && (
               <div className="flex items-center space-x-2 overflow-hidden">
                 <Mail className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate" title={hasFullAccess ? member.email : formatEmail(member.email, hasFullAccess)}>
+                <a 
+                  href={`mailto:${member.email}`} 
+                  className="truncate text-blue-600 hover:text-blue-800" 
+                  title={hasFullAccess ? member.email : formatEmail(member.email, hasFullAccess)}
+                >
                   {formatEmail(member.email, hasFullAccess)}
-                </span>
+                </a>
               </div>
             )}
             {member.phone && (
               <div className="flex items-center space-x-2">
                 <Phone className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate" title={member.phone}>
+                <a 
+                  href={`tel:${member.phone}`} 
+                  className="truncate text-blue-600 hover:text-blue-800" 
+                  title={member.phone}
+                >
                   {member.phone}
-                </span>
+                </a>
               </div>
             )}
           </div>

@@ -337,12 +337,26 @@ const MemberProfile = () => {
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Email</dt>
                     <dd className="mt-1 text-sm text-gray-900">
-                      {formatEmail(pilot?.email, hasFullAccess)}
+                      {pilot?.email ? (
+                        <a href={`mailto:${formatEmail(pilot.email, hasFullAccess)}`} className="text-blue-600 hover:text-blue-800">
+                          {formatEmail(pilot.email, hasFullAccess)}
+                        </a>
+                      ) : (
+                        "Non renseigné"
+                      )}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Téléphone</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{pilot?.phone || "Non renseigné"}</dd>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {pilot?.phone ? (
+                        <a href={`tel:${pilot.phone}`} className="text-blue-600 hover:text-blue-800">
+                          {pilot.phone}
+                        </a>
+                      ) : (
+                        "Non renseigné"
+                      )}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Date de naissance</dt>
