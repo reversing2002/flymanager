@@ -27,7 +27,21 @@ export async function updateUser(
     console.log("[updateUser] Sanitized data:", JSON.stringify(sanitizedData, null, 2));
     console.log("[updateUser] instructor_rate value:", sanitizedData.instructor_rate, typeof sanitizedData.instructor_rate);
 
-    // 1. Mettre à jour les informations de base de l'utilisateur
+    // 1. Mettre à jour l'email dans la table d'authentification si nécessaire
+    if (data.email) {
+      const { error: authError } = await supabase
+        .rpc('update_user_email', { 
+          p_user_id: data.id,
+          p_email: data.email
+        });
+
+      if (authError) {
+        console.error("[updateUser] Error updating auth email:", authError);
+        throw authError;
+      }
+    }
+
+    // 2. Mettre à jour les informations de base de l'utilisateur
     const { data: updateResult, error: userError } = await supabase
       .from("users")
       .update(sanitizedData)
@@ -41,7 +55,7 @@ export async function updateUser(
       throw userError;
     }
 
-    // 2. Si des rôles sont fournis, les mettre à jour via la RPC
+    // 3. Si des rôles sont fournis, les mettre à jour via la RPC
     if (data.roles) {
       console.log("Updating user roles:", data.roles);
 
