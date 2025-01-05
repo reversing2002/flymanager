@@ -367,12 +367,15 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
     const today = new Date();
     if (selectedDate > today) {
       setError("La date du vol ne peut pas être dans le futur");
+      setLoading(false); // Important : réinitialiser loading en cas d'erreur
       return;
     }
 
     // Vérifier si le vol est validé
     if (flight.isValidated) {
-      throw new Error("Impossible de modifier un vol validé");
+      setError("Impossible de modifier un vol validé");
+      setLoading(false); // Important : réinitialiser loading en cas d'erreur
+      return;
     }
 
     try {
@@ -398,9 +401,7 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
       onSuccess();
     } catch (err) {
       setError(err.message);
-      console.error("Erreur lors de la mise à jour du vol:", err);
-    } finally {
-      setLoading(false);
+      setLoading(false); // Important : réinitialiser loading en cas d'erreur
     }
   };
 
@@ -699,14 +700,17 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-800"
-          disabled={loading}
+          className="px-4 py-2 text-slate-700 hover:text-slate-900"
         >
           Annuler
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 rounded-lg disabled:opacity-50"
+          className={`px-4 py-2 rounded-lg text-white ${
+            loading
+              ? "bg-slate-400 cursor-not-allowed"
+              : "bg-sky-500 hover:bg-sky-600"
+          }`}
           disabled={loading}
         >
           {loading ? "Modification..." : "Modifier"}
