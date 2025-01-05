@@ -3,6 +3,8 @@ import { Send, Clock, Code } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { hasAnyGroup } from "../../lib/permissions";
+import { Navigate } from "react-router-dom";
 
 interface TablePermissions {
   name: string;
@@ -29,6 +31,13 @@ interface ApiCall {
 
 const ApiExplorer = () => {
   const { user } = useAuth();
+
+  // Vérifier si l'utilisateur est SUPERADMIN
+  if (!user || !hasAnyGroup(user, ["superadmin"])) {
+    toast.error("Accès non autorisé. Seuls les super-administrateurs peuvent accéder à cette page.");
+    return <Navigate to="/" replace />;
+  }
+
   const [apiCalls, setApiCalls] = useState<ApiCall[]>([]);
   const [selectedTable, setSelectedTable] = useState("aircraft");
   const [selectedOperation, setSelectedOperation] = useState("SELECT");

@@ -25,6 +25,8 @@ import {
   Cloud,
   ChevronDown,
 } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { hasAnyGroup } from "../../lib/permissions";
 import AnnouncementList from "../announcements/AnnouncementList";
 import AnnouncementForm from "../announcements/AnnouncementForm";
 import AccountTypesSettings from "../settings/AccountTypesSettings";
@@ -71,6 +73,7 @@ type TabType =
   | "smile";
 
 const SettingsPage = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("club");
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
@@ -102,6 +105,22 @@ const SettingsPage = () => {
     { id: "api", label: "API", icon: Terminal },
     { id: "backups", label: "Sauvegardes", icon: DatabaseBackup },
   ] as const;
+
+  // Filtrer les onglets en fonction des permissions
+  const availableTabs = tabs.filter(tab => {
+    if (tab.id === "api") {
+      return user && hasAnyGroup(user, ["superadmin"]);
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    // Si l'onglet actif n'est pas disponible pour l'utilisateur, rediriger vers "club"
+    if (activeTab === "api" && (!user || !hasAnyGroup(user, ["superadmin"]))) {
+      setActiveTab("club");
+      toast.error("Accès non autorisé. Seuls les super-administrateurs peuvent accéder à cette page.");
+    }
+  }, [activeTab, user]);
 
   useEffect(() => {
     loadAnnouncements();
@@ -195,21 +214,21 @@ const SettingsPage = () => {
           >
             <div className="flex items-center gap-2">
               {(() => {
-                const activeTabData = tabs.find(tab => tab.id === activeTab);
+                const activeTabData = availableTabs.find(tab => tab.id === activeTab);
                 if (activeTabData) {
                   const Icon = activeTabData.icon;
                   return <Icon className="h-4 w-4" />;
                 }
                 return null;
               })()}
-              <span>{tabs.find(tab => tab.id === activeTab)?.label}</span>
+              <span>{availableTabs.find(tab => tab.id === activeTab)?.label}</span>
             </div>
             <ChevronDown className={`h-4 w-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
           </button>
           
           {isMenuOpen && (
             <div className="absolute z-10 mt-2 w-[calc(100%-2rem)] bg-white border rounded-lg shadow-lg">
-              {tabs.map((tab) => {
+              {availableTabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
@@ -235,7 +254,7 @@ const SettingsPage = () => {
 
         {/* Menu desktop */}
         <div className="hidden lg:block space-y-1">
-          {tabs.map((tab) => {
+          {availableTabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
