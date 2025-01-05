@@ -4,6 +4,8 @@ import { fr } from 'date-fns/locale';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import type { Aircraft, FlightType, User } from '../../types/database';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { hasAnyGroup } from '../../lib/permissions';
 
 interface FlightFiltersProps {
   filters: FlightFilters;
@@ -32,9 +34,16 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
   onClose,
   users,
 }) => {
+  const { user } = useAuth();
   const [flightTypes, setFlightTypes] = useState<FlightType[]>([]);
 
   useEffect(() => {
+    console.log("FlightFilters mounted", {
+      hasUsers: !!users,
+      userCount: users?.length,
+      isInstructor: user?.groups?.includes("INSTRUCTOR"),
+      filters
+    });
     const loadFlightTypes = async () => {
       const { data, error } = await supabase
         .from('flight_types')
@@ -66,7 +75,7 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
         break;
       case 'last3Months':
         startDate = format(startOfMonth(subMonths(now, 2)), 'yyyy-MM-dd');
-        endDate = format(endOfMonth(now), 'yyyy-MM-dd');
+        startDate = format(endOfMonth(now), 'yyyy-MM-dd');
         break;
     }
 
@@ -169,6 +178,40 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
               ))}
           </select>
         </div>
+
+        {/* Filtre des membres (pour les admins et instructeurs) */}
+        {hasAnyGroup(user, ["ADMIN", "INSTRUCTOR"]) && users && users.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-4 w-4" />
+                <span>
+                  {hasAnyGroup(user, ["ADMIN"]) 
+                    ? `Filtrer par membre (${users.length} membres)`
+                    : `Filtrer par élève (${users.length} élèves)`
+                  }
+                </span>
+              </div>
+            </label>
+            <select
+              value={filters.memberId || ""}
+              onChange={(e) =>
+                onFiltersChange({
+                  ...filters,
+                  memberId: e.target.value || null,
+                })
+              }
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+            >
+              <option value="">Tous les vols</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.first_name} {user.last_name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Types de vol */}
         <div>

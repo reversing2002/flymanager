@@ -16,8 +16,6 @@ const FlightList = () => {
   const { user } = useAuth();
   const [flights, setFlights] = useState<Flight[]>([]);
   const [filteredFlights, setFilteredFlights] = useState<Flight[]>([]);
-  const [personalFlights, setPersonalFlights] = useState<Flight[]>([]);
-  const [studentFlights, setStudentFlights] = useState<Flight[]>([]);
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -29,7 +27,9 @@ const FlightList = () => {
   const [showCompetenciesModal, setShowCompetenciesModal] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
-
+  const [personalFlights, setPersonalFlights] = useState<Flight[]>([]);
+  const [studentFlights, setStudentFlights] = useState<Flight[]>([]);
+  const [instructorStudents, setInstructorStudents] = useState<User[]>([]);
   const [filters, setFilters] = useState({
     dateRange: "all",
     startDate: "",
@@ -42,16 +42,111 @@ const FlightList = () => {
     memberId: null,
   });
 
+  const getInstructorStudents = (flights: Flight[]) => {
+    if (!user || !hasAnyGroup(user, ["INSTRUCTOR"])) {
+      console.log("Not an instructor or no user", { user });
+      return [];
+    }
+    
+    console.log("Getting instructor students", {
+      instructorId: user.id,
+      totalFlights: flights.length,
+      instructorFlights: flights.filter(flight => flight.instructorId === user.id).length
+    });
+    
+    // Récupérer tous les élèves uniques qui ont fait des vols avec cet instructeur
+    const studentIds = [...new Set(flights
+      .filter(flight => {
+        const isInstructorFlight = flight.instructorId === user.id && flight.userId !== user.id;
+        console.log("Checking flight", {
+          flightId: flight.id,
+          instructorId: flight.instructorId,
+          userId: flight.userId,
+          isInstructorFlight
+        });
+        return isInstructorFlight;
+      })
+      .map(flight => flight.userId))];
+    
+    console.log("Found student IDs", { studentIds });
+    
+    const students = users.filter(u => studentIds.includes(u.id));
+    console.log("Found students", { students });
+    
+    return students;
+  };
+
   const loadData = async () => {
     setLoading(true);
     setError(null);
-
     try {
+      // Charger toutes les données en parallèle
       const [flightsData, aircraftData, usersData] = await Promise.all([
         getFlights(),
         getAircraft(),
         getUsers(),
       ]);
+
+      console.log("Loaded data", {
+        flights: flightsData.length,
+        aircraft: aircraftData.length,
+        users: usersData.length,
+        sampleUser: usersData[0]  // Pour vérifier la structure
+      });
+
+      // D'abord définir les utilisateurs
+      setUsers(usersData);
+
+      // Pour les admins, on passe tous les utilisateurs
+      // Pour les instructeurs, on ne passe que leurs élèves
+      if (hasAnyGroup(user, ["ADMIN"])) {
+        setInstructorStudents(usersData);
+      } else if (hasAnyGroup(user, ["INSTRUCTOR"])) {
+        const studentsList = usersData.filter(u => 
+          flightsData.some(flight => 
+            flight.instructorId === user.id && 
+            flight.userId === u.id && 
+            flight.userId !== user.id
+          )
+        );
+        setInstructorStudents(studentsList);
+      }
+
+      setAircraftList(aircraftData);
+
+      // Traiter les vols selon le rôle
+      if (user) {
+        if (hasAnyGroup(user, ["ADMIN"])) {
+          setFlights(flightsData);
+        } else if (hasAnyGroup(user, ["INSTRUCTOR"])) {
+          console.log("Processing instructor flights", { userId: user.id });
+          const personal = flightsData.filter(
+            (flight) => flight.userId === user.id
+          );
+          const students = flightsData.filter(
+            (flight) =>
+              flight.instructorId === user.id && flight.userId !== user.id
+          );
+          
+          // Trouver les étudiants après avoir défini les utilisateurs
+          const studentsList = usersData.filter(u => 
+            students.some(flight => flight.userId === u.id)
+          );
+          
+          console.log("Found students directly", {
+            studentCount: studentsList.length,
+            sampleStudent: studentsList[0]
+          });
+          
+          setPersonalFlights(personal);
+          setStudentFlights(students);
+          setFlights([...personal, ...students]);
+        } else {
+          setFlights(
+            flightsData.filter((flight) => flight.userId === user.id)
+          );
+        }
+      }
 
       // Load flight types
       const { data: flightTypesData, error: flightTypesError } = await supabase
@@ -73,30 +168,6 @@ const FlightList = () => {
         });
       }
       setFlightTypes(typesMap);
-
-      if (hasAnyGroup(user, ["ADMIN"])) {
-        // Admin voit tous les vols
-        setFlights(flightsData);
-      } else if (hasAnyGroup(user, ["INSTRUCTOR"])) {
-        const personal = flightsData.filter(
-          (flight) => flight.userId === user.id
-        );
-        const students = flightsData.filter(
-          (flight) =>
-            flight.instructorId === user.id && flight.userId !== user.id
-        );
-        setPersonalFlights(personal);
-        setStudentFlights(students);
-        setFlights([...personal, ...students]);
-      } else {
-        // Pilote ne voit que ses vols
-        setFlights(
-          flightsData.filter((flight) => flight.userId === user.id)
-        );
-      }
-
-      setAircraftList(aircraftData);
-      setUsers(usersData);
     } catch (err) {
       console.error("Error loading data:", err);
       setError("Erreur lors du chargement des données");
@@ -111,9 +182,43 @@ const FlightList = () => {
   }, [user]);
 
   useEffect(() => {
+    // Apply filters
     let filtered = [...flights];
 
-    // Filtrage par date
+    console.log('Applying filters:', {
+      dateRange: filters.dateRange,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      aircraftTypes: filters.aircraftTypes,
+      aircraftIds: filters.aircraftIds,
+      flightTypes: filters.flightTypes,
+      accountingCategories: filters.accountingCategories,
+      validated: filters.validated,
+      memberId: filters.memberId,
+      initialCount: filtered.length
+    });
+
+    // Pour les admins, on filtre tous les vols liés au membre sélectionné
+    if (hasAnyGroup(user, ["ADMIN"]) && filters.memberId) {
+      filtered = filtered.filter(flight => 
+        flight.userId === filters.memberId || 
+        flight.instructorId === filters.memberId
+      );
+      console.log('After admin member filter:', {
+        memberId: filters.memberId,
+        flightsCount: filtered.length
+      });
+    }
+    // Pour les instructeurs, on filtre uniquement les vols de leurs élèves
+    else if (hasAnyGroup(user, ["INSTRUCTOR"]) && filters.memberId) {
+      filtered = studentFlights.filter(flight => flight.userId === filters.memberId);
+      console.log('After instructor student filter:', {
+        studentId: filters.memberId,
+        flightsCount: filtered.length
+      });
+    }
+
+    // Filter by date range
     if (filters.dateRange !== "all") {
       filtered = filtered.filter((flight) => {
         const flightDate = new Date(flight.date);
@@ -125,54 +230,53 @@ const FlightList = () => {
         }
         return true;
       });
+      console.log('After date filter:', filtered.length);
     }
 
-    // Filtrage par membre
-    if (filters.memberId) {
-      filtered = filtered.filter(
-        (flight) =>
-          flight.userId === filters.memberId ||
-          flight.instructorId === filters.memberId
-      );
-    }
-
-    // Autres filtres existants
+    // Filter by aircraft type
     if (filters.aircraftTypes.length > 0) {
-      const aircraftOfType = aircraftList
-        .filter((a) => filters.aircraftTypes.includes(a.type))
-        .map((a) => a.id);
-      filtered = filtered.filter((f) => aircraftOfType.includes(f.aircraftId));
-    }
-
-    if (filters.aircraftIds.length > 0) {
-      filtered = filtered.filter((f) => filters.aircraftIds.includes(f.aircraftId));
-    }
-
-    if (filters.flightTypes.length > 0) {
-      filtered = filtered.filter((f) => filters.flightTypes.includes(f.flightTypeId));
-    }
-
-    if (filters.accountingCategories.length > 0) {
       filtered = filtered.filter((flight) => {
-        const flightType = flightTypes[flight.flightTypeId];
-        return (
-          flightType &&
-          flightType.accounting_category &&
-          filters.accountingCategories.includes(
-            flightType.accounting_category.id
-          )
-        );
+        const aircraft = aircraftList.find((a) => a.id === flight.aircraftId);
+        return aircraft && filters.aircraftTypes.includes(aircraft.type);
       });
+      console.log('After aircraft type filter:', filtered.length);
     }
 
-    if (filters.validated !== "all") {
-      filtered = filtered.filter(
-        (f) => (f.validated ? "yes" : "no") === filters.validated
+    // Filter by specific aircraft
+    if (filters.aircraftIds.length > 0) {
+      filtered = filtered.filter((flight) =>
+        filters.aircraftIds.includes(flight.aircraftId)
       );
+      console.log('After aircraft ID filter:', filtered.length);
     }
 
+    // Filter by flight type
+    if (filters.flightTypes.length > 0) {
+      filtered = filtered.filter((flight) =>
+        filters.flightTypes.includes(flight.flightTypeId)
+      );
+      console.log('After flight type filter:', filtered.length);
+    }
+
+    // Filter by accounting category
+    if (filters.accountingCategories.length > 0) {
+      filtered = filtered.filter((flight) =>
+        filters.accountingCategories.includes(flight.accountingCategory)
+      );
+      console.log('After accounting category filter:', filtered.length);
+    }
+
+    // Filter by validation status
+    if (filters.validated !== "all") {
+      filtered = filtered.filter((flight) =>
+        filters.validated === "yes" ? flight.validated : !flight.validated
+      );
+      console.log('After validation filter:', filtered.length);
+    }
+
+    console.log('Final filtered count:', filtered.length);
     setFilteredFlights(filtered);
-  }, [flights, filters, aircraftList, flightTypes]);
+  }, [flights, filters, aircraftList]);
 
   const handleNewFlightSuccess = async () => {
     await loadData();
@@ -266,9 +370,9 @@ const FlightList = () => {
             <GraduationCap size={20} />
           </button>
         )}
-        {(hasAnyGroup(user, ["ADMIN"]) ||
+        {(hasAnyGroup(user, ["ADMIN"]) || 
           (!flight.isValidated && (
-            flight.userId === user?.id ||
+            flight.userId === user?.id || 
             (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
           ))
         ) && (
@@ -337,129 +441,129 @@ const FlightList = () => {
               </tr>
             </thead>
             <tbody>
-              {studentFlights.map((flight) => {
-                const aircraft = aircraftList.find(
-                  (a) => a.id === flight.aircraftId
-                );
-                const pilot = users.find((u) => u.id === flight.userId);
-                const instructor = users.find(
-                  (u) => u.id === flight.instructorId
-                );
+              {filteredFlights
+                .filter(flight => flight.instructorId === user?.id && flight.userId !== user?.id)
+                .map((flight) => {
+                  const aircraft = aircraftList.find(
+                    (a) => a.id === flight.aircraftId
+                  );
+                  const pilot = users.find((u) => u.id === flight.userId);
+                  const instructor = users.find(
+                    (u) => u.id === flight.instructorId
+                  );
 
-                console.log('Flight details:', {
-                  id: flight.id,
-                  date: flight.date,
-                  pilot: pilot ? `${pilot.first_name} ${pilot.last_name}` : 'N/A',
-                  instructor: instructor ? `${instructor.first_name} ${instructor.last_name}` : 'N/A',
-                  cost: flight.cost,
-                  instructorCost: flight.instructorCost,
-                  instructorId: flight.instructorId,
-                  flightType: flight.flightType,
-                });
+                  console.log('Flight details:', {
+                    id: flight.id,
+                    date: flight.date,
+                    pilot: pilot ? `${pilot.first_name} ${pilot.last_name}` : 'N/A',
+                    instructor: instructor ? `${instructor.first_name} ${instructor.last_name}` : 'N/A',
+                    cost: flight.cost,
+                    instructorCost: flight.instructorCost,
+                    instructorId: flight.instructorId,
+                    flightType: flight.flightType,
+                  });
 
-                return (
-                  <tr
-                    key={flight.id}
-                    className="border-b border-slate-100 hover:bg-slate-50"
-                  >
-                    <td className="p-4">
-                      {pilot
-                        ? `${pilot.first_name} ${pilot.last_name}`
-                        : "N/A"}
-                    </td>
-                    <td className="p-4">
-                      {new Date(flight.date).toLocaleDateString()}
-                    </td>
-                    <td className="p-4">
-                      {aircraft?.registration || "N/A"}
-                    </td>
-                    <td className="p-4">
-                      {flightTypes[flight.flightTypeId] ||
-                        flight.flightTypeId}
-                    </td>
-                    <td className="p-4">
-                      {instructor
-                        ? `${instructor.first_name} ${instructor.last_name}`
-                        : "-"}
-                    </td>
-                    <td className="p-4">
-                      {formatDuration(flight.duration)}
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center">
-                        <span className={`${flight.flightType?.accounting_category?.is_club_paid ? 'text-green-600 font-medium' : ''}`}>
-                          {flight.flightType?.accounting_category?.is_club_paid ? '0.00 €' : `${flight.cost.toFixed(2)} €`}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right">
-                      {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
-                    </td>
-                    <td className="p-4 text-center">
-                      {hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id && (
-                        <button
-                          onClick={() => {
-                            setSelectedStudentId(flight.userId);
-                            setSelectedFlightId(flight.id);
-                            setShowCompetenciesModal(true);
-                          }}
-                          className="text-purple-600 hover:text-purple-800"
-                          title="Gérer les compétences"
-                        >
-                          <GraduationCap size={20} />
-                        </button>
-                      )}
-                      {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
-                        <button
-                          onClick={() => handleValidateFlight(flight)}
-                          className="text-green-600 hover:text-green-800"
-                          title="Valider"
-                        >
-                          <Check size={20} />
-                        </button>
-                      ) : flight.isValidated ? (
-                        <span className="text-green-600" title="Vol validé">
-                          <CheckCircle2 size={20} />
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="p-4 flex justify-center gap-2">
-                      {(hasAnyGroup(user, ["ADMIN"]) || !flight.isValidated) && (
-                        <>
-                          {(hasAnyGroup(user, ["ADMIN"]) ||
-                            flight.userId === user?.id ||
-                            (hasAnyGroup(user, ["INSTRUCTOR"]) &&
-                              flight.instructorId === user?.id)
-                          ) && (
-                            <button
-                              onClick={() => setEditingFlight(flight)}
-                              className="text-blue-600 hover:text-blue-800"
-                              title="Modifier"
-                            >
-                              <Edit size={20} />
-                            </button>
-                          )}
-                          {(hasAnyGroup(user, ["ADMIN"]) ||
-                            (!flight.isValidated &&
-                              (flight.userId === user?.id ||
-                                (hasAnyGroup(user, ["INSTRUCTOR"]) &&
-                                  flight.instructorId === user?.id)
+                  return (
+                    <tr
+                      key={flight.id}
+                      className="border-b border-slate-100 hover:bg-slate-50"
+                    >
+                      <td className="p-4">
+                        {pilot
+                          ? `${pilot.first_name} ${pilot.last_name}`
+                          : "N/A"}
+                      </td>
+                      <td className="p-4">
+                        {new Date(flight.date).toLocaleDateString()}
+                      </td>
+                      <td className="p-4">
+                        {aircraft?.registration || "N/A"}
+                      </td>
+                      <td className="p-4">
+                        {flightTypes[flight.flightTypeId] ||
+                          flight.flightTypeId}
+                      </td>
+                      <td className="p-4">
+                        {instructor
+                          ? `${instructor.first_name} ${instructor.last_name}`
+                          : "-"}
+                      </td>
+                      <td className="p-4">
+                        {formatDuration(flight.duration)}
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center">
+                          <span className={`${flight.flightType?.accounting_category?.is_club_paid ? 'text-green-600 font-medium' : ''}`}>
+                            {flight.flightType?.accounting_category?.is_club_paid ? '0.00 €' : `${flight.cost.toFixed(2)} €`}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-right">
+                        {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
+                      </td>
+                      <td className="p-4 text-center">
+                        {hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id && (
+                          <button
+                            onClick={() => {
+                              setSelectedStudentId(flight.userId);
+                              setSelectedFlightId(flight.id);
+                              setShowCompetenciesModal(true);
+                            }}
+                            className="text-purple-600 hover:text-purple-800"
+                            title="Gérer les compétences"
+                          >
+                            <GraduationCap size={20} />
+                          </button>
+                        )}
+                        {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
+                          <button
+                            onClick={() => handleValidateFlight(flight)}
+                            className="text-green-600 hover:text-green-800"
+                            title="Valider"
+                          >
+                            <Check size={20} />
+                          </button>
+                        ) : flight.isValidated ? (
+                          <span className="text-green-600" title="Vol validé">
+                            <CheckCircle2 size={20} />
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="p-4 flex justify-center gap-2">
+                        {(hasAnyGroup(user, ["ADMIN"]) || !flight.isValidated) && (
+                          <>
+                            {(hasAnyGroup(user, ["ADMIN"]) || 
+                              flight.userId === user?.id || 
+                              (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
+                            ) && (
+                              <button
+                                onClick={() => setEditingFlight(flight)}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="Modifier"
+                              >
+                                <Edit size={20} />
+                              </button>
+                            )}
+                            {(hasAnyGroup(user, ["ADMIN"]) || 
+                              (!flight.isValidated && (
+                                flight.userId === user?.id || 
+                                (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
                               ))
-                          ) && (
-                            <button
-                              onClick={() => handleDeleteFlight(flight)}
-                              className="text-red-600 hover:text-red-800"
-                              title="Supprimer"
-                            >
-                              <Trash2 size={20} />
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+                            ) && (
+                              <button
+                                onClick={() => handleDeleteFlight(flight)}
+                                className="text-red-600 hover:text-red-800"
+                                title="Supprimer"
+                              >
+                                <Trash2 size={20} />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -562,8 +666,8 @@ const FlightList = () => {
               filters={filters}
               onFiltersChange={setFilters}
               aircraftList={aircraftList}
+              users={instructorStudents}
               onClose={() => setShowFilters(false)}
-              users={users}
             />
           )}
 
@@ -700,10 +804,9 @@ const FlightList = () => {
                             <td className="p-4 flex justify-center gap-2">
                               {(hasAnyGroup(user, ["ADMIN"]) || !flight.isValidated) && (
                                 <>
-                                  {(hasAnyGroup(user, ["ADMIN"]) ||
-                                    flight.userId === user?.id ||
-                                    (hasAnyGroup(user, ["INSTRUCTOR"]) &&
-                                      flight.instructorId === user?.id)
+                                  {(hasAnyGroup(user, ["ADMIN"]) || 
+                                    flight.userId === user?.id || 
+                                    (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
                                   ) && (
                                     <button
                                       onClick={() => setEditingFlight(flight)}
@@ -713,12 +816,11 @@ const FlightList = () => {
                                       <Edit size={20} />
                                     </button>
                                   )}
-                                  {(hasAnyGroup(user, ["ADMIN"]) ||
-                                    (!flight.isValidated &&
-                                      (flight.userId === user?.id ||
-                                        (hasAnyGroup(user, ["INSTRUCTOR"]) &&
-                                          flight.instructorId === user?.id)
-                                      ))
+                                  {(hasAnyGroup(user, ["ADMIN"]) || 
+                                    (!flight.isValidated && (
+                                      flight.userId === user?.id || 
+                                      (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
+                                    ))
                                   ) && (
                                     <button
                                       onClick={() => handleDeleteFlight(flight)}
@@ -871,10 +973,9 @@ const FlightList = () => {
                           <td className="p-4 flex justify-center gap-2">
                             {(hasAnyGroup(user, ["ADMIN"]) || !flight.isValidated) && (
                               <>
-                                {(hasAnyGroup(user, ["ADMIN"]) ||
-                                  flight.userId === user?.id ||
-                                  (hasAnyGroup(user, ["INSTRUCTOR"]) &&
-                                    flight.instructorId === user?.id)
+                                {(hasAnyGroup(user, ["ADMIN"]) || 
+                                  flight.userId === user?.id || 
+                                  (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
                                 ) && (
                                   <button
                                     onClick={() => setEditingFlight(flight)}
@@ -884,12 +985,11 @@ const FlightList = () => {
                                     <Edit size={20} />
                                   </button>
                                 )}
-                                {(hasAnyGroup(user, ["ADMIN"]) ||
-                                  (!flight.isValidated &&
-                                    (flight.userId === user?.id ||
-                                      (hasAnyGroup(user, ["INSTRUCTOR"]) &&
-                                        flight.instructorId === user?.id)
-                                    ))
+                                {(hasAnyGroup(user, ["ADMIN"]) || 
+                                  (!flight.isValidated && (
+                                    flight.userId === user?.id || 
+                                    (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
+                                  ))
                                 ) && (
                                   <button
                                     onClick={() => handleDeleteFlight(flight)}
