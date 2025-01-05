@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Filter, Calendar, Plane, Clock } from 'lucide-react';
+import { Filter, Calendar, Plane, Clock, User } from 'lucide-react';
 import { fr } from 'date-fns/locale';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
-import type { Aircraft, FlightType } from '../../types/database';
+import type { Aircraft, FlightType, User } from '../../types/database';
 import { supabase } from '../../lib/supabase';
 
 interface FlightFiltersProps {
@@ -10,6 +10,7 @@ interface FlightFiltersProps {
   onFiltersChange: (filters: FlightFilters) => void;
   aircraftList: Aircraft[];
   onClose: () => void;
+  users: User[];
 }
 
 export interface FlightFilters {
@@ -21,6 +22,7 @@ export interface FlightFilters {
   flightTypes: string[];
   accountingCategories: string[];
   validated: 'all' | 'yes' | 'no';
+  memberId: string | null;
 }
 
 const FlightFilters: React.FC<FlightFiltersProps> = ({
@@ -28,6 +30,7 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
   onFiltersChange,
   aircraftList,
   onClose,
+  users,
 }) => {
   const [flightTypes, setFlightTypes] = useState<FlightType[]>([]);
 
@@ -99,13 +102,13 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
           <select
             value={filters.dateRange}
             onChange={(e) => handleDateRangeChange(e.target.value)}
-            className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
           >
             <option value="all">Toutes les dates</option>
             <option value="thisMonth">Ce mois</option>
-            <option value="lastMonth">Mois dernier</option>
-            <option value="last3Months">3 derniers mois</option>
-            <option value="custom">Période personnalisée</option>
+            <option value="lastMonth">Le mois dernier</option>
+            <option value="last3Months">Les 3 derniers mois</option>
+            <option value="custom">Personnalisé</option>
           </select>
 
           {filters.dateRange === 'custom' && (
@@ -138,6 +141,33 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Membre */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            <div className="flex items-center gap-2 mb-2">
+              <User className="h-4 w-4" />
+              <span>Membre</span>
+            </div>
+          </label>
+          <select
+            value={filters.memberId || ''}
+            onChange={(e) => onFiltersChange({
+              ...filters,
+              memberId: e.target.value || null
+            })}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+          >
+            <option value="">Tous les membres</option>
+            {users
+              .filter(user => user.first_name || user.last_name)
+              .map((user) => (
+                <option key={user.id} value={user.id}>
+                  {[user.first_name, user.last_name].filter(Boolean).join(' ') || '(Sans nom)'}
+                </option>
+              ))}
+          </select>
         </div>
 
         {/* Types de vol */}

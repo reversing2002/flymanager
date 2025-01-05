@@ -37,10 +37,8 @@ const FlightList = () => {
     flightTypes: [],
     validated: "all",
     accountingCategories: [],
+    memberId: null,
   });
-
-  const [personalFlights, setPersonalFlights] = useState<Flight[]>([]);
-  const [studentFlights, setStudentFlights] = useState<Flight[]>([]);
 
   const loadData = async () => {
     setLoading(true);
@@ -111,22 +109,9 @@ const FlightList = () => {
   }, [user]);
 
   useEffect(() => {
-    // Apply filters
     let filtered = [...flights];
 
-    console.log('Applying filters:', {
-      dateRange: filters.dateRange,
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-      aircraftTypes: filters.aircraftTypes,
-      aircraftIds: filters.aircraftIds,
-      flightTypes: filters.flightTypes,
-      accountingCategories: filters.accountingCategories,
-      validated: filters.validated,
-      initialCount: filtered.length
-    });
-
-    // Filter by date range
+    // Filtrage par date
     if (filters.dateRange !== "all") {
       filtered = filtered.filter((flight) => {
         const flightDate = new Date(flight.date);
@@ -138,53 +123,54 @@ const FlightList = () => {
         }
         return true;
       });
-      console.log('After date filter:', filtered.length);
     }
 
-    // Filter by aircraft type
+    // Filtrage par membre
+    if (filters.memberId) {
+      filtered = filtered.filter(
+        (flight) =>
+          flight.userId === filters.memberId ||
+          flight.instructorId === filters.memberId
+      );
+    }
+
+    // Autres filtres existants
     if (filters.aircraftTypes.length > 0) {
-      filtered = filtered.filter((flight) => {
-        const aircraft = aircraftList.find((a) => a.id === flight.aircraftId);
-        return aircraft && filters.aircraftTypes.includes(aircraft.type);
-      });
-      console.log('After aircraft type filter:', filtered.length);
+      const aircraftOfType = aircraftList
+        .filter((a) => filters.aircraftTypes.includes(a.type))
+        .map((a) => a.id);
+      filtered = filtered.filter((f) => aircraftOfType.includes(f.aircraftId));
     }
 
-    // Filter by specific aircraft
     if (filters.aircraftIds.length > 0) {
-      filtered = filtered.filter((flight) =>
-        filters.aircraftIds.includes(flight.aircraftId)
-      );
-      console.log('After aircraft ID filter:', filtered.length);
+      filtered = filtered.filter((f) => filters.aircraftIds.includes(f.aircraftId));
     }
 
-    // Filter by flight type
     if (filters.flightTypes.length > 0) {
-      filtered = filtered.filter((flight) =>
-        filters.flightTypes.includes(flight.flightTypeId)
-      );
-      console.log('After flight type filter:', filtered.length);
+      filtered = filtered.filter((f) => filters.flightTypes.includes(f.flightTypeId));
     }
 
-    // Filter by accounting category
     if (filters.accountingCategories.length > 0) {
-      filtered = filtered.filter((flight) =>
-        filters.accountingCategories.includes(flight.accountingCategory)
-      );
-      console.log('After accounting category filter:', filtered.length);
+      filtered = filtered.filter((flight) => {
+        const flightType = flightTypes[flight.flightTypeId];
+        return (
+          flightType &&
+          flightType.accounting_category &&
+          filters.accountingCategories.includes(
+            flightType.accounting_category.id
+          )
+        );
+      });
     }
 
-    // Filter by validation status
     if (filters.validated !== "all") {
-      filtered = filtered.filter((flight) =>
-        filters.validated === "yes" ? flight.validated : !flight.validated
+      filtered = filtered.filter(
+        (f) => (f.validated ? "yes" : "no") === filters.validated
       );
-      console.log('After validation filter:', filtered.length);
     }
 
-    console.log('Final filtered count:', filtered.length);
     setFilteredFlights(filtered);
-  }, [flights, filters, aircraftList]);
+  }, [flights, filters, aircraftList, flightTypes]);
 
   const handleNewFlightSuccess = async () => {
     await loadData();
@@ -278,9 +264,9 @@ const FlightList = () => {
             <GraduationCap size={20} />
           </button>
         )}
-        {(hasAnyGroup(user, ["ADMIN"]) || 
+        {(hasAnyGroup(user, ["ADMIN"]) ||
           (!flight.isValidated && (
-            flight.userId === user?.id || 
+            flight.userId === user?.id ||
             (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
           ))
         ) && (
@@ -438,9 +424,10 @@ const FlightList = () => {
                     <td className="p-4 flex justify-center gap-2">
                       {(hasAnyGroup(user, ["ADMIN"]) || !flight.isValidated) && (
                         <>
-                          {(hasAnyGroup(user, ["ADMIN"]) || 
-                            flight.userId === user?.id || 
-                            (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
+                          {(hasAnyGroup(user, ["ADMIN"]) ||
+                            flight.userId === user?.id ||
+                            (hasAnyGroup(user, ["INSTRUCTOR"]) &&
+                              flight.instructorId === user?.id)
                           ) && (
                             <button
                               onClick={() => setEditingFlight(flight)}
@@ -450,11 +437,12 @@ const FlightList = () => {
                               <Edit size={20} />
                             </button>
                           )}
-                          {(hasAnyGroup(user, ["ADMIN"]) || 
-                            (!flight.isValidated && (
-                              flight.userId === user?.id || 
-                              (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
-                            ))
+                          {(hasAnyGroup(user, ["ADMIN"]) ||
+                            (!flight.isValidated &&
+                              (flight.userId === user?.id ||
+                                (hasAnyGroup(user, ["INSTRUCTOR"]) &&
+                                  flight.instructorId === user?.id)
+                              ))
                           ) && (
                             <button
                               onClick={() => handleDeleteFlight(flight)}
@@ -573,6 +561,7 @@ const FlightList = () => {
               onFiltersChange={setFilters}
               aircraftList={aircraftList}
               onClose={() => setShowFilters(false)}
+              users={users}
             />
           )}
 
@@ -709,9 +698,10 @@ const FlightList = () => {
                             <td className="p-4 flex justify-center gap-2">
                               {(hasAnyGroup(user, ["ADMIN"]) || !flight.isValidated) && (
                                 <>
-                                  {(hasAnyGroup(user, ["ADMIN"]) || 
-                                    flight.userId === user?.id || 
-                                    (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
+                                  {(hasAnyGroup(user, ["ADMIN"]) ||
+                                    flight.userId === user?.id ||
+                                    (hasAnyGroup(user, ["INSTRUCTOR"]) &&
+                                      flight.instructorId === user?.id)
                                   ) && (
                                     <button
                                       onClick={() => setEditingFlight(flight)}
@@ -721,11 +711,12 @@ const FlightList = () => {
                                       <Edit size={20} />
                                     </button>
                                   )}
-                                  {(hasAnyGroup(user, ["ADMIN"]) || 
-                                    (!flight.isValidated && (
-                                      flight.userId === user?.id || 
-                                      (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
-                                    ))
+                                  {(hasAnyGroup(user, ["ADMIN"]) ||
+                                    (!flight.isValidated &&
+                                      (flight.userId === user?.id ||
+                                        (hasAnyGroup(user, ["INSTRUCTOR"]) &&
+                                          flight.instructorId === user?.id)
+                                      ))
                                   ) && (
                                     <button
                                       onClick={() => handleDeleteFlight(flight)}
@@ -878,9 +869,10 @@ const FlightList = () => {
                           <td className="p-4 flex justify-center gap-2">
                             {(hasAnyGroup(user, ["ADMIN"]) || !flight.isValidated) && (
                               <>
-                                {(hasAnyGroup(user, ["ADMIN"]) || 
-                                  flight.userId === user?.id || 
-                                  (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
+                                {(hasAnyGroup(user, ["ADMIN"]) ||
+                                  flight.userId === user?.id ||
+                                  (hasAnyGroup(user, ["INSTRUCTOR"]) &&
+                                    flight.instructorId === user?.id)
                                 ) && (
                                   <button
                                     onClick={() => setEditingFlight(flight)}
@@ -890,11 +882,12 @@ const FlightList = () => {
                                     <Edit size={20} />
                                   </button>
                                 )}
-                                {(hasAnyGroup(user, ["ADMIN"]) || 
-                                  (!flight.isValidated && (
-                                    flight.userId === user?.id || 
-                                    (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
-                                  ))
+                                {(hasAnyGroup(user, ["ADMIN"]) ||
+                                  (!flight.isValidated &&
+                                    (flight.userId === user?.id ||
+                                      (hasAnyGroup(user, ["INSTRUCTOR"]) &&
+                                        flight.instructorId === user?.id)
+                                    ))
                                 ) && (
                                   <button
                                     onClick={() => handleDeleteFlight(flight)}
