@@ -330,6 +330,12 @@ const Dashboard = () => {
     aeroEnd: Date;
   } | null>(null);
 
+  // Charger les utilisateurs
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+  });
+
   // Stats des membres
   const { data: memberStats } = useQuery({
     queryKey: ['memberStats'],
@@ -542,6 +548,16 @@ const Dashboard = () => {
                   </div>
                   <div className="text-sm text-slate-600">
                     {new Date(reservation.startTime).toLocaleDateString()}
+                    {reservation.instructorId && reservation.instructorId === user?.id && (
+                      <div className="text-sm text-sky-600">
+                        Élève: {users?.find(u => u.id === reservation.pilotId)?.first_name} {users?.find(u => u.id === reservation.pilotId)?.last_name}
+                      </div>
+                    )}
+                    {reservation.comments && (
+                      <div className="text-sm text-gray-500 mt-1">
+                        📝 {reservation.comments}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="text-sm">
