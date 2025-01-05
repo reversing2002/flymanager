@@ -46,9 +46,13 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate("/login");
+      // Forcer la redirection même si la déconnexion échoue
+      window.localStorage.clear(); // Nettoyer tout le stockage local
+      navigate("/login", { replace: true });
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
+      // Rediriger quand même vers la page de connexion en cas d'erreur
+      navigate("/login", { replace: true });
     }
   };
 

@@ -85,12 +85,30 @@ export const signIn = async (login: string, password: string) => {
 };
 
 export const signOut = async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    console.error("Sign out error:", error);
+  try {
+    // Vérifier d'abord si une session existe
+    const { data: sessionData } = await supabase.auth.getSession();
+    
+    if (!sessionData.session) {
+      console.log("Aucune session active trouvée");
+      return { error: null };
+    }
+
+    // Procéder à la déconnexion
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Erreur de déconnexion:", error);
+      throw error;
+    }
+
+    // Nettoyer le stockage local
+    window.localStorage.removeItem("flymanager_auth");
+    
+    return { error: null };
+  } catch (error) {
+    console.error("Erreur lors de la déconnexion:", error);
     throw error;
   }
-  return { error: null };
 };
 
 // Fonction utilitaire pour vérifier la session
