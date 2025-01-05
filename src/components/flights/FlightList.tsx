@@ -16,6 +16,8 @@ const FlightList = () => {
   const { user } = useAuth();
   const [flights, setFlights] = useState<Flight[]>([]);
   const [filteredFlights, setFilteredFlights] = useState<Flight[]>([]);
+  const [personalFlights, setPersonalFlights] = useState<Flight[]>([]);
+  const [studentFlights, setStudentFlights] = useState<Flight[]>([]);
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [showFilters, setShowFilters] = useState(false);
