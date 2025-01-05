@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from './useSupabase';
+import { useAuth } from '../contexts/AuthContext';
 import { Backup, BackupType, AuditLog } from '../types/backup';
 import { toast } from 'react-hot-toast';
 
 export const useBackups = () => {
   const { supabase } = useSupabase();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const getBackups = async (type: BackupType): Promise<Backup[]> => {
@@ -12,6 +14,7 @@ export const useBackups = () => {
       .from('backups')
       .select('*')
       .eq('type', type)
+      .eq('club_id', user?.club?.id)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -19,9 +22,17 @@ export const useBackups = () => {
   };
 
   const createBackup = async (backup: Partial<Backup>) => {
+    if (!user?.club?.id) throw new Error('Club ID not found');
+    
+    const backupWithClub = {
+      ...backup,
+      club_id: user.club.id,
+      created_by: user.id
+    };
+
     const { data, error } = await supabase
       .from('backups')
-      .insert(backup)
+      .insert(backupWithClub)
       .select()
       .single();
 
@@ -30,10 +41,12 @@ export const useBackups = () => {
   };
 
   const restoreBackup = async (backup: Backup) => {
+    if (!user?.club?.id) throw new Error('Club ID not found');
+
     // Créer une nouvelle sauvegarde avant la restauration
     await createBackup({
       type: backup.type,
-      data: (await supabase.from(backup.type).select('*')).data,
+      data: (await supabase.from(backup.type).select('*').eq('club_id', user.club.id)).data,
       description: `Sauvegarde automatique avant restauration`,
       is_auto: true,
     });
@@ -42,7 +55,7 @@ export const useBackups = () => {
     const { error } = await supabase
       .from(backup.type)
       .delete()
-      .neq('id', 'dummy')
+      .eq('club_id', user.club.id)
       .then(() => supabase.from(backup.type).insert(backup.data));
 
     if (error) throw error;
@@ -52,10 +65,13 @@ export const useBackups = () => {
     type: BackupType,
     limit = 50
   ): Promise<AuditLog[]> => {
+    if (!user?.club?.id) throw new Error('Club ID not found');
+
     const { data, error } = await supabase
       .from('audit_logs')
       .select('*')
       .eq('resource_type', type)
+      .eq('club_id', user.club.id)
       .order('created_at', { ascending: false })
       .limit(limit);
 

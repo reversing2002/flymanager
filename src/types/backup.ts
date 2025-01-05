@@ -13,6 +13,8 @@ export interface Backup {
   data: any[];
   description: string;
   is_auto: boolean;
+  club_id: string;
+  created_by: string;
 }
 
 export interface AuditLog {
@@ -22,5 +24,6 @@ export interface AuditLog {
   resource_type: BackupType;
   resource_id: string;
   user_id: string;
+  club_id: string;
   details?: any;
 }
