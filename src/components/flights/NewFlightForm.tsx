@@ -64,12 +64,17 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
     const durationInMinutes = initialData?.duration || 60;
     const cost = (hourlyRate * durationInMinutes) / 60;
 
+    // Si l'utilisateur est un instructeur, on le met comme instructeur et on garde le pilote initial
+    const isInstructor = currentUser && hasAnyGroup(currentUser, ["INSTRUCTOR"]);
+    const userId = initialData?.userId || (isInstructor ? "" : currentUser?.id) || "";
+    const instructorId = initialData?.instructorId || (isInstructor ? currentUser?.id : null);
+
     return {
       id: uuidv4(),
-      userId: initialData?.userId || currentUser?.id || "",
+      userId: userId,
       aircraftId: initialData?.aircraftId || "",
       flightTypeId: "",  // Sera mis à jour une fois les types de vol chargés
-      instructorId: initialData?.instructorId || null,
+      instructorId: instructorId,
       reservationId: initialData?.reservationId || null,
       date: initialData?.date || new Date().toISOString().split("T")[0],
       start_hour_meter: aircraft?.last_hour_meter || null,
@@ -81,7 +86,6 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
       instructor_fee: 0,
       comments: "",
       isValidated: false,
-      // Définir ACCOUNT comme valeur par défaut pour le mode de paiement
       paymentMethod: "ACCOUNT",
       accountingCategory: "LOCAL",
       clubId: currentUser?.club?.id,
@@ -182,8 +186,8 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
   }, [propUsers, location.state]);
 
   useEffect(() => {
-    // Set default values when component mounts
-    if (currentUser && !formData.userId) {
+    // Ne pas modifier l'userId si on a des données initiales (transformation d'une réservation)
+    if (currentUser && !formData.userId && !initialData?.userId) {
       const isAdminOrInstructor = hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR"]);
       
       setFormData(prevData => ({
@@ -192,7 +196,7 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
         userId: !isAdminOrInstructor ? currentUser.id : "",
       }));
     }
-  }, [currentUser]);
+  }, [currentUser, initialData]);
 
   // Charger les définitions des champs personnalisés
   console.log("NewFlightForm: club_id de l'utilisateur", currentUser?.club.id);

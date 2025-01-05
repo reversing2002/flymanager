@@ -605,8 +605,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
             onCancel={() => setShowNewFlightForm(false)}
             initialData={{
               date: existingReservation.startTime.split("T")[0],
-              pilotId:
-                existingReservation.pilotId || existingReservation.userId,
+              userId: existingReservation.pilotId || existingReservation.userId,
               instructorId: existingReservation.instructorId,
               aircraftId: existingReservation.aircraftId,
               flightTypeId: existingReservation.flightTypeId,
