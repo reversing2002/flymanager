@@ -15,7 +15,7 @@ const MemberList = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedMembershipStatus, setSelectedMembershipStatus] = useState<string>("all");
+  const [selectedMembershipStatus, setSelectedMembershipStatus] = useState<string>("valid");
   const [showFilters, setShowFilters] = useState(false);
   const [members, setMembers] = useState<(UserType & { contributions?: Contribution[] })[]>([]);
   const [allContributions, setAllContributions] = useState<Contribution[]>([]);
@@ -135,7 +135,14 @@ const MemberList = () => {
               placeholder="Rechercher un membre..."
               className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (e.target.value !== "") {
+                  setSelectedMembershipStatus("all");
+                } else {
+                  setSelectedMembershipStatus("valid");
+                }
+              }}
             />
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
           </div>

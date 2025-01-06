@@ -27,6 +27,15 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
   const canViewFinancials = isAdmin || isInstructor;
   const hasFullAccess = isAdmin || isInstructor;
 
+  const isMembershipValid = member.contributions && member.contributions.length > 0 && (() => {
+    const sortedContributions = [...member.contributions].sort(
+      (a, b) => new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime()
+    );
+    const lastContribution = sortedContributions[0];
+    const validUntil = addMonths(new Date(lastContribution.valid_from), 12);
+    return isAfter(validUntil, new Date());
+  })();
+
   const getRoleBadgeColor = (role: Role) => {
     switch (role) {
       case "PILOT":
@@ -100,39 +109,34 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
                   }}
                 />
               ) : (
-                <div className="h-full w-full bg-gray-100 flex items-center justify-center">
-                  <User className="h-5 w-5 text-gray-400" />
-                </div>
+                <User className="h-6 w-6 text-gray-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
               )}
             </div>
-            <div className="flex-1 min-w-0"> 
-              <h3 
-                className="text-lg font-medium text-gray-900 hover:text-blue-600 cursor-pointer truncate"
-                onClick={() => navigate(`/members/${member.id}`)}
-                title={`${member.first_name} ${member.last_name}`}
-              >
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 truncate">
                 {member.first_name} {member.last_name}
               </h3>
-              {isAdmin && member.membership_status === 'expired' && (
-                <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 mt-1">
-                  Cotisation expirée
+              <div className="flex flex-wrap gap-2 mt-1">
+                {member.groups?.map((role) => (
+                  <span
+                    key={role}
+                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRoleBadgeColor(role as Role)}`}
+                  >
+                    {getRoleLabel(role as Role)}
+                  </span>
+                ))}
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                    isMembershipValid
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {isMembershipValid ? "Cotisation valide" : "Cotisation expirée"}
                 </span>
-              )}
+              </div>
             </div>
           </div>
-
-          {member.roles && member.roles.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {member.roles.map((role, index) => (
-                <span
-                  key={index}
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full ${getRoleBadgeColor(role as Role)}`}
-                >
-                  {getRoleLabel(role)}
-                </span>
-              ))}
-            </div>
-          )}
 
           <div className="space-y-1.5 text-sm text-gray-500">
             {member.email && (
