@@ -38,6 +38,13 @@ import EnhancedDiscoveryPage from "./components/discovery/EnhancedDiscoveryPage"
 import NewDiscoveryFlightPage from "./pages/NewDiscoveryFlightPage";
 import DiscoveryFlightSuccess from "./components/discovery/DiscoveryFlightSuccess";
 import DiscoveryFlightError from "./components/discovery/DiscoveryFlightError";
+import PassengerInfoForm from "./components/discovery/PassengerInfoForm";
+import PassengerInfoConfirmation from "./components/discovery/PassengerInfoConfirmation";
+import DiscoveryFlightClientPage from "./pages/DiscoveryFlightClientPage";
+import Weather from './pages/Weather';
+import UpdatePasswordPage from "./pages/UpdatePasswordPage";
+import EmailMembersPage from "./components/admin/EmailMembersPage";
+import AccountingMigrationSettings from "./components/settings/AccountingMigrationSettings";
 import InstructorFlightsPage from "./components/flights/InstructorFlightsPage";
 import InstructorStudentsPage from "./components/members/InstructorStudentsPage";
 import AvailabilityManagementPage from "./components/availability/AvailabilityManagementPage";
@@ -48,12 +55,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotificationList from "./components/admin/NotificationList";
 import ClubStatsPage from "./pages/ClubStatsPage";
 import InvoicesPage from "./pages/InvoicesPage";
-import PassengerInfoForm from "./components/discovery/PassengerInfoForm";
-import PassengerInfoConfirmation from "./components/discovery/PassengerInfoConfirmation";
-import DiscoveryFlightClientPage from "./pages/DiscoveryFlightClientPage";
-import Weather from './pages/Weather';
-import UpdatePasswordPage from "./pages/UpdatePasswordPage";
-import EmailMembersPage from "./components/admin/EmailMembersPage";
+import SimpleAccountingView from "./components/accounting/SimpleAccountingView";
 
 function App() {
   const queryClient = new QueryClient({
@@ -318,15 +320,17 @@ function App() {
               {/* Stats */}
               <Route path="stats" element={<StatsPage />} />
 
-              {/* Settings - Admin only */}
+              {/* Settings */}
               <Route
                 path="settings"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
+                  <ProtectedRoute groups={["ADMIN"]}>
                     <SettingsPage />
                   </ProtectedRoute>
                 }
-              />
+              >
+                <Route path="accounting-migration" element={<AccountingMigrationSettings />} />
+              </Route>
 
               {/* Email - Admin only */}
               <Route
@@ -344,6 +348,16 @@ function App() {
                 element={
                   <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
                     <Weather />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Comptabilité */}
+              <Route
+                path="accounting"
+                element={
+                  <ProtectedRoute>
+                    <SimpleAccountingView />
                   </ProtectedRoute>
                 }
               />

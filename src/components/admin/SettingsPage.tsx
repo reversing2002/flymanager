@@ -24,6 +24,7 @@ import {
   Shield,
   Cloud,
   ChevronDown,
+  ArrowRightLeft
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
@@ -41,6 +42,7 @@ import RolesSettings from "../settings/RolesSettings";
 import PagePermissionsSettings from "../settings/PagePermissionsSettings";
 import BackupSettings from "../settings/BackupSettings";
 import SmileSettings from "../settings/SmileSettings";
+import AccountingMigrationSettings from "../settings/AccountingMigrationSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -58,6 +60,7 @@ type TabType =
   | "flightTypes"
   | "accountTypes"
   | "accountingCategories"
+  | "accountingMigration"
   | "qualifications"
   | "licenses"
   | "medicalTypes"
@@ -92,6 +95,7 @@ const SettingsPage = () => {
     { id: "flightTypes", label: "Types de vol", icon: ListOrdered },
     { id: "accountTypes", label: "Types de compte", icon: Receipt },
     { id: "accountingCategories", label: "Catégories comptables", icon: Calculator },
+    { id: "accountingMigration", label: "Migration comptable", icon: ArrowRightLeft },
     { id: "qualifications", label: "Qualifications", icon: Award },
     { id: "licenses", label: "Licences", icon: BookOpen },
     { id: "medicalTypes", label: "Types médicaux", icon: Heart },
@@ -314,6 +318,11 @@ const SettingsPage = () => {
           {activeTab === "flightTypes" && <FlightTypeManager />}
           {activeTab === "accountTypes" && <AccountTypesSettings />}
           {activeTab === "accountingCategories" && <AccountingCategoryManager />}
+          {activeTab === "accountingMigration" && (
+            <div className="space-y-4">
+              <AccountingMigrationSettings />
+            </div>
+          )}
           {activeTab === "qualifications" && <QualificationTypesSettings />}
           {activeTab === "licenses" && <LicenseTypesSettings />}
           {activeTab === "medicalTypes" && <MedicalTypesSettings />}
