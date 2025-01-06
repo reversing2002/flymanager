@@ -75,6 +75,11 @@ const Navbar = () => {
   const showMyProgression = hasAnyGroup(currentUser, ["PILOT"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
 
+  // Logs de débogage
+  console.log("Utilisateur actuel:", currentUser);
+  console.log("Groupes de l'utilisateur:", currentUser?.user_metadata?.groups);
+  console.log("Est instructeur:", isInstructor);
+
   return (
     <>
       {/* Header fixe avec logo */}
@@ -196,11 +201,14 @@ const Navbar = () => {
             </div>  
 
             {/* FORMATION section */}
-            {showMyProgression || isInstructor && (
+            {console.log("Condition Formation:", showMyProgression, isInstructor)}
+            {(showMyProgression || isInstructor) && (
               <div className="py-4">
                 <div className="px-4 py-2 text-sm text-gray-500 uppercase">Formation</div>
+                {console.log("Section Formation rendue")}
                 {isInstructor && (
                   <>
+                    {console.log("Section Instructeur rendue")}
                     <Link to="/instructor-students" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                       <GraduationCap className="w-5 h-5 mr-3" />
                       <span>Mes élèves</span>
