@@ -126,6 +126,17 @@ export async function updateFlight(
     throw aircraftError;
   }
 
+  // Supprimer toutes les entrées comptables liées au vol via la procédure stockée
+  console.log("Suppression des entrées comptables pour le vol", id);
+  const { error: deleteError } = await supabase.rpc('delete_flight_entries', {
+    p_flight_id: id
+  });
+
+  if (deleteError) {
+    console.error("Erreur lors de la suppression des entrées comptables:", deleteError);
+    throw deleteError;
+  }
+
   // Convertir les chaînes vides en null pour les champs UUID
   const updatedData = {
     user_id: data.userId,
@@ -145,36 +156,23 @@ export async function updateFlight(
     end_hour_meter: data.end_hour_meter,
   };
 
-  console.log("Données de mise à jour du vol", updatedData);
-
-  const { error } = await supabase
+  // Mettre à jour le vol
+  const { error: updateError } = await supabase
     .from("flights")
     .update(updatedData)
     .eq("id", id);
 
-  if (error) {
-    console.error("Erreur lors de la mise à jour du vol", error);
-    throw error;
+  if (updateError) {
+    console.error("Erreur lors de la mise à jour du vol", updateError);
+    throw updateError;
   }
 
-  console.log("Vol mis à jour avec succès, recherche de l'entrée comptable...");
+  console.log("Vol mis à jour avec succès, création des nouvelles entrées comptables...");
 
-  // Rechercher les entrées comptables correspondantes
-  const { data: accountEntries, error: searchError } = await supabase
-    .from("account_entries")
-    .select("*")
-    .eq("flight_id", id);
-
-  if (searchError) {
-    console.error("Erreur lors de la recherche des entrées comptables", searchError);
-    throw searchError;
-  }
-
-  // Get the account entry types first
+  // Get the account entry types
   const { data: entryTypes, error: entryTypesError } = await supabase
     .from("account_entry_types")
-    .select("id, code")
-    .in("code", ["FLIGHT", "INSTRUCTION"]);
+    .select("id, code");
 
   if (entryTypesError) {
     console.error("Erreur lors de la récupération des types d'entrées", entryTypesError);
@@ -183,6 +181,7 @@ export async function updateFlight(
 
   const flightTypeId = entryTypes.find(t => t.code === "FLIGHT")?.id;
   const instructionTypeId = entryTypes.find(t => t.code === "INSTRUCTION")?.id;
+  const instructorFeeTypeId = "68818f41-b9cb-4f6c-bb5e-c38fae86e82d"; // remun instruction
 
   if (!flightTypeId || !instructionTypeId) {
     throw new Error("Types d'entrées comptables non trouvés");
@@ -191,42 +190,46 @@ export async function updateFlight(
   // S'assurer que la date est au bon format (YYYY-MM-DD)
   const formattedDate = new Date(data.date || "").toISOString().split('T')[0];
 
-  // Trouver l'entrée pour le coût de l'avion
-  const aircraftEntry = accountEntries?.find(entry => entry.entry_type_id === flightTypeId);
-  // Trouver l'entrée pour le coût de l'instruction
-  const instructorEntry = accountEntries?.find(entry => entry.entry_type_id === instructionTypeId);
-
-  // Mettre à jour l'entrée pour l'avion
-  if (aircraftEntry) {
-    const aircraftUpdateData = {
-      amount: -Math.abs(data.cost || 0),
+  // Créer l'entrée pour le coût de l'avion
+  console.log("Création de l'entrée comptable pour l'avion...");
+  const { error: flightEntryError } = await supabase
+    .from("account_entries")
+    .insert({
+      id: uuidv4(),
+      user_id: data.userId,
+      entry_type_id: flightTypeId,
       date: formattedDate,
+      amount: -Math.abs(data.cost || 0),
       payment_method: data.paymentMethod,
       description: `Vol ${aircraft.registration} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+      flight_id: id,
+      assigned_to_id: data.userId,
+      is_validated: false,
+      is_club_paid: false,
+      created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
-    };
+    });
 
-    const { error: updateError } = await supabase
-      .from("account_entries")
-      .update(aircraftUpdateData)
-      .eq("id", aircraftEntry.id);
+  if (flightEntryError) {
+    console.error("Erreur lors de la création de l'entrée comptable avion", flightEntryError);
+    throw flightEntryError;
+  }
 
-    if (updateError) {
-      console.error("Erreur lors de la mise à jour de l'entrée comptable avion", updateError);
-      throw updateError;
-    }
-  } else {
-    // Créer une nouvelle entrée pour l'avion si elle n'existe pas
-    const { error: insertError } = await supabase
+  // Si c'est un vol avec instructeur, créer les entrées correspondantes
+  if (data.instructorId && data.instructor_cost) {
+    console.log("Création des entrées comptables pour l'instruction...");
+    
+    // Entrée pour le coût d'instruction
+    const { error: instructionEntryError } = await supabase
       .from("account_entries")
       .insert({
         id: uuidv4(),
         user_id: data.userId,
-        entry_type_id: flightTypeId,
+        entry_type_id: instructionTypeId,
         date: formattedDate,
-        amount: -Math.abs(data.cost || 0),
+        amount: -Math.abs(data.instructor_cost),
         payment_method: data.paymentMethod,
-        description: `Vol ${aircraft.registration} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+        description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${((data.duration || 0) / 60).toFixed(1)}h`,
         flight_id: id,
         assigned_to_id: data.userId,
         is_validated: false,
@@ -235,98 +238,20 @@ export async function updateFlight(
         updated_at: new Date().toISOString()
       });
 
-    if (insertError) {
-      console.error("Erreur lors de la création de l'entrée comptable avion", insertError);
-      throw insertError;
-    }
-  }
-
-  // Gérer l'entrée comptable pour le coût d'instruction
-  if (data.instructorId && data.instructor_cost) {
-    if (instructorEntry) {
-      // Mettre à jour l'entrée existante
-      const instructorUpdateData = {
-        amount: -Math.abs(data.instructor_cost),
-        date: formattedDate,
-        payment_method: data.paymentMethod,
-        description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${((data.duration || 0) / 60).toFixed(1)}h`,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error: updateError } = await supabase
-        .from("account_entries")
-        .update(instructorUpdateData)
-        .eq("id", instructorEntry.id);
-
-      if (updateError) {
-        console.error("Erreur lors de la mise à jour de l'entrée comptable instruction", updateError);
-        throw updateError;
-      }
-    } else {
-      // Créer une nouvelle entrée pour l'instruction
-      const { error: insertError } = await supabase
-        .from("account_entries")
-        .insert({
-          id: uuidv4(),
-          user_id: data.userId,
-          entry_type_id: instructionTypeId,
-          date: formattedDate,
-          amount: -Math.abs(data.instructor_cost),
-          payment_method: data.paymentMethod,
-          description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${((data.duration || 0) / 60).toFixed(1)}h`,
-          flight_id: id,
-          assigned_to_id: data.userId,
-          is_validated: false,
-          is_club_paid: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-
-      if (insertError) {
-        console.error("Erreur lors de la création de l'entrée comptable instruction", insertError);
-        throw insertError;
-      }
+    if (instructionEntryError) {
+      console.error("Erreur lors de la création de l'entrée comptable instruction", instructionEntryError);
+      throw instructionEntryError;
     }
 
-    // Gérer l'entrée comptable pour la rémunération de l'instructeur
-    const { data: instructorFeeEntry, error: searchFeeError } = await supabase
-      .from("account_entries")
-      .select("*")
-      .eq("flight_id", id)
-      .eq("entry_type_id", "68818f41-b9cb-4f6c-bb5e-c38fae86e82d"); // remun instruction
-
-    if (searchFeeError) {
-      console.error("Erreur lors de la recherche de l'entrée de rémunération", searchFeeError);
-      throw searchFeeError;
-    }
-
-    if (instructorFeeEntry && instructorFeeEntry.length > 0) {
-      // Mettre à jour l'entrée existante
-      const feeUpdateData = {
-        amount: Math.abs(data.instructor_fee || 0),
-        date: formattedDate,
-        payment_method: data.paymentMethod,
-        description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${((data.duration || 0) / 60).toFixed(1)}h`,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error: updateError } = await supabase
-        .from("account_entries")
-        .update(feeUpdateData)
-        .eq("id", instructorFeeEntry[0].id);
-
-      if (updateError) {
-        console.error("Erreur lors de la mise à jour de l'entrée de rémunération", updateError);
-        throw updateError;
-      }
-    } else if (data.instructor_fee) {
-      // Créer une nouvelle entrée pour la rémunération
-      const { error: insertError } = await supabase
+    // Entrée pour la rémunération de l'instructeur
+    if (data.instructor_fee) {
+      console.log("Création de l'entrée comptable pour la rémunération de l'instructeur...");
+      const { error: feeEntryError } = await supabase
         .from("account_entries")
         .insert({
           id: uuidv4(),
           user_id: data.instructorId,
-          entry_type_id: "68818f41-b9cb-4f6c-bb5e-c38fae86e82d", // remun instruction
+          entry_type_id: instructorFeeTypeId,
           date: formattedDate,
           amount: Math.abs(data.instructor_fee),
           payment_method: data.paymentMethod,
@@ -339,12 +264,14 @@ export async function updateFlight(
           updated_at: new Date().toISOString()
         });
 
-      if (insertError) {
-        console.error("Erreur lors de la création de l'entrée de rémunération", insertError);
-        throw insertError;
+      if (feeEntryError) {
+        console.error("Erreur lors de la création de l'entrée de rémunération", feeEntryError);
+        throw feeEntryError;
       }
     }
   }
+
+  console.log("Mise à jour du vol et des entrées comptables terminée avec succès");
 }
 
 export async function validateFlight(id: string): Promise<void> {
