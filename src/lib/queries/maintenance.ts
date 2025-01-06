@@ -90,3 +90,45 @@ export async function updateAircraftMaintenanceStatus(
 
   if (error) throw error;
 }
+
+export type AircraftStats = {
+  id: string;
+  registration: string;
+  name: string;
+  model: string;
+  total_hours: number;
+  hours_before_maintenance: number;
+  last_maintenance: string | null;
+  status: 'AVAILABLE' | 'UNAVAILABLE';
+  maintenance_status: 'OK' | 'WARNING' | 'URGENT';
+  total_flights_30d: number;
+  total_hours_30d: number;
+  last_flight: string | null;
+};
+
+export type MaintenanceStats = {
+  aircraft_stats: AircraftStats[];
+  alerts_count: {
+    overdue: number;
+    urgent: number;
+    warning: number;
+    ok: number;
+  };
+};
+
+export async function getMaintenanceStats(): Promise<MaintenanceStats> {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_maintenance_stats');
+
+    if (error) {
+      console.error("Erreur lors de la récupération des statistiques de maintenance:", error);
+      throw error;
+    }
+
+    return data || { aircraft_stats: [], alerts_count: { overdue: 0, urgent: 0, warning: 0, ok: 0 } };
+  } catch (error) {
+    console.error("Erreur dans getMaintenanceStats:", error);
+    throw error;
+  }
+}

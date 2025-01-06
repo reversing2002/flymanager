@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { setMinutes, setHours, differenceInMinutes, format, isToday } from "date-fns";
 import { Aircraft, Reservation, User, Availability } from "../../types/database";
 import { useAuth } from "../../contexts/AuthContext";
-import { Plane, Moon } from "lucide-react";
+import { Plane, Moon, AlertTriangle, CheckCircle2 } from "lucide-react";
 import ReservationModal from "./ReservationModal";
 import { getSunTimes } from "../../lib/sunTimes";
 import { supabase } from "../../lib/supabase";
 import toast from 'react-hot-toast';
 import { fr } from 'date-fns/locale';
 import { getAvailabilitiesForPeriod } from "../../lib/queries/availability";
+import { getMaintenanceStats, MaintenanceStats } from "../../lib/queries/maintenance";
 
 interface TimeGridProps {
   selectedDate: Date;
@@ -51,6 +52,10 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [maintenanceStats, setMaintenanceStats] = useState<MaintenanceStats>({
+    aircraft_stats: [],
+    alerts_count: { overdue: 0, urgent: 0, warning: 0, ok: 0 }
+  });
 
   useEffect(() => {
     const loadClubCoordinates = async () => {
@@ -69,6 +74,20 @@ const TimeGrid: React.FC<TimeGridProps> = ({
 
     loadClubCoordinates();
   }, [user?.club?.id]);
+
+  useEffect(() => {
+    const loadMaintenanceStats = async () => {
+      try {
+        const stats = await getMaintenanceStats();
+        console.log("Maintenance stats received:", stats);
+        setMaintenanceStats(stats);
+      } catch (error) {
+        console.error("Erreur lors du chargement des statistiques de maintenance:", error);
+      }
+    };
+
+    loadMaintenanceStats();
+  }, []);
 
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionStart, setSelectionStart] = useState<{
@@ -650,6 +669,55 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     );
   };
 
+  const renderAircraftHeader = (aircraft: Aircraft) => {
+    const stats = maintenanceStats.aircraft_stats.find(stat => stat.id === aircraft.id);
+    if (!stats) return <span>{aircraft.registration}</span>;
+
+    const getMaintenanceIcon = () => {
+      switch (stats.maintenance_status) {
+        case 'URGENT':
+          return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        case 'WARNING':
+          return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+        case 'OK':
+          return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+        default:
+          return null;
+      }
+    };
+
+    const getMaintenanceStatusText = () => {
+      switch (stats.maintenance_status) {
+        case 'URGENT':
+          return 'URGENT';
+        case 'WARNING':
+          return 'ATTENTION';
+        case 'OK':
+          return 'OK';
+        default:
+          return '';
+      }
+    };
+
+    return (
+      <div className="flex items-center space-x-2">
+        <span>{aircraft.registration}</span>
+        <div className="group relative">
+          {getMaintenanceIcon()}
+          <div className="absolute left-0 top-full hidden group-hover:block bg-white border border-gray-200 rounded-md p-2 shadow-lg z-50 w-48">
+            <p className="text-sm">
+              <span>Heures avant maintenance: {stats.hours_before_maintenance}h<br /></span>
+              {stats.last_maintenance && (
+                <span>Dernière maintenance: {new Date(stats.last_maintenance).toLocaleDateString('fr-FR')}<br /></span>
+              )}
+              <span>Statut: {getMaintenanceStatusText()}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div ref={timeGridRef} className="relative h-full">
       <div className="h-full overflow-auto">
@@ -689,7 +757,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   <div className="flex flex-col items-center justify-center gap-1">
                     <div className="flex items-center justify-center gap-2">
                       <Plane className="h-4 w-4" />
-                      <span className="font-medium">{aircraft.registration}</span>
+                      {renderAircraftHeader(aircraft)}
                     </div>
                     <span className="text-xs text-slate-500">{aircraft.name}</span>
                   </div>
