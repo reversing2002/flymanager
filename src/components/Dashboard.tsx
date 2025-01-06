@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from '@tanstack/react-query';
-import { Plane, Users, Calendar, CreditCard, MessageSquare, Sun } from "lucide-react";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plane, Users, Calendar, CreditCard, MessageSquare, Sun, Plus } from "lucide-react";
 import {
   getAircraft,
   getUsers,
@@ -35,6 +35,7 @@ import SunTimesDisplay from "./common/SunTimesDisplay";
 import AircraftRemarks from "./remarks/AircraftRemarks";
 import PendingDiscoveryFlights from "./discovery/PendingDiscoveryFlights";
 import WeatherWidget from "./weather/WeatherWidget";
+import CreditAccountModal from "./accounts/CreditAccountModal";
 
 const StatCard = ({
   icon,
@@ -311,6 +312,7 @@ const RecentMessages = () => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // Rediriger les administrateurs vers le dashboard admin
   if (hasAnyGroup(user, ['ADMIN'])) {
@@ -318,6 +320,7 @@ const Dashboard = () => {
   }
 
   const [showReservationModal, setShowReservationModal] = useState(false);
+  const [showCreditModal, setShowCreditModal] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -515,17 +518,27 @@ const Dashboard = () => {
           color="purple"
         />
         {balance && (
-          <StatCard
-            icon={<CreditCard className="h-6 w-6" />}
-            title="Solde"
-            value={`${balance.validated.toFixed(2)}€`}
-            description={
-              balance.pending !== 0
-                ? `${balance.pending.toFixed(2)}€ en attente`
-                : "Solde validé"
-            }
-            color="yellow"
-          />
+          <div className="relative">
+            <StatCard
+              icon={
+                <button
+                  onClick={() => setShowCreditModal(true)}
+                  className="flex items-center gap-1 px-3 py-1 text-sm bg-sky-500 hover:bg-sky-600 text-white rounded-md transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Créditer</span>
+                </button>
+              }
+              title="Solde"
+              value={`${balance.validated.toFixed(2)}€`}
+              description={
+                balance.pending !== 0
+                  ? `${balance.pending.toFixed(2)}€ en attente`
+                  : "Solde validé"
+              }
+              color="yellow"
+            />
+          </div>
         )}
       </div>
 
@@ -651,6 +664,18 @@ const Dashboard = () => {
           aircraft={fleetStats?.aircraft_stats}
           users={memberStats?.users}
           existingReservation={selectedReservation}
+        />
+      )}
+      {/* Modal de crédit */}
+      {showCreditModal && user && (
+        <CreditAccountModal
+          userId={user.id}
+          onClose={() => setShowCreditModal(false)}
+          onSuccess={() => {
+            setShowCreditModal(false);
+            // Rafraîchir le solde
+            queryClient.invalidateQueries(['memberBalance', user.id]);
+          }}
         />
       )}
     </div>
