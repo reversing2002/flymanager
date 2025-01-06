@@ -103,7 +103,103 @@ export async function createFlight(data: Partial<Flight>): Promise<Flight> {
   if (flightError) throw flightError;
   if (!newFlight) throw new Error("Le vol n'a pas pu être créé");
 
-  await createFlightAccountEntry(newFlight as Flight);
+  // Récupérer les informations de l'élève
+  const { data: student, error: studentError } = await supabase
+    .from("users")
+    .select("first_name, last_name")
+    .eq("id", data.userId)
+    .single();
+
+  if (studentError) {
+    console.error("Erreur lors de la récupération des informations de l'élève", studentError);
+    throw studentError;
+  }
+
+  // Récupérer les types d'entrées comptables
+  const { data: entryTypes, error: entryTypesError } = await supabase
+    .from("account_entry_types")
+    .select("id, code");
+
+  if (entryTypesError) {
+    console.error("Erreur lors de la récupération des types d'entrées", entryTypesError);
+    throw entryTypesError;
+  }
+
+  const flightTypeId = entryTypes.find(t => t.code === "FLIGHT")?.id;
+  const instructionTypeId = entryTypes.find(t => t.code === "INSTRUCTION")?.id;
+  const instructorFeeTypeId = "68818f41-b9cb-4f6c-bb5e-c38fae86e82d"; // remun instruction
+
+  if (!flightTypeId || !instructionTypeId) {
+    throw new Error("Types d'entrées comptables non trouvés");
+  }
+
+  // Créer l'entrée pour le coût de l'avion
+  const { error: flightEntryError } = await supabase
+    .from("account_entries")
+    .insert({
+      id: uuidv4(),
+      user_id: data.userId,
+      assigned_to_id: data.userId,
+      flight_id: newFlight.id,
+      entry_type_id: flightTypeId,
+      date: data.date,
+      amount: -data.cost,
+      payment_method: data.paymentMethod,
+      description: data.instructorId 
+        ? `Vol instruction ${student.first_name} ${student.last_name} - ${data.duration}min`
+        : `Vol ${data.aircraftId} - ${data.duration}min`,
+      is_validated: false,
+    });
+
+  if (flightEntryError) {
+    console.error("Erreur lors de la création de l'entrée comptable du vol", flightEntryError);
+    throw flightEntryError;
+  }
+
+  // Si il y a un instructeur, créer les entrées d'instruction
+  if (data.instructorId && data.instructor_fee > 0) {
+    // Entrée pour le coût de l'instruction (débit élève)
+    const { error: instructionEntryError } = await supabase
+      .from("account_entries")
+      .insert({
+        id: uuidv4(),
+        user_id: data.userId,
+        assigned_to_id: data.userId,
+        flight_id: newFlight.id,
+        entry_type_id: instructionTypeId,
+        date: data.date,
+        amount: -(data.instructor_fee || 0),
+        payment_method: data.paymentMethod,
+        description: `Instruction ${student.first_name} ${student.last_name} - ${data.duration}min`,
+        is_validated: false,
+      });
+
+    if (instructionEntryError) {
+      console.error("Erreur lors de la création de l'entrée d'instruction", instructionEntryError);
+      throw instructionEntryError;
+    }
+
+    // Entrée pour la rémunération de l'instructeur (crédit instructeur)
+    const { error: instructorFeeEntryError } = await supabase
+      .from("account_entries")
+      .insert({
+        id: uuidv4(),
+        user_id: data.instructorId,
+        assigned_to_id: data.instructorId,
+        flight_id: newFlight.id,
+        entry_type_id: instructorFeeTypeId,
+        date: data.date,
+        amount: data.instructor_fee || 0,
+        payment_method: data.paymentMethod,
+        description: `Instruction ${student.first_name} ${student.last_name} - ${data.duration}min`,
+        is_validated: false,
+      });
+
+    if (instructorFeeEntryError) {
+      console.error("Erreur lors de la création de l'entrée de rémunération", instructorFeeEntryError);
+      throw instructorFeeEntryError;
+    }
+  }
 
   return newFlight as Flight;
 }
