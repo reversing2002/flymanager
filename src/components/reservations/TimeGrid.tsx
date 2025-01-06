@@ -704,7 +704,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
         <span>{aircraft.registration}</span>
         <div className="group relative">
           {getMaintenanceIcon()}
-          <div className="absolute left-0 top-full hidden group-hover:block bg-white border border-gray-200 rounded-md p-2 shadow-lg z-50 w-48">
+          <div className="absolute left-1/2 -translate-x-1/2 top-full hidden group-hover:block bg-white border border-gray-200 rounded-md p-2 shadow-lg z-50 w-48">
             <p className="text-sm">
               <span>Heures avant maintenance: {stats.hours_before_maintenance}h<br /></span>
               {stats.last_maintenance && (

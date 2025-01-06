@@ -92,7 +92,10 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+    <div 
+      className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => navigate(`/members/${member.id}`)}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0"> 
           <div className="flex items-center space-x-3 mb-2">
@@ -168,7 +171,10 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
 
         {isAdmin && (
           <button
-            onClick={() => setShowDeleteDialog(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDeleteDialog(true);
+            }}
             className="p-1 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2"
           >
             <Trash2 className="w-5 h-5" />
