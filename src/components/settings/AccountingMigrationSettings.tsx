@@ -70,6 +70,32 @@ const AccountingMigrationSettings = () => {
     loadStats();
   }, []);
 
+  // Fonction pour transformer le code du compte pilote
+  const transformPilotAccountCode = (fullName: string, originalCode: string): string => {
+    // Ne transformer que si c'est un compte pilote
+    if (!fullName.startsWith('Compte pilote')) {
+      return originalCode;
+    }
+
+    // Extraire le nom complet après "Compte pilote "
+    const namePart = fullName.replace('Compte pilote ', '');
+    const names = namePart.split(' ');
+  
+    // Préfixe comptable pour les comptes clients (pilotes)
+    const COMPTE_CLIENT_PREFIX = "411";
+  
+    // Cas spécial pour les noms composés (avec tiret)
+    if (names.length > 2) {
+      const firstName = names[0];
+      const lastName = names.slice(1).join('');
+      return `${COMPTE_CLIENT_PREFIX}PIL${firstName[0]}${lastName}`;
+    }
+  
+    // Cas standard : prénom + nom
+    const [firstName, lastName] = names;
+    return `${COMPTE_CLIENT_PREFIX}PIL${firstName[0]}${lastName}`;
+  };
+
   // Fonction pour créer ou récupérer un compte
   const getOrCreateAccount = async (
     code: string,
@@ -79,11 +105,14 @@ const AccountingMigrationSettings = () => {
     clubId: string
   ) => {
     try {
+      // Transformer le code si c'est un compte pilote
+      const transformedCode = transformPilotAccountCode(name, code);
+
       // Vérifier si le compte existe déjà
       const { data: existingAccounts } = await supabase
         .from('accounts')
         .select('id')
-        .eq('code', code)
+        .eq('code', transformedCode)
         .eq('club_id', clubId)
         .limit(1);
 
@@ -95,7 +124,7 @@ const AccountingMigrationSettings = () => {
       const { data: newAccount, error } = await supabase
         .from('accounts')
         .insert({
-          code,
+          code: transformedCode,
           name,
           account_type: accountType,
           type,
