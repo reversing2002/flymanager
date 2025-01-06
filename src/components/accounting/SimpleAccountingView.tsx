@@ -27,7 +27,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { 
   TrendingUp, 
@@ -92,7 +92,25 @@ interface AccountTableProps {
 }
 
 const AccountTable = ({ accounts, type }: AccountTableProps) => {
-  const filteredAccounts = accounts.filter(a => a.account_type === type);
+  const filteredAccounts = accounts.filter(a => {
+    if (type === 'LIABILITY') {
+      // Pour la section passifs, on montre uniquement les comptes utilisateurs avec solde créditeur
+      return a.account_type === 'USER_ACCOUNT' && (a.balance || 0) > 0;
+    }
+    // Pour les autres sections, on filtre normalement par type
+    return a.account_type === type;
+  });
+  
+  const getDisplayBalance = (account: AccountBalance) => {
+    let balance = account.balance || 0;
+    // Pour les passifs, on affiche le solde en positif
+    if (account.account_type === 'LIABILITY') {
+      balance = -balance;
+    }
+    return balance;
+  };
+
+  const totalBalance = filteredAccounts.reduce((sum, account) => sum + getDisplayBalance(account), 0);
   
   return (
     <TableContainer component={Paper} sx={{ mt: 2 }}>
@@ -107,26 +125,29 @@ const AccountTable = ({ accounts, type }: AccountTableProps) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {filteredAccounts.map((account) => (
-            <TableRow key={account.id}>
-              <TableCell>{account.code}</TableCell>
-              <TableCell>{account.name}</TableCell>
-              <TableCell align="right">
-                {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-                  .format(account.total_debit || 0)}
-              </TableCell>
-              <TableCell align="right">
-                {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-                  .format(account.total_credit || 0)}
-              </TableCell>
-              <TableCell align="right">
-                <Typography color={account.balance >= 0 ? 'success.main' : 'error.main'}>
+          {filteredAccounts.map((account) => {
+            const displayBalance = getDisplayBalance(account);
+            return (
+              <TableRow key={account.id}>
+                <TableCell>{account.code}</TableCell>
+                <TableCell>{account.name}</TableCell>
+                <TableCell align="right">
                   {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-                    .format(account.balance || 0)}
-                </Typography>
-              </TableCell>
-            </TableRow>
-          ))}
+                    .format(account.total_debit || 0)}
+                </TableCell>
+                <TableCell align="right">
+                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
+                    .format(account.total_credit || 0)}
+                </TableCell>
+                <TableCell align="right">
+                  <Typography color={displayBalance >= 0 ? 'success.main' : 'error.main'}>
+                    {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
+                      .format(displayBalance)}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            );
+          })}
           <TableRow sx={{ backgroundColor: 'action.hover' }}>
             <TableCell colSpan={2}>Total</TableCell>
             <TableCell align="right">
@@ -138,9 +159,9 @@ const AccountTable = ({ accounts, type }: AccountTableProps) => {
                 .format(filteredAccounts.reduce((sum, a) => sum + (a.total_credit || 0), 0))}
             </TableCell>
             <TableCell align="right">
-              <Typography color={filteredAccounts.reduce((sum, a) => sum + (a.balance || 0), 0) >= 0 ? 'success.main' : 'error.main'}>
+              <Typography color={totalBalance >= 0 ? 'success.main' : 'error.main'}>
                 {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-                  .format(filteredAccounts.reduce((sum, a) => sum + (a.balance || 0), 0))}
+                  .format(totalBalance)}
               </Typography>
             </TableCell>
           </TableRow>
@@ -163,9 +184,12 @@ const SimpleAccountingView = () => {
     if (!lines) return 0;
     
     return lines.reduce((sum, line) => {
-      // Pour les comptes de passif, produits et comptes utilisateurs, on inverse la logique
-      const multiplier = ['LIABILITY', 'INCOME', 'USER_ACCOUNT'].includes(accountType) ? -1 : 1;
-      return sum + multiplier * ((line.debit_amount || 0) - (line.credit_amount || 0));
+      // Pour les comptes de passif, produits et comptes utilisateurs, on inverse la logique débit/crédit
+      if (['LIABILITY', 'INCOME', 'USER_ACCOUNT'].includes(accountType)) {
+        return sum + ((line.credit_amount || 0) - (line.debit_amount || 0));
+      }
+      // Pour les actifs, on garde la logique normale
+      return sum + ((line.debit_amount || 0) - (line.credit_amount || 0));
     }, 0);
   };
 
@@ -175,8 +199,14 @@ const SimpleAccountingView = () => {
       
       if (account.account_type === 'ASSET') {
         totals.assets += balance;
-      } else if (account.account_type === 'LIABILITY' || account.account_type === 'USER_ACCOUNT') {
-        totals.liabilities += balance;
+      } else if (account.account_type === 'LIABILITY') {
+        // Les passifs sont toujours positifs quand ils représentent une dette
+        totals.liabilities += -balance;
+      } else if (account.account_type === 'USER_ACCOUNT') {
+        // Pour les comptes utilisateurs, on ajoute au passif seulement les soldes créditeurs (positifs)
+        if (balance > 0) {
+          totals.liabilities += balance;
+        }
       } else if (account.account_type === 'EQUITY') {
         totals.equity += balance;
       } else if (account.account_type === 'INCOME') {
@@ -245,7 +275,8 @@ const SimpleAccountingView = () => {
       const { data: accountsData, error: accountsError } = await supabase
         .from('accounts')
         .select('*')
-        .eq('club_id', user.club.id);
+        .eq('club_id', user.club.id)
+        .or('account_type.eq.ASSET,account_type.eq.LIABILITY,account_type.eq.USER_ACCOUNT,account_type.eq.INCOME');
 
       if (accountsError) throw accountsError;
 
@@ -281,6 +312,7 @@ const SimpleAccountingView = () => {
         })
       );
 
+      console.log('Comptes chargés:', accountsWithBalances);
       setAccounts(accountsWithBalances);
     } catch (error) {
       console.error('Error fetching accounts:', error);
@@ -315,8 +347,8 @@ const SimpleAccountingView = () => {
 
     // Trier les mois chronologiquement
     const sortedMonths = Object.keys(monthlyData).sort((a, b) => {
-      const dateA = new Date(a.split(' ')[1], fr.months.indexOf(a.split(' ')[0]));
-      const dateB = new Date(b.split(' ')[1], fr.months.indexOf(b.split(' ')[0]));
+      const dateA = parse(a, 'MMM yyyy', new Date(), { locale: fr });
+      const dateB = parse(b, 'MMM yyyy', new Date(), { locale: fr });
       return dateA.getTime() - dateB.getTime();
     });
 
