@@ -305,7 +305,11 @@ const FlightList = () => {
   };
 
   const handleDeleteFlight = async (flight: Flight) => {
-    if (!flight.validated) {
+    const confirmDelete = window.confirm(
+      "Êtes-vous sûr de vouloir supprimer ce vol ? Cette action supprimera également toutes les entrées comptables associées."
+    );
+
+    if (confirmDelete) {
       try {
         await deleteFlight(flight.id);
         toast.success("Vol supprimé avec succès");
@@ -314,8 +318,6 @@ const FlightList = () => {
         console.error("Error deleting flight:", error);
         toast.error("Erreur lors de la suppression du vol");
       }
-    } else {
-      toast.error("Impossible de supprimer un vol validé");
     }
   };
 

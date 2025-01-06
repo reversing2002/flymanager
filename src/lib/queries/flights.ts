@@ -375,26 +375,14 @@ export async function validateFlight(id: string): Promise<void> {
 }
 
 export async function deleteFlight(id: string): Promise<void> {
-  // Supprimer d'abord toutes les entrées comptables liées au vol
-  const { error: deleteEntriesError } = await supabase
-    .from("account_entries")
-    .delete()
-    .eq("flight_id", id);
+  // Démarrer une transaction
+  const { error: transactionError } = await supabase.rpc('delete_flight_with_entries', {
+    p_flight_id: id
+  });
 
-  if (deleteEntriesError) {
-    console.error("Erreur lors de la suppression des entrées comptables", deleteEntriesError);
-    throw deleteEntriesError;
-  }
-
-  // Ensuite, supprimer le vol lui-même
-  const { error: deleteFlightError } = await supabase
-    .from("flights")
-    .delete()
-    .eq("id", id);
-
-  if (deleteFlightError) {
-    console.error("Erreur lors de la suppression du vol", deleteFlightError);
-    throw deleteFlightError;
+  if (transactionError) {
+    console.error("Erreur lors de la suppression du vol et de ses entrées", transactionError);
+    throw transactionError;
   }
 }
 
