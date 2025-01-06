@@ -171,13 +171,30 @@ const MemberList = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredMembers.map((member) => (
-          <MemberCard 
-            key={member.id} 
-            member={member}
-            onDelete={loadMembers}
-          />
-        ))}
+        {/* Membre connecté */}
+        {filteredMembers
+          .filter(member => member.id === user?.id)
+          .map((member) => (
+            <div key={member.id} className="col-span-1 md:col-span-2 lg:col-span-3">
+              <div className="bg-blue-50 p-2 rounded-lg">
+                <MemberCard 
+                  member={member}
+                  onDelete={loadMembers}
+                />
+              </div>
+            </div>
+          ))}
+        
+        {/* Autres membres */}
+        {filteredMembers
+          .filter(member => member.id !== user?.id)
+          .map((member) => (
+            <MemberCard 
+              key={member.id} 
+              member={member}
+              onDelete={loadMembers}
+            />
+          ))}
       </div>
 
       <AddMemberForm
