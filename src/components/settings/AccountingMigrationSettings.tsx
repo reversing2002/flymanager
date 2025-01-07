@@ -70,6 +70,42 @@ const AccountingMigrationSettings = () => {
     loadStats();
   }, []);
 
+  // Fonction pour déterminer le type de compte en fonction du code
+  const determineAccountType = (code: string): string => {
+    // Les comptes bancaires réels sont des actifs (classe 5)
+    if (code.startsWith('512') || code.startsWith('467')) {
+      return 'ASSET';
+    }
+
+    // Passifs : comptes clients, fournisseurs et dettes (classes 4)
+    if (
+      code.startsWith('411') || // Comptes clients (pilotes)
+      code.startsWith('401') || // Comptes fournisseurs
+      code.startsWith('419') || // Avances clients
+      code.startsWith('421') || // Personnel - rémunérations dues
+      code.startsWith('431') || // Sécurité sociale
+      code.startsWith('444') || // État - impôts et taxes
+      code.startsWith('455') || // Associés - comptes courants
+      code.startsWith('164')    // Emprunts auprès des établissements de crédit
+    ) {
+      return 'LIABILITY';
+    }
+
+    // Produits (classe 7)
+    if (code.startsWith('7')) {
+      return 'REVENUE';
+    }
+
+    // Charges (classe 6)
+    if (code.startsWith('6')) {
+      return 'EXPENSE';
+    }
+
+    // Par défaut, demander une vérification manuelle
+    console.warn(`Type de compte non déterminé automatiquement pour le code ${code}`);
+    return 'ASSET';
+  };
+
   // Fonction pour transformer le code du compte pilote
   const transformPilotAccountCode = (fullName: string, originalCode: string): string => {
     // Ne transformer que si c'est un compte pilote
@@ -107,6 +143,9 @@ const AccountingMigrationSettings = () => {
     try {
       // Transformer le code si c'est un compte pilote
       const transformedCode = transformPilotAccountCode(name, code);
+      
+      // Déterminer le bon type de compte
+      const correctedAccountType = determineAccountType(transformedCode);
 
       // Vérifier si le compte existe déjà
       const { data: existingAccounts } = await supabase
@@ -117,6 +156,12 @@ const AccountingMigrationSettings = () => {
         .limit(1);
 
       if (existingAccounts && existingAccounts.length > 0) {
+        // Mettre à jour le type de compte si nécessaire
+        await supabase
+          .from('accounts')
+          .update({ account_type: correctedAccountType })
+          .eq('id', existingAccounts[0].id);
+        
         return existingAccounts[0].id;
       }
 
@@ -126,7 +171,7 @@ const AccountingMigrationSettings = () => {
         .insert({
           code: transformedCode,
           name,
-          account_type: accountType,
+          account_type: correctedAccountType,
           type,
           club_id: clubId,
           created_at: new Date(),

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Paper,
   Typography,
@@ -92,20 +92,13 @@ interface AccountTableProps {
 }
 
 const AccountTable = ({ accounts, type }: AccountTableProps) => {
-  const filteredAccounts = accounts.filter(a => {
-    if (type === 'LIABILITY') {
-      // Pour la section passifs, on montre uniquement les comptes utilisateurs avec solde créditeur
-      return a.account_type === 'USER_ACCOUNT' && (a.balance || 0) > 0;
-    }
-    // Pour les autres sections, on filtre normalement par type
-    return a.account_type === type;
-  });
+  const filteredAccounts = accounts.filter(a => a.account_type === type);
   
   const getDisplayBalance = (account: AccountBalance) => {
     let balance = account.balance || 0;
-    // Pour les passifs, on affiche le solde en positif
-    if (account.account_type === 'LIABILITY') {
-      balance = -balance;
+    // Pour les passifs et les produits, on inverse le signe du solde pour l'affichage
+    if (['LIABILITY', 'REVENUE'].includes(account.account_type)) {
+      balance = Math.abs(balance);
     }
     return balance;
   };
@@ -127,6 +120,10 @@ const AccountTable = ({ accounts, type }: AccountTableProps) => {
         <TableBody>
           {filteredAccounts.map((account) => {
             const displayBalance = getDisplayBalance(account);
+            const isPositiveBalance = ['LIABILITY', 'REVENUE'].includes(account.account_type) 
+              ? account.balance > 0 
+              : account.balance >= 0;
+
             return (
               <TableRow key={account.id}>
                 <TableCell>{account.code}</TableCell>
@@ -140,7 +137,7 @@ const AccountTable = ({ accounts, type }: AccountTableProps) => {
                     .format(account.total_credit || 0)}
                 </TableCell>
                 <TableCell align="right">
-                  <Typography color={displayBalance >= 0 ? 'success.main' : 'error.main'}>
+                  <Typography color={isPositiveBalance ? 'success.main' : 'error.main'}>
                     {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
                       .format(displayBalance)}
                   </Typography>
@@ -184,11 +181,11 @@ const SimpleAccountingView = () => {
     if (!lines) return 0;
     
     return lines.reduce((sum, line) => {
-      // Pour les comptes de passif, produits et comptes utilisateurs, on inverse la logique débit/crédit
-      if (['LIABILITY', 'INCOME', 'USER_ACCOUNT'].includes(accountType)) {
+      // Pour les comptes de passif et produits, on inverse la logique débit/crédit
+      if (['LIABILITY', 'REVENUE'].includes(accountType)) {
         return sum + ((line.credit_amount || 0) - (line.debit_amount || 0));
       }
-      // Pour les actifs, on garde la logique normale
+      // Pour les actifs et charges, on garde la logique normale
       return sum + ((line.debit_amount || 0) - (line.credit_amount || 0));
     }, 0);
   };
@@ -200,25 +197,19 @@ const SimpleAccountingView = () => {
       if (account.account_type === 'ASSET') {
         totals.assets += balance;
       } else if (account.account_type === 'LIABILITY') {
-        // Les passifs sont toujours positifs quand ils représentent une dette
-        totals.liabilities += -balance;
-      } else if (account.account_type === 'USER_ACCOUNT') {
-        // Pour les comptes utilisateurs, on ajoute au passif seulement les soldes créditeurs (positifs)
-        if (balance > 0) {
-          totals.liabilities += balance;
-        }
-      } else if (account.account_type === 'EQUITY') {
-        totals.equity += balance;
-      } else if (account.account_type === 'INCOME') {
-        totals.income += balance;
+        totals.liabilities += balance;
+      } else if (account.account_type === 'REVENUE') {
+        totals.revenue += balance;
+      } else if (account.account_type === 'EXPENSE') {
+        totals.expenses += balance;
       }
       
       return totals;
     }, {
       assets: 0,
       liabilities: 0,
-      equity: 0,
-      income: 0
+      revenue: 0,
+      expenses: 0
     });
   };
 
@@ -275,8 +266,7 @@ const SimpleAccountingView = () => {
       const { data: accountsData, error: accountsError } = await supabase
         .from('accounts')
         .select('*')
-        .eq('club_id', user.club.id)
-        .or('account_type.eq.ASSET,account_type.eq.LIABILITY,account_type.eq.USER_ACCOUNT,account_type.eq.INCOME');
+        .eq('club_id', user.club.id);
 
       if (accountsError) throw accountsError;
 
@@ -321,56 +311,91 @@ const SimpleAccountingView = () => {
   };
 
   const updateChartData = (entries: JournalEntry[]) => {
-    const monthlyData: { [key: string]: { income: number; expense: number } } = {};
-
-    // Trier les entrées par date décroissante
-    const sortedEntries = entries.sort((a, b) => 
-      new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
-    );
-
-    sortedEntries.forEach(entry => {
-      const month = format(new Date(entry.transaction_date), 'MMM yyyy', { locale: fr });
-      
-      if (!monthlyData[month]) {
-        monthlyData[month] = { income: 0, expense: 0 };
-      }
-
-      entry.lines.forEach(line => {
-        if (line.debit_amount > 0) {
-          monthlyData[month].expense += line.debit_amount;
+    try {
+      // Grouper les entrées par mois
+      const monthlyData = entries.reduce((acc: any, entry) => {
+        // Vérifier si la date est valide
+        if (!entry.transaction_date) {
+          console.warn('Date de transaction manquante pour l\'entrée:', entry);
+          return acc;
         }
-        if (line.credit_amount > 0) {
-          monthlyData[month].income += line.credit_amount;
+
+        let date;
+        try {
+          // S'assurer que la date est au bon format
+          if (entry.transaction_date.includes('T')) {
+            // Si la date contient un timestamp, on extrait juste la partie date
+            date = new Date(entry.transaction_date);
+          } else {
+            // Sinon on parse la date au format yyyy-MM-dd
+            date = parse(entry.transaction_date, 'yyyy-MM-dd', new Date());
+          }
+
+          if (isNaN(date.getTime())) {
+            console.warn('Date invalide:', entry.transaction_date);
+            return acc;
+          }
+        } catch (error) {
+          console.warn('Erreur lors du parsing de la date:', entry.transaction_date);
+          return acc;
         }
+
+        const monthKey = format(date, 'yyyy-MM');
+        
+        if (!acc[monthKey]) {
+          acc[monthKey] = {
+            revenues: 0,
+            expenses: 0
+          };
+        }
+
+        if (entry.lines && Array.isArray(entry.lines)) {
+          entry.lines.forEach(line => {
+            if (!line.accounts) return;
+            
+            if (line.accounts.account_type === 'REVENUE') {
+              acc[monthKey].revenues += Number(line.credit_amount || 0);
+            } else if (line.accounts.account_type === 'EXPENSE') {
+              acc[monthKey].expenses += Number(line.debit_amount || 0);
+            }
+          });
+        }
+
+        return acc;
+      }, {});
+
+      // Trier les mois par ordre chronologique
+      const sortedMonths = Object.keys(monthlyData)
+        .sort((a, b) => a.localeCompare(b));
+
+      const labels = sortedMonths.map(month => {
+        const date = parse(month, 'yyyy-MM', new Date());
+        return format(date, 'MMMM yyyy', { locale: fr });
       });
-    });
 
-    // Trier les mois chronologiquement
-    const sortedMonths = Object.keys(monthlyData).sort((a, b) => {
-      const dateA = parse(a, 'MMM yyyy', new Date(), { locale: fr });
-      const dateB = parse(b, 'MMM yyyy', new Date(), { locale: fr });
-      return dateA.getTime() - dateB.getTime();
-    });
-
-    setChartData({
-      labels: sortedMonths,
-      datasets: [
-        {
-          label: 'Recettes',
-          data: sortedMonths.map(month => monthlyData[month].income),
-          backgroundColor: 'rgba(75, 192, 192, 0.5)',
-          borderColor: 'rgb(75, 192, 192)',
-          borderWidth: 1
-        },
-        {
-          label: 'Dépenses',
-          data: sortedMonths.map(month => monthlyData[month].expense),
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
-          borderColor: 'rgb(255, 99, 132)',
-          borderWidth: 1
-        }
-      ]
-    });
+      setChartData({
+        labels,
+        datasets: [
+          {
+            label: 'Recettes',
+            data: sortedMonths.map(month => monthlyData[month].revenues),
+            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          },
+          {
+            label: 'Dépenses',
+            data: sortedMonths.map(month => monthlyData[month].expenses),
+            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1
+          }
+        ]
+      });
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour des données du graphique:', error);
+      toast.error('Erreur lors de la génération du graphique');
+    }
   };
 
   useEffect(() => {
@@ -451,7 +476,7 @@ const SimpleAccountingView = () => {
               </Box>
               <Typography variant="h4" color="success">
                 {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-                  .format(totals.equity)}
+                  .format(totals.revenue)}
               </Typography>
             </CardContent>
           </Card>
@@ -463,9 +488,9 @@ const SimpleAccountingView = () => {
                 <Wallet size={24} />
                 <Typography variant="h6" sx={{ ml: 1 }}>Résultat</Typography>
               </Box>
-              <Typography variant="h4" color={totals.income >= 0 ? "success" : "error"}>
+              <Typography variant="h4" color={totals.revenue - totals.expenses >= 0 ? "success" : "error"}>
                 {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-                  .format(totals.income)}
+                  .format(totals.revenue - totals.expenses)}
               </Typography>
             </CardContent>
           </Card>
@@ -489,9 +514,40 @@ const SimpleAccountingView = () => {
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'top' as const,
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context: any) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                              label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                              label += new Intl.NumberFormat('fr-FR', { 
+                                style: 'currency', 
+                                currency: 'EUR' 
+                              }).format(context.parsed.y);
+                            }
+                            return label;
+                          }
+                        }
+                      }
+                    },
                     scales: {
                       y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                          callback: function(value: any) {
+                            return new Intl.NumberFormat('fr-FR', { 
+                              style: 'currency', 
+                              currency: 'EUR',
+                              maximumFractionDigits: 0
+                            }).format(value);
+                          }
+                        }
                       }
                     }
                   }} 
@@ -509,60 +565,100 @@ const SimpleAccountingView = () => {
             <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Passifs</Typography>
             <AccountTable accounts={accounts} type="LIABILITY" />
             
-            <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Comptes Utilisateurs</Typography>
-            <AccountTable accounts={accounts} type="USER_ACCOUNT" />
-            
             <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Produits</Typography>
-            <AccountTable accounts={accounts} type="INCOME" />
+            <AccountTable accounts={accounts} type="REVENUE" />
+            
+            <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Charges</Typography>
+            <AccountTable accounts={accounts} type="EXPENSE" />
           </Box>
         )}
 
         {activeTab === 2 && (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="right">Montant</TableCell>
-                  <TableCell>Détails</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {journalEntries.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell>{new Date(entry.transaction_date).toLocaleDateString('fr-FR')}</TableCell>
-                    <TableCell>{entry.description}</TableCell>
-                    <TableCell align="right">
-                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-                        .format(entry.total_amount)}
-                    </TableCell>
-                    <TableCell>
-                      <Table size="small">
-                        <TableBody>
-                          {entry.lines.map((line: any) => (
-                            <TableRow key={line.id}>
-                              <TableCell>{line.accounts.code} - {line.accounts.name}</TableCell>
-                              <TableCell align="right">
-                                {line.debit_amount ? 
-                                  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(line.debit_amount) : 
-                                  ''}
-                              </TableCell>
-                              <TableCell align="right">
-                                {line.credit_amount ? 
-                                  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(line.credit_amount) : 
-                                  ''}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableCell>
+          <Box>
+            <Typography variant="h6" sx={{ mb: 2 }}>Journal des écritures</Typography>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell>Compte</TableCell>
+                    <TableCell align="right">Débit</TableCell>
+                    <TableCell align="right">Crédit</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {journalEntries.map((entry) => (
+                    <React.Fragment key={entry.id}>
+                      {entry.lines.map((line, lineIndex) => (
+                        <TableRow 
+                          key={`${entry.id}-${lineIndex}`}
+                          sx={{
+                            backgroundColor: line.accounts?.account_type === 'REVENUE' 
+                              ? 'rgba(75, 192, 192, 0.1)'  // Vert clair pour les produits
+                              : line.accounts?.account_type === 'EXPENSE'
+                                ? 'rgba(255, 99, 132, 0.1)' // Rouge clair pour les charges
+                                : 'inherit',
+                            '&:hover': {
+                              backgroundColor: line.accounts?.account_type === 'REVENUE'
+                                ? 'rgba(75, 192, 192, 0.2)'
+                                : line.accounts?.account_type === 'EXPENSE'
+                                  ? 'rgba(255, 99, 132, 0.2)'
+                                  : 'rgba(0, 0, 0, 0.04)'
+                            }
+                          }}
+                        >
+                          <TableCell>
+                            {lineIndex === 0 && format(new Date(entry.transaction_date), 'dd/MM/yyyy')}
+                          </TableCell>
+                          <TableCell>
+                            {lineIndex === 0 && entry.description}
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              {line.accounts?.account_type === 'REVENUE' && (
+                                <TrendingUp size={16} color="rgb(75, 192, 192)" />
+                              )}
+                              {line.accounts?.account_type === 'EXPENSE' && (
+                                <TrendingDown size={16} color="rgb(255, 99, 132)" />
+                              )}
+                              {line.accounts?.name || line.accounts?.code}
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right" sx={{
+                            color: line.debit_amount > 0 ? 'error.main' : 'inherit'
+                          }}>
+                            {line.debit_amount > 0 && 
+                              new Intl.NumberFormat('fr-FR', { 
+                                style: 'currency', 
+                                currency: 'EUR' 
+                              }).format(line.debit_amount)
+                            }
+                          </TableCell>
+                          <TableCell align="right" sx={{
+                            color: line.credit_amount > 0 ? 'success.main' : 'inherit'
+                          }}>
+                            {line.credit_amount > 0 && 
+                              new Intl.NumberFormat('fr-FR', { 
+                                style: 'currency', 
+                                currency: 'EUR' 
+                              }).format(line.credit_amount)
+                            }
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {/* Ligne de séparation entre les écritures */}
+                      <TableRow>
+                        <TableCell colSpan={5} sx={{ p: 0 }}>
+                          <Divider />
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
         )}
       </Box>
     </Box>

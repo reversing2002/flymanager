@@ -192,23 +192,26 @@ const Navbar = () => {
                   </Link>
                 )}
                 {hasAnyGroup(currentUser, ['admin']) && (
-                  <Link to="/club-stats" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                    <BarChart2 className="w-5 h-5 mr-3" />
-                    <span>Statistiques Clubs</span>
-                  </Link>
+                  <>
+                    <Link to="/club-stats" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                      <BarChart2 className="w-5 h-5 mr-3" />
+                      <span>Statistiques Clubs</span>
+                    </Link>
+                    <Link to="/accounting" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                      <Database className="w-5 h-5 mr-3" />
+                      <span>Comptabilité</span>
+                    </Link>
+                  </>
                 )}
               
             </div>  
 
             {/* FORMATION section */}
-            {console.log("Condition Formation:", showMyProgression, isInstructor)}
             {(showMyProgression || isInstructor) && (
               <div className="py-4">
                 <div className="px-4 py-2 text-sm text-gray-500 uppercase">Formation</div>
-                {console.log("Section Formation rendue")}
                 {isInstructor && (
                   <>
-                    {console.log("Section Instructeur rendue")}
                     <Link to="/instructor-students" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                       <GraduationCap className="w-5 h-5 mr-3" />
                       <span>Mes élèves</span>
