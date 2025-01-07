@@ -137,6 +137,7 @@ interface SupplierFormData {
   email?: string;
   phone?: string;
   address?: string;
+  default_expense_account_id?: string;
 }
 
 interface TreasuryFormData {
@@ -153,6 +154,7 @@ const supplierFormSchema = z.object({
   email: z.string().email("Email invalide").optional().or(z.literal('')),
   phone: z.string().optional(),
   address: z.string().optional(),
+  default_expense_account_id: z.string().optional(),
 });
 
 type SupplierFormData = z.infer<typeof supplierFormSchema>;
@@ -160,7 +162,7 @@ type SupplierFormData = z.infer<typeof supplierFormSchema>;
 interface SupplierFormProps {
   open: boolean;
   onClose: () => void;
-  supplier?: SupplierAccount;
+  initialData?: SupplierAccount;
   onSubmit: (data: SupplierFormData) => Promise<void>;
 }
 
@@ -654,7 +656,8 @@ const SimpleAccountingView = () => {
           siret: data.siret,
           email: data.email,
           phone: data.phone,
-          address: data.address
+          address: data.address,
+          default_expense_account_id: data.default_expense_account_id
         }])
         .select()
         .single();
@@ -683,7 +686,8 @@ const SimpleAccountingView = () => {
           siret: data.siret,
           email: data.email,
           phone: data.phone,
-          address: data.address
+          address: data.address,
+          default_expense_account_id: data.default_expense_account_id
         })
         .eq('id', selectedSupplier.id);
 
@@ -1272,6 +1276,26 @@ const SimpleAccountingView = () => {
     }
   };
 
+  const handleOpenSupplierForm = (supplier?: SupplierAccount) => {
+    setSelectedSupplier(supplier);
+    setIsSupplierFormOpen(true);
+  };
+
+  const handleCloseSupplierForm = () => {
+    setSelectedSupplier(undefined);
+    setIsSupplierFormOpen(false);
+  };
+
+  const handleOpenSupplierDetails = (supplier: SupplierAccount) => {
+    setSelectedSupplier(supplier);
+    setIsSupplierDetailsOpen(true);
+  };
+
+  const handleCloseSupplierDetails = () => {
+    setSelectedSupplier(undefined);
+    setIsSupplierDetailsOpen(false);
+  };
+
   useEffect(() => {
     if (user?.club?.id) {
       setLoading(true);
@@ -1308,26 +1332,6 @@ const SimpleAccountingView = () => {
       setAccounts(updatedAccounts);
     }
   }, [selectedPeriod]);
-
-  const handleCloseSupplierForm = () => {
-    setSelectedSupplier(undefined);
-    setIsSupplierFormOpen(false);
-  };
-
-  const handleOpenSupplierForm = (supplier?: SupplierAccount) => {
-    setSelectedSupplier(supplier);
-    setIsSupplierFormOpen(true);
-  };
-
-  const handleOpenSupplierDetails = (supplier: SupplierAccount) => {
-    setSelectedSupplier(supplier);
-    setIsSupplierDetailsOpen(true);
-  };
-
-  const handleCloseSupplierDetails = () => {
-    setSelectedSupplier(undefined);
-    setIsSupplierDetailsOpen(false);
-  };
 
   // Afficher un message de chargement si l'utilisateur n'est pas encore chargé
   if (!user?.club?.id) {
@@ -1636,7 +1640,7 @@ const SimpleAccountingView = () => {
             <SupplierForm
               open={isSupplierFormOpen}
               onClose={handleCloseSupplierForm}
-              supplier={selectedSupplier}
+              initialData={selectedSupplier}
               onSubmit={selectedSupplier ? handleUpdateSupplier : handleCreateSupplier}
             />
 

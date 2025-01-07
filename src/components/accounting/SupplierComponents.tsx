@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { Edit, Eye, Plus, X } from 'lucide-react';
@@ -14,12 +14,17 @@ import { supabase } from '../../lib/supabase';
 import { AccountEntriesView } from './AccountEntriesView';
 
 export interface SupplierAccount extends AccountBalance {
-  supplier_details?: {
+  account_type: 'SUPPLIER';
+  type: 'SUPPLIER';
+  siret?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  default_expense_account_id?: string;
+  default_expense_account?: {
     id: string;
-    siret?: string;
-    email?: string;
-    phone?: string;
-    address?: string;
+    code: string;
+    name: string;
   };
 }
 
@@ -35,24 +40,32 @@ interface JournalEntry {
   }[];
 }
 
+export interface SupplierFormData {
+  name: string;
+  code: string;
+  siret?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  default_expense_account_id?: string;
+}
+
+export interface SupplierFormProps {
+  initialData?: SupplierAccount;
+  onSubmit: (data: SupplierFormData) => Promise<void>;
+  onClose: () => void;
+  open: boolean;
+}
+
 const supplierFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   code: z.string().min(1, "Le code est requis"),
   siret: z.string().optional(),
-  email: z.string().email("Email invalide").optional().or(z.literal('')),
+  email: z.string().email("L'email n'est pas valide").optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
   default_expense_account_id: z.string().optional(),
 });
-
-type SupplierFormData = z.infer<typeof supplierFormSchema>;
-
-interface SupplierFormProps {
-  initialData?: AccountBalance;
-  onSubmit: (data: SupplierFormData) => void;
-  onClose: () => void;
-  open: boolean;
-}
 
 export const SupplierForm: React.FC<SupplierFormProps> = ({
   initialData,
@@ -60,18 +73,24 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   onClose,
   open
 }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<SupplierFormData>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<SupplierFormData>({
     resolver: zodResolver(supplierFormSchema),
-    defaultValues: {
-      name: initialData?.name || '',
-      code: initialData?.code || '',
-      siret: initialData?.siret || '',
-      email: initialData?.email || '',
-      phone: initialData?.phone || '',
-      address: initialData?.address || '',
-      default_expense_account_id: initialData?.default_expense_account_id || '',
-    },
   });
+
+  // Réinitialiser le formulaire quand initialData change ou quand la modale s'ouvre
+  useEffect(() => {
+    if (open) {
+      reset({
+        name: initialData?.name || '',
+        code: initialData?.code || '',
+        siret: initialData?.siret || '',
+        email: initialData?.email || '',
+        phone: initialData?.phone || '',
+        address: initialData?.address || '',
+        default_expense_account_id: initialData?.default_expense_account_id || '',
+      });
+    }
+  }, [initialData, open, reset]);
 
   // Récupérer la liste des comptes de charges
   const { data: expenseAccounts = [] } = useQuery({
