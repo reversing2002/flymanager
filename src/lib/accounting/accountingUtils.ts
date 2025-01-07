@@ -37,17 +37,21 @@ export const determineAccountType = (code: string): string => {
   return 'ASSET';
 };
 
-// Transforme le code du compte pilote en format comptable normalisé
-export const transformPilotAccountCode = (fullName: string, originalCode: string): string => {
-  // Ne transformer que si c'est un compte pilote
-  if (!fullName.startsWith('Compte pilote')) {
+// Transforme le code du compte pilote ou instructeur en format comptable normalisé
+export const transformPilotAccountCode = (fullName: string, originalCode: string, isInstructor = false): string => {
+  // Ne transformer que si c'est un compte pilote ou instructeur
+  if (!fullName.startsWith('Compte pilote') && !fullName.startsWith('Compte instructeur')) {
     return originalCode;
   }
 
   // Extraire et nettoyer le nom complet
-  const namePart = fullName.replace('Compte pilote ', '').trim();
+  const namePart = fullName
+    .replace('Compte pilote ', '')
+    .replace('Compte instructeur ', '')
+    .trim();
+  
   if (!namePart) {
-    console.warn('Nom de pilote invalide:', fullName);
+    console.warn('Nom invalide:', fullName);
     return originalCode;
   }
 
@@ -57,19 +61,19 @@ export const transformPilotAccountCode = (fullName: string, originalCode: string
     return originalCode;
   }
 
-  // Préfixe comptable pour les comptes clients (pilotes)
-  const COMPTE_CLIENT_PREFIX = "411";
+  // Préfixe comptable selon le type
+  const prefix = isInstructor ? "421INS" : "411PIL";
 
   // Cas spécial pour les noms composés (avec tiret ou plusieurs noms)
   if (names.length > 2) {
     const firstName = names[0];
-    const lastName = names.slice(1).join('');
-    return `${COMPTE_CLIENT_PREFIX}PIL${firstName[0].toUpperCase()}${lastName}`;
+    const lastName = names.slice(1).join('').toUpperCase();
+    return `${prefix}${firstName[0].toUpperCase()}${lastName}`;
   }
 
   // Cas standard : prénom + nom
   const [firstName, lastName] = names;
-  return `${COMPTE_CLIENT_PREFIX}PIL${firstName[0].toUpperCase()}${lastName}`;
+  return `${prefix}${firstName[0].toUpperCase()}${lastName.toUpperCase()}`;
 };
 
 // Crée ou récupère un compte

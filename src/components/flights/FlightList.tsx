@@ -494,9 +494,11 @@ const FlightList = () => {
                         {formatDuration(flight.duration)}
                       </td>
                       <td className="p-4 text-right">
-                        <div className="flex items-center">
+                        <div className="flex items-center justify-end">
                           <span className={`${flight.flightType?.accounting_category?.is_club_paid ? 'text-green-600 font-medium' : ''}`}>
-                            {flight.flightType?.accounting_category?.is_club_paid ? '0.00 €' : `${flight.cost.toFixed(2)} €`}
+                            {flight.flightType?.accounting_category?.is_club_paid 
+                              ? '0.00 €' 
+                              : `${(flight.cost + (flight.instructorCost || 0)).toFixed(2)} €`}
                           </span>
                         </div>
                       </td>
@@ -766,9 +768,11 @@ const FlightList = () => {
                               {formatDuration(flight.duration)}
                             </td>
                             <td className="p-4 text-right">
-                              <div className="flex items-center">
+                              <div className="flex items-center justify-end">
                                 <span className={`${flight.flightType?.accounting_category?.is_club_paid ? 'text-green-600 font-medium' : ''}`}>
-                                  {flight.flightType?.accounting_category?.is_club_paid ? '0.00 €' : `${flight.cost.toFixed(2)} €`}
+                                  {flight.flightType?.accounting_category?.is_club_paid 
+                                    ? '0.00 €' 
+                                    : `${(flight.cost + (flight.instructorCost || 0)).toFixed(2)} €`}
                                 </span>
                               </div>
                             </td>
@@ -935,9 +939,11 @@ const FlightList = () => {
                             {formatDuration(flight.duration)}
                           </td>
                           <td className="p-4 text-right">
-                            <div className="flex items-center">
+                            <div className="flex items-center justify-end">
                               <span className={`${flight.flightType?.accounting_category?.is_club_paid ? 'text-green-600 font-medium' : ''}`}>
-                                {flight.flightType?.accounting_category?.is_club_paid ? '0.00 €' : `${flight.cost.toFixed(2)} €`}
+                                {flight.flightType?.accounting_category?.is_club_paid 
+                                  ? '0.00 €' 
+                                  : `${(flight.cost + (flight.instructorCost || 0)).toFixed(2)} €`}
                               </span>
                             </div>
                           </td>

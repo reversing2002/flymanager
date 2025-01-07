@@ -79,6 +79,7 @@ import { CustomerForm, CustomerDetails, CustomersTab } from './CustomerComponent
 import { ProductForm, ProductDetails, ProductsTab } from './ProductComponents';
 import { ExpenseForm, ExpenseDetails, ExpensesTab } from './ExpenseComponents';
 import { SupplierInvoiceForm } from './SupplierInvoiceForm';
+import { useQueryClient } from '@tanstack/react-query';
 
 ChartJS.register(
   CategoryScale,
@@ -256,6 +257,7 @@ const AccountTable = ({ accounts, type }: AccountTableProps) => {
 
 const SimpleAccountingView = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
   const [accounts, setAccounts] = useState<AccountBalance[]>([]);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);

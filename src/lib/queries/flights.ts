@@ -1,7 +1,7 @@
 import { supabase } from "../supabase";
 import type { Flight, FlightType } from "../../types/database";
 import { v4 as uuidv4 } from "uuid";
-import { getOrCreateAccount, createJournalEntry } from "../accounting/accountingUtils";
+import { getOrCreateAccount, createJournalEntry, transformPilotAccountCode } from "../accounting/accountingUtils";
 
 export const getFlightTypes = async (): Promise<FlightType[]> => {
   const { data, error } = await supabase
@@ -89,6 +89,7 @@ export async function createFlight(data: Partial<Flight>): Promise<Flight> {
     hourly_rate: data.hourlyRate,
     cost: data.cost,
     instructor_fee: data.instructor_fee,
+    instructor_cost: data.instructor_cost,
     payment_method: data.paymentMethod,
     is_validated: data.isValidated,
     start_hour_meter: data.start_hour_meter,
@@ -246,6 +247,7 @@ export async function updateFlight(
     hourly_rate: data.hourlyRate,
     cost: data.cost,
     instructor_fee: data.instructor_fee,
+    instructor_cost: data.instructor_cost,
     payment_method: data.paymentMethod,
     is_validated: data.isValidated || false,
     updated_at: new Date().toISOString(),
@@ -398,7 +400,7 @@ export async function validateFlight(id: string): Promise<void> {
   // 2. Créer ou récupérer les comptes nécessaires
   const pilotName = `${flight.user.first_name} ${flight.user.last_name}`;
   const pilotAccountId = await getOrCreateAccount(
-    `411PIL${flight.user_id}`,
+    transformPilotAccountCode(`Compte pilote ${pilotName}`, `411PIL${flight.user_id}`, false),
     `Compte pilote ${pilotName}`,
     'USER_ACCOUNT',
     'USER',
@@ -422,7 +424,7 @@ export async function validateFlight(id: string): Promise<void> {
   if (flight.instructor_id && flight.instructor_fee > 0) {
     const instructorName = `${flight.instructor.first_name} ${flight.instructor.last_name}`;
     instructorAccountId = await getOrCreateAccount(
-      `411INS${flight.instructor_id}`,
+      transformPilotAccountCode(`Compte instructeur ${instructorName}`, `421INS${flight.instructor_id}`, true),
       `Compte instructeur ${instructorName}`,
       'INSTRUCTOR_ACCOUNT',
       'INSTRUCTOR',
