@@ -143,8 +143,6 @@ interface SupplierFormData {
 interface TreasuryFormData {
   name: string;
   code: string;
-  accepts_external_payments: boolean;
-  can_group_sales: boolean;
 }
 
 const supplierFormSchema = z.object({
@@ -813,8 +811,6 @@ const SimpleAccountingView = () => {
           type: 'TREASURY',
           account_type: 'TREASURY',
           club_id: user?.club?.id,
-          accepts_external_payments: data.accepts_external_payments,
-          can_group_sales: data.can_group_sales
         }])
         .select()
         .single();
@@ -840,8 +836,6 @@ const SimpleAccountingView = () => {
         .update({
           name: data.name,
           code: data.code,
-          accepts_external_payments: data.accepts_external_payments,
-          can_group_sales: data.can_group_sales
         })
         .eq('id', selectedTreasuryAccount.id);
 
@@ -1724,10 +1718,10 @@ const SimpleAccountingView = () => {
           <>
             <TreasuryTab
               accounts={accounts}
-              onCreateAccount={() => handleOpenTreasuryForm()}
-              onEditAccount={handleOpenTreasuryForm}
-              onViewAccountDetails={handleOpenTreasuryDetails}
-              onDeleteAccount={handleDeleteTreasuryAccount}
+              onCreateTreasury={handleOpenTreasuryForm}
+              onEditTreasury={handleOpenTreasuryForm}
+              onViewTreasuryDetails={handleOpenTreasuryDetails}
+              onDeleteTreasury={handleDeleteTreasuryAccount}
             />
             
             <TreasuryForm
@@ -1741,7 +1735,7 @@ const SimpleAccountingView = () => {
               <TreasuryDetails
                 open={isTreasuryDetailsOpen}
                 onClose={handleCloseTreasuryDetails}
-                account={selectedTreasuryAccount}
+                treasury={selectedTreasuryAccount}
                 startDate={startDate}
                 endDate={endDate}
               />
@@ -1815,5 +1809,15 @@ const SimpleAccountingView = () => {
     </Box>
   );
 };
+
+interface TreasuryFormData {
+  name: string;
+  code: string;
+}
+
+const treasuryFormSchema = z.object({
+  name: z.string().min(1, "Le nom est requis"),
+  code: z.string().min(1, "Le code est requis"),
+});
 
 export default SimpleAccountingView;

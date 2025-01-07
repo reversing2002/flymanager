@@ -65,7 +65,6 @@ export const NotificationPreferences = ({ userId, isEditable }: NotificationPref
         }
       } catch (error) {
         console.error('Erreur lors du chargement des préférences:', error);
-        toast.error('Impossible de charger les préférences de notification');
       } finally {
         setLoading(false);
       }
@@ -102,7 +101,6 @@ export const NotificationPreferences = ({ userId, isEditable }: NotificationPref
       toast.success('Préférences mises à jour');
     } catch (error) {
       console.error('Erreur lors de la mise à jour des préférences:', error);
-      toast.error('Impossible de mettre à jour les préférences');
     }
   };
 

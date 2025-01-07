@@ -113,30 +113,41 @@ const AccountingMigrationSettings = () => {
     return 'ASSET';
   };
 
-  // Fonction pour transformer le code du compte pilote
+  // Fonction pour transformer le code du compte pilote en format comptable normalisé
+  // Format: 411PIL[Initiale Prénom][Nom]
+  // Exemple: "Compte pilote Jean Dupont" -> "411PILJDupont"
   const transformPilotAccountCode = (fullName: string, originalCode: string): string => {
     // Ne transformer que si c'est un compte pilote
     if (!fullName.startsWith('Compte pilote')) {
       return originalCode;
     }
 
-    // Extraire le nom complet après "Compte pilote "
-    const namePart = fullName.replace('Compte pilote ', '');
-    const names = namePart.split(' ');
+    // Extraire et nettoyer le nom complet
+    const namePart = fullName.replace('Compte pilote ', '').trim();
+    if (!namePart) {
+      console.warn('Nom de pilote invalide:', fullName);
+      return originalCode;
+    }
+
+    const names = namePart.split(' ').filter(n => n.length > 0);
+    if (names.length < 2) {
+      console.warn('Format de nom invalide (doit contenir prénom et nom):', fullName);
+      return originalCode;
+    }
   
     // Préfixe comptable pour les comptes clients (pilotes)
     const COMPTE_CLIENT_PREFIX = "411";
   
-    // Cas spécial pour les noms composés (avec tiret)
+    // Cas spécial pour les noms composés (avec tiret ou plusieurs noms)
     if (names.length > 2) {
       const firstName = names[0];
       const lastName = names.slice(1).join('');
-      return `${COMPTE_CLIENT_PREFIX}PIL${firstName[0]}${lastName}`;
+      return `${COMPTE_CLIENT_PREFIX}PIL${firstName[0].toUpperCase()}${lastName}`;
     }
   
     // Cas standard : prénom + nom
     const [firstName, lastName] = names;
-    return `${COMPTE_CLIENT_PREFIX}PIL${firstName[0]}${lastName}`;
+    return `${COMPTE_CLIENT_PREFIX}PIL${firstName[0].toUpperCase()}${lastName}`;
   };
 
   // Fonction pour créer ou récupérer un compte
@@ -145,7 +156,8 @@ const AccountingMigrationSettings = () => {
     name: string,
     accountType: string,
     type: string,
-    clubId: string
+    clubId: string,
+    userId?: string
   ) => {
     try {
       // Transformer le code si c'est un compte pilote
@@ -162,6 +174,8 @@ const AccountingMigrationSettings = () => {
         .eq('club_id', clubId)
         .limit(1);
 
+      let accountId: string;
+
       if (existingAccounts && existingAccounts.length > 0) {
         // Mettre à jour le type de compte si nécessaire
         await supabase
@@ -169,32 +183,46 @@ const AccountingMigrationSettings = () => {
           .update({ account_type: correctedAccountType })
           .eq('id', existingAccounts[0].id);
         
-        return existingAccounts[0].id;
+        accountId = existingAccounts[0].id;
+      } else {
+        // Créer le compte s'il n'existe pas
+        const { data: newAccount, error } = await supabase
+          .from('accounts')
+          .insert({
+            code: transformedCode,
+            name,
+            account_type: correctedAccountType,
+            type,
+            club_id: clubId,
+            created_at: new Date(),
+            updated_at: new Date()
+          })
+          .select('id')
+          .single();
+
+        if (error) throw error;
+        
+        accountId = newAccount.id;
+        
+        setStats(prev => ({
+          ...prev,
+          createdAccounts: prev.createdAccounts + 1
+        }));
       }
 
-      // Créer le compte s'il n'existe pas
-      const { data: newAccount, error } = await supabase
-        .from('accounts')
-        .insert({
-          code: transformedCode,
-          name,
-          account_type: correctedAccountType,
-          type,
-          club_id: clubId,
-          created_at: new Date(),
-          updated_at: new Date()
-        })
-        .select('id')
-        .single();
+      // Si c'est un compte pilote et qu'on a un userId, mettre à jour la table users
+      if (name.startsWith('Compte pilote') && userId) {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ account_id: accountId })
+          .eq('id', userId);
 
-      if (error) throw error;
-      
-      setStats(prev => ({
-        ...prev,
-        createdAccounts: prev.createdAccounts + 1
-      }));
+        if (updateError) {
+          console.warn(`Erreur lors de la mise à jour du account_id pour l'utilisateur ${userId}:`, updateError);
+        }
+      }
 
-      return newAccount.id;
+      return accountId;
     } catch (error) {
       throw new Error(`Erreur lors de la création du compte ${code}: ${error.message}`);
     }
@@ -224,7 +252,8 @@ const AccountingMigrationSettings = () => {
         `Compte pilote ${pilotName}`,
         'USER_ACCOUNT',
         'USER',
-        entry.club_id
+        entry.club_id,
+        entry.user_id
       );
 
       // 2. Créer ou récupérer le compte opposé

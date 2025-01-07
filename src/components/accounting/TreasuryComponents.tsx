@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -11,41 +11,44 @@ import {
   TableContainer,
   Paper,
   Button,
-  Card,
-  CardContent,
-  TextField,
-  Checkbox,
-  FormControlLabel,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Typography,
   IconButton,
+  CircularProgress,
+  TextField,
+  Grid,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
-import { Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { Edit, Eye, Plus, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../../utils/formatters';
-import React from 'react';
 import { useForm } from 'react-hook-form';
-import { useAuth } from '../../contexts/AuthContext';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, Box, FormControlLabel, Checkbox, TextField, IconButton, Typography } from '@mui/material';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { AccountEntriesView } from './AccountEntriesView';
-import { X } from 'lucide-react';
 
 interface AccountBalance {
   id: string;
   name: string;
   code: string;
-  accepts_external_payments: boolean;
-  can_group_sales: boolean;
   balance: number;
   type: string;
   account_type: string;
+  iban?: string;
+  bic?: string;
 }
 
 interface TreasuryTabProps {
   accounts: AccountBalance[];
-  onCreateTreasury?: () => void;
-  onEditTreasury?: (account: AccountBalance) => void;
-  onViewTreasuryDetails?: (account: AccountBalance) => void;
-  onDeleteTreasury?: (account: AccountBalance) => void;
+  onCreateTreasury: () => void;
+  onEditTreasury: (account: AccountBalance) => void;
+  onViewTreasuryDetails: (account: AccountBalance) => void;
+  onDeleteTreasury: (account: AccountBalance) => Promise<void>;
 }
 
 export const TreasuryTab = ({
@@ -56,180 +59,261 @@ export const TreasuryTab = ({
   onDeleteTreasury,
 }: TreasuryTabProps) => {
   const { user } = useAuth();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<AccountBalance | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedTreasury, setSelectedTreasury] = useState<AccountBalance | null>(null);
 
   const treasuryAccounts = accounts.filter(account => 
     account.code.startsWith('512')
   ) as AccountBalance[];
 
-  return (
-    <Card>
-      <CardContent>
-        <div className="flex justify-between items-center mb-4">
-          <Typography variant="h5" component="h2">Trésorerie</Typography>
-          {onCreateTreasury && (
-            <Button variant="contained" color="primary" onClick={onCreateTreasury}>
-              Nouveau compte
-            </Button>
-          )}
-        </div>
+  const handleCreateClick = () => {
+    onCreateTreasury();
+  };
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Nom</TableCell>
-                <TableCell>Code du compte</TableCell>
-                <TableCell align="center">Reçoit les paiements des clients extérieurs</TableCell>
-                <TableCell align="center">Regrouper les ventes</TableCell>
-                <TableCell align="right">Solde</TableCell>
-                <TableCell>Action</TableCell>
+  const handleEditClick = (account: AccountBalance) => {
+    setSelectedTreasury(account);
+    setFormOpen(true);
+  };
+
+  const handleViewClick = (account: AccountBalance) => {
+    setSelectedTreasury(account);
+    setDetailsOpen(true);
+  };
+
+  const handleDeleteClick = (account: AccountBalance) => {
+    setSelectedAccount(account);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedAccount) return;
+    
+    setIsDeleting(true);
+    try {
+      await onDeleteTreasury(selectedAccount);
+      setDeleteConfirmOpen(false);
+      toast.success('Compte supprimé avec succès');
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast.error('Erreur lors de la suppression du compte');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleFormSubmit = async (data: TreasuryFormData) => {
+    try {
+      if (selectedTreasury) {
+        await onEditTreasury({
+          ...selectedTreasury,
+          ...data,
+        });
+        toast.success('Compte modifié avec succès');
+        setFormOpen(false);
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      toast.error('Erreur lors de la modification');
+    }
+  };
+
+  return (
+    <Box>
+      <Box display="flex" justifyContent="flex-end" mb={2}>
+        <Button
+          variant="contained"
+          startIcon={<Plus size={20} />}
+          onClick={handleCreateClick}
+        >
+          Nouveau compte
+        </Button>
+      </Box>
+
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Code</TableCell>
+              <TableCell>Nom</TableCell>
+              <TableCell align="right">Solde</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {treasuryAccounts.map((account) => (
+              <TableRow key={account.id}>
+                <TableCell>{account.code}</TableCell>
+                <TableCell>{account.name}</TableCell>
+                <TableCell align="right">
+                  {formatCurrency(account.balance)}
+                </TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    size="small"
+                    onClick={() => handleViewClick(account)}
+                  >
+                    <Eye size={16} />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleEditClick(account)}
+                  >
+                    <Edit size={16} />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDeleteClick(account)}
+                    color="error"
+                  >
+                    <X size={16} />
+                  </IconButton>
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {treasuryAccounts.map((account) => (
-                <TableRow key={account.id}>
-                  <TableCell>{account.name}</TableCell>
-                  <TableCell>{account.code}</TableCell>
-                  <TableCell align="center">
-                    {account.accepts_external_payments ? '✓' : ''}
-                  </TableCell>
-                  <TableCell align="center">
-                    {account.can_group_sales ? '✓' : ''}
-                  </TableCell>
-                  <TableCell align="right">
-                    {formatCurrency(account.balance)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      {onEditTreasury && (
-                        <IconButton
-                          size="small"
-                          onClick={() => onEditTreasury(account)}
-                          color="primary"
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      )}
-                      {onViewTreasuryDetails && (
-                        <IconButton
-                          size="small"
-                          onClick={() => onViewTreasuryDetails(account)}
-                          color="primary"
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                      )}
-                      {onDeleteTreasury && (
-                        <IconButton
-                          size="small"
-                          onClick={() => onDeleteTreasury(account)}
-                          color="error"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
-    </Card>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {selectedTreasury && (
+        <TreasuryForm
+          open={formOpen}
+          onClose={() => setFormOpen(false)}
+          onSubmit={handleFormSubmit}
+          initialData={selectedTreasury}
+        />
+      )}
+
+      {selectedTreasury && (
+        <TreasuryDetails
+          open={detailsOpen}
+          onClose={() => setDetailsOpen(false)}
+          treasury={selectedTreasury}
+        />
+      )}
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+      >
+        <DialogTitle>Confirmer la suppression</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Êtes-vous sûr de vouloir supprimer ce compte ?
+            Cette action est irréversible.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            disabled={isDeleting}
+            color="error"
+            variant="contained"
+            startIcon={isDeleting ? <CircularProgress size={20} color="inherit" /> : null}
+          >
+            {isDeleting ? 'Suppression...' : 'Supprimer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 
-interface TreasuryFormData {
-  name: string;
-  code: string;
-  accepts_external_payments: boolean;
-  can_group_sales: boolean;
-}
+const treasuryFormSchema = z.object({
+  name: z.string().min(1, "Le nom est requis"),
+  code: z.string().min(1, "Le code est requis"),
+});
+
+type TreasuryFormData = z.infer<typeof treasuryFormSchema>;
 
 interface TreasuryFormProps {
-  initialData?: AccountBalance;
-  onSubmit: (data: TreasuryFormData) => void;
-  onClose: () => void;
   open: boolean;
+  onClose: () => void;
+  onSubmit: (data: TreasuryFormData) => Promise<void>;
+  initialData?: AccountBalance;
 }
 
-export const TreasuryForm: React.FC<TreasuryFormProps> = ({
-  initialData,
-  onSubmit,
+export const TreasuryForm = ({
+  open,
   onClose,
-  open
-}) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<TreasuryFormData>({
-    defaultValues: {
-      name: initialData?.name || '',
-      code: initialData?.code || '',
-      accepts_external_payments: initialData?.accepts_external_payments || false,
-      can_group_sales: initialData?.can_group_sales || false,
-    },
+  onSubmit,
+  initialData
+}: TreasuryFormProps) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting }
+  } = useForm<TreasuryFormData>({
+    resolver: zodResolver(treasuryFormSchema),
+    defaultValues: initialData ? {
+      name: initialData.name,
+      code: initialData.code,
+    } : undefined
   });
 
+  React.useEffect(() => {
+    if (open) {
+      reset(initialData ? {
+        name: initialData.name,
+        code: initialData.code,
+      } : undefined);
+    }
+  }, [open, initialData, reset]);
+
+  const onSubmitForm = async (data: TreasuryFormData) => {
+    try {
+      await onSubmit(data);
+      onClose();
+    } catch (error) {
+      console.error('Erreur lors de la soumission:', error);
+    }
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose}>
       <DialogTitle>
-        {initialData ? 'Modifier le compte' : 'Nouveau compte de trésorerie'}
+        {initialData ? 'Modifier le compte' : 'Nouveau compte'}
       </DialogTitle>
-      <DialogContent>
-        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 2 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Nom du compte"
-                {...register('name', { required: 'Le nom est requis' })}
-                error={!!errors.name}
-                helperText={errors.name?.message}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Code comptable"
-                {...register('code', { required: 'Le code est requis' })}
-                error={!!errors.code}
-                helperText={errors.code?.message}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    {...register('accepts_external_payments')}
-                  />
-                }
-                label="Accepte les paiements externes"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    {...register('can_group_sales')}
-                  />
-                }
-                label="Peut grouper les ventes"
-              />
-            </Grid>
-          </Grid>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>
-          Annuler
-        </Button>
-        <Button 
-          variant="contained" 
-          color="primary"
-          onClick={handleSubmit(onSubmit)}
-        >
-          {initialData ? 'Modifier' : 'Créer'}
-        </Button>
-      </DialogActions>
+      <form onSubmit={handleSubmit(onSubmitForm)}>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="Nom"
+              {...register('name')}
+              error={!!errors.name}
+              helperText={errors.name?.message}
+              fullWidth
+            />
+            <TextField
+              label="Code"
+              {...register('code')}
+              error={!!errors.code}
+              helperText={errors.code?.message}
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSubmitting}
+            startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
+          >
+            {initialData ? 'Modifier' : 'Créer'}
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 };
@@ -242,29 +326,42 @@ interface TreasuryDetailsProps {
   endDate?: Date;
 }
 
-export const TreasuryDetails = ({ open, onClose, treasury, startDate, endDate }: TreasuryDetailsProps) => {
+export const TreasuryDetails = ({
+  open,
+  onClose,
+  treasury,
+  startDate,
+  endDate
+}: TreasuryDetailsProps) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">Détails du compte de trésorerie</Typography>
-        </Box>
+        Détails du compte : {treasury.name}
       </DialogTitle>
       <DialogContent>
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h6">{treasury.name}</Typography>
-          <Typography color="textSecondary">Code: {treasury.code}</Typography>
-          <Typography color="textSecondary">IBAN: {treasury.iban || 'Non renseigné'}</Typography>
-          <Typography color="textSecondary">BIC: {treasury.bic || 'Non renseigné'}</Typography>
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Code : {treasury.code}
+          </Typography>
+          <Typography variant="subtitle1" gutterBottom>
+            Solde actuel : {formatCurrency(treasury.balance)}
+          </Typography>
         </Box>
-        <AccountEntriesView 
-          accountId={treasury.id} 
-          startDate={startDate}
-          endDate={endDate}
-        />
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Historique des transactions
+          </Typography>
+          <AccountEntriesView
+            accountId={treasury.id}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Fermer</Button>
+        <Button onClick={onClose}>
+          Fermer
+        </Button>
       </DialogActions>
     </Dialog>
   );

@@ -1,6 +1,7 @@
 import { supabase } from "../supabase";
 import type { Flight, FlightType } from "../../types/database";
 import { v4 as uuidv4 } from "uuid";
+import { getOrCreateAccount, createJournalEntry } from "../accounting/accountingUtils";
 
 export const getFlightTypes = async (): Promise<FlightType[]> => {
   const { data, error } = await supabase
@@ -371,16 +372,115 @@ export async function updateFlight(
 }
 
 export async function validateFlight(id: string): Promise<void> {
-  // Start a Supabase transaction
+  // 1. Récupérer toutes les informations du vol
   const { data: flight, error: flightError } = await supabase
     .from("flights")
-    .select("*")
+    .select(`
+      *,
+      user:user_id (
+        first_name,
+        last_name
+      ),
+      instructor:instructor_id (
+        first_name,
+        last_name
+      ),
+      flight_type:flight_type_id (
+        *,
+        accounting_category:accounting_categories!accounting_category_id(*)
+      )
+    `)
     .eq("id", id)
     .single();
 
   if (flightError) throw flightError;
 
-  // Update flight validation status
+  // 2. Créer ou récupérer les comptes nécessaires
+  const pilotName = `${flight.user.first_name} ${flight.user.last_name}`;
+  const pilotAccountId = await getOrCreateAccount(
+    `411PIL${flight.user_id}`,
+    `Compte pilote ${pilotName}`,
+    'USER_ACCOUNT',
+    'USER',
+    flight.club_id,
+    flight.user_id
+  );
+
+  // Compte de produit pour le vol
+  const flightRevenueAccountId = await getOrCreateAccount(
+    '706VOL',
+    'Produits des vols',
+    'INCOME',
+    'REVENUE',
+    flight.club_id
+  );
+
+  // Si instruction, créer les comptes supplémentaires
+  let instructorAccountId: string | undefined;
+  let instructionRevenueAccountId: string | undefined;
+  
+  if (flight.instructor_id && flight.instructor_fee > 0) {
+    const instructorName = `${flight.instructor.first_name} ${flight.instructor.last_name}`;
+    instructorAccountId = await getOrCreateAccount(
+      `411INS${flight.instructor_id}`,
+      `Compte instructeur ${instructorName}`,
+      'INSTRUCTOR_ACCOUNT',
+      'INSTRUCTOR',
+      flight.club_id,
+      flight.instructor_id
+    );
+
+    instructionRevenueAccountId = await getOrCreateAccount(
+      '706INSTR',
+      'Produits instruction',
+      'INCOME',
+      'REVENUE',
+      flight.club_id
+    );
+  }
+
+  // 3. Créer les écritures comptables
+  // Écriture pour le coût du vol
+  await createJournalEntry(
+    flight.date,
+    `Vol ${flight.aircraft_id} - ${flight.duration}min`,
+    flight.club_id,
+    [
+      {
+        accountId: pilotAccountId,
+        debitAmount: flight.cost,
+        creditAmount: 0
+      },
+      {
+        accountId: flightRevenueAccountId,
+        debitAmount: 0,
+        creditAmount: flight.cost
+      }
+    ]
+  );
+
+  // Si instruction, créer l'écriture pour les frais d'instruction
+  if (flight.instructor_id && flight.instructor_fee > 0 && instructorAccountId && instructionRevenueAccountId) {
+    await createJournalEntry(
+      flight.date,
+      `Instruction ${pilotName} - ${flight.duration}min`,
+      flight.club_id,
+      [
+        {
+          accountId: pilotAccountId,
+          debitAmount: flight.instructor_fee,
+          creditAmount: 0
+        },
+        {
+          accountId: instructorAccountId,
+          debitAmount: 0,
+          creditAmount: flight.instructor_fee
+        }
+      ]
+    );
+  }
+
+  // 4. Marquer le vol comme validé
   const { error: updateFlightError } = await supabase
     .from("flights")
     .update({ is_validated: true })
@@ -388,7 +488,7 @@ export async function validateFlight(id: string): Promise<void> {
 
   if (updateFlightError) throw updateFlightError;
 
-  // Find and validate all corresponding account entries (both flight cost and instructor fees)
+  // 5. Marquer les entrées comptables comme validées
   const { error: accountError } = await supabase
     .from("account_entries")
     .update({ is_validated: true })
