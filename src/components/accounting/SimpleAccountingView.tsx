@@ -69,6 +69,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { SupplierForm, SupplierDetails, SuppliersTab, SupplierAccount } from './SupplierComponents';
 import { TreasuryTab, TreasuryForm, TreasuryDetails } from './TreasuryComponents';
+import { CustomerForm, CustomerDetails, CustomersTab } from './CustomerComponents';
+import { ProductForm, ProductDetails, ProductsTab } from './ProductComponents';
+import { ExpenseForm, ExpenseDetails, ExpensesTab } from './ExpenseComponents';
 
 ChartJS.register(
   CategoryScale,
@@ -86,6 +89,12 @@ interface AccountBalance {
   balance: number;
   account_type: string;
   type: string;
+  accepts_external_payments?: boolean;
+  can_group_sales?: boolean;
+  siret?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
 }
 
 interface JournalEntry {
@@ -108,13 +117,6 @@ interface AccountTableProps {
   type: string;
 }
 
-interface SupplierAccount extends AccountBalance {
-  siret?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-}
-
 interface SupplierFormData {
   name: string;
   code: string;
@@ -122,11 +124,6 @@ interface SupplierFormData {
   email?: string;
   phone?: string;
   address?: string;
-}
-
-interface TreasuryAccount extends AccountBalance {
-  accepts_external_payments: boolean;
-  can_group_sales: boolean;
 }
 
 interface TreasuryFormData {
@@ -158,6 +155,8 @@ interface SupplierDetailsProps {
   open: boolean;
   onClose: () => void;
   supplier: SupplierAccount;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 interface AccountTableProps {
@@ -258,6 +257,15 @@ const SimpleAccountingView = () => {
   const [selectedTreasuryAccount, setSelectedTreasuryAccount] = useState<TreasuryAccount | undefined>();
   const [isTreasuryFormOpen, setIsTreasuryFormOpen] = useState(false);
   const [isTreasuryDetailsOpen, setIsTreasuryDetailsOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerAccount | undefined>();
+  const [isCustomerFormOpen, setIsCustomerFormOpen] = useState(false);
+  const [isCustomerDetailsOpen, setIsCustomerDetailsOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductAccount | undefined>();
+  const [isProductFormOpen, setIsProductFormOpen] = useState(false);
+  const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseAccount | undefined>();
+  const [isExpenseFormOpen, setIsExpenseFormOpen] = useState(false);
+  const [isExpenseDetailsOpen, setIsExpenseDetailsOpen] = useState(false);
 
   const calculateAccountBalance = (lines: any[], accountType: string, startDate?: Date, endDate?: Date) => {
     if (!lines) return 0;
@@ -604,43 +612,47 @@ const SimpleAccountingView = () => {
   };
 
   const handleCreateSupplier = async (data: SupplierFormData) => {
-    if (!user?.club?.id) return;
-
     try {
-      // 1. Create the account first
+      // Vérifier si le compte existe déjà
+      const { data: existingAccount, error: searchError } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('code', data.code)
+        .eq('club_id', user?.club?.id)
+        .single();
+
+      if (searchError && searchError.code !== 'PGRST116') throw searchError;
+
+      if (existingAccount) {
+        toast.error('Un compte avec ce code existe déjà');
+        return;
+      }
+
+      // Créer le compte avec tous les attributs dans la table accounts
       const { data: accountData, error: accountError } = await supabase
         .from('accounts')
-        .insert({
+        .insert([{
           name: data.name,
           code: data.code,
-          club_id: user.club.id,
-          account_type: 'LIABILITY',
-          type: 'SUPPLIER'
-        })
+          type: 'SUPPLIER',
+          account_type: 'SUPPLIER',
+          club_id: user?.club?.id,
+          siret: data.siret,
+          email: data.email,
+          phone: data.phone,
+          address: data.address
+        }])
         .select()
         .single();
 
       if (accountError) throw accountError;
 
-      // 2. Create the supplier with the account_id
-      const { error: supplierError } = await supabase
-        .from('suppliers')
-        .insert({
-          account_id: accountData.id,
-          siret: data.siret,
-          email: data.email,
-          phone: data.phone,
-          address: data.address
-        });
-
-      if (supplierError) throw supplierError;
-
       toast.success('Fournisseur créé avec succès');
       setIsSupplierFormOpen(false);
       fetchAccounts();
     } catch (error: any) {
-      console.error('Erreur lors de la création du fournisseur:', error);
-      toast.error("Erreur lors de la création du fournisseur");
+      console.error('Error creating supplier:', error);
+      toast.error(`Erreur lors de la création du fournisseur: ${error.message}`);
     }
   };
 
@@ -648,29 +660,20 @@ const SimpleAccountingView = () => {
     if (!selectedSupplier?.id) return;
 
     try {
-      // 1. Update the account
+      // Mettre à jour le compte
       const { error: accountError } = await supabase
         .from('accounts')
         .update({
           name: data.name,
-          code: data.code
-        })
-        .eq('id', selectedSupplier.id);
-
-      if (accountError) throw accountError;
-
-      // 2. Update the supplier
-      const { error: supplierError } = await supabase
-        .from('suppliers')
-        .update({
+          code: data.code,
           siret: data.siret,
           email: data.email,
           phone: data.phone,
           address: data.address
         })
-        .eq('account_id', selectedSupplier.id);
+        .eq('id', selectedSupplier.id);
 
-      if (supplierError) throw supplierError;
+      if (accountError) throw accountError;
 
       toast.success('Fournisseur mis à jour avec succès');
       setIsSupplierFormOpen(false);
@@ -682,15 +685,6 @@ const SimpleAccountingView = () => {
   };
 
   const handleDeleteSupplier = async (supplier: SupplierAccount) => {
-    const { error: deleteSupplierError } = await supabase
-      .from('suppliers')
-      .delete()
-      .eq('account_id', supplier.id);
-
-    if (deleteSupplierError) {
-      throw deleteSupplierError;
-    }
-
     const { error: deleteAccountError } = await supabase
       .from('accounts')
       .delete()
@@ -707,9 +701,9 @@ const SimpleAccountingView = () => {
   const fetchSupplierDetails = async (accountId: string) => {
     try {
       const { data, error } = await supabase
-        .from('suppliers')
+        .from('accounts')
         .select('*')
-        .eq('account_id', accountId)
+        .eq('id', accountId)
         .single();
 
       if (error) throw error;
@@ -742,7 +736,22 @@ const SimpleAccountingView = () => {
 
   const handleCreateTreasuryAccount = async (data: TreasuryFormData) => {
     try {
-      // Créer d'abord le compte
+      // Vérifier si le compte existe déjà
+      const { data: existingAccount, error: searchError } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('code', data.code)
+        .eq('club_id', user?.club?.id)
+        .single();
+
+      if (searchError && searchError.code !== 'PGRST116') throw searchError;
+
+      if (existingAccount) {
+        toast.error('Un compte avec ce code existe déjà');
+        return;
+      }
+
+      // Créer le compte avec tous les attributs dans la table accounts
       const { data: accountData, error: accountError } = await supabase
         .from('accounts')
         .insert([{
@@ -750,31 +759,21 @@ const SimpleAccountingView = () => {
           code: data.code,
           type: 'TREASURY',
           account_type: 'TREASURY',
-          club_id: user?.club?.id
+          club_id: user?.club?.id,
+          accepts_external_payments: data.accepts_external_payments,
+          can_group_sales: data.can_group_sales
         }])
         .select()
         .single();
 
       if (accountError) throw accountError;
 
-      // La table treasury sera automatiquement mise à jour via le trigger
-      // Mettre à jour les propriétés spécifiques à la trésorerie
-      const { error: treasuryError } = await supabase
-        .from('treasury')
-        .update({
-          accepts_external_payments: data.accepts_external_payments,
-          can_group_sales: data.can_group_sales
-        })
-        .eq('account_id', accountData.id);
-
-      if (treasuryError) throw treasuryError;
-
       toast.success('Compte de trésorerie créé avec succès');
-      handleCloseTreasuryForm();
+      setIsTreasuryFormOpen(false);
       fetchAccounts();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating treasury account:', error);
-      toast.error('Erreur lors de la création du compte de trésorerie');
+      toast.error(`Erreur lors de la création du compte de trésorerie: ${error.message}`);
     }
   };
 
@@ -787,22 +786,13 @@ const SimpleAccountingView = () => {
         .from('accounts')
         .update({
           name: data.name,
-          code: data.code
+          code: data.code,
+          accepts_external_payments: data.accepts_external_payments,
+          can_group_sales: data.can_group_sales
         })
         .eq('id', selectedTreasuryAccount.id);
 
       if (accountError) throw accountError;
-
-      // Mettre à jour les propriétés de trésorerie
-      const { error: treasuryError } = await supabase
-        .from('treasury')
-        .update({
-          accepts_external_payments: data.accepts_external_payments,
-          can_group_sales: data.can_group_sales
-        })
-        .eq('account_id', selectedTreasuryAccount.id);
-
-      if (treasuryError) throw treasuryError;
 
       toast.success('Compte de trésorerie mis à jour avec succès');
       handleCloseTreasuryForm();
@@ -815,7 +805,7 @@ const SimpleAccountingView = () => {
 
   const handleDeleteTreasuryAccount = async (account: TreasuryAccount) => {
     try {
-      // Supprimer le compte (la suppression de l'entrée treasury se fera en cascade)
+      // Supprimer le compte
       const { error } = await supabase
         .from('accounts')
         .delete()
@@ -829,6 +819,375 @@ const SimpleAccountingView = () => {
       console.error('Error deleting treasury account:', error);
       toast.error('Erreur lors de la suppression du compte de trésorerie');
     }
+  };
+
+  const handleCreateCustomer = async (data: CustomerFormData) => {
+    try {
+      // Vérifier si le compte existe déjà
+      const { data: existingAccount, error: searchError } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('code', data.code)
+        .eq('club_id', user?.club?.id)
+        .single();
+
+      if (searchError && searchError.code !== 'PGRST116') throw searchError;
+
+      if (existingAccount) {
+        toast.error('Un compte avec ce code existe déjà');
+        return;
+      }
+
+      // Créer le compte avec tous les attributs dans la table accounts
+      const { data: accountData, error: accountError } = await supabase
+        .from('accounts')
+        .insert([{
+          name: data.name,
+          code: data.code,
+          type: 'CUSTOMER',
+          account_type: 'CUSTOMER',
+          club_id: user?.club?.id,
+          siret: data.siret,
+          email: data.email,
+          phone: data.phone,
+          address: data.address
+        }])
+        .select()
+        .single();
+
+      if (accountError) throw accountError;
+
+      toast.success('Client créé avec succès');
+      setIsCustomerFormOpen(false);
+      fetchAccounts();
+    } catch (error: any) {
+      console.error('Error creating customer:', error);
+      toast.error(`Erreur lors de la création du client: ${error.message}`);
+    }
+  };
+
+  const handleUpdateCustomer = async (data: CustomerFormData) => {
+    if (!selectedCustomer?.id) return;
+
+    try {
+      // Mettre à jour le compte
+      const { error: accountError } = await supabase
+        .from('accounts')
+        .update({
+          name: data.name,
+          code: data.code,
+          siret: data.siret,
+          email: data.email,
+          phone: data.phone,
+          address: data.address
+        })
+        .eq('id', selectedCustomer.id);
+
+      if (accountError) throw accountError;
+
+      toast.success('Client mis à jour avec succès');
+      setIsCustomerFormOpen(false);
+      fetchAccounts();
+    } catch (error: any) {
+      console.error('Erreur lors de la mise à jour du client:', error);
+      toast.error("Erreur lors de la mise à jour du client");
+    }
+  };
+
+  const handleDeleteCustomer = async (customer: CustomerAccount) => {
+    const { error: deleteAccountError } = await supabase
+      .from('accounts')
+      .delete()
+      .eq('id', customer.id);
+
+    if (deleteAccountError) {
+      throw deleteAccountError;
+    }
+
+    // Recharger les données
+    fetchAccounts();
+  };
+
+  const fetchCustomerDetails = async (accountId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('id', accountId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des détails du client:', error);
+      return null;
+    }
+  };
+
+  const handleOpenCustomerForm = (customer?: CustomerAccount) => {
+    setSelectedCustomer(customer);
+    setIsCustomerFormOpen(true);
+  };
+
+  const handleCloseCustomerForm = () => {
+    setSelectedCustomer(undefined);
+    setIsCustomerFormOpen(false);
+  };
+
+  const handleOpenCustomerDetails = (customer: CustomerAccount) => {
+    setSelectedCustomer(customer);
+    setIsCustomerDetailsOpen(true);
+  };
+
+  const handleCloseCustomerDetails = () => {
+    setSelectedCustomer(undefined);
+    setIsCustomerDetailsOpen(false);
+  };
+
+  const handleCreateProduct = async (data: ProductFormData) => {
+    try {
+      // Vérifier si le compte existe déjà
+      const { data: existingAccount, error: searchError } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('code', data.code)
+        .eq('club_id', user?.club?.id)
+        .single();
+
+      if (searchError && searchError.code !== 'PGRST116') throw searchError;
+
+      if (existingAccount) {
+        toast.error('Un compte avec ce code existe déjà');
+        return;
+      }
+
+      // Créer le compte avec tous les attributs dans la table accounts
+      const { data: accountData, error: accountError } = await supabase
+        .from('accounts')
+        .insert([{
+          name: data.name,
+          code: data.code,
+          type: 'PRODUCT',
+          account_type: 'PRODUCT',
+          club_id: user?.club?.id,
+          siret: data.siret,
+          email: data.email,
+          phone: data.phone,
+          address: data.address
+        }])
+        .select()
+        .single();
+
+      if (accountError) throw accountError;
+
+      toast.success('Produit créé avec succès');
+      setIsProductFormOpen(false);
+      fetchAccounts();
+    } catch (error: any) {
+      console.error('Error creating product:', error);
+      toast.error(`Erreur lors de la création du produit: ${error.message}`);
+    }
+  };
+
+  const handleUpdateProduct = async (data: ProductFormData) => {
+    if (!selectedProduct?.id) return;
+
+    try {
+      // Mettre à jour le compte
+      const { error: accountError } = await supabase
+        .from('accounts')
+        .update({
+          name: data.name,
+          code: data.code,
+          siret: data.siret,
+          email: data.email,
+          phone: data.phone,
+          address: data.address
+        })
+        .eq('id', selectedProduct.id);
+
+      if (accountError) throw accountError;
+
+      toast.success('Produit mis à jour avec succès');
+      setIsProductFormOpen(false);
+      fetchAccounts();
+    } catch (error: any) {
+      console.error('Erreur lors de la mise à jour du produit:', error);
+      toast.error("Erreur lors de la mise à jour du produit");
+    }
+  };
+
+  const handleDeleteProduct = async (product: ProductAccount) => {
+    const { error: deleteAccountError } = await supabase
+      .from('accounts')
+      .delete()
+      .eq('id', product.id);
+
+    if (deleteAccountError) {
+      throw deleteAccountError;
+    }
+
+    // Recharger les données
+    fetchAccounts();
+  };
+
+  const fetchProductDetails = async (accountId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('id', accountId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des détails du produit:', error);
+      return null;
+    }
+  };
+
+  const handleOpenProductForm = (product?: ProductAccount) => {
+    setSelectedProduct(product);
+    setIsProductFormOpen(true);
+  };
+
+  const handleCloseProductForm = () => {
+    setSelectedProduct(undefined);
+    setIsProductFormOpen(false);
+  };
+
+  const handleOpenProductDetails = (product: ProductAccount) => {
+    setSelectedProduct(product);
+    setIsProductDetailsOpen(true);
+  };
+
+  const handleCloseProductDetails = () => {
+    setSelectedProduct(undefined);
+    setIsProductDetailsOpen(false);
+  };
+
+  const handleCreateExpense = async (data: ExpenseFormData) => {
+    try {
+      // Vérifier si le compte existe déjà
+      const { data: existingAccount, error: searchError } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('code', data.code)
+        .eq('club_id', user?.club?.id)
+        .single();
+
+      if (searchError && searchError.code !== 'PGRST116') throw searchError;
+
+      if (existingAccount) {
+        toast.error('Un compte avec ce code existe déjà');
+        return;
+      }
+
+      // Créer le compte avec tous les attributs dans la table accounts
+      const { data: accountData, error: accountError } = await supabase
+        .from('accounts')
+        .insert([{
+          name: data.name,
+          code: data.code,
+          type: 'EXPENSE',
+          account_type: 'EXPENSE',
+          club_id: user?.club?.id,
+          siret: data.siret,
+          email: data.email,
+          phone: data.phone,
+          address: data.address
+        }])
+        .select()
+        .single();
+
+      if (accountError) throw accountError;
+
+      toast.success('Dépense créée avec succès');
+      setIsExpenseFormOpen(false);
+      fetchAccounts();
+    } catch (error: any) {
+      console.error('Error creating expense:', error);
+      toast.error(`Erreur lors de la création de la dépense: ${error.message}`);
+    }
+  };
+
+  const handleUpdateExpense = async (data: ExpenseFormData) => {
+    if (!selectedExpense?.id) return;
+
+    try {
+      // Mettre à jour le compte
+      const { error: accountError } = await supabase
+        .from('accounts')
+        .update({
+          name: data.name,
+          code: data.code,
+          siret: data.siret,
+          email: data.email,
+          phone: data.phone,
+          address: data.address
+        })
+        .eq('id', selectedExpense.id);
+
+      if (accountError) throw accountError;
+
+      toast.success('Dépense mise à jour avec succès');
+      setIsExpenseFormOpen(false);
+      fetchAccounts();
+    } catch (error: any) {
+      console.error('Erreur lors de la mise à jour de la dépense:', error);
+      toast.error("Erreur lors de la mise à jour de la dépense");
+    }
+  };
+
+  const handleDeleteExpense = async (expense: ExpenseAccount) => {
+    const { error: deleteAccountError } = await supabase
+      .from('accounts')
+      .delete()
+      .eq('id', expense.id);
+
+    if (deleteAccountError) {
+      throw deleteAccountError;
+    }
+
+    // Recharger les données
+    fetchAccounts();
+  };
+
+  const fetchExpenseDetails = async (accountId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('id', accountId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des détails de la dépense:', error);
+      return null;
+    }
+  };
+
+  const handleOpenExpenseForm = (expense?: ExpenseAccount) => {
+    setSelectedExpense(expense);
+    setIsExpenseFormOpen(true);
+  };
+
+  const handleCloseExpenseForm = () => {
+    setSelectedExpense(undefined);
+    setIsExpenseFormOpen(false);
+  };
+
+  const handleOpenExpenseDetails = (expense: ExpenseAccount) => {
+    setSelectedExpense(expense);
+    setIsExpenseDetailsOpen(true);
+  };
+
+  const handleCloseExpenseDetails = () => {
+    setSelectedExpense(undefined);
+    setIsExpenseDetailsOpen(false);
   };
 
   useEffect(() => {
@@ -900,6 +1259,8 @@ const SimpleAccountingView = () => {
   }
 
   const totals = getTotalsByType(accounts);
+
+  const { startDate, endDate } = getDateRangeForPeriod();
 
   return (
     <Box sx={{ p: 3 }}>
@@ -991,7 +1352,10 @@ const SimpleAccountingView = () => {
           <Tab label="Détail des comptes" />
           <Tab label="Journal" />
           <Tab label="Fournisseurs" />
+          <Tab label="Clients" />
           <Tab label="Trésorerie" />
+          <Tab label="Produits" />
+          <Tab label="Charges" />
         </Tabs>
 
         {activeTab === 0 && (
@@ -1173,12 +1537,43 @@ const SimpleAccountingView = () => {
                 open={isSupplierDetailsOpen}
                 onClose={handleCloseSupplierDetails}
                 supplier={selectedSupplier}
+                startDate={startDate}
+                endDate={endDate}
               />
             )}
           </>
         )}
 
         {activeTab === 4 && (
+          <>
+            <CustomersTab
+              accounts={accounts}
+              onCreateCustomer={() => handleOpenCustomerForm()}
+              onEditCustomer={handleOpenCustomerForm}
+              onViewCustomerDetails={handleOpenCustomerDetails}
+              onDeleteCustomer={handleDeleteCustomer}
+            />
+
+            <CustomerForm
+              open={isCustomerFormOpen}
+              onClose={handleCloseCustomerForm}
+              customer={selectedCustomer}
+              onSubmit={selectedCustomer ? handleUpdateCustomer : handleCreateCustomer}
+            />
+
+            {selectedCustomer && (
+              <CustomerDetails
+                open={isCustomerDetailsOpen}
+                onClose={handleCloseCustomerDetails}
+                customer={selectedCustomer}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+          </>
+        )}
+
+        {activeTab === 5 && (
           <>
             <TreasuryTab
               accounts={accounts}
@@ -1200,6 +1595,66 @@ const SimpleAccountingView = () => {
                 open={isTreasuryDetailsOpen}
                 onClose={handleCloseTreasuryDetails}
                 account={selectedTreasuryAccount}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+          </>
+        )}
+
+        {activeTab === 6 && (
+          <>
+            <ProductsTab
+              accounts={accounts}
+              onCreateProduct={() => handleOpenProductForm()}
+              onEditProduct={handleOpenProductForm}
+              onViewProductDetails={handleOpenProductDetails}
+              onDeleteProduct={handleDeleteProduct}
+            />
+
+            <ProductForm
+              open={isProductFormOpen}
+              onClose={handleCloseProductForm}
+              product={selectedProduct}
+              onSubmit={selectedProduct ? handleUpdateProduct : handleCreateProduct}
+            />
+
+            {selectedProduct && (
+              <ProductDetails
+                open={isProductDetailsOpen}
+                onClose={handleCloseProductDetails}
+                product={selectedProduct}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+          </>
+        )}
+
+        {activeTab === 7 && (
+          <>
+            <ExpensesTab
+              accounts={accounts}
+              onCreateExpense={() => handleOpenExpenseForm()}
+              onEditExpense={handleOpenExpenseForm}
+              onViewExpenseDetails={handleOpenExpenseDetails}
+              onDeleteExpense={handleDeleteExpense}
+            />
+
+            <ExpenseForm
+              open={isExpenseFormOpen}
+              onClose={handleCloseExpenseForm}
+              expense={selectedExpense}
+              onSubmit={selectedExpense ? handleUpdateExpense : handleCreateExpense}
+            />
+
+            {selectedExpense && (
+              <ExpenseDetails
+                open={isExpenseDetailsOpen}
+                onClose={handleCloseExpenseDetails}
+                expense={selectedExpense}
+                startDate={startDate}
+                endDate={endDate}
               />
             )}
           </>
