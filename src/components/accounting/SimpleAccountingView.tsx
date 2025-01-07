@@ -68,6 +68,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { SupplierForm, SupplierDetails, SuppliersTab, SupplierAccount } from './SupplierComponents';
+import { TreasuryTab, TreasuryForm, TreasuryDetails } from './TreasuryComponents';
 
 ChartJS.register(
   CategoryScale,
@@ -121,6 +122,18 @@ interface SupplierFormData {
   email?: string;
   phone?: string;
   address?: string;
+}
+
+interface TreasuryAccount extends AccountBalance {
+  accepts_external_payments: boolean;
+  can_group_sales: boolean;
+}
+
+interface TreasuryFormData {
+  name: string;
+  code: string;
+  accepts_external_payments: boolean;
+  can_group_sales: boolean;
 }
 
 const supplierFormSchema = z.object({
@@ -242,6 +255,9 @@ const SimpleAccountingView = () => {
   const [selectedSupplier, setSelectedSupplier] = useState<SupplierAccount | undefined>();
   const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
   const [isSupplierDetailsOpen, setIsSupplierDetailsOpen] = useState(false);
+  const [selectedTreasuryAccount, setSelectedTreasuryAccount] = useState<TreasuryAccount | undefined>();
+  const [isTreasuryFormOpen, setIsTreasuryFormOpen] = useState(false);
+  const [isTreasuryDetailsOpen, setIsTreasuryDetailsOpen] = useState(false);
 
   const calculateAccountBalance = (lines: any[], accountType: string, startDate?: Date, endDate?: Date) => {
     if (!lines) return 0;
@@ -704,6 +720,117 @@ const SimpleAccountingView = () => {
     }
   };
 
+  const handleOpenTreasuryForm = (account?: TreasuryAccount) => {
+    setSelectedTreasuryAccount(account);
+    setIsTreasuryFormOpen(true);
+  };
+
+  const handleCloseTreasuryForm = () => {
+    setSelectedTreasuryAccount(undefined);
+    setIsTreasuryFormOpen(false);
+  };
+
+  const handleOpenTreasuryDetails = (account: TreasuryAccount) => {
+    setSelectedTreasuryAccount(account);
+    setIsTreasuryDetailsOpen(true);
+  };
+
+  const handleCloseTreasuryDetails = () => {
+    setSelectedTreasuryAccount(undefined);
+    setIsTreasuryDetailsOpen(false);
+  };
+
+  const handleCreateTreasuryAccount = async (data: TreasuryFormData) => {
+    try {
+      // Créer d'abord le compte
+      const { data: accountData, error: accountError } = await supabase
+        .from('accounts')
+        .insert([{
+          name: data.name,
+          code: data.code,
+          type: 'TREASURY',
+          account_type: 'TREASURY',
+          club_id: user?.club?.id
+        }])
+        .select()
+        .single();
+
+      if (accountError) throw accountError;
+
+      // La table treasury sera automatiquement mise à jour via le trigger
+      // Mettre à jour les propriétés spécifiques à la trésorerie
+      const { error: treasuryError } = await supabase
+        .from('treasury')
+        .update({
+          accepts_external_payments: data.accepts_external_payments,
+          can_group_sales: data.can_group_sales
+        })
+        .eq('account_id', accountData.id);
+
+      if (treasuryError) throw treasuryError;
+
+      toast.success('Compte de trésorerie créé avec succès');
+      handleCloseTreasuryForm();
+      fetchAccounts();
+    } catch (error) {
+      console.error('Error creating treasury account:', error);
+      toast.error('Erreur lors de la création du compte de trésorerie');
+    }
+  };
+
+  const handleUpdateTreasuryAccount = async (data: TreasuryFormData) => {
+    if (!selectedTreasuryAccount) return;
+
+    try {
+      // Mettre à jour le compte
+      const { error: accountError } = await supabase
+        .from('accounts')
+        .update({
+          name: data.name,
+          code: data.code
+        })
+        .eq('id', selectedTreasuryAccount.id);
+
+      if (accountError) throw accountError;
+
+      // Mettre à jour les propriétés de trésorerie
+      const { error: treasuryError } = await supabase
+        .from('treasury')
+        .update({
+          accepts_external_payments: data.accepts_external_payments,
+          can_group_sales: data.can_group_sales
+        })
+        .eq('account_id', selectedTreasuryAccount.id);
+
+      if (treasuryError) throw treasuryError;
+
+      toast.success('Compte de trésorerie mis à jour avec succès');
+      handleCloseTreasuryForm();
+      fetchAccounts();
+    } catch (error) {
+      console.error('Error updating treasury account:', error);
+      toast.error('Erreur lors de la mise à jour du compte de trésorerie');
+    }
+  };
+
+  const handleDeleteTreasuryAccount = async (account: TreasuryAccount) => {
+    try {
+      // Supprimer le compte (la suppression de l'entrée treasury se fera en cascade)
+      const { error } = await supabase
+        .from('accounts')
+        .delete()
+        .eq('id', account.id);
+
+      if (error) throw error;
+
+      toast.success('Compte de trésorerie supprimé avec succès');
+      fetchAccounts();
+    } catch (error) {
+      console.error('Error deleting treasury account:', error);
+      toast.error('Erreur lors de la suppression du compte de trésorerie');
+    }
+  };
+
   useEffect(() => {
     if (user?.club?.id) {
       setLoading(true);
@@ -864,6 +991,7 @@ const SimpleAccountingView = () => {
           <Tab label="Détail des comptes" />
           <Tab label="Journal" />
           <Tab label="Fournisseurs" />
+          <Tab label="Trésorerie" />
         </Tabs>
 
         {activeTab === 0 && (
@@ -1045,6 +1173,33 @@ const SimpleAccountingView = () => {
                 open={isSupplierDetailsOpen}
                 onClose={handleCloseSupplierDetails}
                 supplier={selectedSupplier}
+              />
+            )}
+          </>
+        )}
+
+        {activeTab === 4 && (
+          <>
+            <TreasuryTab
+              accounts={accounts}
+              onCreateAccount={() => handleOpenTreasuryForm()}
+              onEditAccount={handleOpenTreasuryForm}
+              onViewAccountDetails={handleOpenTreasuryDetails}
+              onDeleteAccount={handleDeleteTreasuryAccount}
+            />
+            
+            <TreasuryForm
+              open={isTreasuryFormOpen}
+              onClose={handleCloseTreasuryForm}
+              onSubmit={selectedTreasuryAccount ? handleUpdateTreasuryAccount : handleCreateTreasuryAccount}
+              initialData={selectedTreasuryAccount}
+            />
+
+            {selectedTreasuryAccount && (
+              <TreasuryDetails
+                open={isTreasuryDetailsOpen}
+                onClose={handleCloseTreasuryDetails}
+                account={selectedTreasuryAccount}
               />
             )}
           </>
