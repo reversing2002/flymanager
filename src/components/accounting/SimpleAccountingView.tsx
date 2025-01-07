@@ -32,6 +32,12 @@ import {
   DialogActions,
   TextField as MuiTextField,
 } from '@mui/material';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Receipt as ReceiptIcon,
+} from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { format, parse } from 'date-fns';
@@ -72,6 +78,7 @@ import { TreasuryTab, TreasuryForm, TreasuryDetails } from './TreasuryComponents
 import { CustomerForm, CustomerDetails, CustomersTab } from './CustomerComponents';
 import { ProductForm, ProductDetails, ProductsTab } from './ProductComponents';
 import { ExpenseForm, ExpenseDetails, ExpensesTab } from './ExpenseComponents';
+import { SupplierInvoiceForm } from './SupplierInvoiceForm';
 
 ChartJS.register(
   CategoryScale,
@@ -95,6 +102,12 @@ interface AccountBalance {
   email?: string;
   phone?: string;
   address?: string;
+  default_expense_account_id?: string;
+  default_expense_account?: {
+    id: string;
+    code: string;
+    name: string;
+  };
 }
 
 interface JournalEntry {
@@ -266,6 +279,7 @@ const SimpleAccountingView = () => {
   const [selectedExpense, setSelectedExpense] = useState<ExpenseAccount | undefined>();
   const [isExpenseFormOpen, setIsExpenseFormOpen] = useState(false);
   const [isExpenseDetailsOpen, setIsExpenseDetailsOpen] = useState(false);
+  const [supplierInvoiceOpen, setSupplierInvoiceOpen] = useState(false);
 
   const calculateAccountBalance = (lines: any[], accountType: string, startDate?: Date, endDate?: Date) => {
     if (!lines) return 0;
@@ -1190,6 +1204,74 @@ const SimpleAccountingView = () => {
     setIsExpenseDetailsOpen(false);
   };
 
+  const handleSupplierInvoiceSubmit = async (data: any) => {
+    try {
+      const { error: journalError } = await supabase
+        .from('journal_entries')
+        .insert({
+          transaction_date: data.transaction_date,
+          description: `Facture ${data.reference} - ${data.description}`,
+          club_id: user?.club?.id,
+        })
+        .select()
+        .single();
+
+      if (journalError) throw journalError;
+
+      const { data: journalEntry } = await supabase
+        .from('journal_entries')
+        .select()
+        .eq('description', `Facture ${data.reference} - ${data.description}`)
+        .single();
+
+      const journalLines = data.lines.map((line: any) => ({
+        journal_entry_id: journalEntry.id,
+        account_id: line.account_id,
+        debit_amount: line.debit_amount || 0,
+        credit_amount: line.credit_amount || 0,
+      }));
+
+      const { error: linesError } = await supabase
+        .from('journal_entry_lines')
+        .insert(journalLines);
+
+      if (linesError) throw linesError;
+
+      toast.success('Facture enregistrée avec succès');
+      setSupplierInvoiceOpen(false);
+      refetch();
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast.error("Erreur lors de l'enregistrement de la facture");
+    }
+  };
+
+  const handleDeleteJournal = async (journalId: string) => {
+    try {
+      // Supprimer d'abord les lignes du journal
+      const { error: linesError } = await supabase
+        .from('journal_entry_lines')
+        .delete()
+        .eq('journal_entry_id', journalId);
+
+      if (linesError) throw linesError;
+
+      // Ensuite, supprimer le journal lui-même
+      const { error: journalError } = await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('id', journalId);
+
+      if (journalError) throw journalError;
+
+      toast.success('Journal supprimé avec succès');
+      queryClient.invalidateQueries(['accountEntries']);
+    } catch (error) {
+      console.error('Erreur lors de la suppression du journal:', error);
+      toast.error('Erreur lors de la suppression du journal');
+    }
+  };
+
   useEffect(() => {
     if (user?.club?.id) {
       setLoading(true);
@@ -1285,6 +1367,17 @@ const SimpleAccountingView = () => {
           <MenuItem value="all">Toutes les transactions</MenuItem>
         </Select>
       </FormControl>
+
+      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<ReceiptIcon />}
+          onClick={() => setSupplierInvoiceOpen(true)}
+        >
+          Nouvelle facture fournisseur
+        </Button>
+      </Box>
 
       {/* Cartes de résumé */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -1439,6 +1532,7 @@ const SimpleAccountingView = () => {
                     <TableCell>Compte</TableCell>
                     <TableCell align="right">Débit</TableCell>
                     <TableCell align="right">Crédit</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1499,11 +1593,25 @@ const SimpleAccountingView = () => {
                               }).format(line.credit_amount)
                             }
                           </TableCell>
+                          <TableCell align="right">
+                            <Tooltip title="Supprimer">
+                              <IconButton
+                                onClick={() => {
+                                  if (window.confirm('Êtes-vous sûr de vouloir supprimer ce journal ? Cette action supprimera également toutes les entrées associées.')) {
+                                    handleDeleteJournal(entry.id);
+                                  }
+                                }}
+                                size="small"
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
                         </TableRow>
                       ))}
                       {/* Ligne de séparation entre les écritures */}
                       <TableRow>
-                        <TableCell colSpan={5} sx={{ p: 0 }}>
+                        <TableCell colSpan={6} sx={{ p: 0 }}>
                           <Divider />
                         </TableCell>
                       </TableRow>
@@ -1660,6 +1768,11 @@ const SimpleAccountingView = () => {
           </>
         )}
       </Box>
+      <SupplierInvoiceForm
+        open={supplierInvoiceOpen}
+        onClose={() => setSupplierInvoiceOpen(false)}
+        onSubmit={handleSupplierInvoiceSubmit}
+      />
     </Box>
   );
 };

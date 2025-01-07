@@ -1,6 +1,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid, IconButton, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { Edit, Eye, Plus, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -42,6 +42,7 @@ const supplierFormSchema = z.object({
   email: z.string().email("Email invalide").optional().or(z.literal('')),
   phone: z.string().optional(),
   address: z.string().optional(),
+  default_expense_account_id: z.string().optional(),
 });
 
 type SupplierFormData = z.infer<typeof supplierFormSchema>;
@@ -60,6 +61,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   open
 }) => {
   const { register, handleSubmit, formState: { errors } } = useForm<SupplierFormData>({
+    resolver: zodResolver(supplierFormSchema),
     defaultValues: {
       name: initialData?.name || '',
       code: initialData?.code || '',
@@ -67,6 +69,22 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       email: initialData?.email || '',
       phone: initialData?.phone || '',
       address: initialData?.address || '',
+      default_expense_account_id: initialData?.default_expense_account_id || '',
+    },
+  });
+
+  // Récupérer la liste des comptes de charges
+  const { data: expenseAccounts = [] } = useQuery({
+    queryKey: ['expenseAccounts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('type', 'EXPENSE')
+        .order('code');
+
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -95,6 +113,24 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                 error={!!errors.code}
                 helperText={errors.code?.message}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Compte de charges par défaut</InputLabel>
+                <Select
+                  {...register('default_expense_account_id')}
+                  label="Compte de charges par défaut"
+                >
+                  <MenuItem value="">
+                    <em>Aucun</em>
+                  </MenuItem>
+                  {expenseAccounts.map((account) => (
+                    <MenuItem key={account.id} value={account.id}>
+                      {account.code} - {account.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12}>
               <TextField
@@ -208,7 +244,7 @@ export const SuppliersTab = ({
   onDeleteSupplier 
 }: SuppliersTabProps) => {
   const supplierAccounts = accounts.filter(account => 
-    account.code.startsWith('401')
+    account.account_type === 'SUPPLIER'
   ) as SupplierAccount[];
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
