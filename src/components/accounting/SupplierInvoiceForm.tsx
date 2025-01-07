@@ -22,20 +22,30 @@ import { z } from 'zod';
 import { supabase } from '../../lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { CloudUpload } from '@mui/icons-material';
+import { Add, DeleteOutline } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Schéma de validation principal
+const chargeLineSchema = z.object({
+  account_id: z.string().min(1, 'Le compte est requis'),
+  amount: z.number().min(0.01, 'Le montant doit être supérieur à 0'),
+  description: z.string().optional(),
+});
+
 const invoiceSchema = z.object({
   supplier_id: z.string().min(1, 'Le fournisseur est requis'),
   reference: z.string().min(1, 'La référence est requise'),
   transaction_date: z.date(),
   description: z.string().min(1, 'La description est requise'),
   total_amount: z.number().min(0.01, 'Le montant doit être supérieur à 0'),
-  account_id: z.string().min(1, 'Le compte est requis'),
-  file: z.any().optional(),
+  account_id: z.string().optional(), // Rendu optionnel car remplacé par les lignes de ventilation
+  charge_lines: z.array(chargeLineSchema)
+    .refine(
+      (lines) => lines.length > 0,
+      "Au moins une ligne de ventilation est requise"
+    ),
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -52,7 +62,6 @@ export const SupplierInvoiceForm: React.FC<SupplierInvoiceFormProps> = ({
   onSubmit,
 }) => {
   const { user } = useAuth();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
 
   const { control, handleSubmit, formState: { errors }, watch, setValue, reset } = useForm<InvoiceFormData>({
@@ -60,7 +69,17 @@ export const SupplierInvoiceForm: React.FC<SupplierInvoiceFormProps> = ({
     defaultValues: {
       transaction_date: dayjs().toDate(),
       total_amount: 0,
+      charge_lines: [{
+        account_id: '',
+        amount: 0,
+        description: ''
+      }],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "charge_lines",
   });
 
   // Récupérer la liste des fournisseurs
@@ -106,63 +125,88 @@ export const SupplierInvoiceForm: React.FC<SupplierInvoiceFormProps> = ({
     
     if (supplier?.default_expense_account_id) {
       console.log('Default expense account ID:', supplier.default_expense_account_id);
-      console.log('Current form values:', watch());
       
-      // Force la mise à jour du champ account_id
+      // Réinitialiser le formulaire avec les nouvelles valeurs
+      const currentValues = watch();
       const newValues = {
-        ...watch(),
-        account_id: supplier.default_expense_account_id
+        ...currentValues,
+        charge_lines: [{
+          account_id: supplier.default_expense_account_id,
+          amount: currentValues.total_amount || 0,
+          description: currentValues.description || ''
+        }]
       };
+      
       console.log('Setting new values:', newValues);
       reset(newValues);
       
-      // Double vérification avec setValue
-      setValue('account_id', supplier.default_expense_account_id, {
+      // Forcer la mise à jour des champs individuels
+      setValue('charge_lines.0.account_id', supplier.default_expense_account_id, {
         shouldValidate: true,
-        shouldDirty: true,
+        shouldDirty: true
       });
+      
+      if (currentValues.total_amount) {
+        setValue('charge_lines.0.amount', currentValues.total_amount, {
+          shouldValidate: true,
+          shouldDirty: true
+        });
+      }
       
       // Vérification après mise à jour
       console.log('Form values after update:', watch());
     }
   }, [supplierId, suppliers, reset, watch, setValue]);
 
-  // Log la liste des comptes de charges disponibles
+  // Surveiller le montant total et les lignes pour la validation
+  const totalAmount = watch('total_amount');
+  const chargeLines = watch('charge_lines') || [];
+  
   useEffect(() => {
-    console.log('Available expense accounts:', expenseAccounts);
-  }, [expenseAccounts]);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
+    if (totalAmount > 0) {
+      // Mettre à jour le montant de la première ligne
+      setValue(`charge_lines.0.amount`, totalAmount, {
+        shouldValidate: true,
+      });
     }
-  };
+  }, [totalAmount, setValue]);
+
+  useEffect(() => {
+    const total = chargeLines.reduce((sum, line) => sum + (line.amount || 0), 0);
+    const ventilationTotal = total;
+    const ventilationError = total > totalAmount ? 'Le total ventilé dépasse le montant de la facture' : total < totalAmount ? 'Le total ventilé est inférieur au montant de la facture' : '';
+    console.log('Ventilation total:', ventilationTotal);
+    console.log('Ventilation error:', ventilationError);
+  }, [chargeLines, totalAmount]);
+
+  useEffect(() => {
+    if (totalAmount > 0 && chargeLines.length === 0) {
+      append({
+        account_id: watch('account_id') || '',
+        amount: totalAmount,
+        description: watch('description'),
+      });
+    }
+  }, [totalAmount, append, watch]);
 
   const handleFormSubmit = async (data: InvoiceFormData) => {
     try {
-      // Gérer l'upload du fichier
-      if (selectedFile) {
-        const fileExt = selectedFile.name.split('.').pop();
-        const filePath = `${Math.random()}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('invoices')
-          .upload(filePath, selectedFile);
-
-        if (uploadError) throw uploadError;
-        data.file = filePath;
+      // Vérifier que la ventilation correspond au total
+      const ventilationTotal = data.charge_lines.reduce((sum, line) => sum + (line.amount || 0), 0);
+      if (Math.abs(ventilationTotal - data.total_amount) > 0.01) {
+        toast.error('Le total ventilé doit être égal au montant de la facture');
+        return;
       }
 
-      // Créer les lignes d'écriture automatiquement
       const journalData = {
         ...data,
         lines: [
-          {
-            account_id: data.account_id,
-            debit_amount: data.total_amount,
+          ...data.charge_lines.map(line => ({
+            account_id: line.account_id,
+            debit_amount: line.amount,
             credit_amount: 0,
-            description: data.description
-          },
+            description: line.description || data.description
+          })),
           {
             account_id: data.supplier_id,
             debit_amount: 0,
@@ -173,7 +217,6 @@ export const SupplierInvoiceForm: React.FC<SupplierInvoiceFormProps> = ({
       };
 
       await onSubmit(journalData);
-      setSelectedFile(null);
       onClose();
     } catch (error: any) {
       console.error('Submit error:', error);
@@ -269,7 +312,7 @@ export const SupplierInvoiceForm: React.FC<SupplierInvoiceFormProps> = ({
               />
             </Grid>
 
-            {/* Ligne 4: Montant et Compte */}
+            {/* Ligne 4: Montant */}
             <Grid item xs={12} md={6}>
               <Controller
                 name="total_amount"
@@ -288,51 +331,82 @@ export const SupplierInvoiceForm: React.FC<SupplierInvoiceFormProps> = ({
                 )}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="account_id"
-                control={control}
-                defaultValue=""
-                render={({ field }) => (
-                  <FormControl fullWidth error={!!errors.account_id}>
-                    <InputLabel>Compte de charges</InputLabel>
-                    <Select 
-                      {...field}
-                      value={field.value || ''}
-                      label="Compte de charges"
-                      key={field.value} // Force le rendu quand la valeur change
-                    >
-                      {expenseAccounts.map((account) => (
-                        <MenuItem key={account.id} value={account.id}>
-                          {account.code} - {account.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {errors.account_id && (
-                      <Typography color="error" variant="caption">
-                        {errors.account_id.message}
-                      </Typography>
-                    )}
-                  </FormControl>
-                )}
-              />
-            </Grid>
 
-            {/* Ligne 5: Upload de fichier */}
+            {/* Lignes de ventilation */}
             <Grid item xs={12}>
+              <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+                Ventilation des charges
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                Total ventilé : {chargeLines.reduce((sum, line) => sum + (line.amount || 0), 0).toFixed(2)} €
+              </Typography>
+              {fields.map((field, index) => (
+                <Box key={field.id} sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <Controller
+                    name={`charge_lines.${index}.account_id`}
+                    control={control}
+                    render={({ field }) => (
+                      <FormControl fullWidth error={!!errors.charge_lines?.[index]?.account_id}>
+                        <InputLabel>Compte de charges</InputLabel>
+                        <Select {...field} label="Compte de charges">
+                          {expenseAccounts.map((account) => (
+                            <MenuItem key={account.id} value={account.id}>
+                              {account.code} - {account.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
+                  />
+                  <Controller
+                    name={`charge_lines.${index}.amount`}
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        label="Montant"
+                        type="number"
+                        inputProps={{ step: "0.01" }}
+                        error={!!errors.charge_lines?.[index]?.amount}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        sx={{ width: '200px' }}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name={`charge_lines.${index}.description`}
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        label="Description"
+                        fullWidth
+                      />
+                    )}
+                  />
+                  <IconButton 
+                    onClick={() => remove(index)}
+                    color="error"
+                    sx={{ mt: 1 }}
+                  >
+                    <DeleteOutline />
+                  </IconButton>
+                </Box>
+              ))}
               <Button
-                component="label"
                 variant="outlined"
-                startIcon={<CloudUpload />}
+                onClick={() => {
+                  const remainingAmount = totalAmount - chargeLines.reduce((sum, line) => sum + (line.amount || 0), 0);
+                  append({ 
+                    account_id: '', 
+                    amount: remainingAmount > 0 ? remainingAmount : 0,
+                    description: '' 
+                  });
+                }}
+                startIcon={<Add />}
                 sx={{ mt: 1 }}
               >
-                {selectedFile ? selectedFile.name : "Joindre la facture"}
-                <input
-                  type="file"
-                  hidden
-                  onChange={handleFileChange}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                />
+                Ajouter une ligne
               </Button>
             </Grid>
           </Grid>

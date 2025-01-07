@@ -16,8 +16,6 @@ export interface ProductAccount extends AccountBalance {
   product_details?: {
     id: string;
     description?: string;
-    category?: string;
-    tax_rate?: number;
   };
 }
 
@@ -37,8 +35,6 @@ const productFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   code: z.string().min(1, "Le code est requis"),
   description: z.string().optional(),
-  category: z.string().optional(),
-  tax_rate: z.number().min(0).max(100).optional(),
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
@@ -69,16 +65,12 @@ export const ProductForm = ({ open, onClose, product, onSubmit }: ProductFormPro
           name: product.name,
           code: product.code,
           description: product.product_details?.description || '',
-          category: product.product_details?.category || '',
-          tax_rate: product.product_details?.tax_rate || 0,
         });
       } else {
         reset({
           name: '',
           code: '',
           description: '',
-          category: '',
-          tax_rate: 0,
         });
       }
       setLoading(false);
@@ -128,24 +120,6 @@ export const ProductForm = ({ open, onClose, product, onSubmit }: ProductFormPro
                 helperText={errors.description?.message}
                 fullWidth
               />
-              <TextField
-                {...register('category')}
-                label="Catégorie"
-                error={!!errors.category}
-                helperText={errors.category?.message}
-                fullWidth
-              />
-              <TextField
-                {...register('tax_rate', { valueAsNumber: true })}
-                label="Taux de TVA (%)"
-                type="number"
-                error={!!errors.tax_rate}
-                helperText={errors.tax_rate?.message}
-                fullWidth
-                InputProps={{
-                  inputProps: { min: 0, max: 100 }
-                }}
-              />
             </Box>
           )}
         </DialogContent>
@@ -189,10 +163,6 @@ export const ProductDetails = ({ open, onClose, product, startDate, endDate }: P
           {product.product_details?.description && (
             <Typography color="textSecondary">Description: {product.product_details.description}</Typography>
           )}
-          {product.product_details?.category && (
-            <Typography color="textSecondary">Catégorie: {product.product_details.category}</Typography>
-          )}
-          <Typography color="textSecondary">TVA: {product.product_details?.tax_rate || 0}%</Typography>
         </Box>
         <AccountEntriesView 
           accountId={product.id} 
@@ -243,8 +213,6 @@ export const ProductsTab = ({
         [product.account_id]: {
           id: product.id,
           description: product.description,
-          category: product.category,
-          tax_rate: product.tax_rate
         }
       }), {});
     },
@@ -292,8 +260,6 @@ export const ProductsTab = ({
             <TableRow>
               <TableCell>Code</TableCell>
               <TableCell>Nom</TableCell>
-              <TableCell>Catégorie</TableCell>
-              <TableCell>TVA</TableCell>
               <TableCell align="right">Solde</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -303,13 +269,6 @@ export const ProductsTab = ({
               <TableRow key={product.id}>
                 <TableCell>{product.code}</TableCell>
                 <TableCell>{product.name}</TableCell>
-                <TableCell>
-                  {productDetails[product.id]?.category || '-'}
-                </TableCell>
-                <TableCell>
-                  {productDetails[product.id]?.tax_rate ? 
-                    `${productDetails[product.id].tax_rate}%` : '-'}
-                </TableCell>
                 <TableCell align="right">
                   {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
                     .format(product.balance)}

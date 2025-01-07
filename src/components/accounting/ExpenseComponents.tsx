@@ -16,9 +16,6 @@ export interface ExpenseAccount extends AccountBalance {
   expense_details?: {
     id: string;
     description?: string;
-    category?: string;
-    tax_rate?: number;
-    budget_monthly?: number;
   };
 }
 
@@ -38,9 +35,6 @@ const expenseFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   code: z.string().min(1, "Le code est requis"),
   description: z.string().optional(),
-  category: z.string().optional(),
-  tax_rate: z.number().min(0).max(100).optional(),
-  budget_monthly: z.number().min(0).optional(),
 });
 
 type ExpenseFormData = z.infer<typeof expenseFormSchema>;
@@ -71,18 +65,12 @@ export const ExpenseForm = ({ open, onClose, expense, onSubmit }: ExpenseFormPro
           name: expense.name,
           code: expense.code,
           description: expense.expense_details?.description || '',
-          category: expense.expense_details?.category || '',
-          tax_rate: expense.expense_details?.tax_rate || 0,
-          budget_monthly: expense.expense_details?.budget_monthly || 0,
         });
       } else {
         reset({
           name: '',
           code: '',
           description: '',
-          category: '',
-          tax_rate: 0,
-          budget_monthly: 0,
         });
       }
       setLoading(false);
@@ -132,35 +120,6 @@ export const ExpenseForm = ({ open, onClose, expense, onSubmit }: ExpenseFormPro
                 helperText={errors.description?.message}
                 fullWidth
               />
-              <TextField
-                {...register('category')}
-                label="Catégorie"
-                error={!!errors.category}
-                helperText={errors.category?.message}
-                fullWidth
-              />
-              <TextField
-                {...register('tax_rate', { valueAsNumber: true })}
-                label="Taux de TVA (%)"
-                type="number"
-                error={!!errors.tax_rate}
-                helperText={errors.tax_rate?.message}
-                fullWidth
-                InputProps={{
-                  inputProps: { min: 0, max: 100 }
-                }}
-              />
-              <TextField
-                {...register('budget_monthly', { valueAsNumber: true })}
-                label="Budget mensuel (€)"
-                type="number"
-                error={!!errors.budget_monthly}
-                helperText={errors.budget_monthly?.message}
-                fullWidth
-                InputProps={{
-                  inputProps: { min: 0 }
-                }}
-              />
             </Box>
           )}
         </DialogContent>
@@ -203,13 +162,6 @@ export const ExpenseDetails = ({ open, onClose, expense, startDate, endDate }: E
           <Typography color="textSecondary">Code: {expense.code}</Typography>
           {expense.expense_details?.description && (
             <Typography color="textSecondary">Description: {expense.expense_details.description}</Typography>
-          )}
-          {expense.expense_details?.category && (
-            <Typography color="textSecondary">Catégorie: {expense.expense_details.category}</Typography>
-          )}
-          <Typography color="textSecondary">TVA: {expense.expense_details?.tax_rate || 0}%</Typography>
-          {expense.expense_details?.budget_monthly && (
-            <Typography color="textSecondary">Budget mensuel: {expense.expense_details.budget_monthly}€</Typography>
           )}
         </Box>
         <AccountEntriesView 
@@ -261,9 +213,6 @@ export const ExpensesTab = ({
         [expense.account_id]: {
           id: expense.id,
           description: expense.description,
-          category: expense.category,
-          tax_rate: expense.tax_rate,
-          budget_monthly: expense.budget_monthly
         }
       }), {});
     },
@@ -311,9 +260,6 @@ export const ExpensesTab = ({
             <TableRow>
               <TableCell>Code</TableCell>
               <TableCell>Nom</TableCell>
-              <TableCell>Catégorie</TableCell>
-              <TableCell>TVA</TableCell>
-              <TableCell align="right">Budget mensuel</TableCell>
               <TableCell align="right">Solde</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -323,18 +269,6 @@ export const ExpensesTab = ({
               <TableRow key={expense.id}>
                 <TableCell>{expense.code}</TableCell>
                 <TableCell>{expense.name}</TableCell>
-                <TableCell>
-                  {expenseDetails[expense.id]?.category || '-'}
-                </TableCell>
-                <TableCell>
-                  {expenseDetails[expense.id]?.tax_rate ? 
-                    `${expenseDetails[expense.id].tax_rate}%` : '-'}
-                </TableCell>
-                <TableCell align="right">
-                  {expenseDetails[expense.id]?.budget_monthly ?
-                    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-                      .format(expenseDetails[expense.id].budget_monthly) : '-'}
-                </TableCell>
                 <TableCell align="right">
                   {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
                     .format(expense.balance)}
