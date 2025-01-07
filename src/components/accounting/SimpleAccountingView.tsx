@@ -24,6 +24,13 @@ import {
   Tabs,
   Tab,
   Divider,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField as MuiTextField,
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -39,7 +46,11 @@ import {
   PiggyBank,
   Building2,
   Users,
-  ArrowDownUp
+  ArrowDownUp,
+  Plus,
+  Edit,
+  Eye,
+  X
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Bar } from 'react-chartjs-2';
@@ -52,6 +63,11 @@ import {
   Tooltip as ChartTooltip,
   Legend
 } from 'chart.js';
+import { startOfYear, endOfYear, startOfMonth, endOfMonth, isWithinInterval, subMonths, subYears } from 'date-fns';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { SupplierForm, SupplierDetails, SuppliersTab, SupplierAccount } from './SupplierComponents';
 
 ChartJS.register(
   CategoryScale,
@@ -87,7 +103,52 @@ interface JournalEntry {
 }
 
 interface AccountTableProps {
-  accounts: any[];
+  accounts: AccountBalance[];
+  type: string;
+}
+
+interface SupplierAccount extends AccountBalance {
+  siret?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+}
+
+interface SupplierFormData {
+  name: string;
+  code: string;
+  siret?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+}
+
+const supplierFormSchema = z.object({
+  name: z.string().min(1, "Le nom est requis"),
+  code: z.string().min(1, "Le code est requis"),
+  siret: z.string().optional(),
+  email: z.string().email("Email invalide").optional().or(z.literal('')),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+});
+
+type SupplierFormData = z.infer<typeof supplierFormSchema>;
+
+interface SupplierFormProps {
+  open: boolean;
+  onClose: () => void;
+  supplier?: SupplierAccount;
+  onSubmit: (data: SupplierFormData) => Promise<void>;
+}
+
+interface SupplierDetailsProps {
+  open: boolean;
+  onClose: () => void;
+  supplier: SupplierAccount;
+}
+
+interface AccountTableProps {
+  accounts: AccountBalance[];
   type: string;
 }
 
@@ -173,14 +234,26 @@ const SimpleAccountingView = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [accounts, setAccounts] = useState<AccountBalance[]>([]);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
-  const [selectedPeriod, setSelectedPeriod] = useState('all');
+  const [selectedPeriod, setSelectedPeriod] = useState('current-year');
+  const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
+  const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<any>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<SupplierAccount | undefined>();
+  const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
+  const [isSupplierDetailsOpen, setIsSupplierDetailsOpen] = useState(false);
 
-  const calculateAccountBalance = (lines: any[], accountType: string) => {
+  const calculateAccountBalance = (lines: any[], accountType: string, startDate?: Date, endDate?: Date) => {
     if (!lines) return 0;
     
-    return lines.reduce((sum, line) => {
+    const filteredLines = startDate && endDate
+      ? lines.filter(line => {
+          const transactionDate = new Date(line.journal_entries.transaction_date);
+          return isWithinInterval(transactionDate, { start: startDate, end: endDate });
+        })
+      : lines;
+    
+    return filteredLines.reduce((sum, line) => {
       // Pour les comptes de passif et produits, on inverse la logique débit/crédit
       if (['LIABILITY', 'REVENUE'].includes(accountType)) {
         return sum + ((line.credit_amount || 0) - (line.debit_amount || 0));
@@ -190,9 +263,76 @@ const SimpleAccountingView = () => {
     }, 0);
   };
 
+  const calculateTotals = (lines: any[], startDate?: Date, endDate?: Date) => {
+    if (!lines) return { debit: 0, credit: 0 };
+    
+    const filteredLines = startDate && endDate
+      ? lines.filter(line => {
+          const transactionDate = new Date(line.journal_entries.transaction_date);
+          return isWithinInterval(transactionDate, { start: startDate, end: endDate });
+        })
+      : lines;
+
+    return filteredLines.reduce((totals, line) => ({
+      debit: totals.debit + (line.debit_amount || 0),
+      credit: totals.credit + (line.credit_amount || 0)
+    }), { debit: 0, credit: 0 });
+  };
+
+  const getDateRangeForPeriod = () => {
+    const now = new Date();
+    
+    switch (selectedPeriod) {
+      case 'current-year':
+        return {
+          startDate: startOfYear(now),
+          endDate: endOfYear(now)
+        };
+      case 'current-month':
+        return {
+          startDate: startOfMonth(now),
+          endDate: endOfMonth(now)
+        };
+      case 'last-3-months':
+        return {
+          startDate: startOfMonth(subMonths(now, 2)),
+          endDate: endOfMonth(now)
+        };
+      case 'last-6-months':
+        return {
+          startDate: startOfMonth(subMonths(now, 5)),
+          endDate: endOfMonth(now)
+        };
+      case 'last-12-months':
+        return {
+          startDate: startOfMonth(subMonths(now, 11)),
+          endDate: endOfMonth(now)
+        };
+      case 'previous-year':
+        const lastYear = subYears(now, 1);
+        return {
+          startDate: startOfYear(lastYear),
+          endDate: endOfYear(lastYear)
+        };
+      case 'all':
+      default:
+        return {
+          startDate: undefined,
+          endDate: undefined
+        };
+    }
+  };
+
   const getTotalsByType = (accounts: AccountBalance[]) => {
+    const { startDate, endDate } = getDateRangeForPeriod();
+    
     return accounts.reduce((totals, account) => {
-      const balance = account.balance || 0;
+      const balance = calculateAccountBalance(
+        account.lines || [], 
+        account.account_type,
+        startDate,
+        endDate
+      );
       
       if (account.account_type === 'ASSET') {
         totals.assets += balance;
@@ -289,15 +429,16 @@ const SimpleAccountingView = () => {
 
           if (linesError) throw linesError;
 
-          const total_debit = lines?.reduce((sum, line) => sum + (line.debit_amount || 0), 0) || 0;
-          const total_credit = lines?.reduce((sum, line) => sum + (line.credit_amount || 0), 0) || 0;
-          const balance = calculateAccountBalance(lines, account.account_type);
+          const { startDate, endDate } = getDateRangeForPeriod();
+          const balance = calculateAccountBalance(lines, account.account_type, startDate, endDate);
+          const { debit, credit } = calculateTotals(lines, startDate, endDate);
 
           return { 
             ...account, 
+            lines,
             balance,
-            total_debit,
-            total_credit
+            total_debit: debit,
+            total_credit: credit
           };
         })
       );
@@ -312,8 +453,11 @@ const SimpleAccountingView = () => {
 
   const updateChartData = (entries: JournalEntry[]) => {
     try {
+      // Filtrer les entrées selon la période sélectionnée
+      const filteredEntries = filterEntriesByPeriod(entries);
+      
       // Grouper les entrées par mois
-      const monthlyData = entries.reduce((acc: any, entry) => {
+      const monthlyData = filteredEntries.reduce((acc: any, entry) => {
         // Vérifier si la date est valide
         if (!entry.transaction_date) {
           console.warn('Date de transaction manquante pour l\'entrée:', entry);
@@ -398,13 +542,224 @@ const SimpleAccountingView = () => {
     }
   };
 
+  const filterEntriesByPeriod = (entries: JournalEntry[]) => {
+    if (!entries) return [];
+    
+    const now = new Date();
+    let startDate: Date;
+    let endDate: Date;
+
+    switch (selectedPeriod) {
+      case 'current-year':
+        startDate = startOfYear(now);
+        endDate = endOfYear(now);
+        break;
+      case 'current-month':
+        startDate = startOfMonth(now);
+        endDate = endOfMonth(now);
+        break;
+      case 'last-3-months':
+        startDate = startOfMonth(subMonths(now, 2));
+        endDate = endOfMonth(now);
+        break;
+      case 'last-6-months':
+        startDate = startOfMonth(subMonths(now, 5));
+        endDate = endOfMonth(now);
+        break;
+      case 'last-12-months':
+        startDate = startOfMonth(subMonths(now, 11));
+        endDate = endOfMonth(now);
+        break;
+      case 'previous-year':
+        const lastYear = subYears(now, 1);
+        startDate = startOfYear(lastYear);
+        endDate = endOfYear(lastYear);
+        break;
+      case 'all':
+        return entries;
+      default:
+        return entries;
+    }
+
+    return entries.filter(entry => {
+      const entryDate = new Date(entry.transaction_date);
+      return isWithinInterval(entryDate, { start: startDate, end: endDate });
+    });
+  };
+
+  const handleCreateSupplier = async (data: SupplierFormData) => {
+    if (!user?.club?.id) return;
+
+    try {
+      // 1. Create the account first
+      const { data: accountData, error: accountError } = await supabase
+        .from('accounts')
+        .insert({
+          name: data.name,
+          code: data.code,
+          club_id: user.club.id,
+          account_type: 'LIABILITY',
+          type: 'SUPPLIER'
+        })
+        .select()
+        .single();
+
+      if (accountError) throw accountError;
+
+      // 2. Create the supplier with the account_id
+      const { error: supplierError } = await supabase
+        .from('suppliers')
+        .insert({
+          account_id: accountData.id,
+          siret: data.siret,
+          email: data.email,
+          phone: data.phone,
+          address: data.address
+        });
+
+      if (supplierError) throw supplierError;
+
+      toast.success('Fournisseur créé avec succès');
+      setIsSupplierFormOpen(false);
+      fetchAccounts();
+    } catch (error: any) {
+      console.error('Erreur lors de la création du fournisseur:', error);
+      toast.error("Erreur lors de la création du fournisseur");
+    }
+  };
+
+  const handleUpdateSupplier = async (data: SupplierFormData) => {
+    if (!selectedSupplier?.id) return;
+
+    try {
+      // 1. Update the account
+      const { error: accountError } = await supabase
+        .from('accounts')
+        .update({
+          name: data.name,
+          code: data.code
+        })
+        .eq('id', selectedSupplier.id);
+
+      if (accountError) throw accountError;
+
+      // 2. Update the supplier
+      const { error: supplierError } = await supabase
+        .from('suppliers')
+        .update({
+          siret: data.siret,
+          email: data.email,
+          phone: data.phone,
+          address: data.address
+        })
+        .eq('account_id', selectedSupplier.id);
+
+      if (supplierError) throw supplierError;
+
+      toast.success('Fournisseur mis à jour avec succès');
+      setIsSupplierFormOpen(false);
+      fetchAccounts();
+    } catch (error: any) {
+      console.error('Erreur lors de la mise à jour du fournisseur:', error);
+      toast.error("Erreur lors de la mise à jour du fournisseur");
+    }
+  };
+
+  const handleDeleteSupplier = async (supplier: SupplierAccount) => {
+    const { error: deleteSupplierError } = await supabase
+      .from('suppliers')
+      .delete()
+      .eq('account_id', supplier.id);
+
+    if (deleteSupplierError) {
+      throw deleteSupplierError;
+    }
+
+    const { error: deleteAccountError } = await supabase
+      .from('accounts')
+      .delete()
+      .eq('id', supplier.id);
+
+    if (deleteAccountError) {
+      throw deleteAccountError;
+    }
+
+    // Recharger les données
+    fetchAccounts();
+  };
+
+  const fetchSupplierDetails = async (accountId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .eq('account_id', accountId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des détails du fournisseur:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (user?.club?.id) {
       setLoading(true);
-      Promise.all([fetchAccounts(), fetchJournalEntries()])
-        .finally(() => setLoading(false));
+      Promise.all([
+        fetchAccounts(),
+        fetchJournalEntries()
+      ]).finally(() => setLoading(false));
     }
-  }, [user?.club?.id]);
+  }, [user?.club?.id, selectedPeriod]);
+
+  useEffect(() => {
+    if (journalEntries.length > 0) {
+      updateChartData(journalEntries);
+    }
+  }, [selectedPeriod, journalEntries]);
+
+  useEffect(() => {
+    if (accounts.length > 0) {
+      const { startDate, endDate } = getDateRangeForPeriod();
+      const updatedAccounts = accounts.map(account => {
+        const { debit, credit } = calculateTotals(account.lines || [], startDate, endDate);
+        return {
+          ...account,
+          balance: calculateAccountBalance(
+            account.lines || [],
+            account.account_type,
+            startDate,
+            endDate
+          ),
+          total_debit: debit,
+          total_credit: credit
+        };
+      });
+      setAccounts(updatedAccounts);
+    }
+  }, [selectedPeriod]);
+
+  const handleCloseSupplierForm = () => {
+    setSelectedSupplier(undefined);
+    setIsSupplierFormOpen(false);
+  };
+
+  const handleOpenSupplierForm = (supplier?: SupplierAccount) => {
+    setSelectedSupplier(supplier);
+    setIsSupplierFormOpen(true);
+  };
+
+  const handleOpenSupplierDetails = (supplier: SupplierAccount) => {
+    setSelectedSupplier(supplier);
+    setIsSupplierDetailsOpen(true);
+  };
+
+  const handleCloseSupplierDetails = () => {
+    setSelectedSupplier(undefined);
+    setIsSupplierDetailsOpen(false);
+  };
 
   // Afficher un message de chargement si l'utilisateur n'est pas encore chargé
   if (!user?.club?.id) {
@@ -422,17 +777,23 @@ const SimpleAccountingView = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Comptabilité Simplifiée
+        Comptabilité du club
       </Typography>
 
       {/* Période */}
-      <FormControl sx={{ minWidth: 200, mb: 2 }}>
+      <FormControl sx={{ minWidth: 300, mb: 2 }}>
         <InputLabel>Période</InputLabel>
         <Select
           value={selectedPeriod}
           label="Période"
           onChange={(e) => setSelectedPeriod(e.target.value)}
         >
+          <MenuItem value="current-year">Année en cours</MenuItem>
+          <MenuItem value="current-month">Mois en cours</MenuItem>
+          <MenuItem value="last-3-months">3 derniers mois</MenuItem>
+          <MenuItem value="last-6-months">6 derniers mois</MenuItem>
+          <MenuItem value="last-12-months">12 derniers mois</MenuItem>
+          <MenuItem value="previous-year">Année précédente</MenuItem>
           <MenuItem value="all">Toutes les transactions</MenuItem>
         </Select>
       </FormControl>
@@ -502,6 +863,7 @@ const SimpleAccountingView = () => {
           <Tab label="Vue d'ensemble" />
           <Tab label="Détail des comptes" />
           <Tab label="Journal" />
+          <Tab label="Fournisseurs" />
         </Tabs>
 
         {activeTab === 0 && (
@@ -588,7 +950,7 @@ const SimpleAccountingView = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {journalEntries.map((entry) => (
+                  {filterEntriesByPeriod(journalEntries).map((entry) => (
                     <React.Fragment key={entry.id}>
                       {entry.lines.map((line, lineIndex) => (
                         <TableRow 
@@ -659,6 +1021,33 @@ const SimpleAccountingView = () => {
               </Table>
             </TableContainer>
           </Box>
+        )}
+
+        {activeTab === 3 && (
+          <>
+            <SuppliersTab
+              accounts={accounts}
+              onCreateSupplier={() => handleOpenSupplierForm()}
+              onEditSupplier={handleOpenSupplierForm}
+              onViewSupplierDetails={handleOpenSupplierDetails}
+              onDeleteSupplier={handleDeleteSupplier}
+            />
+
+            <SupplierForm
+              open={isSupplierFormOpen}
+              onClose={handleCloseSupplierForm}
+              supplier={selectedSupplier}
+              onSubmit={selectedSupplier ? handleUpdateSupplier : handleCreateSupplier}
+            />
+
+            {selectedSupplier && (
+              <SupplierDetails
+                open={isSupplierDetailsOpen}
+                onClose={handleCloseSupplierDetails}
+                supplier={selectedSupplier}
+              />
+            )}
+          </>
         )}
       </Box>
     </Box>

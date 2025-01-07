@@ -91,13 +91,20 @@ const AccountingMigrationSettings = () => {
       return 'LIABILITY';
     }
 
-    // Produits (classe 7)
-    if (code.startsWith('7')) {
+    // Produits (classe 7 et assurances payées par les pilotes)
+    // Note: Le compte 616 est traité comme un produit car il correspond au paiement 
+    // des assurances par les pilotes au club. Plus tard, quand le club paiera 
+    // les licences FFA, il faudra créer un nouveau compte (ex: 6161 - Licence FFA)
+    // qui sera catégorisé comme une charge (EXPENSE).
+    if (code.startsWith('7') || code.startsWith('616')) {
       return 'REVENUE';
     }
 
-    // Charges (classe 6)
-    if (code.startsWith('6')) {
+    // Charges (classe 6, sauf assurances pilotes)
+    // Note: Les comptes 616x sont exclus car ils représentent actuellement
+    // uniquement les paiements des pilotes (produits). Les futures charges
+    // comme le paiement des licences FFA utiliseront des comptes distincts.
+    if (code.startsWith('6') && !code.startsWith('616')) {
       return 'EXPENSE';
     }
 
@@ -249,8 +256,8 @@ const AccountingMigrationSettings = () => {
             oppositeAccountName = 'Produits des vols';
             break;
           case 'ASSURANCE':
-            oppositeAccountCode = '616ASSUR';
-            oppositeAccountName = 'Assurances';
+            oppositeAccountCode = '706ASSUR';
+            oppositeAccountName = 'Produits des assurances';
             break;
           case 'MEMBERSHIP':
             oppositeAccountCode = '756COTIS';
