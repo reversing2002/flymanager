@@ -26,6 +26,11 @@ export interface SupplierAccount extends AccountBalance {
     code: string;
     name: string;
   };
+  expense_account?: {
+    id: string;
+    code: string;
+    name: string;
+  };
 }
 
 interface JournalEntry {
@@ -61,10 +66,10 @@ const supplierFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   code: z.string().min(1, "Le code est requis"),
   siret: z.string().optional(),
-  email: z.string().email("L'email n'est pas valide").optional(),
+  email: z.union([z.string().email("L'email n'est pas valide"), z.literal('')]).optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
-  default_expense_account_id: z.string().optional(),
+  default_expense_account_id: z.string().nullable().optional(),
 });
 
 export const SupplierForm: React.FC<SupplierFormProps> = ({
@@ -73,7 +78,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   onClose,
   open
 }) => {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<SupplierFormData>({
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<SupplierFormData>({
     resolver: zodResolver(supplierFormSchema),
   });
 
@@ -137,8 +142,16 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
               <FormControl fullWidth>
                 <InputLabel>Compte de charges par défaut</InputLabel>
                 <Select
-                  {...register('default_expense_account_id')}
+                  value={watch('default_expense_account_id') || ''}
+                  onChange={(e) => {
+                    console.log('Selected value:', e.target.value);
+                    // Si la valeur est une chaîne vide, on met null
+                    const newValue = e.target.value === '' ? null : e.target.value;
+                    console.log('Setting value to:', newValue);
+                    setValue('default_expense_account_id', newValue);
+                  }}
                   label="Compte de charges par défaut"
+                  key={watch('default_expense_account_id')}
                 >
                   <MenuItem value="">
                     <em>Aucun</em>
@@ -322,6 +335,7 @@ export const SuppliersTab = ({
                   <TableCell>SIRET</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Téléphone</TableCell>
+                  <TableCell>Compte de charges</TableCell>
                   <TableCell align="right">Solde</TableCell>
                   <TableCell align="center">Actions</TableCell>
                 </TableRow>
@@ -334,6 +348,11 @@ export const SuppliersTab = ({
                     <TableCell>{supplier.siret || '-'}</TableCell>
                     <TableCell>{supplier.email || '-'}</TableCell>
                     <TableCell>{supplier.phone || '-'}</TableCell>
+                    <TableCell>
+                      {supplier.expense_account ? 
+                        `${supplier.expense_account.code} - ${supplier.expense_account.name}` 
+                        : '-'}
+                    </TableCell>
                     <TableCell align="right">
                       {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
                         .format(Math.abs(supplier.balance))}

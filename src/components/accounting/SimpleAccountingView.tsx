@@ -443,16 +443,51 @@ const SimpleAccountingView = () => {
     if (!user?.club?.id) return;
     
     try {
+      // Première requête pour obtenir tous les comptes
       const { data: accountsData, error: accountsError } = await supabase
         .from('accounts')
         .select('*')
         .eq('club_id', user.club.id);
 
-      if (accountsError) throw accountsError;
+      if (accountsError) {
+        console.error('Error fetching accounts:', accountsError);
+        throw accountsError;
+      }
+
+      // Récupérer les IDs des comptes de charges par défaut
+      const defaultExpenseAccountIds = accountsData
+        .filter(account => account.default_expense_account_id)
+        .map(account => account.default_expense_account_id);
+
+      // Deuxième requête pour obtenir les informations des comptes de charges
+      const { data: expenseAccountsData, error: expenseError } = await supabase
+        .from('accounts')
+        .select('id, code, name')
+        .in('id', defaultExpenseAccountIds);
+
+      if (expenseError) {
+        console.error('Error fetching expense accounts:', expenseError);
+        throw expenseError;
+      }
+
+      // Créer un map des comptes de charges pour un accès rapide
+      const expenseAccountsMap = new Map(
+        expenseAccountsData?.map(account => [account.id, account])
+      );
+
+      // Fusionner les données
+      const enrichedAccountsData = accountsData.map(account => ({
+        ...account,
+        expense_account: account.default_expense_account_id 
+          ? expenseAccountsMap.get(account.default_expense_account_id)
+          : null
+      }));
+
+      console.log('Enriched accounts data:', enrichedAccountsData);
 
       // Calculer les soldes
       const accountsWithBalances = await Promise.all(
-        accountsData.map(async (account) => {
+        enrichedAccountsData.map(async (account) => {
           const { data: lines, error: linesError } = await supabase
             .from('journal_entry_lines')
             .select(`

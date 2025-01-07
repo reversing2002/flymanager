@@ -55,7 +55,7 @@ export const SupplierInvoiceForm: React.FC<SupplierInvoiceFormProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
 
-  const { control, handleSubmit, formState: { errors }, watch, setValue } = useForm<InvoiceFormData>({
+  const { control, handleSubmit, formState: { errors }, watch, setValue, reset } = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
       transaction_date: dayjs().toDate(),
@@ -69,7 +69,7 @@ export const SupplierInvoiceForm: React.FC<SupplierInvoiceFormProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('accounts')
-        .select('*, default_expense_account:accounts!default_expense_account_id(*)')
+        .select('*, default_expense_account_id')
         .eq('type', 'SUPPLIER')
         .order('code');
 
@@ -97,12 +97,40 @@ export const SupplierInvoiceForm: React.FC<SupplierInvoiceFormProps> = ({
   // Surveiller les changements de fournisseur
   const supplierId = watch('supplier_id');
   useEffect(() => {
+    console.log('Effect triggered with supplierId:', supplierId);
+    if (!supplierId) return;
+    
     const supplier = suppliers.find(s => s.id === supplierId);
+    console.log('Found supplier:', supplier);
     setSelectedSupplier(supplier);
-    if (supplier?.default_expense_account?.id) {
-      setValue('account_id', supplier.default_expense_account.id);
+    
+    if (supplier?.default_expense_account_id) {
+      console.log('Default expense account ID:', supplier.default_expense_account_id);
+      console.log('Current form values:', watch());
+      
+      // Force la mise à jour du champ account_id
+      const newValues = {
+        ...watch(),
+        account_id: supplier.default_expense_account_id
+      };
+      console.log('Setting new values:', newValues);
+      reset(newValues);
+      
+      // Double vérification avec setValue
+      setValue('account_id', supplier.default_expense_account_id, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      
+      // Vérification après mise à jour
+      console.log('Form values after update:', watch());
     }
-  }, [supplierId, suppliers, setValue]);
+  }, [supplierId, suppliers, reset, watch, setValue]);
+
+  // Log la liste des comptes de charges disponibles
+  useEffect(() => {
+    console.log('Available expense accounts:', expenseAccounts);
+  }, [expenseAccounts]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -264,10 +292,16 @@ export const SupplierInvoiceForm: React.FC<SupplierInvoiceFormProps> = ({
               <Controller
                 name="account_id"
                 control={control}
+                defaultValue=""
                 render={({ field }) => (
                   <FormControl fullWidth error={!!errors.account_id}>
                     <InputLabel>Compte de charges</InputLabel>
-                    <Select {...field} label="Compte de charges">
+                    <Select 
+                      {...field}
+                      value={field.value || ''}
+                      label="Compte de charges"
+                      key={field.value} // Force le rendu quand la valeur change
+                    >
                       {expenseAccounts.map((account) => (
                         <MenuItem key={account.id} value={account.id}>
                           {account.code} - {account.name}
