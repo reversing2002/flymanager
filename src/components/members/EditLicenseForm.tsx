@@ -96,7 +96,6 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
       const { data, error } = await supabase
         .from('license_types')
         .select('*')
-        .eq('club_id', currentUser.club.id)
         .order('display_order');
 
       if (error) throw error;
