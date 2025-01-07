@@ -417,11 +417,20 @@ export async function validateFlight(id: string): Promise<void> {
     flight.club_id
   );
 
+  // Compte bancaire du club
+  const clubBankAccountId = await getOrCreateAccount(
+    '512000',
+    'Compte bancaire principal',
+    'BANK_ACCOUNT',
+    'ASSET',
+    flight.club_id
+  );
+
   // Si instruction, créer les comptes supplémentaires
   let instructorAccountId: string | undefined;
   let instructionRevenueAccountId: string | undefined;
   
-  if (flight.instructor_id && flight.instructor_fee > 0) {
+  if (flight.instructor_id) {
     const instructorName = `${flight.instructor.first_name} ${flight.instructor.last_name}`;
     instructorAccountId = await getOrCreateAccount(
       transformPilotAccountCode(`Compte instructeur ${instructorName}`, `421INS${flight.instructor_id}`, true),
@@ -461,25 +470,49 @@ export async function validateFlight(id: string): Promise<void> {
     ]
   );
 
-  // Si instruction, créer l'écriture pour les frais d'instruction
-  if (flight.instructor_id && flight.instructor_fee > 0 && instructorAccountId && instructionRevenueAccountId) {
-    await createJournalEntry(
-      flight.date,
-      `Instruction ${pilotName} - ${flight.duration}min`,
-      flight.club_id,
-      [
-        {
-          accountId: pilotAccountId,
-          debitAmount: flight.instructor_fee,
-          creditAmount: 0
-        },
-        {
-          accountId: instructorAccountId,
-          debitAmount: 0,
-          creditAmount: flight.instructor_fee
-        }
-      ]
-    );
+  // Si instruction, créer les écritures pour les frais d'instruction
+  if (flight.instructor_id && instructorAccountId && instructionRevenueAccountId) {
+    // Écriture pour le coût d'instruction (du compte pilote vers le compte instruction du club)
+    if (flight.instructor_cost > 0) {
+      await createJournalEntry(
+        flight.date,
+        `Coût instruction ${pilotName} - ${flight.duration}min`,
+        flight.club_id,
+        [
+          {
+            accountId: pilotAccountId,
+            debitAmount: flight.instructor_cost,
+            creditAmount: 0
+          },
+          {
+            accountId: instructionRevenueAccountId,
+            debitAmount: 0,
+            creditAmount: flight.instructor_cost
+          }
+        ]
+      );
+    }
+
+    // Écriture pour les honoraires de l'instructeur (du compte banque du club vers le compte instructeur)
+    if (flight.instructor_fee > 0) {
+      await createJournalEntry(
+        flight.date,
+        `Honoraires instructeur ${flight.instructor.first_name} ${flight.instructor.last_name} - ${flight.duration}min`,
+        flight.club_id,
+        [
+          {
+            accountId: clubBankAccountId,
+            debitAmount: flight.instructor_fee,
+            creditAmount: 0
+          },
+          {
+            accountId: instructorAccountId,
+            debitAmount: 0,
+            creditAmount: flight.instructor_fee
+          }
+        ]
+      );
+    }
   }
 
   // 4. Marquer le vol comme validé

@@ -298,7 +298,11 @@ const SimpleAccountingView = () => {
       if (['LIABILITY', 'REVENUE'].includes(accountType)) {
         return sum + ((line.credit_amount || 0) - (line.debit_amount || 0));
       }
-      // Pour les actifs et charges, on garde la logique normale
+      // Pour les comptes de trésorerie (512), on inverse le signe du solde
+      if (accountType === 'ASSET') {
+        return sum - ((line.debit_amount || 0) - (line.credit_amount || 0));
+      }
+      // Pour les charges, on garde la logique normale
       return sum + ((line.debit_amount || 0) - (line.credit_amount || 0));
     }, 0);
   };
