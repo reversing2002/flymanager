@@ -981,7 +981,7 @@ app.post("/api/create-stripe-session", async (req, res) => {
     // Récupérer l'ID du compte Stripe du club
     const { data: clubData, error: clubError } = await supabase
       .from('clubs')
-      .select('stripe_account_id, name')
+      .select('stripe_account_id, name, commission_rate')
       .eq('id', clubId)
       .single();
 
@@ -1014,13 +1014,14 @@ app.post("/api/create-stripe-session", async (req, res) => {
       mode: 'payment',
       success_url: `${process.env.FRONTEND_URL}/accounts?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/accounts?canceled=true`,
+      customer_email: req.body.customerEmail,
       metadata: {
         userId,
         entryTypeId,
         amount: amount.toString(),
       },
       payment_intent_data: {
-        application_fee_amount: amount * 0.03 * 100, // 3% du montant de la transaction
+        application_fee_amount: amount * (clubData.commission_rate ? parseFloat(clubData.commission_rate) / 100 : 0.03) * 100,
         transfer_data: {
           destination: clubData.stripe_account_id,
         },
