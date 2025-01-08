@@ -424,7 +424,9 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   // Get all pilots and instructors
   const allPilots = useMemo(() => {
     return users.filter((u) => {
-      return u.roles?.some((role) => ["PILOT", "INSTRUCTOR"].includes(role));
+      return u.roles?.some((role) => 
+        ["PILOT", "INSTRUCTOR"].some(r => r.toLowerCase() === role.toLowerCase())
+      );
     });
   }, [users]);
 
@@ -442,7 +444,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
   const instructors = useMemo(() => {
     return users.filter((u) =>
-      u.roles?.some((role) => ["INSTRUCTOR"].includes(role))
+      u.roles?.some((role) => ["INSTRUCTOR"].some(r => r.toLowerCase() === role.toLowerCase()))
     );
   }, [users]);
 

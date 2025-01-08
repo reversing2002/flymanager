@@ -1,58 +1,76 @@
 import { supabase } from '../supabase';
 import type { UserGroup, SystemRole, Role } from '../../types/roles';
 
+// Map des libellés de rôles en français
+const roleLabels = new Map<string, string>([
+  ['admin', 'Administrateur'],
+  ['instructor', 'Instructeur'],
+  ['student', 'Élève'],
+  ['pilot', 'Pilote'],
+  ['mechanic', 'Mécanicien'],
+  ['discovery', 'Découverte'],
+  ['modelist', 'Modéliste'],
+  ['superadmin', 'Super Admin'],
+  ['ulm_pilot', 'Pilote ULM'],
+  ['tresorier', 'Trésorier']
+]);
+
+/**
+ * Met à jour les libellés des rôles
+ */
+export const updateRoleLabels = (groups: UserGroup[]) => {
+  groups.forEach(group => {
+    if (group.code && group.name) {
+      roleLabels.set(group.code.toLowerCase(), group.name);
+    }
+  });
+};
+
 /**
  * Convertit un rôle en libellé lisible
  */
 export const getRoleLabel = (role: string): string => {
-  const labels: Record<string, string> = {
-    'admin': 'Administrateur',
-    'instructor': 'Instructeur',
-    'student': 'Élève',
-    'pilot': 'Pilote',
-    'mechanic': 'Mécanicien',
-    'discovery': 'Vol découverte',
-    'modelist': 'Modéliste',
-    'superadmin': 'Super Admin',
-    'ulm_pilot': 'Pilote ULM',
-  };
-  return labels[role.toLowerCase()] || role;
+  return roleLabels.get(role.toLowerCase()) || role;
 };
 
 /**
  * Récupère la classe CSS pour le badge d'un rôle
  */
 export const getRoleBadgeClass = (role: string): string => {
-  const classes: Record<string, string> = {
-    'admin': 'bg-red-100 text-red-800',
-    'instructor': 'bg-blue-100 text-blue-800',
-    'student': 'bg-green-100 text-green-800',
-    'pilot': 'bg-yellow-100 text-yellow-800',
-    'mechanic': 'bg-purple-100 text-purple-800',
-    'discovery': 'bg-pink-100 text-pink-800',
-    'modelist': 'bg-indigo-100 text-indigo-800',
-    'superadmin': 'bg-red-200 text-red-900',
-    'ulm_pilot': 'bg-orange-100 text-orange-800',
-  };
-  return classes[role.toLowerCase()] || 'bg-gray-100 text-gray-800';
+  const roleColors = new Map([
+    ['admin', 'bg-gradient-to-r from-red-500/20 to-red-500/10 text-red-500 border border-red-500/20'],
+    ['instructor', 'bg-gradient-to-r from-blue-500/20 to-blue-500/10 text-blue-500 border border-blue-500/20'],
+    ['student', 'bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 text-emerald-500 border border-emerald-500/20'],
+    ['pilot', 'bg-gradient-to-r from-amber-500/20 to-amber-500/10 text-amber-500 border border-amber-500/20'],
+    ['mechanic', 'bg-gradient-to-r from-purple-500/20 to-purple-500/10 text-purple-500 border border-purple-500/20'],
+    ['discovery', 'bg-gradient-to-r from-pink-500/20 to-pink-500/10 text-pink-500 border border-pink-500/20'],
+    ['modelist', 'bg-gradient-to-r from-indigo-500/20 to-indigo-500/10 text-indigo-500 border border-indigo-500/20'],
+    ['superadmin', 'bg-gradient-to-r from-rose-600/20 to-rose-600/10 text-rose-600 border border-rose-600/20'],
+    ['ulm_pilot', 'bg-gradient-to-r from-orange-500/20 to-orange-500/10 text-orange-500 border border-orange-500/20'],
+    ['tresorier', 'bg-gradient-to-r from-teal-500/20 to-teal-500/10 text-teal-500 border border-teal-500/20']
+  ]);
+  
+  return roleColors.get(role.toLowerCase()) || 'bg-gradient-to-r from-gray-500/20 to-gray-500/10 text-gray-500 border border-gray-500/20';
 };
 
 /**
  * Récupère la couleur pour le badge d'un rôle (version MUI)
  */
 export const getRoleBadgeColor = (role: string): string => {
-  const colors: Record<string, string> = {
-    'admin': 'bg-red-100 text-red-800',
-    'instructor': 'bg-blue-100 text-blue-800',
-    'student': 'bg-green-100 text-green-800',
-    'pilot': 'bg-yellow-100 text-yellow-800',
-    'mechanic': 'bg-purple-100 text-purple-800',
-    'discovery': 'bg-pink-100 text-pink-800',
-    'modelist': 'bg-indigo-100 text-indigo-800',
-    'superadmin': 'bg-red-200 text-red-900',
-    'ulm_pilot': 'bg-orange-100 text-orange-800',
-  };
-  return colors[role.toLowerCase()] || 'bg-gray-100 text-gray-800';
+  const roleColors = new Map([
+    ['admin', 'error'],
+    ['instructor', 'primary'],
+    ['student', 'success'],
+    ['pilot', 'warning'],
+    ['mechanic', 'secondary'],
+    ['discovery', 'info'],
+    ['modelist', 'default'],
+    ['superadmin', 'error'],
+    ['ulm_pilot', 'warning'],
+    ['tresorier', 'success']
+  ]);
+  
+  return roleColors.get(role.toLowerCase()) || 'default';
 };
 
 /**

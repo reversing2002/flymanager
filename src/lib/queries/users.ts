@@ -180,7 +180,7 @@ export async function getUsers(): Promise<User[]> {
     .select(`
       *,
       user_group_memberships (
-        group:user_groups(name)
+        group:user_groups(code)
       ),
       club_members!user_id (
         club:club_id (
@@ -209,7 +209,7 @@ export async function getUsers(): Promise<User[]> {
     birth_date: formatDate(user.birth_date),
     image_url: user.image_url,
     default_schedule: user.default_schedule,
-    roles: user.user_group_memberships?.map(membership => membership.group.name) || [],
+    roles: user.user_group_memberships?.map(membership => membership.group.code) || [],
     membership_expiry: formatDate(user.membership_expiry),
     login: user.login,
     password: user.password,

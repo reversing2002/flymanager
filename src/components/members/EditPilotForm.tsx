@@ -3,7 +3,7 @@ import { AlertTriangle, Upload, X, Check } from "lucide-react";
 import type { User } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
-import { Role, SYSTEM_ROLE_GROUPS } from "../../types/roles";
+import { SYSTEM_ROLE_GROUPS, UserGroup } from "../../types/roles";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { getInitials } from "../../lib/utils/avatarUtils";
 import * as Checkbox from "@radix-ui/react-checkbox";
@@ -18,6 +18,7 @@ interface EditPilotFormProps {
   onCancel: () => void;
   isAdmin?: boolean;
   currentUser?: User;
+  availableRoles?: UserGroup[];
 }
 
 const EditPilotForm: React.FC<EditPilotFormProps> = ({
@@ -26,7 +27,15 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   onCancel,
   isAdmin = false,
   currentUser,
+  availableRoles = [],
 }) => {
+  console.log('[EditPilotForm] Initialisation avec:', {
+    pilotId: pilot.id,
+    pilotClubId: pilot.club?.id,
+    currentUserClubId: currentUser?.club?.id,
+    availableRoles
+  });
+  
   const [formData, setFormData] = useState({
     first_name: pilot.first_name || "",
     last_name: pilot.last_name || "",
@@ -51,44 +60,51 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [newCalendar, setNewCalendar] = useState({ id: "", name: "" });
 
-  const availableGroups = SYSTEM_ROLE_GROUPS.ALL;
-
   useEffect(() => {
     const loadUserData = async () => {
-      if (!pilot.id) return;
+      console.log('[EditPilotForm] useEffect déclenché avec pilot.id:', pilot.id);
       
+      if (!pilot.id) {
+        console.log('[EditPilotForm] Pas de pilot.id, sortie de loadUserData');
+        return;
+      }
+
       try {
-        // Charger les groupes
+        // Charger les groupes de l'utilisateur avec une jointure sur user_groups
+        console.log('[EditPilotForm] Chargement des groupes pour pilot.id:', pilot.id);
         const { data: groupData, error: groupError } = await supabase
-          .rpc('get_user_groups', { user_id: pilot.id });
+          .from('user_group_memberships')
+          .select(`
+            user_groups:group_id (
+              code
+            )
+          `)
+          .eq('user_id', pilot.id);
 
-        if (groupError) throw groupError;
-
-        const groups = (groupData || []).map(group => group.toUpperCase());
-        
-        // Charger les calendriers si c'est un instructeur
-        if (groups.includes('INSTRUCTOR')) {
-          const { data: calendarData, error: calendarError } = await supabase
-            .from('instructor_calendars')
-            .select('calendar_id, calendar_name')
-            .eq('instructor_id', pilot.id);
-
-          if (calendarError) throw calendarError;
-
-          setFormData(prev => ({ 
-            ...prev, 
-            roles: groups,
-            calendars: calendarData?.map(cal => ({ 
-              id: cal.calendar_id, 
-              name: cal.calendar_name 
-            })) || []
-          }));
-        } else {
-          setFormData(prev => ({ ...prev, roles: groups }));
+        if (groupError) {
+          console.error('[EditPilotForm] Erreur lors du chargement des groupes:', groupError);
+          throw groupError;
         }
+
+        console.log('[EditPilotForm] Groupes reçus:', groupData);
+        
+        // Extraire les codes des groupes
+        const groups = groupData
+          .map(g => g.user_groups?.code)
+          .filter(Boolean) as string[];
+        
+        console.log('[EditPilotForm] Groupes normalisés:', groups);
+
+        // Mettre à jour les rôles dans le formulaire
+        setFormData(prev => ({
+          ...prev,
+          roles: groups
+        }));
+        
+        console.log('[EditPilotForm] Mise à jour des rôles sans calendriers:', groups);
       } catch (err) {
-        console.error("Erreur lors du chargement des données:", err);
-        setError("Erreur lors du chargement des données");
+        console.error('[EditPilotForm] Erreur lors du chargement des données:', err);
+        toast.error("Erreur lors du chargement des données");
       }
     };
 
@@ -352,20 +368,20 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                 Rôles
               </label>
               <div className="space-y-2">
-                {availableGroups.map((role) => (
-                  <div key={role} className="flex items-center">
+                {availableRoles.map((group) => (
+                  <div key={group.code} className="flex items-center">
                     <input
                       type="checkbox"
-                      id={`role-${role}`}
-                      checked={formData.roles.includes(role.toUpperCase())}
-                      onChange={() => handleRoleChange(role)}
+                      id={`role-${group.code}`}
+                      checked={formData.roles.includes(group.code.toUpperCase())}
+                      onChange={() => handleRoleChange(group.code)}
                       className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
                     />
                     <label
-                      htmlFor={`role-${role}`}
+                      htmlFor={`role-${group.code}`}
                       className="ml-2 block text-sm text-gray-900"
                     >
-                      {getRoleLabel(role)}
+                      {group.name}
                     </label>
                   </div>
                 ))}

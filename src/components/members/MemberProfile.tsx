@@ -26,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "../../lib/supabase";
 import FFACredentialsForm from "./FFACredentialsForm";
 import FFPLUMCredentialsForm from "./FFPLUMCredentialsForm";
-// import { BiometricAuth } from "../auth/BiometricAuth";
+import { useRoles } from "../../hooks/useRoles";
 
 const getRoleBadgeColor = (role: Role) => {
   switch (role) {
@@ -67,15 +67,21 @@ const formatEmail = (email: string | null, hasFullAccess: boolean) => {
 };
 
 const MemberProfile = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [pilot, setPilot] = useState<UserType | null>(null);
-  const [medicals, setMedicals] = useState<Medical[]>([]);
-  const [loadingMedicals, setLoadingMedicals] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingMedical, setEditingMedical] = useState<Medical | null>(null);
+  const [editingContribution, setEditingContribution] = useState<Contribution | null>(null);
+  const [loadingContributions, setLoadingContributions] = useState(false);
+  const [contributions, setContributions] = useState<Contribution[]>([]);
+  const [showFFAModal, setShowFFAModal] = useState(false);
+  const [showFFPLUMModal, setShowFFPLUMModal] = useState(false);
+  const [medicals, setMedicals] = useState<Medical[]>([]);
+  const [loadingMedicals, setLoadingMedicals] = useState(true);
   const [selectedLicense, setSelectedLicense] = useState<License | null>(null);
   const [selectedMedical, setSelectedMedical] = useState<Medical | null>(null);
   const [selectedContribution, setSelectedContribution] = useState<Contribution | null>(null);
@@ -85,11 +91,18 @@ const MemberProfile = () => {
   const [isAddingContribution, setIsAddingContribution] = useState(false);
   const [isEditingQualifications, setIsEditingQualifications] = useState(false);
   const [showAddContribution, setShowAddContribution] = useState(false);
-  const [editingContribution, setEditingContribution] = useState<Contribution | null>(null);
-  const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [loadingContributions, setLoadingContributions] = useState(false);
   const [isQualificationsModalOpen, setIsQualificationsModalOpen] = useState(false);
   const [showEditMedical, setShowEditMedical] = useState(false);
+
+  console.log('[MemberProfile] Initialisation avec currentUser:', currentUser);
+  
+  // Utiliser le club_id depuis user.club?.id
+  const clubId = currentUser?.club?.id;
+  console.log('[MemberProfile] Club ID:', clubId);
+  
+  // Charger les rôles disponibles
+  const { data: userGroups, isLoading: rolesLoading } = useRoles(clubId);
+  console.log('[MemberProfile] Rôles chargés:', userGroups);
 
   const isAdmin = hasAnyGroup(currentUser, ["ADMIN"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
@@ -241,13 +254,21 @@ const MemberProfile = () => {
       <div className="p-6 max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-xl font-semibold mb-6">Modifier le profil</h2>
-          <EditPilotForm
-            pilot={pilot}
-            onSubmit={handleUpdateProfile}
-            onCancel={() => setIsEditing(false)}
-            isAdmin={isAdmin}
-            currentUser={currentUser}
-          />
+          {rolesLoading ? (
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-sm text-gray-500">Chargement des rôles...</p>
+            </div>
+          ) : (
+            <EditPilotForm
+              pilot={pilot}
+              onSubmit={handleUpdateProfile}
+              onCancel={() => setIsEditing(false)}
+              isAdmin={isAdmin}
+              currentUser={currentUser}
+              availableRoles={userGroups}
+            />
+          )}
         </div>
       </div>
     );

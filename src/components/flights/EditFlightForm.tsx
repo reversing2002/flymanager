@@ -159,7 +159,7 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
   // Fonction utilitaire pour vérifier si un utilisateur a un groupe spécifique
   const userHasGroup = (user: User, groupName: string) => {
     return user.user_group_memberships?.some(
-      (membership) => membership.group.name === groupName
+      (membership) => membership.group.code === groupName
     );
   };
 
