@@ -8,9 +8,11 @@ import { getAircraft, getReservations, getUsers } from '../../lib/queries';
 import { hasAnyGroup } from "../../lib/permissions";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 const ReservationList: React.FC = () => {
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -161,6 +163,10 @@ const ReservationList: React.FC = () => {
     setShowReservationModal(true);
   };
 
+  const handleCreateFlight = (reservation: Reservation) => {
+    navigate(`/flights/new?reservationId=${reservation.id}`);
+  };
+
   if (loading) {
     return (
       <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -266,6 +272,7 @@ const ReservationList: React.FC = () => {
                       pilot={users.find((u) => u.id === reservation.pilotId)}
                       instructor={users.find((u) => u.id === reservation.instructorId)}
                       onEdit={handleEditReservation}
+                      onCreateFlight={handleCreateFlight}
                       canEdit={true}
                     />
                   ))}
@@ -293,6 +300,7 @@ const ReservationList: React.FC = () => {
           aircraft={aircraft}
           users={users}
           existingReservation={selectedReservation}
+          onCreateFlight={handleCreateFlight}
         />
       )}
     </div>
