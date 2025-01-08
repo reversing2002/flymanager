@@ -27,12 +27,11 @@ if (!stripeKey) {
   throw new Error('La clé Stripe est manquante dans les variables d\'environnement');
 }
 
-const stripe = new Stripe(stripeKey, {
-  //apiVersion: "2024-11-20.acacia",
-  apiVersion: "2024-12-18.acacia",
+// Configuration de Stripe
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2023-10-16',
+  typescript: true,
 });
-
-
 
 // Configuration CORS
 const allowedOrigins = [
@@ -512,6 +511,7 @@ app.get('/api/conversations/:flightId/messages', async (req, res) => {
       conversation = await twilioClient.conversations.v1
         .conversations(conversationUniqueName)
         .fetch();
+
     } catch (error) {
       if (error.code === 20404) { // Conversation not found
         // Récupérer les informations du vol depuis Supabase
@@ -969,73 +969,75 @@ app.get("/api/hello", (req, res) => {
 });
 
 app.post("/api/create-stripe-session", async (req, res) => {
-  console.log("⭐ Début de la requête create-stripe-session");
   try {
-    const { amount, userId, entryTypeId } = req.body;
-    console.log("📦 Données reçues:", { amount, userId, entryTypeId });
-    console.log(
-      "🔑 STRIPE_SECRET_KEY présente:",
-      !!process.env.STRIPE_SECRET_KEY
-    );
+    const { amount, userId, entryTypeId, clubId } = req.body;
+    console.log('Création session - Body:', { amount, userId, entryTypeId, clubId });
+    console.log('Stripe Secret Key:', process.env.STRIPE_SECRET_KEY?.substring(0, 8) + '...');
 
-    if (!amount || !userId || !entryTypeId) {
-      console.log("❌ Paramètres manquants");
-      res.status(400).json({
-        error: "Paramètres manquants",
-        received: { amount, userId, entryTypeId },
-      });
-      return;
+    if (!clubId) {
+      throw new Error('Club ID non fourni');
     }
 
-    console.log("✨ Tentative de création session Stripe...");
-    const successUrl = process.env.FRONTEND_URL 
-      ? `${process.env.FRONTEND_URL}/accounts?success=true`
-      : 'http://localhost:5173/accounts?success=true';
+    // Récupérer l'ID du compte Stripe du club
+    const { data: clubData, error: clubError } = await supabase
+      .from('clubs')
+      .select('stripe_account_id, name')
+      .eq('id', clubId)
+      .single();
 
-    const cancelUrl = process.env.FRONTEND_URL 
-      ? `${process.env.FRONTEND_URL}/accounts?canceled=true`
-      : 'http://localhost:5173/accounts?canceled=true';
+    console.log('Club data:', clubData);
+    console.log('Club error:', clubError);
+
+    if (clubError || !clubData?.stripe_account_id) {
+      console.error('Erreur club:', clubError);
+      console.error('Club data:', clubData);
+      throw new Error('Configuration Stripe du club non trouvée');
+    }
+
+    console.log('Création session Stripe avec compte:', clubData.stripe_account_id);
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+      payment_method_types: ['card'],
       line_items: [
         {
           price_data: {
-            currency: "eur",
+            currency: 'eur',
             product_data: {
-              name: "Crédit de compte",
+              name: 'Crédit de compte',
+              description: `Crédit de compte pour ${clubData.name}`,
             },
-            unit_amount: Math.round(amount * 100),
+            unit_amount: amount * 100,
           },
           quantity: 1,
         },
       ],
-      mode: "payment",
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL}/accounts?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/accounts?canceled=true`,
       metadata: {
         userId,
         entryTypeId,
-        amount,
+        amount: amount.toString(),
       },
+      payment_intent_data: {
+        application_fee_amount: amount * 0.03 * 100, // 3% du montant de la transaction
+        transfer_data: {
+          destination: clubData.stripe_account_id,
+        },
+      },
+      submit_type: 'pay',
+      locale: 'fr',
     });
 
-    console.log("✅ Session créée avec succès:", session.id);
-    res.json({ sessionId: session.id });
-  } catch (err) {
-    console.error("🚨 Erreur détaillée:", err);
-    console.error(
-      "🚨 Type d'erreur:",
-      err instanceof Error ? err.constructor.name : typeof err
-    );
-    console.error(
-      "🚨 Message d'erreur:",
-      err instanceof Error ? err.message : String(err)
-    );
-    res.status(500).json({
-      error: "Erreur lors de la création de la session",
-      details: err instanceof Error ? err.message : String(err),
+    console.log('Session créée:', session.id);
+    console.log('URLs de redirection:', {
+      success: session.success_url,
+      cancel: session.cancel_url
     });
+    res.json({ sessionId: session.id });
+  } catch (error) {
+    console.error('Erreur détaillée:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -1662,7 +1664,6 @@ async function extractPilotData(login, password, user_id) {
       telephoneMobile: '#A583',
       telephoneDomicile: '#A584',
       telephoneTravail: '#A585',
-      aeroclub: '#A57',
     };
 
 
@@ -2040,6 +2041,61 @@ app.get('/api/weather', async (req, res) => {
       error: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
+  }
+});
+
+// Route pour créer une session de compte Stripe
+app.post("/account_session", async (req, res) => {
+  try {
+    const { account } = req.body;
+
+    const accountSession = await stripe.accountSessions.create({
+      account: account,
+      components: {
+        account_onboarding: { enabled: true },
+      },
+    });
+
+    res.json({
+      client_secret: accountSession.client_secret,
+    });
+  } catch (error) {
+    console.error(
+      "Une erreur s'est produite lors de l'appel à l'API Stripe pour créer une session de compte",
+      error
+    );
+    res.status(500);
+    res.send({ error: error.message });
+  }
+});
+
+// Route pour créer un compte Stripe
+app.post("/account", async (req, res) => {
+  try {
+    const account = await stripe.accounts.create({
+      controller: {
+        stripe_dashboard: {
+          type: "express",
+        },
+        fees: {
+          payer: "application"
+        },
+        losses: {
+          payments: "application"
+        },
+      },
+    });
+
+    res.json({
+      account: account.id,
+    });
+  } catch (error) {
+    console.error(
+      "Une erreur s'est produite lors de l'appel à l'API Stripe pour créer un compte",
+      error
+    );
+    res.status(500);
+    res.send({ error: error.message });
   }
 });
 

@@ -1,220 +1,237 @@
-import React, { useState, useEffect } from "react";
-import { X, AlertTriangle, CreditCard } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, AlertTriangle, CreditCard, Euro } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import type { AccountEntryType } from "../../types/accounts";
+import { useAuth } from "../../contexts/AuthContext";
+import { motion } from "framer-motion";
 
-const stripePromise = loadStripe(
-  "pk_live_51M4MGHATJFXCdMjoq1CTqE7hb86qT8ssv6XXJIIExHAf5CVXKQ25mKAcuOjzWjClzDp2aNtfrriNae4na0UJ5lWd00sWTIrLtD"
-);
+// Charger Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-interface CreditAccountModalProps {
-  userId: string;
+interface Props {
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
-const AMOUNTS = [50, 100, 200, 500];
+const AMOUNTS = [200, 500, 1000];
 
-const CreditAccountModal: React.FC<CreditAccountModalProps> = ({
-  userId,
-  onClose,
-  onSuccess,
-}) => {
-  const [amount, setAmount] = useState<number>(100);
+export default function CreditAccountModal({ onClose, onSuccess }: Props) {
+  const [selectedAmount, setSelectedAmount] = useState<number>(500);  // Présélection de 500€
   const [customAmount, setCustomAmount] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [accountFundingType, setAccountFundingType] = useState<AccountEntryType | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const loadAccountFundingType = async () => {
+    const fetchAccountFundingType = async () => {
       const { data, error } = await supabase
-        .from("account_entry_types")
-        .select("*")
-        .eq("code", "ACCOUNT_FUNDING")
+        .from('account_entry_types')
+        .select('*')
+        .eq('code', 'ACCOUNT_FUNDING')
         .single();
 
       if (error) {
-        console.error("Erreur chargement type de compte:", error);
-        toast.error("Erreur lors du chargement du type de compte");
+        console.error('Erreur lors de la récupération du type de compte:', error);
+        toast.error('Erreur lors de la récupération du type de compte');
         return;
       }
 
       setAccountFundingType(data);
     };
 
-    loadAccountFundingType();
+    fetchAccountFundingType();
   }, []);
-
-  const handleAmountClick = (value: number) => {
-    setAmount(value);
-    setCustomAmount("");
-  };
-
-  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === "" || /^\d+$/.test(value)) {
-      setCustomAmount(value);
-      if (value) {
-        setAmount(parseInt(value, 10));
-      }
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (amount < 1) {
-      setError("Le montant doit être supérieur à 0");
+    console.log('User:', user);
+    console.log('AccountFundingType:', accountFundingType);
+    console.log('Amount:', selectedAmount || customAmount);
+
+    const amount = selectedAmount || parseFloat(customAmount);
+
+    if (!user?.id) {
+      toast.error("Utilisateur non connecté");
       return;
     }
-    
-    if (!accountFundingType || !accountFundingType.id) {
-      setError("Le type de compte n'est pas disponible. Veuillez réessayer.");
+    if (!user?.club?.id) {
+      toast.error("Club non trouvé");
+      return;
+    }
+    if (!accountFundingType?.id) {
+      toast.error("Type de compte non défini");
+      return;
+    }
+    if (!amount || amount <= 0) {
+      toast.error("Montant invalide");
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
-      console.log("Début de la création du paiement...");
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error('Stripe non initialisé');
+      }
 
-      // Créer une session de paiement Stripe via l'API Route
-      const response = await fetch("https://stripe.linked.fr/api/create-stripe-session/", {
+      console.log('Envoi de la requête avec:', {
+        amount: amount,
+        userId: user.id,
+        entryTypeId: accountFundingType.id,
+        clubId: user.club.id,
+      });
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/create-stripe-session`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount,
-          userId,
+          amount: amount,
+          userId: user.id,
           entryTypeId: accountFundingType.id,
+          clubId: user.club.id,
         }),
-        redirect: 'follow',
       });
+
+      console.log('Réponse du serveur:', response.status, response.statusText);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("Erreur API Stripe:", {
-          status: response.status,
-          statusText: response.statusText,
-          errorData,
-        });
-        throw new Error(`Erreur ${response.status}: ${errorData.error || response.statusText}`);
+        console.error('Erreur de réponse:', errorData);
+        throw new Error(errorData.error || 'Erreur lors de la création de la session');
       }
 
       const { sessionId } = await response.json();
-      console.log("Session Stripe créée:", sessionId);
+      console.log('Session ID reçu:', sessionId);
 
-      // Rediriger vers Stripe Checkout
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error("Stripe non initialisé");
+      const { error: redirectError } = await stripe.redirectToCheckout({ sessionId });
+
+      if (redirectError) {
+        console.error('Erreur de redirection:', redirectError);
+        throw redirectError;
       }
 
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId,
-      });
-
-      if (stripeError) {
-        throw stripeError;
+      if (onSuccess) {
+        onSuccess();
       }
-    } catch (err) {
-      console.error("Erreur détaillée du paiement:", err);
-      setError(
-        "Une erreur est survenue lors de la création du paiement. Veuillez réessayer."
-      );
-      toast.error("Erreur lors de la création du paiement");
+    } catch (error) {
+      console.error("Error détaillée:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Une erreur s'est produite lors de la création de la session de paiement");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold">Créditer mon compte</h2>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+    >
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Créditer votre compte</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {error && (
-            <div className="p-4 bg-red-50 text-red-800 rounded-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              <p>{error}</p>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Montant à créditer
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {AMOUNTS.map((value) => (
-                <button
-                  key={value}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <p className="text-gray-600 mb-4">Choisissez un montant ou entrez un montant personnalisé</p>
+            <div className="grid grid-cols-3 gap-3">
+              {AMOUNTS.map((amount) => (
+                <motion.button
+                  key={amount}
                   type="button"
-                  onClick={() => handleAmountClick(value)}
-                  className={`p-4 text-center rounded-lg border transition-colors ${
-                    amount === value && !customAmount
-                      ? "border-sky-500 bg-sky-50 text-sky-700"
-                      : "border-slate-200 hover:border-slate-300"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setSelectedAmount(amount);
+                    setCustomAmount("");
+                  }}
+                  className={`relative p-4 text-center rounded-xl border-2 transition-all duration-200 ${
+                    selectedAmount === amount
+                      ? "border-primary-500 bg-primary-50 text-primary-700 shadow-md"
+                      : "border-gray-200 hover:border-primary-300 hover:bg-gray-50"
                   }`}
                 >
-                  {value} €
-                </button>
+                  <span className="text-xl font-semibold">{amount}€</span>
+                </motion.button>
               ))}
             </div>
 
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Autre montant
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={customAmount}
-                  onChange={handleCustomAmountChange}
-                  placeholder="Montant personnalisé"
-                  className="w-full pl-4 pr-12 py-2 rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
-                  €
-                </span>
+            <div className="relative mt-6">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Euro className="h-5 w-5 text-gray-400" />
               </div>
+              <input
+                type="number"
+                value={customAmount}
+                onChange={(e) => {
+                  setCustomAmount(e.target.value);
+                  setSelectedAmount(null);
+                }}
+                placeholder="Montant personnalisé"
+                className={`block w-full rounded-xl border-2 pl-10 py-3 focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
+                  customAmount
+                    ? "border-primary-500 ring-primary-200"
+                    : "border-gray-200 focus:border-primary-500 focus:ring-primary-200"
+                }`}
+                min="1"
+                step="1"
+              />
             </div>
           </div>
 
-          <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-              disabled={loading}
-            >
-              Annuler
-            </button>
-            <button
+          <div className="mt-8 mb-4">
+            <motion.button
               type="submit"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors disabled:opacity-50"
-              disabled={loading || amount < 1}
+              disabled={loading || (!selectedAmount && !customAmount)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={`w-full flex items-center justify-center py-4 px-6 border border-transparent rounded-xl text-white text-xl font-semibold shadow-lg transition-all duration-200 ${
+                loading || (!selectedAmount && !customAmount)
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 hover:shadow-xl"
+              }`}
             >
-              <CreditCard className="h-4 w-4" />
-              {loading ? "Chargement..." : `Payer ${amount} €`}
-            </button>
+              {loading ? (
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 border-t-2 border-b-2 border-white rounded-full animate-spin" />
+                  <span>Chargement...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <CreditCard className="h-6 w-6" />
+                  <span>Ajouter {selectedAmount || customAmount}€</span>
+                </div>
+              )}
+            </motion.button>
           </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 
-export default CreditAccountModal;
+          <p className="text-sm text-center text-gray-500">
+            Paiement sécurisé par Stripe
+          </p>
+        </form>
+      </motion.div>
+    </motion.div>
+  );
+}

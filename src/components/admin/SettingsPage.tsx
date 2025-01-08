@@ -24,7 +24,8 @@ import {
   Shield,
   Cloud,
   ChevronDown,
-  ArrowRightLeft
+  ArrowRightLeft,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
@@ -43,6 +44,7 @@ import PagePermissionsSettings from "../settings/PagePermissionsSettings";
 import BackupSettings from "../settings/BackupSettings";
 import SmileSettings from "../settings/SmileSettings";
 import AccountingMigrationSettings from "../settings/AccountingMigrationSettings";
+import StripeAccountSettings from "../settings/StripeAccountSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -61,6 +63,7 @@ type TabType =
   | "accountTypes"
   | "accountingCategories"
   | "accountingMigration"
+  | "stripeAccount"
   | "qualifications"
   | "licenses"
   | "medicalTypes"
@@ -96,6 +99,7 @@ const SettingsPage = () => {
     { id: "accountTypes", label: "Types de compte", icon: Receipt },
     { id: "accountingCategories", label: "Catégories comptables", icon: Calculator },
     { id: "accountingMigration", label: "Migration comptable", icon: ArrowRightLeft },
+    { id: "stripeAccount", label: "Gestion CB", icon: CreditCard },
     { id: "qualifications", label: "Qualifications", icon: Award },
     { id: "licenses", label: "Licences", icon: BookOpen },
     { id: "medicalTypes", label: "Types médicaux", icon: Heart },
@@ -323,6 +327,7 @@ const SettingsPage = () => {
               <AccountingMigrationSettings />
             </div>
           )}
+          {activeTab === "stripeAccount" && <StripeAccountSettings />}
           {activeTab === "qualifications" && <QualificationTypesSettings />}
           {activeTab === "licenses" && <LicenseTypesSettings />}
           {activeTab === "medicalTypes" && <MedicalTypesSettings />}
