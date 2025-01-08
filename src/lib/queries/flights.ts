@@ -159,7 +159,7 @@ export async function createFlight(data: Partial<Flight>): Promise<Flight> {
   }
 
   // Si il y a un instructeur, créer les entrées d'instruction
-  if (data.instructorId && data.instructor_fee > 0) {
+  if (data.instructorId && data.instructor_cost > 0) {
     // Entrée pour le coût de l'instruction (débit élève)
     const { error: instructionEntryError } = await supabase
       .from("account_entries")
@@ -170,7 +170,7 @@ export async function createFlight(data: Partial<Flight>): Promise<Flight> {
         flight_id: newFlight.id,
         entry_type_id: instructionTypeId,
         date: data.date,
-        amount: -(data.instructor_fee || 0),
+        amount: -(data.instructor_cost || 0),
         payment_method: data.paymentMethod,
         description: `Instruction ${student.first_name} ${student.last_name} - ${data.duration}min`,
         is_validated: false,
