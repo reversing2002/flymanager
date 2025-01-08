@@ -212,7 +212,9 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
     () => {
       return users.filter((u) => {
         const userRoles = u.roles || [];
-        return userRoles.some(role => ["PILOT", "INSTRUCTOR"].includes(role));
+        return userRoles.some(role => 
+          ["PILOT", "INSTRUCTOR"].some(r => r.toLowerCase() === role.toLowerCase())
+        );
       });
     },
     [users]
@@ -234,7 +236,7 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
     () => {
       return users.filter((u) => {
         const userRoles = u.roles || [];
-        return userRoles.includes("INSTRUCTOR");
+        return userRoles.some(role => ["INSTRUCTOR"].some(r => r.toLowerCase() === role.toLowerCase()));
       });
     },
     [users]

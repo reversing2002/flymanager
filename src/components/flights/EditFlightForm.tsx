@@ -168,7 +168,9 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
     () => {
       return users.filter((u) => {
         const userRoles = u.roles || [];
-        return userRoles.some(role => ["PILOT", "INSTRUCTOR"].includes(role));
+        return userRoles.some(role => 
+          ["PILOT", "INSTRUCTOR"].some(r => r.toLowerCase() === role.toLowerCase())
+        );
       });
     },
     [users]
@@ -189,7 +191,7 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
   const instructors = useMemo(() => {
     return users.filter((u) => {
       const userRoles = u.roles || [];
-      return userRoles.includes("INSTRUCTOR");
+      return userRoles.some(role => ["INSTRUCTOR"].some(r => r.toLowerCase() === role.toLowerCase()));
     });
   }, [users]);
 
