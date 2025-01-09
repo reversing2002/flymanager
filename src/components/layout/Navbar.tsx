@@ -25,7 +25,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { signOut } from "../../lib/supabase";
 import { usePermissions, hasPermission, hasAnyGroup } from "../../lib/permissions";
 import { PERMISSIONS } from "../../types/permissions";
-import { getRoleLabel, getRoleBadgeColor } from "../../lib/utils/roleUtils";
+import { getRoleLabel, getRoleBadgeClass } from "../../lib/utils/roleUtils";
 import { getInitials } from "../../lib/utils/avatarUtils";
 import type { Role } from "../../types/roles";
 import { Logo } from '../common/Logo';
@@ -328,7 +328,7 @@ const Navbar = () => {
                 {currentUser?.roles?.map((role) => (
                   <span
                     key={role}
-                    className={`inline-flex items-center w-full px-3 py-0.5 rounded-md text-[11px] font-medium tracking-wide ${getRoleBadgeColor(role)}`}
+                    className={`inline-flex items-center w-full px-3 py-0.5 rounded-md text-[11px] font-medium tracking-wide ${getRoleBadgeClass(role)}`}
                   >
                     {getRoleLabel(role)}
                   </span>
