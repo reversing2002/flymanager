@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, AlertTriangle, CreditCard, Euro } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
+import { createStripeSession, redirectToCheckout } from "../../lib/stripe";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import type { AccountEntryType } from "../../types/accounts";
@@ -8,7 +8,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { motion } from "framer-motion";
 
 // Charger Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+// const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface Props {
   onClose: () => void;
@@ -72,60 +72,17 @@ export default function CreditAccountModal({ onClose, onSuccess }: Props) {
     setLoading(true);
 
     try {
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error('Stripe non initialisé');
-      }
-
-      console.log('Envoi de la requête avec:', {
+      const sessionId = await createStripeSession({
         amount: amount,
         userId: user.id,
         entryTypeId: accountFundingType.id,
         clubId: user.club.id,
       });
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/create-stripe-session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: amount,
-          userId: user.id,
-          entryTypeId: accountFundingType.id,
-          clubId: user.club.id,
-        }),
-      });
-
-      console.log('Réponse du serveur:', response.status, response.statusText);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Erreur de réponse:', errorData);
-        throw new Error(errorData.error || 'Erreur lors de la création de la session');
-      }
-
-      const { sessionId } = await response.json();
-      console.log('Session ID reçu:', sessionId);
-
-      const { error: redirectError } = await stripe.redirectToCheckout({ sessionId });
-
-      if (redirectError) {
-        console.error('Erreur de redirection:', redirectError);
-        throw redirectError;
-      }
-
-      if (onSuccess) {
-        onSuccess();
-      }
+      await redirectToCheckout(sessionId);
     } catch (error) {
-      console.error("Error détaillée:", error);
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("Une erreur s'est produite lors de la création de la session de paiement");
-      }
-    } finally {
+      console.error("Erreur lors de la création de la session:", error);
+      toast.error("Erreur lors de la création de la session de paiement");
       setLoading(false);
     }
   };

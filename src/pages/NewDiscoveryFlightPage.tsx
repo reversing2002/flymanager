@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { stripePromise } from '../lib/stripe'
+import { createStripeSession, redirectToCheckout } from '../lib/stripe'
 import toast from 'react-hot-toast'
 import { Users, Weight, Calendar, MessageSquare } from 'lucide-react'
 import { Logo } from '../components/common/Logo'
@@ -104,44 +104,14 @@ export default function NewDiscoveryFlightPage() {
         console.error('Erreur lors de la création de la conversation:', errorData)
       }
 
-      // Créer la session de paiement Stripe
-      const stripe = await stripePromise
-      if (!stripe) throw new Error("Stripe n'est pas initialisé")
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/stripe/create-discovery-flight-session`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            flightId: flightData.id,
-            customerEmail: data.contact_email,
-            customerPhone: data.contact_phone,
-          }),
-        }
-      )
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          `Erreur lors de la création de la session: ${
-            errorData.error || response.statusText
-          }`
-        )
-      }
-
-      const session = await response.json()
-
-      // Rediriger vers la page de paiement Stripe
-      const result = await stripe.redirectToCheckout({
-        sessionId: session.id,
+      // Créer la session de paiement Stripe et rediriger
+      const sessionId = await createStripeSession({
+        flightId: flightData.id,
+        customerEmail: data.contact_email,
+        customerPhone: data.contact_phone,
       })
 
-      if (result.error) {
-        throw new Error(result.error.message)
-      }
+      await redirectToCheckout(sessionId)
     } catch (error) {
       console.error('Erreur:', error)
       toast.error(
