@@ -240,14 +240,14 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
             setShowModal(false);
             setSelectedAvailability(null);
           }}
-          onSave={() => {
+          onSuccess={() => {
             loadAvailabilities();
             setShowModal(false);
             setSelectedAvailability(null);
           }}
           userId={userId}
           aircraftId={aircraftId}
-          defaultMode={defaultMode}
+          initialDefaultMode={defaultMode}
         />
       )}
     </div>
