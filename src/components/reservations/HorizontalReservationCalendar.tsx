@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   format,
@@ -44,7 +44,6 @@ import { cn } from "../../lib/utils";
 import SunTimesDisplay from "../common/SunTimesDisplay";
 import { getSunTimes } from "../../lib/sunTimes";
 import { FilterState } from "./FilterPanel";
-import { useMemo } from "react";
 
 // Générer les intervalles de 15 minutes
 const generateTimeSlots = (
@@ -165,6 +164,8 @@ const HorizontalReservationCalendar = ({
   >([]);
 
   const [instructorAvailabilities, setInstructorAvailabilities] = useState<Availability[]>([]);
+  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
+  const [instructors, setInstructors] = useState<User[]>([]);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -271,6 +272,53 @@ const HorizontalReservationCalendar = ({
 
     loadInstructorAvailabilities();
   }, [filters.instructors, selectedDate]);
+
+  useEffect(() => {
+    const loadAvailabilities = async () => {
+      if (!currentUser?.club?.id) return;
+
+      try {
+        const dayStart = startOfDay(selectedDate);
+        const dayEnd = endOfDay(selectedDate);
+
+        const availabilities = await getAvailabilitiesForPeriod(
+          dayStart.toISOString(),
+          dayEnd.toISOString(),
+          currentUser.club.id
+        );
+
+        setAvailabilities(availabilities);
+      } catch (error) {
+        console.error('Error loading availabilities:', error);
+        toast.error('Erreur lors du chargement des indisponibilités');
+      }
+    };
+
+    loadAvailabilities();
+  }, [currentUser?.club?.id, selectedDate]);
+
+  useEffect(() => {
+    const loadInstructors = async () => {
+      if (!filters?.instructors?.length) {
+        setInstructors([]);
+        return;
+      }
+
+      try {
+        const instructorsData = await getUsers();
+        const filteredInstructors = instructorsData.filter(user => 
+          filters.instructors?.includes(user.id) && 
+          hasAnyGroup({ role: user.role } as User, ["INSTRUCTOR"])
+        );
+        setInstructors(filteredInstructors);
+      } catch (error) {
+        console.error('Error loading instructors:', error);
+        toast.error('Erreur lors du chargement des instructeurs');
+      }
+    };
+
+    loadInstructors();
+  }, [filters.instructors]);
 
   const loadInitialData = async () => {
     try {
@@ -381,6 +429,12 @@ const HorizontalReservationCalendar = ({
     if (!filters?.aircraftTypes?.length) return aircraft;
     return aircraft.filter((a) => filters.aircraftTypes.includes(a.id));
   }, [aircraft, filters?.aircraftTypes]);
+
+  const filteredInstructors = useMemo(() => {
+    return instructors.filter(instructor => 
+      filters.instructors?.includes(instructor.id)
+    );
+  }, [instructors, filters.instructors]);
 
   const getReservationsForAircraft = (aircraftId: string) => {
     return filteredReservations.filter((r) => r.aircraftId === aircraftId);
@@ -749,6 +803,19 @@ const HorizontalReservationCalendar = ({
     );
   };
 
+  const isInstructorAvailable = (instructorId: string, hour: number, minute: number) => {
+    const slotTime = setMinutes(setHours(selectedDate, hour), minute);
+    const availability = instructorAvailabilities.find(a => {
+      const start = parseISO(a.start_time);
+      const end = parseISO(a.end_time);
+      return slotTime >= start && slotTime < end && a.user_id === instructorId;
+    });
+
+    if (!availability) return { available: true };
+
+    return { available: availability.slot_type === 'available' };
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header avec la date */}
@@ -839,6 +906,19 @@ const HorizontalReservationCalendar = ({
                   <span className="text-xs text-slate-500 truncate">{a.name}</span>
                 </div>
               ))}
+              {/* Lignes des instructeurs */}
+              {filteredInstructors.map((instructor) => (
+                <div
+                  key={instructor.id}
+                  className="flex flex-col justify-center h-12 px-2 border-b border-gray-200 bg-white"
+                  style={{ minWidth: "120px", width: "120px" }}
+                >
+                  <span className="font-medium truncate">
+                    {instructor.first_name} {instructor.last_name}
+                  </span>
+                  <span className="text-xs text-slate-500 truncate">Instructeur</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -876,6 +956,34 @@ const HorizontalReservationCalendar = ({
                           onMouseUp={handleMouseUp}
                         />
                       ))}
+                    </div>
+                    {/* Périodes indisponibles */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      {availabilities
+                        .filter((availability) => availability.aircraft_id === aircraft.id)
+                        .map((availability, index) => {
+                          const style = calculateReservationStyle({
+                            startTime: availability.start_time,
+                            endTime: availability.end_time,
+                            aircraftId: aircraft.id
+                          } as Reservation);
+
+                          if (!style) return null;
+
+                          return (
+                            <div
+                              key={`availability-${index}`}
+                              className="absolute h-10 rounded px-2 text-xs font-medium bg-red-100 text-red-900 border border-red-200"
+                              style={style}
+                            >
+                              <div className="p-1">
+                                <div className="mt-1 line-clamp-1 text-[0.65rem] leading-tight">
+                                  Indisponible
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                     </div>
                     {/* Réservations pour cet avion */}
                     <div className="absolute inset-0 pointer-events-none">
@@ -931,6 +1039,67 @@ const HorizontalReservationCalendar = ({
                                       {`${instructor.first_name} ${instructor.last_name}` || "Instructeur"}
                                     </>
                                   )}
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ))}
+                {/* Grille des instructeurs */}
+                {filteredInstructors.map((instructor) => (
+                  <div
+                    key={`instructor-${instructor.id}`}
+                    className="relative h-12 border-b border-gray-200"
+                    style={{ minWidth: `${timeSlots.length * CELL_WIDTH}px` }}
+                  >
+                    <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${timeSlots.length}, ${CELL_WIDTH}px)` }}>
+                      {timeSlots.map(({ hour, minutes }, index) => {
+                        const { available } = isInstructorAvailable(instructor.id, hour, minutes);
+                        return (
+                          <div
+                            key={index}
+                            className={cn(
+                              "h-12 border-l border-gray-200 flex-shrink-0",
+                              {
+                                "border-l-2 border-l-gray-300": shouldShowBorder(hour, minutes),
+                                "bg-gray-50": isNightTime(hour, minutes),
+                                "bg-red-100": !available,
+                                "bg-gray-200": isToday(selectedDate) && isBefore(setMinutes(setHours(selectedDate, hour), minutes), new Date())
+                              },
+                              "w-6"
+                            )}
+                          />
+                        );
+                      })}
+                    </div>
+                    {/* Réservations de l'instructeur */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      {filteredReservations
+                        .filter((r) => r.instructorId === instructor.id)
+                        .map((reservation) => {
+                          const pilot = users.find((u) => u.id === reservation.pilotId);
+                          const style = calculateReservationStyle(reservation);
+                          if (!style) return null;
+
+                          return (
+                            <button
+                              key={reservation.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReservationClick(reservation);
+                              }}
+                              className={cn(
+                                "absolute h-10 rounded px-2 text-xs font-medium transition-all shadow-sm border pointer-events-auto",
+                                "bg-amber-100 text-amber-900 border-amber-200",
+                                "hover:shadow-md hover:scale-[1.02]"
+                              )}
+                              style={style}
+                            >
+                              <div className="p-1">
+                                <div className="mt-1 line-clamp-1 text-[0.65rem] leading-tight">
+                                  {pilot ? `${pilot.first_name} ${pilot.last_name}` : "Pilote"}
                                 </div>
                               </div>
                             </button>
