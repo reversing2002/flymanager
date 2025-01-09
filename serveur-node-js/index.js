@@ -1175,8 +1175,8 @@ app.post("/api/create-discovery-session", async (req, res) => {
       : `http://localhost:5173/discovery/success?session_id={CHECKOUT_SESSION_ID}&flight_id=${flightId}`;
 
     const cancelUrl = process.env.FRONTEND_URL 
-      ? `${process.env.FRONTEND_URL}/discovery/cancel`
-      : 'http://localhost:5173/discovery/cancel';
+      ? `${process.env.FRONTEND_URL}/discovery/cancel?flight_id=${flightId}`
+      : 'http://localhost:5173/discovery/cancel?flight_id=${flightId}';
 
     const sessionConfig = {
       payment_method_types: ["card"],
@@ -1302,7 +1302,7 @@ app.post("/api/stripe/create-discovery-flight-session", async (req, res) => {
       ],
       mode: 'payment',
       success_url: `${process.env.FRONTEND_URL}/discovery-flight/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/discovery-flight/cancel`,
+      cancel_url: `${process.env.FRONTEND_URL}/discovery-flight/cancel?flight_id=${flightId}`,
       customer_email: customerEmail,
       metadata: {
         flightId,

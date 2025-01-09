@@ -56,6 +56,8 @@ import NotificationList from "./components/admin/NotificationList";
 import ClubStatsPage from "./pages/ClubStatsPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import SimpleAccountingView from "./components/accounting/SimpleAccountingView";
+import DiscoveryFlightSuccessPage from './pages/DiscoveryFlightSuccessPage';
+import DiscoveryFlightCancelPage from './pages/DiscoveryFlightCancelPage';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
@@ -89,7 +91,8 @@ function App() {
               <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
               <Route path="/discovery/qr2" element={<EnhancedDiscoveryPage />} />
               <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
-              <Route path="/discovery-flight/success" element={<DiscoveryFlightSuccess />} />
+              <Route path="/discovery-flight/success" element={<DiscoveryFlightSuccessPage />} />
+              <Route path="/discovery-flight/cancel" element={<DiscoveryFlightCancelPage />} />
               <Route path="/discovery-flight/error" element={<DiscoveryFlightError />} />
               <Route path="/discovery-flights/:flightId/passenger-info" element={<PassengerInfoForm />} />
               <Route path="/discovery-flights/:flightId/passenger-confirmation" element={<PassengerInfoConfirmation />} />
