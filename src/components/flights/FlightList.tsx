@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, Plus, X, Trash2, Check, Edit, CheckCircle2, GraduationCap } from "lucide-react";
+import { Filter, Plus, X, Trash2, Check, Edit, CheckCircle2, GraduationCap, Download } from "lucide-react";
 import { getFlights, getAircraft, getUsers, validateFlight, deleteFlight } from "../../lib/queries";
 import type { Aircraft, User, Flight } from "../../types/database";
 import { useAuth } from "../../contexts/AuthContext";
@@ -269,9 +269,12 @@ const FlightList = () => {
     // Filter by validation status
     if (filters.validated !== "all") {
       filtered = filtered.filter((flight) =>
-        filters.validated === "yes" ? flight.validated : !flight.validated
+        filters.validated === "yes" ? !flight.validated : flight.validated
       );
-      console.log('After validation filter:', filtered.length);
+      console.log('After validation filter:', {
+        validationStatus: filters.validated,
+        filteredCount: filtered.length
+      });
     }
 
     console.log('Final filtered count:', filtered.length);
@@ -575,6 +578,58 @@ const FlightList = () => {
     );
   };
 
+  const handleExport = () => {
+    // Préparer les données filtrées pour l'export
+    const dataToExport = filteredFlights.map((flight) => {
+      const aircraft = aircraftList.find((a) => a.id === flight.aircraftId);
+      const pilot = users.find((u) => u.id === flight.userId);
+      const instructor = flight.instructorId ? users.find((u) => u.id === flight.instructorId) : null;
+      
+      return {
+        "Date": new Date(flight.date).toLocaleDateString('fr-FR'),
+        "Pilote": pilot ? `${pilot.last_name} ${pilot.first_name}` : "Inconnu",
+        "Instructeur": instructor ? `${instructor.last_name} ${instructor.first_name}` : "-",
+        "Aéronef": aircraft ? `${aircraft.registration} (${aircraft.type})` : "Inconnu",
+        "Type de vol": flightTypes[flight.flightTypeId] || "Inconnu",
+        "Durée": formatDuration(flight.duration),
+        "Atterrissages": flight.landings,
+        "Validé": flight.validated ? "Oui" : "Non",
+        "Remarques": flight.remarks || "-"
+      };
+    });
+
+    // Convertir en CSV
+    const headers = Object.keys(dataToExport[0]);
+    const csvContent = [
+      headers.join(";"),
+      ...dataToExport.map(row => 
+        headers.map(header => {
+          const value = row[header as keyof typeof row];
+          // Échapper les guillemets et ajouter des guillemets si nécessaire
+          const formattedValue = value?.toString().includes(";") 
+            ? `"${value.toString().replace(/"/g, '""')}"` 
+            : value;
+          return formattedValue;
+        }).join(";")
+      )
+    ].join("\n");
+
+    // Créer et télécharger le fichier
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    const today = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+    link.setAttribute("href", url);
+    link.setAttribute("download", `export_vols_${today}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success("Export réussi !");
+  };
+
   if (loading) {
     return (
       <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -649,6 +704,13 @@ const FlightList = () => {
               >
                 <Filter className="h-4 w-4" />
                 <span>Filtres</span>
+              </button>
+              <button
+                onClick={handleExport}
+                className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                <span>Exporter</span>
               </button>
 
               {(hasAnyGroup(user, ["ADMIN"]) ||
