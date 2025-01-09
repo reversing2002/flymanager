@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, List } from 'lucide-react';
-import type { Aircraft, User, Reservation } from '../../types/database';
+import type { Aircraft, User, Reservation, Availability } from '../../types/database';
 import { useAuth } from '../../contexts/AuthContext';
 import ReservationModal from './ReservationModal';
 import ReservationCard from './ReservationCard';
-import { getAircraft, getReservations, getUsers } from '../../lib/queries';
+import { getAircraft, getReservations, getUsers, getAvailabilitiesForPeriod } from '../../lib/queries';
 import { hasAnyGroup } from "../../lib/permissions";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -16,6 +16,7 @@ const ReservationList: React.FC = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
   const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([]);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
@@ -32,15 +33,24 @@ const ReservationList: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [reservationsData, aircraftData, usersData] = await Promise.all([
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0);
+
+      const [reservationsData, aircraftData, usersData, availabilitiesData] = await Promise.all([
         getReservations(),
         getAircraft(),
         getUsers(),
+        getAvailabilitiesForPeriod(
+          startOfMonth.toISOString(),
+          endOfMonth.toISOString()
+        ),
       ]);
 
       setReservations(reservationsData);
       setAircraft(aircraftData);
       setUsers(usersData);
+      setAvailabilities(availabilitiesData);
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Erreur lors du chargement des données');
@@ -286,19 +296,16 @@ const ReservationList: React.FC = () => {
 
       {showReservationModal && (
         <ReservationModal
-          startTime={selectedReservation ? new Date(selectedReservation.startTime) : new Date()}
-          endTime={selectedReservation ? new Date(selectedReservation.endTime) : new Date()}
-          onClose={() => {
-            setShowReservationModal(false);
-            setSelectedReservation(null);
-          }}
+          startTime={new Date()}
+          endTime={new Date(Date.now() + 2 * 60 * 60 * 1000)} // 2 heures par défaut
+          onClose={() => setShowReservationModal(false)}
           onSuccess={() => {
             setShowReservationModal(false);
-            setSelectedReservation(null);
             loadData();
           }}
           aircraft={aircraft}
           users={users}
+          availabilities={availabilities}
           existingReservation={selectedReservation}
           onCreateFlight={handleCreateFlight}
         />

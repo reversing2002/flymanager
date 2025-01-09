@@ -1,5 +1,6 @@
 import { Reservation } from "../types/database";
-import { isFuture } from "date-fns";
+import { isFuture, parseISO } from "date-fns";
+import { RRule, RRuleSet, rrulestr } from "rrule/dist/esm/index.js";
 
 export interface ValidationError {
   message: string;
@@ -196,6 +197,81 @@ export function validateInstructorOverlap(
   return null;
 }
 
+export function validateAircraftAvailability(
+  startTime: Date,
+  endTime: Date,
+  aircraftId: string,
+  availabilities: Availability[]
+): ValidationError | null {
+  // Filtrer les indisponibilités pour l'avion spécifié ou globales
+  const relevantUnavailabilities = availabilities.filter(
+    (a) => a.slot_type === 'unavailability' && 
+          (a.aircraft_id === aircraftId || a.aircraft_id === null)
+  );
+
+  // Vérifier s'il y a un chevauchement avec une période d'indisponibilité
+  const hasOverlap = relevantUnavailabilities.some((unavailability) => {
+    const unavailStart = new Date(unavailability.start_time);
+    const unavailEnd = new Date(unavailability.end_time);
+
+    // Pour les indisponibilités récurrentes
+    if (unavailability.is_recurring && unavailability.recurrence_pattern) {
+      try {
+        const rrule = rrulestr(unavailability.recurrence_pattern, {
+          dtstart: parseISO(unavailability.start_time),
+          until: unavailability.recurrence_end_date ? parseISO(unavailability.recurrence_end_date) : undefined
+        });
+
+        // Calculer la durée de l'indisponibilité en millisecondes
+        const duration = new Date(unavailability.end_time).getTime() - new Date(unavailability.start_time).getTime();
+
+        // Obtenir toutes les occurrences qui pourraient chevaucher la période demandée
+        const occurrences = rrule.between(
+          new Date(startTime.getTime() - duration), // Rechercher un peu avant
+          endTime,
+          true
+        );
+
+        // Vérifier chaque occurrence
+        return occurrences.some(occurrence => {
+          const occurrenceStart = occurrence;
+          const occurrenceEnd = new Date(occurrence.getTime() + duration);
+          
+          return (
+            (startTime >= occurrenceStart && startTime < occurrenceEnd) ||
+            (endTime > occurrenceStart && endTime <= occurrenceEnd) ||
+            (startTime <= occurrenceStart && endTime >= occurrenceEnd)
+          );
+        });
+      } catch (error) {
+        console.error('Erreur lors du parsing de la règle de récurrence:', error);
+        // En cas d'erreur de parsing, on vérifie uniquement la première occurrence
+        return (
+          (startTime >= unavailStart && startTime < unavailEnd) ||
+          (endTime > unavailStart && endTime <= unavailEnd) ||
+          (startTime <= unavailStart && endTime >= unavailEnd)
+        );
+      }
+    }
+    
+    // Pour les indisponibilités non récurrentes
+    return (
+      (startTime >= unavailStart && startTime < unavailEnd) ||
+      (endTime > unavailStart && endTime <= unavailEnd) ||
+      (startTime <= unavailStart && endTime >= unavailEnd)
+    );
+  });
+
+  if (hasOverlap) {
+    return {
+      message: "L'avion n'est pas disponible pendant la période sélectionnée",
+      code: "AIRCRAFT_UNAVAILABLE",
+    };
+  }
+
+  return null;
+}
+
 export function validateReservation(
   startTime: Date,
   endTime: Date,
@@ -203,57 +279,61 @@ export function validateReservation(
   pilotId: string,
   instructorId: string | null,
   reservations: Reservation[],
+  availabilities: Availability[],
   currentReservationId?: string
 ): ValidationError | null {
-  // Vérifier que le pilote est spécifié
-  if (!pilotId) {
-    return {
-      message: "Un pilote doit être spécifié",
-      code: "MISSING_PILOT",
-    };
-  }
+  // Validation des horaires de base
+  const timeValidation = validateReservationTimes(startTime, endTime);
+  if (timeValidation) return timeValidation;
 
-  // Vérifier que la réservation est dans le futur
-  const futureError = validateReservationInFuture(startTime);
-  if (futureError) return futureError;
+  // Validation des heures d'ouverture
+  const hoursValidation = validateReservationHours(startTime, endTime);
+  if (hoursValidation) return hoursValidation;
 
-  // Vérifier les horaires de la réservation
-  const timeError = validateReservationTimes(startTime, endTime);
-  if (timeError) return timeError;
+  // Validation que la réservation est dans le futur
+  const futureValidation = validateReservationInFuture(startTime);
+  if (futureValidation) return futureValidation;
 
-  // Vérifier les heures d'ouverture
-  const hoursError = validateReservationHours(startTime, endTime);
-  if (hoursError) return hoursError;
-
-  // Vérifier le chevauchement avec d'autres réservations pour l'avion
-  const overlapError = validateReservationOverlap(
+  // Validation des chevauchements de réservations
+  const overlapValidation = validateReservationOverlap(
     startTime,
     endTime,
     aircraftId,
     reservations,
     currentReservationId
   );
-  if (overlapError) return overlapError;
+  if (overlapValidation) return overlapValidation;
 
-  // Vérifier le chevauchement avec d'autres réservations pour le pilote
-  const pilotOverlapError = validatePilotOverlap(
+  // Validation des disponibilités de l'avion
+  const availabilityValidation = validateAircraftAvailability(
+    startTime,
+    endTime,
+    aircraftId,
+    availabilities
+  );
+  if (availabilityValidation) return availabilityValidation;
+
+  // Validation des chevauchements pour le pilote
+  const pilotOverlapValidation = validatePilotOverlap(
     startTime,
     endTime,
     pilotId,
     reservations,
     currentReservationId
   );
-  if (pilotOverlapError) return pilotOverlapError;
+  if (pilotOverlapValidation) return pilotOverlapValidation;
 
-  // Vérifier le chevauchement avec d'autres réservations pour l'instructeur
-  const instructorOverlapError = validateInstructorOverlap(
-    startTime,
-    endTime,
-    instructorId,
-    reservations,
-    currentReservationId
-  );
-  if (instructorOverlapError) return instructorOverlapError;
+  // Validation des chevauchements pour l'instructeur si présent
+  if (instructorId) {
+    const instructorOverlapValidation = validateInstructorOverlap(
+      startTime,
+      endTime,
+      instructorId,
+      reservations,
+      currentReservationId
+    );
+    if (instructorOverlapValidation) return instructorOverlapValidation;
+  }
 
   return null;
 }

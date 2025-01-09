@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { setMinutes, getMinutes } from "date-fns";
 import { X, AlertTriangle, Calendar, MessageSquare } from "lucide-react";
-import type { Aircraft, User, Reservation } from "../../types/database";
+import type { Aircraft, User, Reservation, Availability } from "../../types/database";
 import {
   createReservation,
   updateReservation,
@@ -214,6 +214,7 @@ interface ReservationModalProps {
   onSuccess: () => void;
   aircraft: Aircraft[];
   users: User[];
+  availabilities: Availability[];
   preselectedAircraftId?: string;
   preselectedFlightTypeId?: string;
   existingReservation?: Reservation;
@@ -228,6 +229,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   onSuccess,
   aircraft: propAircraft,
   users: propUsers,
+  availabilities,
   preselectedAircraftId,
   preselectedFlightTypeId,
   existingReservation,
@@ -478,6 +480,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         formData.pilotId,
         formData.instructorId || null,
         existingReservations || [],
+        availabilities || [],
         existingReservation?.id
       );
 

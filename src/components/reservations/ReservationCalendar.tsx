@@ -279,6 +279,22 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
 
   const handleReservationUpdate = async (updatedReservation: Reservation) => {
     try {
+      const validationError = validateReservation(
+        updatedReservation.startTime,
+        updatedReservation.endTime,
+        updatedReservation.aircraftId,
+        updatedReservation.userId,
+        updatedReservation.instructorId,
+        reservations,
+        availabilities,
+        updatedReservation.id
+      );
+
+      if (validationError) {
+        toast.error(validationError.message);
+        return;
+      }
+
       await updateReservation(updatedReservation.id, updatedReservation);
       setReservations((prevReservations) => {
         return prevReservations.map((reservation) =>
@@ -595,13 +611,14 @@ const ReservationCalendar = ({ filters }: ReservationCalendarProps) => {
         <ReservationModal
           startTime={selectedTimeSlot?.start || new Date()}
           endTime={selectedTimeSlot?.end || new Date()}
-          onClose={handleModalClose}
+          onClose={() => setShowReservationModal(false)}
           onSuccess={() => {
             handleModalClose();
             loadData();
           }}
           aircraft={aircraft}
           users={users}
+          availabilities={availabilities}
           preselectedAircraftId={selectedTimeSlot?.aircraftId}
           existingReservation={selectedReservation}
           onCreateFlight={handleCreateFlight}
