@@ -1,5 +1,5 @@
 import { supabase } from "../supabase";
-import { adminClient } from "../supabase/adminClient";
+import { adminService } from "../supabase/adminClient";
 import type { User } from "../../types/database";
 import { addMonths, isAfter } from 'date-fns';
 
@@ -358,114 +358,40 @@ function generateRandomPassword(length = 12) {
   return password;
 }
 
-export async function createMember(data: {
+export async function createMember({
+  email,
+  firstName,
+  lastName,
+  roles = [],
+  clubId,
+  ...userData
+}: {
+  email: string;
   firstName: string;
   lastName: string;
-  email: string;
-  roles: string[];
-}): Promise<{ password: string }> {
+  roles?: string[];
+  clubId: string;
+  [key: string]: any;
+}): Promise<{ user: any; password: string }> {
+  const password = generateRandomPassword();
+  
   try {
-    const { firstName, lastName, email, roles } = data;
-    const login = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const password = generateRandomPassword();
-    console.log("Generated password:", password);
-
-    // Get current user's club
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      throw new Error("Utilisateur non connecté");
-    }
-
-    const { data: adminClub, error: clubError } = await adminClient
-      .from("club_members")
-      .select("club_id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (clubError) {
-      throw clubError;
-    }
-
-    // First create the user in public.users to get the database ID
-    const { data: newUser, error: createError } = await adminClient
-      .from("users")
-      .insert({
+    const result = await adminService.createUser({
+      email,
+      password,
+      userData: {
         first_name: firstName,
         last_name: lastName,
-        email: email,
-        login: login,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (createError) {
-      console.error("Error creating user:", createError);
-      throw createError;
-    }
-
-    // Create the auth user using the custom RPC function that handles the ID mapping
-    const { error: authError } = await adminClient.rpc("create_auth_user", {
-      p_email: email,
-      p_password: password,
-      p_login: login,
-      p_role: 'authenticated',  // Force role to authenticated
-      p_user_id: newUser.id,
-      p_user_metadata: {
-        login: login,
-        password: password,
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
-        full_name: `${firstName} ${lastName}`,
-        app_url: window.location.origin  // Pour les liens dans l'email
-      }
+        email,
+        ...userData
+      },
+      roles,
+      clubId
     });
 
-    if (authError) {
-      console.error("Error creating auth user:", authError);
-      // Cleanup the created user if auth fails
-      await adminClient.from("users").delete().eq("id", newUser.id);
-      throw authError;
-    }
-
-    // Update user roles using the RPC function
-    if (roles.length > 0) {
-      const { error: rolesError } = await adminClient
-        .rpc('update_user_groups', {
-          p_user_id: newUser.id,
-          p_groups: roles
-        });
-
-      if (rolesError) {
-        console.error("Error updating user roles:", rolesError);
-        // Cleanup if role assignment fails
-        await adminClient.from("users").delete().eq("id", newUser.id);
-        throw rolesError;
-      }
-    }
-
-    // Add user to club_members
-    const { error: clubMemberError } = await adminClient
-      .from("club_members")
-      .insert({
-        user_id: newUser.id,
-        club_id: adminClub.club_id,
-        joined_at: new Date().toISOString()
-      });
-
-    if (clubMemberError) {
-      console.error("Error adding user to club:", clubMemberError);
-      // Cleanup everything if club member creation fails
-      await adminClient.from("users").delete().eq("id", newUser.id);
-      throw clubMemberError;
-    }
-
-    // Return the generated password
-    return { password };
+    return { user: result.user, password };
   } catch (error) {
-    console.error("Error in createMember:", error);
+    console.error("Erreur lors de la création du membre:", error);
     throw error;
   }
 }
@@ -483,7 +409,7 @@ export async function createAuthAccount(data: {
     console.log("Generated password for auth account:", password);
 
     // Create the auth user using the custom RPC function that handles the ID mapping
-    const { error: authError } = await adminClient.rpc("create_auth_user", {
+    const { error: authError } = await adminService.createAuthUser({
       p_email: email,
       p_password: password,
       p_login: login,

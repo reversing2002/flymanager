@@ -40,6 +40,9 @@ const allowedOrigins = [
   'https://4fly.io' // URL de production
 ];
 
+// Import admin router
+const adminRouter = require('./admin');
+
 // Stripe webhook should be before any parsing middleware
 app.post("/api/webhooks/stripe", 
   express.raw({type: 'application/json'}), 
@@ -165,6 +168,9 @@ app.use(
     credentials: true,
   })
 );
+
+// Mount admin router
+app.use('/admin', adminRouter);
 
 // Configuration Twilio
 const accountSid = process.env.TWILIO_ACCOUNT_SID;

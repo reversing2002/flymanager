@@ -49,6 +49,7 @@ const CalendarContainer = () => {
           <span>Filtres</span>
         </button>
 
+        {/*
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500 mr-2">Vue :</span>
           <button
@@ -74,6 +75,7 @@ const CalendarContainer = () => {
             <Table className="h-4 w-4" />
           </button>
         </div>
+        */}
       </div>
 
       {/* Panel de filtres */}

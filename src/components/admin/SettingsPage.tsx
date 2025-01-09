@@ -54,6 +54,7 @@ import AccountingCategoryManager from "./AccountingCategoryManager";
 import ImportManager from "./imports/ImportManager";
 import NotificationList from "./NotificationList";
 import WeatherSettings from "./WeatherSettings";
+import AdminTestPage from "../../pages/settings/AdminTestPage";
 
 type TabType =
   | "club"
@@ -76,7 +77,8 @@ type TabType =
   | "api"
   | "backups"
   | "weather"
-  | "smile";
+  | "smile"
+  | "adminTest";
 
 const SettingsPage = () => {
   const { user } = useAuth();
@@ -99,19 +101,25 @@ const SettingsPage = () => {
     { id: "accountTypes", label: "Types de compte", icon: Receipt },
     { id: "accountingCategories", label: "Catégories comptables", icon: Calculator },
     { id: "accountingMigration", label: "Migration comptable", icon: ArrowRightLeft },
-    { id: "stripeAccount", label: "Gestion CB", icon: CreditCard },
+    { id: "stripeAccount", label: "Compte Stripe", icon: CreditCard },
+    // Qualifications et licences
     { id: "qualifications", label: "Qualifications", icon: Award },
     { id: "licenses", label: "Licences", icon: BookOpen },
     { id: "medicalTypes", label: "Types médicaux", icon: Heart },
+    // Champs personnalisés
     { id: "memberFields", label: "Champs membres", icon: UserCog },
     { id: "aircraftFields", label: "Champs avions", icon: Plane },
-    { id: "flightFields", label: "Champs vols", icon: ListOrdered },
+    { id: "flightFields", label: "Champs vols", icon: FileText },
+    // Rôles et permissions
     { id: "roles", label: "Rôles", icon: Users },
     { id: "permissions", label: "Permissions", icon: Lock },
+    // Autres
     { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "smile", label: "Synchro SMILE", icon: Cloud },
     { id: "api", label: "API", icon: Terminal },
     { id: "backups", label: "Sauvegardes", icon: DatabaseBackup },
+    { id: "smile", label: "SMILE", icon: Building2 },
+    // Tests admin
+    { id: "adminTest", label: "Tests Admin", icon: Shield },
   ] as const;
 
   // Filtrer les onglets en fonction des permissions
@@ -340,6 +348,7 @@ const SettingsPage = () => {
           {activeTab === "smile" && <SmileSettings />}
           {activeTab === "api" && <ApiExplorer />}
           {activeTab === "backups" && <BackupSettings />}
+          {activeTab === "adminTest" && <AdminTestPage />}
         </div>
       </div>
     </div>

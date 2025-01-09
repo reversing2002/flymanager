@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { AlertTriangle, Copy, Download, Upload } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
-import { adminClient } from '../../../lib/supabase/adminClient';
+import { adminService } from '../../../lib/supabase/adminClient';
 import { useAuth } from "../../../contexts/AuthContext";
 import { createMember, createAuthAccount } from '../../../lib/queries/users';
 
@@ -162,11 +162,7 @@ const MemberImportTab = () => {
         const { member_status = 'ACTIVE', ...userInfo } = userData;
         
         // Vérifier si l'utilisateur existe déjà
-        const { data: existingUser } = await adminClient
-          .from('users')
-          .select('id, email, auth_id')
-          .eq('email', userData.email)
-          .single();
+        const { data: existingUser } = await adminService.getUserByEmail(userData.email);
 
         if (existingUser) {
           console.log('Utilisateur existant:', existingUser.email);
@@ -205,20 +201,25 @@ const MemberImportTab = () => {
               continue;
             }
             // Mettre à jour l'utilisateur existant
-            await adminClient
-              .from('users')
-              .update(userInfo)
-              .eq('id', existingUser.id);
+            await adminService.updateUser(existingUser.id, userInfo);
           }
         } else {
           // Créer un nouvel utilisateur avec createMember
           try {
             console.log('Création du membre:', userData);
-            const { password } = await createMember({
-              firstName: userData.first_name,
-              lastName: userData.last_name,
+            const { password } = await adminService.createUser({
               email: userData.email,
-              roles: [], // Les rôles seront gérés séparément
+              password: generateTempPassword(),
+              userData: {
+                first_name: userData.first_name,
+                last_name: userData.last_name,
+                email: userData.email,
+                phone: userData.phone,
+                birth_date: userData.birth_date,
+                // autres champs selon votre schéma
+              },
+              roles: [],
+              clubId: user.club.id
             });
             
             console.log('Membre créé avec succès, mot de passe:', password);

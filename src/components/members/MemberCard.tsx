@@ -9,7 +9,7 @@ import { hasAnyGroup } from "../../lib/permissions";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { Role } from "../../types/roles";
 import { supabase } from '../../lib/supabase';
-import { adminClient } from "../../lib/supabase/adminClient";
+import { adminService } from "../../lib/supabase/adminClient";
 import { toast } from "react-hot-toast";
 
 interface MemberCardProps {
@@ -21,6 +21,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isAdmin = hasAnyGroup(currentUser, ["ADMIN"]);
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
@@ -64,30 +65,16 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onDelete }) => {
   };
 
   const handleDelete = async () => {
-    if (!member.id) return;
-
     try {
-      // Supprimer l'utilisateur de Supabase Auth
-      if (member.auth_id) {
-        const { error: authError } = await adminClient.auth.admin.deleteUser(
-          member.auth_id
-        );
-        if (authError) throw authError;
-      }
-
-      // Supprimer l'utilisateur de la base de données
-      const { error: dbError } = await supabase
-        .from("users")
-        .delete()
-        .eq("id", member.id);
-
-      if (dbError) throw dbError;
-
+      setIsDeleting(true);
+      await adminService.deleteUser(member.id);
       toast.success("Membre supprimé avec succès");
       onDelete?.();
     } catch (error) {
-      console.error("Error deleting member:", error);
+      console.error("Erreur lors de la suppression:", error);
       toast.error("Erreur lors de la suppression du membre");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
