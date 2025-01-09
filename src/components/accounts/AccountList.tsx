@@ -196,17 +196,29 @@ const AccountList = () => {
 
   const renderTable = () => {
     const filteredEntries = entries.filter((entry) => {
+      // Filtre par date de début
       if (filters.startDate && new Date(entry.date) < new Date(filters.startDate))
         return false;
+      
+      // Filtre par date de fin
       if (filters.endDate && new Date(entry.date) > new Date(filters.endDate))
         return false;
+      
+      // Filtre par statut de validation
       if (
         filters.validated !== "all" &&
         entry.is_validated !== (filters.validated === "true")
       )
         return false;
+      
+      // Filtre par membre assigné
       if (filters.assignedToId !== "all" && entry.assigned_to_id !== filters.assignedToId)
         return false;
+        
+      // Filtre par type d'opération
+      if (filters.type !== "all" && entry.account_entry_types?.code !== filters.type)
+        return false;
+        
       return true;
     });
 
@@ -316,6 +328,75 @@ const AccountList = () => {
     return user ? `${user.last_name} ${user.first_name}` : "-";
   };
 
+  const handleExport = () => {
+    // Préparer les données filtrées pour l'export
+    const dataToExport = entries.filter((entry) => {
+      // Filtre par date de début
+      if (filters.startDate && new Date(entry.date) < new Date(filters.startDate))
+        return false;
+      
+      // Filtre par date de fin
+      if (filters.endDate && new Date(entry.date) > new Date(filters.endDate))
+        return false;
+      
+      // Filtre par statut de validation
+      if (
+        filters.validated !== "all" &&
+        entry.is_validated !== (filters.validated === "true")
+      )
+        return false;
+      
+      // Filtre par membre assigné
+      if (filters.assignedToId !== "all" && entry.assigned_to_id !== filters.assignedToId)
+        return false;
+        
+      // Filtre par type d'opération
+      if (filters.type !== "all" && entry.account_entry_types?.code !== filters.type)
+        return false;
+        
+      return true;
+    }).map((entry) => ({
+      Date: dateUtils.formatDate(entry.date),
+      Membre: getUserName(entry.assigned_to_id),
+      Type: entry.account_entry_types?.name || "Type inconnu",
+      Description: entry.description,
+      Montant: formatAmount(entry.amount),
+      "Méthode de paiement": getPaymentMethodLabel(entry.payment_method),
+      "Validé": entry.is_validated ? "Oui" : "Non",
+      "Payé au club": entry.is_club_paid ? "Oui" : "Non"
+    }));
+
+    // Convertir en CSV
+    const headers = Object.keys(dataToExport[0]);
+    const csvContent = [
+      headers.join(";"),
+      ...dataToExport.map(row => 
+        headers.map(header => {
+          const value = row[header as keyof typeof row];
+          // Échapper les guillemets et ajouter des guillemets si nécessaire
+          const formattedValue = value?.toString().includes(";") 
+            ? `"${value.toString().replace(/"/g, '""')}"` 
+            : value;
+          return formattedValue;
+        }).join(";")
+      )
+    ].join("\n");
+
+    // Créer et télécharger le fichier
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `export_comptes_${dateUtils.formatDate(new Date())}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success("Export réussi !");
+  };
+
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -349,9 +430,7 @@ const AccountList = () => {
             <span>Filtres</span>
           </button>
           <button
-            onClick={() => {
-              /* TODO: Export functionality */
-            }}
+            onClick={handleExport}
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
           >
             <Download className="h-4 w-4" />
@@ -401,6 +480,7 @@ const AccountList = () => {
                 className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
               >
                 <option value="all">Tous</option>
+                <option value="ACCOUNT_FUNDING">Crédit compte</option>
                 <option value="FLIGHT">Vols</option>
                 <option value="MEMBERSHIP">Cotisations</option>
                 <option value="INSURANCE">Assurances</option>
@@ -420,8 +500,8 @@ const AccountList = () => {
                 className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
               >
                 <option value="all">Tous</option>
-                <option value="yes">Validés</option>
-                <option value="no">Non validés</option>
+                <option value="true">Validés</option>
+                <option value="false">Non validés</option>
               </select>
             </div>
             {isAdmin && (

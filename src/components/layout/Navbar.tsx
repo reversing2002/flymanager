@@ -191,7 +191,7 @@ const Navbar = () => {
                     <span>Finances</span>
                   </Link>
                 )}
-                {hasAnyGroup(currentUser, ['admin']) && (
+                {hasAnyGroup(currentUser, ['SYSTEM_ADMIN']) && (
                   <>
                     <Link to="/club-stats" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
                       <BarChart2 className="w-5 h-5 mr-3" />

@@ -25,7 +25,7 @@ const ClubStatsPage: React.FC = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['clubStats', selectedPeriod],
     queryFn: async () => {
-      if (!user || !hasAnyGroup(user, ['admin'])) {
+      if (!user || !hasAnyGroup(user, ['SYSTEM_ADMIN'])) {
         throw new Error('Accès non autorisé');
       }
 
@@ -105,7 +105,7 @@ const ClubStatsPage: React.FC = () => {
     ],
   };
 
-  if (!user || !hasAnyGroup(user, ['admin'])) {
+  if (!user || !hasAnyGroup(user, ['SYSTEM_ADMIN'])) {
     return (
       <Typography variant="h5" color="error" sx={{ p: 3 }}>
         Accès non autorisé
