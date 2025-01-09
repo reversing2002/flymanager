@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, Plus, X, Trash2, Check, Edit, CheckCircle2, GraduationCap, Download } from "lucide-react";
+import { Filter, Plus, X, Trash2, Check, Edit, CheckCircle2, GraduationCap, Download, Timer } from "lucide-react";
 import { getFlights, getAircraft, getUsers, validateFlight, deleteFlight } from "../../lib/queries";
 import type { Aircraft, User, Flight } from "../../types/database";
 import { useAuth } from "../../contexts/AuthContext";
@@ -11,6 +11,14 @@ import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { hasAnyGroup } from "../../lib/permissions";
 import CompetenciesModal from "../progression/CompetenciesModal";
+
+// Fonction utilitaire pour vérifier la cohérence des horamètres
+const checkHourMeterConsistency = (currentFlight: Flight, previousFlight: Flight | undefined): boolean => {
+  if (!previousFlight || !currentFlight.start_hour_meter || !previousFlight.end_hour_meter) {
+    return true; // Si pas de vol précédent ou pas d'horamètres, on considère que c'est cohérent
+  }
+  return currentFlight.start_hour_meter === previousFlight.end_hour_meter;
+};
 
 const FlightList = () => {
   const { user } = useAuth();
@@ -413,28 +421,31 @@ const FlightList = () => {
           <table className="w-full text-sm whitespace-nowrap">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left p-4 font-medium text-slate-600">
+                <th className="text-left p-4 font-medium text-slate-600 max-w-[120px]">
                   Nom
                 </th>
-                <th className="text-left p-4 font-medium text-slate-600">
+                <th className="text-left p-4 font-medium text-slate-600 w-[100px]">
                   Date du vol
                 </th>
-                <th className="text-left p-4 font-medium text-slate-600">
+                <th className="text-left p-4 font-medium text-slate-600 w-[80px]">
                   Appareil
                 </th>
-                <th className="text-left p-4 font-medium text-slate-600">
+                <th className="text-center p-4 font-medium text-slate-600 w-[40px]">
+                  Horamètre
+                </th>
+                <th className="text-left p-4 font-medium text-slate-600 w-[100px]">
                   Type de vol
                 </th>
-                <th className="text-left p-4 font-medium text-slate-600">
+                <th className="text-left p-4 font-medium text-slate-600 max-w-[120px]">
                   Instructeur
                 </th>
-                <th className="text-left p-4 font-medium text-slate-600">
+                <th className="text-left p-4 font-medium text-slate-600 w-[80px]">
                   Durée
                 </th>
-                <th className="text-right p-4 font-medium text-slate-600">
+                <th className="text-right p-4 font-medium text-slate-600 w-[100px]">
                   Coût total
                 </th>
-                <th className="text-right p-4 font-medium text-slate-600">
+                <th className="text-right p-4 font-medium text-slate-600 w-[100px]">
                   Dont instruction
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
@@ -473,7 +484,7 @@ const FlightList = () => {
                       key={flight.id}
                       className="border-b border-slate-100 hover:bg-slate-50"
                     >
-                      <td className="p-4">
+                      <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
                         {pilot
                           ? `${pilot.first_name} ${pilot.last_name}`
                           : "N/A"}
@@ -484,11 +495,32 @@ const FlightList = () => {
                       <td className="p-4">
                         {aircraft?.registration || "N/A"}
                       </td>
+                      <td className="p-4 text-center">
+                        {flight.start_hour_meter && (
+                          <Timer 
+                            size={20} 
+                            className={
+                              checkHourMeterConsistency(
+                                flight,
+                                filteredFlights
+                                  .filter(f => f.aircraftId === flight.aircraftId)
+                                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                  .find(f => 
+                                    new Date(f.date).getTime() < new Date(flight.date).getTime()
+                                  )
+                              )
+                              ? "text-green-600"
+                              : "text-red-600"
+                            }
+                            title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter || 'N/A'}`}
+                          />
+                        )}
+                      </td>
                       <td className="p-4">
                         {flightTypes[flight.flightTypeId] ||
                           flight.flightTypeId}
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 truncate max-w-[120px]" title={instructor ? `${instructor.first_name} ${instructor.last_name}` : "-"}>
                         {instructor
                           ? `${instructor.first_name} ${instructor.last_name}`
                           : "-"}
@@ -748,28 +780,31 @@ const FlightList = () => {
                   <table className="w-full text-sm whitespace-nowrap">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="text-left p-4 font-medium text-slate-600">
+                        <th className="text-left p-4 font-medium text-slate-600 max-w-[120px]">
                           Nom
                         </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
+                        <th className="text-left p-4 font-medium text-slate-600 w-[100px]">
                           Date du vol
                         </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
+                        <th className="text-left p-4 font-medium text-slate-600 w-[80px]">
                           Appareil
                         </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
+                        <th className="text-center p-4 font-medium text-slate-600 w-[40px]">
+                          Horamètre
+                        </th>
+                        <th className="text-left p-4 font-medium text-slate-600 w-[100px]">
                           Type de vol
                         </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
+                        <th className="text-left p-4 font-medium text-slate-600 max-w-[120px]">
                           Instructeur
                         </th>
-                        <th className="text-left p-4 font-medium text-slate-600">
+                        <th className="text-left p-4 font-medium text-slate-600 w-[80px]">
                           Durée
                         </th>
-                        <th className="text-right p-4 font-medium text-slate-600">
+                        <th className="text-right p-4 font-medium text-slate-600 w-[100px]">
                           Coût total
                         </th>
-                        <th className="text-right p-4 font-medium text-slate-600">
+                        <th className="text-right p-4 font-medium text-slate-600 w-[100px]">
                           Dont instruction
                         </th>
                         <th className="text-center p-4 font-medium text-slate-600">
@@ -806,7 +841,7 @@ const FlightList = () => {
                             key={flight.id}
                             className="border-b border-slate-100 hover:bg-slate-50"
                           >
-                            <td className="p-4">
+                            <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
                               {pilot
                                 ? `${pilot.first_name} ${pilot.last_name}`
                                 : "N/A"}
@@ -817,11 +852,32 @@ const FlightList = () => {
                             <td className="p-4">
                               {aircraft?.registration || "N/A"}
                             </td>
+                            <td className="p-4 text-center">
+                              {flight.start_hour_meter && (
+                                <Timer 
+                                  size={20} 
+                                  className={
+                                    checkHourMeterConsistency(
+                                      flight,
+                                      personalFlights
+                                        .filter(f => f.aircraftId === flight.aircraftId)
+                                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                        .find(f => 
+                                          new Date(f.date).getTime() < new Date(flight.date).getTime()
+                                        )
+                                    )
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                  }
+                                  title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter || 'N/A'}`}
+                                />
+                              )}
+                            </td>
                             <td className="p-4">
                               {flightTypes[flight.flightTypeId] ||
                                 flight.flightTypeId}
                             </td>
-                            <td className="p-4">
+                            <td className="p-4 truncate max-w-[120px]" title={instructor ? `${instructor.first_name} ${instructor.last_name}` : "-"}>
                               {instructor
                                 ? `${instructor.first_name} ${instructor.last_name}`
                                 : "-"}
@@ -919,28 +975,31 @@ const FlightList = () => {
                 <table className="w-full text-sm whitespace-nowrap">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="text-left p-4 font-medium text-slate-600">
+                      <th className="text-left p-4 font-medium text-slate-600 max-w-[120px]">
                         Nom
                       </th>
-                      <th className="text-left p-4 font-medium text-slate-600">
+                      <th className="text-left p-4 font-medium text-slate-600 w-[100px]">
                         Date du vol
                       </th>
-                      <th className="text-left p-4 font-medium text-slate-600">
+                      <th className="text-left p-4 font-medium text-slate-600 w-[80px]">
                         Appareil
                       </th>
-                      <th className="text-left p-4 font-medium text-slate-600">
+                      <th className="text-center p-4 font-medium text-slate-600 w-[40px]">
+                        Horamètre
+                      </th>
+                      <th className="text-left p-4 font-medium text-slate-600 w-[100px]">
                         Type de vol
                       </th>
-                      <th className="text-left p-4 font-medium text-slate-600">
+                      <th className="text-left p-4 font-medium text-slate-600 max-w-[120px]">
                         Instructeur
                       </th>
-                      <th className="text-left p-4 font-medium text-slate-600">
+                      <th className="text-left p-4 font-medium text-slate-600 w-[80px]">
                         Durée
                       </th>
-                      <th className="text-right p-4 font-medium text-slate-600">
+                      <th className="text-right p-4 font-medium text-slate-600 w-[100px]">
                         Coût total
                       </th>
-                      <th className="text-right p-4 font-medium text-slate-600">
+                      <th className="text-right p-4 font-medium text-slate-600 w-[100px]">
                         Dont instruction
                       </th>
                       <th className="text-center p-4 font-medium text-slate-600">
@@ -977,7 +1036,7 @@ const FlightList = () => {
                           key={flight.id}
                           className="border-b border-slate-100 hover:bg-slate-50"
                         >
-                          <td className="p-4">
+                          <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
                             {pilot
                               ? `${pilot.first_name} ${pilot.last_name}`
                               : "N/A"}
@@ -988,11 +1047,32 @@ const FlightList = () => {
                           <td className="p-4">
                             {aircraft?.registration || "N/A"}
                           </td>
+                          <td className="p-4 text-center">
+                            {flight.start_hour_meter && (
+                              <Timer 
+                                size={20} 
+                                className={
+                                  checkHourMeterConsistency(
+                                    flight,
+                                    filteredFlights
+                                      .filter(f => f.aircraftId === flight.aircraftId)
+                                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                      .find(f => 
+                                        new Date(f.date).getTime() < new Date(flight.date).getTime()
+                                      )
+                                  )
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                                }
+                                title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter || 'N/A'}`}
+                              />
+                            )}
+                          </td>
                           <td className="p-4">
                             {flightTypes[flight.flightTypeId] ||
                               flight.flightTypeId}
                           </td>
-                          <td className="p-4">
+                          <td className="p-4 truncate max-w-[120px]" title={instructor ? `${instructor.first_name} ${instructor.last_name}` : "-"}>
                             {instructor
                               ? `${instructor.first_name} ${instructor.last_name}`
                               : "-"}
