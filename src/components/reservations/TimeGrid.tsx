@@ -435,12 +435,12 @@ const TimeGrid: React.FC<TimeGridProps> = ({
           <div className="font-medium">
             {format(startTime, "H'h'mm")} - {format(endTime, "H'h'mm")}
           </div>
-          <div className="mt-1 line-clamp-2">
-            {pilot ? pilot.first_name : "Pilote inconnu"}
+          <div className="mt-1 line-clamp-2 text-[0.7rem] leading-tight">
+            {pilot ? `${pilot.first_name} ${pilot.last_name}` : "Pilote inconnu"}
             {showInstructor && (
               <>
                 {" + "}
-                {instructor.first_name || "Instructeur inconnu"}
+                {`${instructor.first_name} ${instructor.last_name}` || "Instructeur inconnu"}
               </>
             )}
           </div>

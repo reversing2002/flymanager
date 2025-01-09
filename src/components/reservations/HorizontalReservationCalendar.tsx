@@ -923,12 +923,12 @@ const HorizontalReservationCalendar = ({
                               style={style}
                             >
                               <div className="p-1">
-                                <div className="mt-1 line-clamp-1">
-                                  {(pilot?.first_name || "Pilote").substring(0, 10)}
+                                <div className="mt-1 line-clamp-1 text-[0.65rem] leading-tight">
+                                  {pilot ? `${pilot.first_name} ${pilot.last_name}` : "Pilote"}
                                   {instructor && (
                                     <>
                                       {" + "}
-                                      {(instructor.first_name || "Instructeur").substring(0, 10)}
+                                      {`${instructor.first_name} ${instructor.last_name}` || "Instructeur"}
                                     </>
                                   )}
                                 </div>
