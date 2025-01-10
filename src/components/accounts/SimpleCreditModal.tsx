@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../contexts/AuthContext";
 
 const schema = z.object({
-  amount: z.number().min(0, "Le montant doit être positif"),
+  amount: z.number().min(1, "Le montant doit être supérieur à 0€"),
   paymentMethod: z.enum(["CARD", "TRANSFER", "CHECK", "CASH"], {
     required_error: "Veuillez sélectionner un mode de paiement",
   }),
@@ -73,7 +73,7 @@ export default function SimpleCreditModal({ userId, onClose, onSuccess, entry }:
       paymentMethod: entry.payment_method as "CARD" | "TRANSFER" | "CHECK" | "CASH",
       description: entry.description?.replace(/Crédit du compte (par carte|par virement|par chèque|en espèces)( - )?/, "") || "",
     } : {
-      amount: 0,
+      amount: 200,
       paymentMethod: "CARD",
     },
   });
@@ -197,148 +197,159 @@ export default function SimpleCreditModal({ userId, onClose, onSuccess, entry }:
         exit={{ scale: 0.9, opacity: 0 }}
         className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
       >
+        {/* En-tête */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">
-            {entry ? "Modifier la demande de crédit" : "Créditer votre compte"}
+            {entry ? "Modifier le crédit" : "Créditer le compte"}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors rounded-lg p-1 hover:bg-gray-100"
+            aria-label="Fermer"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Montants rapides */}
+          {/* Montants prédéfinis */}
           {!entry && (
-            <div className="grid grid-cols-5 gap-2">
-              {quickAmounts.map((amount) => (
-                <motion.button
-                  key={amount}
-                  type="button"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setValue("amount", amount)}
-                  className={`py-2 px-3 rounded-xl font-medium transition-colors ${
-                    currentAmount === amount
-                      ? "bg-blue-100 text-blue-700 border-2 border-blue-500"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {amount}€
-                </motion.button>
-              ))}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Montant (€)
-              </label>
-              <div className="relative mt-1">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Euro className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="number"
-                  step="0.01"
-                  {...register("amount", { valueAsNumber: true })}
-                  className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
-                  placeholder="0.00"
-                />
-              </div>
-              {errors.amount && (
-                <p className="mt-1 text-sm text-red-600">{errors.amount.message}</p>
-              )}
-            </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mode de paiement
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Montants suggérés
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {(["CARD", "TRANSFER", "CHECK", "CASH"] as const).map((method) => (
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {quickAmounts.map((amount) => (
                   <motion.button
-                    key={method}
+                    key={amount}
                     type="button"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setValue("paymentMethod", method)}
-                    className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-xl border-2 transition-all duration-200 ${
-                      currentMethod === method
-                        ? "bg-blue-50 border-blue-500 text-blue-700"
-                        : "border-gray-200 hover:border-gray-300 text-gray-700"
+                    onClick={() => setValue("amount", amount)}
+                    className={`py-2 px-3 rounded-xl font-medium transition-all duration-200 ${
+                      currentAmount === amount
+                        ? "bg-blue-100 text-blue-700 border-2 border-blue-500"
+                        : "bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-transparent"
                     }`}
                   >
-                    {getPaymentMethodIcon(method)}
-                    <span className="font-medium">
-                      {method === "CARD" && "Carte bancaire"}
-                      {method === "TRANSFER" && "Virement"}
-                      {method === "CHECK" && "Chèque"}
-                      {method === "CASH" && "Espèces"}
-                    </span>
+                    {amount}€
                   </motion.button>
                 ))}
               </div>
-              {errors.paymentMethod && (
-                <p className="mt-1 text-sm text-red-600">{errors.paymentMethod.message}</p>
-              )}
             </div>
+          )}
 
-            {currentMethod !== "CARD" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Commentaire (optionnel)
-                </label>
-                <input
-                  type="text"
-                  {...register("description")}
-                  className="mt-1 block w-full pl-3 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-200 focus:border-primary-500 transition-all duration-200"
-                  placeholder="Ex: Virement du 10/01/2025"
-                />
+          {/* Montant personnalisé */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Montant personnalisé
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Euro className="h-5 w-5 text-gray-400" />
               </div>
+              <input
+                type="number"
+                step="0.01"
+                {...register("amount", { valueAsNumber: true })}
+                className={`block w-full pl-10 pr-3 py-3 border-2 rounded-xl transition-all duration-200 ${
+                  errors.amount 
+                    ? "border-red-300 focus:ring-red-200 focus:border-red-500" 
+                    : "border-gray-200 focus:ring-blue-200 focus:border-blue-500"
+                }`}
+                placeholder="0.00"
+              />
+            </div>
+            {errors.amount && (
+              <p className="mt-1 text-sm text-red-600">{errors.amount.message}</p>
             )}
           </div>
 
+          {/* Mode de paiement */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mode de paiement
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {(["CARD", "TRANSFER", "CHECK", "CASH"] as const).map((method) => (
+                <motion.button
+                  key={method}
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setValue("paymentMethod", method)}
+                  className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-xl border-2 transition-all duration-200 ${
+                    currentMethod === method
+                      ? "bg-blue-50 border-blue-500 text-blue-700"
+                      : "border-gray-200 hover:border-gray-300 text-gray-700"
+                  }`}
+                >
+                  {getPaymentMethodIcon(method)}
+                  <span className="font-medium">
+                    {method === "CARD" && "Carte"}
+                    {method === "TRANSFER" && "Virement"}
+                    {method === "CHECK" && "Chèque"}
+                    {method === "CASH" && "Espèces"}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          {/* Commentaire optionnel */}
+          {currentMethod !== "CARD" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Commentaire <span className="text-gray-500">(optionnel)</span>
+              </label>
+              <input
+                type="text"
+                {...register("description")}
+                className="block w-full px-3 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all duration-200"
+                placeholder="Ex: Virement du 10/01/2025"
+              />
+            </div>
+          )}
+
+          {/* Bouton de validation */}
           <motion.button
             type="submit"
             disabled={loading}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`w-full flex items-center justify-center py-4 px-6 border border-transparent rounded-xl text-white text-xl font-semibold shadow-lg transition-all duration-200 ${
+            className={`w-full flex items-center justify-center py-4 px-6 rounded-xl text-white text-lg font-semibold shadow-sm transition-all duration-200 ${
               loading
                 ? "bg-gray-300 cursor-not-allowed"
                 : currentMethod === "CARD"
-                ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl"
-                : "bg-blue-600 hover:bg-blue-700 hover:shadow-xl"
+                ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {loading ? (
-              <div className="flex items-center space-x-3">
-                <div className="w-6 h-6 border-t-2 border-b-2 border-white rounded-full animate-spin" />
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin" />
                 <span>Chargement...</span>
               </div>
             ) : (
-              <div className="flex items-center space-x-3">
-                {entry ? <Save className="h-6 w-6" /> : getPaymentMethodIcon(currentMethod)}
+              <div className="flex items-center space-x-2">
+                {entry ? <Save className="h-5 w-5" /> : getPaymentMethodIcon(currentMethod)}
                 <span>
                   {entry 
-                    ? "Enregistrer les modifications" 
+                    ? "Enregistrer" 
                     : currentMethod === "CARD"
-                    ? "Payer par carte"
-                    : "Enregistrer la demande"
+                    ? `Ajouter ${currentAmount}€`
+                    : "Enregistrer"
                   }
                 </span>
               </div>
             )}
           </motion.button>
 
+          {/* Message d'information */}
           <p className="text-sm text-center text-gray-500">
             {currentMethod === "CARD" 
-              ? "Le paiement sera traité immédiatement"
-              : "Votre demande devra être validée par un administrateur"}
+              ? "Le paiement sera traité immédiatement via Stripe"
+              : "Un administrateur validera votre demande"}
           </p>
         </form>
       </motion.div>

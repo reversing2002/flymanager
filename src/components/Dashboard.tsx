@@ -35,7 +35,7 @@ import SunTimesDisplay from "./common/SunTimesDisplay";
 import AircraftRemarks from "./remarks/AircraftRemarks";
 import PendingDiscoveryFlights from "./discovery/PendingDiscoveryFlights";
 import WeatherWidget from "./weather/WeatherWidget";
-import CreditAccountModal from "./accounts/CreditAccountModal";
+import SimpleCreditModal from "./accounts/SimpleCreditModal";
 
 const StatCard = ({
   icon,
@@ -668,13 +668,13 @@ const Dashboard = () => {
       )}
       {/* Modal de crédit */}
       {showCreditModal && user && (
-        <CreditAccountModal
+        <SimpleCreditModal
           userId={user.id}
           onClose={() => setShowCreditModal(false)}
           onSuccess={() => {
             setShowCreditModal(false);
             // Rafraîchir le solde
-            queryClient.invalidateQueries(['memberBalance', user.id]);
+            queryClient.invalidateQueries(['memberBalance']);
           }}
         />
       )}
