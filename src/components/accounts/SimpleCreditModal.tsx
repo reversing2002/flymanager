@@ -358,7 +358,7 @@ export default function SimpleCreditModal({ userId, onClose, onSuccess, entry }:
           <p className="text-sm text-center text-slate-500">
             {currentMethod === "CARD" 
               ? "Crédit sécurisé et immédiat de votre compte vol"
-              : "Vélidation préalable de la transaction"}
+              : "Validation préalable de la transaction"}
           </p>
         </form>
       </motion.div>
