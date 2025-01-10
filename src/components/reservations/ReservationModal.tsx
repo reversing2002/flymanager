@@ -287,7 +287,33 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     >
   ) => {
     const { name, value } = e.target;
+    
+    // Vérifier la disponibilité immédiatement si l'avion change
+    if (name === 'aircraftId') {
+      checkAircraftAvailability(value);
+    }
+    
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const checkAircraftAvailability = (aircraftId: string) => {
+    const validationError = validateReservation(
+      new Date(formData.startTime),
+      new Date(formData.endTime),
+      aircraftId,
+      formData.pilotId,
+      formData.instructorId || null,
+      existingReservations || [],
+      availabilities || [],
+      existingReservation?.id
+    );
+
+    if (validationError) {
+      setError(validationError.message);
+      return false;
+    }
+    setError("");
+    return true;
   };
 
   useEffect(() => {
@@ -473,19 +499,9 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     setLoading(true);
 
     try {
-      const validationError = validateReservation(
-        new Date(formData.startTime),
-        new Date(formData.endTime),
-        formData.aircraftId,
-        formData.pilotId,
-        formData.instructorId || null,
-        existingReservations || [],
-        availabilities || [],
-        existingReservation?.id
-      );
-
-      if (validationError) {
-        setError(validationError.message);
+      // Vérifier la disponibilité avant de soumettre
+      if (!checkAircraftAvailability(formData.aircraftId)) {
+        setLoading(false);
         return;
       }
 
