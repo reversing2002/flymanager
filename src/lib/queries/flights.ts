@@ -13,18 +13,62 @@ export const getFlightTypes = async (): Promise<FlightType[]> => {
   return data;
 };
 
-export async function getFlights(): Promise<Flight[]> {
-  const { data, error } = await supabase.from("flights").select(`
+export async function getFlights(
+  page: number = 1,
+  pageSize: number = 10,
+  filters: {
+    dateRange?: string;
+    startDate?: string;
+    endDate?: string;
+    aircraftTypes?: string[];
+    aircraftIds?: string[];
+    flightTypes?: string[];
+    validated?: string;
+    accountingCategories?: string[];
+    memberId?: string | null;
+  } = {}
+): Promise<{ data: Flight[]; count: number }> {
+  let query = supabase.from("flights").select(`
+    *,
+    flight_type:flight_type_id (
       *,
-      flight_type:flight_type_id (
-        *,
-        accounting_category:accounting_categories!accounting_category_id(*)
-      )
-    `)
-    .order('date', { ascending: false });
+      accounting_category:accounting_categories!accounting_category_id(*)
+    )
+  `, { count: 'exact' });
+
+  // Appliquer les filtres
+  if (filters.startDate) {
+    query = query.gte('date', filters.startDate);
+  }
+  if (filters.endDate) {
+    query = query.lte('date', filters.endDate);
+  }
+  if (filters.aircraftIds && filters.aircraftIds.length > 0) {
+    query = query.in('aircraft_id', filters.aircraftIds);
+  }
+  if (filters.flightTypes && filters.flightTypes.length > 0) {
+    query = query.in('flight_type_id', filters.flightTypes);
+  }
+  if (filters.validated && filters.validated !== 'all') {
+    query = query.eq('is_validated', filters.validated === 'true');
+  }
+  if (filters.memberId) {
+    query = query.eq('user_id', filters.memberId);
+  }
+
+  // Ajouter la pagination
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  
+  query = query
+    .order('date', { ascending: false })
+    .range(from, to);
+
+  const { data, error, count } = await query;
 
   if (error) throw error;
-  return data.map((flight) => ({
+  
+  const mappedData = (data || []).map((flight) => ({
     id: flight.id,
     reservationId: flight.reservation_id,
     userId: flight.user_id,
@@ -47,6 +91,8 @@ export async function getFlights(): Promise<Flight[]> {
     instructorCost: flight.instructor_cost,
     flightType: flight.flight_type
   }));
+
+  return { data: mappedData, count: count || 0 };
 }
 
 export async function getInstructorFlights(instructorId: string, startDate: string, endDate: string) {

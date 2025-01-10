@@ -49,6 +49,9 @@ const FlightList = () => {
     accountingCategories: [],
     memberId: null,
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalFlights, setTotalFlights] = useState(0);
+  const pageSize = 10;
 
   const getInstructorStudents = (flights: Flight[]) => {
     if (!user || !hasAnyGroup(user, ["INSTRUCTOR"])) {
@@ -90,13 +93,23 @@ const FlightList = () => {
     try {
       // Charger toutes les données en parallèle
       const [flightsData, aircraftData, usersData] = await Promise.all([
-        getFlights(),
+        getFlights(currentPage, pageSize, {
+          dateRange: filters.dateRange,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+          aircraftTypes: filters.aircraftTypes,
+          aircraftIds: filters.aircraftIds,
+          flightTypes: filters.flightTypes,
+          validated: filters.validated,
+          accountingCategories: filters.accountingCategories,
+          memberId: filters.memberId
+        }),
         getAircraft(),
         getUsers(),
       ]);
 
       console.log("Loaded data", {
-        flights: flightsData.length,
+        flights: flightsData.data.length,
         aircraft: aircraftData.length,
         users: usersData.length,
         sampleUser: usersData[0]  // Pour vérifier la structure
@@ -111,7 +124,7 @@ const FlightList = () => {
         setInstructorStudents(usersData);
       } else if (hasAnyGroup(user, ["INSTRUCTOR"])) {
         const studentsList = usersData.filter(u => 
-          flightsData.some(flight => 
+          flightsData.data.some(flight => 
             flight.instructorId === user.id && 
             flight.userId === u.id && 
             flight.userId !== user.id
@@ -125,13 +138,13 @@ const FlightList = () => {
       // Traiter les vols selon le rôle
       if (user) {
         if (hasAnyGroup(user, ["ADMIN"])) {
-          setFlights(flightsData);
+          setFlights(flightsData.data);
         } else if (hasAnyGroup(user, ["INSTRUCTOR"])) {
           console.log("Processing instructor flights", { userId: user.id });
-          const personal = flightsData.filter(
+          const personal = flightsData.data.filter(
             (flight) => flight.userId === user.id
           );
-          const students = flightsData.filter(
+          const students = flightsData.data.filter(
             (flight) =>
               flight.instructorId === user.id && flight.userId !== user.id
           );
@@ -151,10 +164,12 @@ const FlightList = () => {
           setFlights([...personal, ...students]);
         } else {
           setFlights(
-            flightsData.filter((flight) => flight.userId === user.id)
+            flightsData.data.filter((flight) => flight.userId === user.id)
           );
         }
       }
+
+      setTotalFlights(flightsData.count);
 
       // Load flight types
       const { data: flightTypesData, error: flightTypesError } = await supabase
@@ -187,7 +202,7 @@ const FlightList = () => {
 
   useEffect(() => {
     loadData();
-  }, [user]);
+  }, [currentPage, filters, user]);
 
   useEffect(() => {
     // Apply filters
@@ -1162,6 +1177,39 @@ const FlightList = () => {
           )}
         </>
       )}
+      {/* Pagination */}
+      <div className="mt-4 flex items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-700">
+            Affichage de {Math.min((currentPage - 1) * pageSize + 1, totalFlights)} à{" "}
+            {Math.min(currentPage * pageSize, totalFlights)} sur {totalFlights} vols
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="rounded px-3 py-1 text-sm font-medium disabled:opacity-50
+                     bg-white text-gray-700 border border-gray-300 hover:bg-gray-50
+                     disabled:hover:bg-white"
+          >
+            Précédent
+          </button>
+          <span className="text-sm text-gray-700">
+            Page {currentPage} sur {Math.ceil(totalFlights / pageSize)}
+          </span>
+          <button
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+            disabled={currentPage >= Math.ceil(totalFlights / pageSize)}
+            className="rounded px-3 py-1 text-sm font-medium disabled:opacity-50
+                     bg-white text-gray-700 border border-gray-300 hover:bg-gray-50
+                     disabled:hover:bg-white"
+          >
+            Suivant
+          </button>
+        </div>
+      </div>
+
       {showCompetenciesModal && selectedStudentId && selectedFlightId && (
         <CompetenciesModal
           studentId={selectedStudentId}

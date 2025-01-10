@@ -1,8 +1,18 @@
 import { supabase } from "../supabase";
 import type { AccountEntry, NewAccountEntry, User } from "../../types/database";
 
-export async function getAccountEntries(): Promise<AccountEntry[]> {
-  const { data, error } = await supabase
+export async function getAccountEntries(
+  page: number = 1,
+  pageSize: number = 10,
+  filters: {
+    startDate?: string;
+    endDate?: string;
+    type?: string;
+    validated?: string;
+    assignedToId?: string;
+  } = {}
+): Promise<{ data: AccountEntry[]; count: number }> {
+  let query = supabase
     .from("account_entries")
     .select(`
       *,
@@ -25,11 +35,37 @@ export async function getAccountEntries(): Promise<AccountEntry[]> {
           )
         )
       )
-    `)
-    .order("date", { ascending: false });
+    `, { count: 'exact' });
+
+  // Appliquer les filtres
+  if (filters.startDate) {
+    query = query.gte('date', filters.startDate);
+  }
+  if (filters.endDate) {
+    query = query.lte('date', filters.endDate);
+  }
+  if (filters.type && filters.type !== 'all') {
+    query = query.eq('type_id', filters.type);
+  }
+  if (filters.validated && filters.validated !== 'all') {
+    query = query.eq('is_validated', filters.validated === 'true');
+  }
+  if (filters.assignedToId && filters.assignedToId !== 'all') {
+    query = query.eq('assigned_to_id', filters.assignedToId);
+  }
+
+  // Ajouter la pagination
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  
+  query = query
+    .order('date', { ascending: false })
+    .range(from, to);
+
+  const { data, error, count } = await query;
 
   if (error) throw error;
-  return data;
+  return { data: data || [], count: count || 0 };
 }
 
 export async function getMembersWithBalance(): Promise<User[]> {

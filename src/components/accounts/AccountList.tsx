@@ -47,6 +47,9 @@ const AccountList = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [validatedBalance, setValidatedBalance] = useState<number>(0);
   const [pendingBalance, setPendingBalance] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalEntries, setTotalEntries] = useState(0);
+  const pageSize = 10;
 
   const isAdmin = hasAnyGroup(user, ["ADMIN"]);
 
@@ -123,12 +126,42 @@ const AccountList = () => {
 
   const loadEntries = async () => {
     try {
-      const data = await getAccountEntries();
-      setEntries(data);
+      const { data: entries, count } = await getAccountEntries(
+        currentPage,
+        pageSize,
+        {
+          startDate: filters.startDate || undefined,
+          endDate: filters.endDate || undefined,
+          type: filters.type,
+          validated: filters.validated,
+          assignedToId: filters.assignedToId,
+        }
+      );
+      setEntries(entries);
+      setTotalEntries(count);
+
+      // Mettre à jour les soldes si nécessaire
+      if (filters.assignedToId !== "all") {
+        const validatedBal = await calculateMemberBalance(
+          filters.assignedToId,
+          new Date().toISOString()
+        );
+        const pendingBal = await calculatePendingBalance(
+          filters.assignedToId,
+          new Date().toISOString()
+        );
+        setValidatedBalance(validatedBal);
+        setPendingBalance(pendingBal);
+      }
     } catch (error) {
-      console.error("Error loading account entries:", error);
+      console.error("Erreur lors du chargement des entrées:", error);
+      toast.error("Erreur lors du chargement des entrées");
     }
   };
+
+  useEffect(() => {
+    loadEntries();
+  }, [currentPage, filters]);
 
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat("fr-FR", {
@@ -560,6 +593,39 @@ const AccountList = () => {
         </div>
 
         {renderTable()}
+
+        {/* Pagination */}
+        <div className="mt-4 flex items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">
+              Affichage de {Math.min((currentPage - 1) * pageSize + 1, totalEntries)} à{" "}
+              {Math.min(currentPage * pageSize, totalEntries)} sur {totalEntries} entrées
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="rounded px-3 py-1 text-sm font-medium disabled:opacity-50
+                       bg-white text-gray-700 border border-gray-300 hover:bg-gray-50
+                       disabled:hover:bg-white"
+            >
+              Précédent
+            </button>
+            <span className="text-sm text-gray-700">
+              Page {currentPage} sur {Math.ceil(totalEntries / pageSize)}
+            </span>
+            <button
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              disabled={currentPage >= Math.ceil(totalEntries / pageSize)}
+              className="rounded px-3 py-1 text-sm font-medium disabled:opacity-50
+                       bg-white text-gray-700 border border-gray-300 hover:bg-gray-50
+                       disabled:hover:bg-white"
+            >
+              Suivant
+            </button>
+          </div>
+        </div>
       </div>
 
       {(selectedEntry || isCreating) && (
