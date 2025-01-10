@@ -51,7 +51,7 @@ const FlightList = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalFlights, setTotalFlights] = useState(0);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const getInstructorStudents = (flights: Flight[]) => {
     if (!user || !hasAnyGroup(user, ["INSTRUCTOR"])) {
@@ -202,7 +202,7 @@ const FlightList = () => {
 
   useEffect(() => {
     loadData();
-  }, [currentPage, filters, user]);
+  }, [currentPage, filters, pageSize, user]);
 
   useEffect(() => {
     // Apply filters
@@ -783,6 +783,25 @@ const FlightList = () => {
               onClose={() => setShowFilters(false)}
             />
           )}
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Liste des vols</h1>
+            <div className="flex items-center space-x-4">
+              <select
+                className="border rounded-md px-3 py-2 bg-white"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1); // Réinitialiser à la première page lors du changement de taille
+                }}
+              >
+                <option value="5">5 par page</option>
+                <option value="10">10 par page</option>
+                <option value="25">25 par page</option>
+                <option value="50">50 par page</option>
+                <option value="100">100 par page</option>
+              </select>
+            </div>
+          </div>
 
           {hasAnyGroup(user, ["INSTRUCTOR"]) ? (
             <>

@@ -20,21 +20,28 @@ import {
 import { getUsers } from "../../lib/queries/users";
 import AccountEntryModal from "./AccountEntryModal";
 import CreditAccountModal from "./CreditAccountModal";
+import SimpleCreditModal from "./SimpleCreditModal"; // Importer le nouveau composant
 import { useAuth } from "../../contexts/AuthContext";
 import { dateUtils } from "../../lib/utils/dateUtils";
 import { toast } from "react-hot-toast";
 import { hasAnyGroup } from "../../lib/permissions";
 import { supabase } from '../../lib/supabase';
 import { useBackups } from '@/hooks/useBackups';
+import { useQuery } from "@tanstack/react-query";
 
 const AccountList = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [entries, setEntries] = useState<AccountEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<AccountEntry | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalEntries, setTotalEntries] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [filters, setFilters] = useState({
     startDate: "",
     endDate: "",
@@ -42,14 +49,13 @@ const AccountList = () => {
     validated: "all",
     assignedToId: "all",
   });
-  const [isCreating, setIsCreating] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [validatedBalance, setValidatedBalance] = useState<number>(0);
-  const [pendingBalance, setPendingBalance] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalEntries, setTotalEntries] = useState(0);
-  const pageSize = 10;
+
+  // Types pour les soldes
+  interface BalanceData {
+    validated_balance: number;
+    pending_amount: number;
+    total_balance: number;
+  }
 
   const isAdmin = hasAnyGroup(user, ["ADMIN"]);
 
@@ -57,7 +63,6 @@ const AccountList = () => {
   const { mutate: createBackup } = useCreateBackup();
 
   useEffect(() => {
-    loadEntries();
     const loadUsers = async () => {
       try {
         const loadedUsers = await getUsers();
@@ -66,8 +71,8 @@ const AccountList = () => {
         console.error("Error loading users:", error);
       }
     };
-    loadUsers();
-  }, []);
+    if (isAdmin) loadUsers();
+  }, [isAdmin]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -86,7 +91,6 @@ const AccountList = () => {
     if (success) {
       toast.success("Paiement effectué avec succès");
       navigate("/accounts", { replace: true });
-      loadEntries();
     }
 
     if (canceled) {
@@ -95,75 +99,52 @@ const AccountList = () => {
     }
   }, [location.search]);
 
+  // Requête pour les entrées de compte
+  const { data: entriesData, isLoading: entriesLoading, refetch: refetchEntries } = useQuery({
+    queryKey: ["accounts", currentPage, pageSize, filters],
+    queryFn: () => getAccountEntries(currentPage, pageSize, filters),
+    enabled: true,
+    refetchOnWindowFocus: false,
+  });
+
+  // Requête pour les soldes
+  const { data: balanceData, isLoading: balanceLoading } = useQuery({
+    queryKey: ["balance", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      
+      const { data, error } = await supabase
+        .rpc('calculate_pending_balance_from_date', {
+          p_user_id: user.id,
+          p_date: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error("Erreur lors du calcul des soldes:", error);
+        throw error;
+      }
+
+      console.log("Données de solde reçues:", data);
+      return data?.[0] || null;
+    },
+    enabled: !!user?.id && !isAdmin,
+    refetchOnWindowFocus: false,
+    staleTime: 30000,
+  });
+
+  console.log("Balance utilisée pour l'affichage:", balanceData);
+
+  const entries = entriesData?.data || [];
+  const balance = balanceData || { validated_balance: 0, pending_amount: 0, total_balance: 0 };
+
   useEffect(() => {
-    const updateBalances = async () => {
-      try {
-        const userId = filters.assignedToId === "all" ? user?.id : filters.assignedToId;
-        if (!userId) return;
-
-        const currentDate = new Date().toISOString();
-
-        // Calculer les soldes en utilisant la nouvelle fonction RPC
-        const { data: balances, error } = await supabase
-          .rpc('calculate_pending_balance_from_date', {
-            p_user_id: userId,
-            p_date: currentDate
-          });
-
-        if (error) throw error;
-        
-        if (balances && balances[0]) {
-          setValidatedBalance(balances[0].validated_balance || 0);
-          setPendingBalance(balances[0].total_balance || 0);
-        }
-      } catch (error) {
-        console.error("Error calculating balances:", error);
-      }
-    };
-
-    updateBalances();
-  }, [entries, filters.assignedToId, user?.id]);
-
-  const loadEntries = async () => {
-    try {
-      const { data: entries, count } = await getAccountEntries(
-        currentPage,
-        pageSize,
-        {
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-          type: filters.type,
-          validated: filters.validated,
-          assignedToId: filters.assignedToId,
-        }
-      );
-      setEntries(entries);
-      setTotalEntries(count);
-
-      // Mettre à jour les soldes si nécessaire
-      if (filters.assignedToId !== "all") {
-        const validatedBal = await calculateMemberBalance(
-          filters.assignedToId,
-          new Date().toISOString()
-        );
-        const pendingBal = await calculatePendingBalance(
-          filters.assignedToId,
-          new Date().toISOString()
-        );
-        setValidatedBalance(validatedBal);
-        setPendingBalance(pendingBal);
-      }
-    } catch (error) {
-      console.error("Erreur lors du chargement des entrées:", error);
-      toast.error("Erreur lors du chargement des entrées");
+    if (entriesData) {
+      setTotalEntries(entriesData.count);
     }
-  };
+  }, [entriesData]);
 
-  useEffect(() => {
-    loadEntries();
-  }, [currentPage, filters]);
-
-  const formatAmount = (amount: number) => {
+  // Fonction pour formater les montants en euros
+  const formatAmount = (amount: number): string => {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
       currency: "EUR",
@@ -205,26 +186,27 @@ const AccountList = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette entrée ?")) return;
+    
     try {
-      // Créer une sauvegarde avant la suppression
-      createBackup({
-        type: 'accounts',
-        description: 'Sauvegarde automatique avant suppression de compte',
-        is_auto: true,
-        data: entries
-      });
-      
-      await deleteAccountEntry(id);
-      toast.success('Compte supprimé avec succès.');
-      loadEntries(); // Recharge les entrées après suppression
-    } catch (error: any) {
-      toast.error(`Erreur lors de la suppression: ${error.message}`);
+      const { error } = await supabase
+        .from("account_entries")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Entrée supprimée avec succès");
+      refetchEntries();
+    } catch (error) {
+      console.error("Error deleting entry:", error);
+      toast.error("Erreur lors de la suppression de l'entrée");
     }
   };
 
-  const handleUpdate = (entry: AccountEntry) => {
+  const handleEdit = (entry: AccountEntry) => {
     setSelectedEntry(entry);
-    setShowEditModal(true); // Utilise la modal de modification
+    setShowEditModal(true);
   };
 
   const renderTable = () => {
@@ -256,101 +238,319 @@ const AccountList = () => {
     });
 
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200">
-              <th className="py-3 text-left font-medium text-slate-600">Date</th>
-              <th className="py-3 text-left font-medium text-slate-600">Membre</th>
-              <th className="py-3 text-left font-medium text-slate-600">Type</th>
-              <th className="py-3 text-left font-medium text-slate-600">Description</th>
-              <th className="py-3 text-left font-medium text-slate-600">Montant</th>
-              <th className="py-3 text-left font-medium text-slate-600">Paiement</th>
-              <th className="py-3 text-left font-medium text-slate-600">Validé</th>
-              <th className="py-3 text-center font-medium text-slate-600">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredEntries.map((entry) => (
-              <tr
-                key={entry.id}
-                className="hover:bg-slate-50 transition-colors cursor-pointer"
-                onClick={() => setSelectedEntry(entry)}
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 space-y-4 sm:space-y-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Gestion des comptes</h1>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <select
+              className="border rounded-md px-2 py-1.5 sm:px-3 sm:py-2 bg-white text-sm flex-grow sm:flex-grow-0"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+            >
+              <option value="5">5 par page</option>
+              <option value="10">10 par page</option>
+              <option value="25">25 par page</option>
+              <option value="50">50 par page</option>
+              <option value="100">100 par page</option>
+            </select>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm w-full sm:w-auto justify-center"
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              <span>Filtres</span>
+            </button>
+            <button
+              onClick={handleExport}
+              className="flex items-center px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors w-full sm:w-auto justify-center"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              <span>Exporter</span>
+            </button>
+            {isAdmin ? (
+              <>
+                <button
+                  onClick={() => setIsCreating(true)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors w-full sm:w-auto justify-center"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Nouvelle opération</span>
+                </button>
+                <button
+                  onClick={() => setShowCreditModal(true)}
+                  className="btn btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Créditer un compte</span>
+                </button>
+              </>
+            ) : user && (
+              <button
+                onClick={() => setShowCreditModal(true)}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors w-full sm:w-auto justify-center"
               >
-                <td className="py-3 text-slate-600">
-                  {dateUtils.formatDate(entry.date)}
-                </td>
-                <td className="py-3 text-slate-600">
-                  {getUserName(entry.assigned_to_id)}
-                </td>
-                
-                <td className="py-3">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                    ${entry.account_entry_types?.is_credit 
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-red-100 text-red-700'}`}>
-                    {entry.account_entry_types?.name || "Type inconnu"}
-                  </span>
-                </td>
-                <td className="py-3 text-slate-600">{entry.description}</td>
-                <td className={`py-3 font-medium ${
-                  entry.amount >= 0 ? "text-emerald-600" : "text-red-600"
-                }`}>
-                  <span className={entry.is_club_paid ? "line-through" : ""}>
-                    {formatAmount(entry.amount)}
-                  </span>
-                </td>
-                <td className="py-3 text-slate-600">
-                  {getPaymentMethodLabel(entry.payment_method)}
-                </td>
-                <td className="py-3">
-                  {entry.is_validated ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  ) : (
-                    <div className="h-5 w-5" />
-                  )}
-                </td>
-                <td className="py-3">
-                  <div className="flex justify-center space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedEntry(entry);
-                      }}
-                      className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                    >
-                      <Eye className="h-4 w-4 text-slate-500" />
-                    </button>
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation(); 
-                            handleUpdate(entry);
-                          }}
-                          className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                          title="Modifier"
-                        >
-                          <Pencil className="h-4 w-4 text-slate-500" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(entry.id);
-                          }}
-                          className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                          title="Supprimer"
-                        >
-                          <Trash2 className="h-4 w-4 text-slate-500" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
+                <Plus className="h-4 w-4" />
+                <span>Créditer mon compte</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date de début
+                </label>
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) =>
+                    setFilters({ ...filters, startDate: e.target.value })
+                  }
+                  className="w-full border rounded-md px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date de fin
+                </label>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) =>
+                    setFilters({ ...filters, endDate: e.target.value })
+                  }
+                  className="w-full border rounded-md px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Type
+                </label>
+                <select
+                  value={filters.type}
+                  onChange={(e) =>
+                    setFilters({ ...filters, type: e.target.value })
+                  }
+                  className="w-full border rounded-md px-3 py-2"
+                >
+                  <option value="all">Tous</option>
+                  <option value="FLIGHT">Vol</option>
+                  <option value="MEMBERSHIP">Cotisation</option>
+                  <option value="INSURANCE">Assurance</option>
+                  <option value="ACCOUNT_FUNDING">Crédit de compte</option>
+                  <option value="BALANCE_RESET">Remise à zéro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Validé
+                </label>
+                <select
+                  value={filters.validated}
+                  onChange={(e) =>
+                    setFilters({ ...filters, validated: e.target.value })
+                  }
+                  className="w-full border rounded-md px-3 py-2"
+                >
+                  <option value="all">Tous</option>
+                  <option value="true">Oui</option>
+                  <option value="false">Non</option>
+                </select>
+              </div>
+              {isAdmin && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Membre
+                  </label>
+                  <select
+                    value={filters.assignedToId || "all"}
+                    onChange={(e) =>
+                      setFilters({ ...filters, assignedToId: e.target.value })
+                    }
+                    className="w-full border rounded-md px-3 py-2"
+                  >
+                    <option value="all">Tous</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.first_name} {user.last_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Soldes de l'utilisateur connecté */}
+        {!isAdmin && user && balanceData && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">Solde validé</h3>
+              <p className="text-3xl font-bold text-primary-600">
+                {formatAmount(balanceData.validated_balance)}
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">En attente de validation</h3>
+              <p className="text-3xl font-bold text-orange-500">
+                {formatAmount(balanceData.pending_amount)}
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">Solde futur</h3>
+              <p className={`text-3xl font-bold ${balanceData.total_balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                {formatAmount(balanceData.total_balance)}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                (après validation)
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left p-4 font-medium text-slate-600">Date</th>
+                <th className="text-left p-4 font-medium text-slate-600">Membre</th>
+                <th className="text-left p-4 font-medium text-slate-600">Type</th>
+                <th className="text-left p-4 font-medium text-slate-600 hidden sm:table-cell">Description</th>
+                <th className="text-right p-4 font-medium text-slate-600">Montant</th>
+                <th className="text-center p-4 font-medium text-slate-600 hidden sm:table-cell">Validé</th>
+                <th className="text-center p-4 font-medium text-slate-600">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredEntries.map((entry) => {
+                const assignedUser = users.find(
+                  (u) => u.id === entry.assigned_to_id
+                );
+                return (
+                  <tr
+                    key={entry.id}
+                    className="border-b border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="p-4 whitespace-nowrap">
+                      {new Date(entry.date).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 whitespace-nowrap">
+                      {assignedUser
+                        ? `${assignedUser.first_name} ${assignedUser.last_name}`
+                        : "-"}
+                    </td>
+                    <td className="p-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        ${entry.account_entry_types?.is_credit ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {entry.account_entry_types?.name || "-"}
+                      </span>
+                    </td>
+                    <td className="p-4 hidden sm:table-cell">
+                      {entry.description || "-"}
+                    </td>
+                    <td className="p-4 text-right whitespace-nowrap">
+                      <span className={entry.account_entry_types?.is_credit ? 'text-green-600' : 'text-red-600'}>
+                        {formatAmount(entry.amount)}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center hidden sm:table-cell">
+                      {entry.is_validated ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" />
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="flex items-center justify-center space-x-2">
+                        {entry.is_validated ? (
+                          <button
+                            onClick={() => setSelectedEntry(entry)}
+                            className="text-slate-400 hover:text-slate-600"
+                            title="Voir les détails"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        ) : (
+                          <>
+                            {isAdmin ? (
+                              <>
+                                <button
+                                  onClick={() => handleEdit(entry)}
+                                  className="text-blue-400 hover:text-blue-600"
+                                  title="Modifier"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(entry.id)}
+                                  className="text-red-400 hover:text-red-600"
+                                  title="Supprimer"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </>
+                            ) : entry.account_entry_types?.code === 'ACCOUNT_FUNDING' && entry.user_id === user?.id && (
+                              <>
+                                <button
+                                  onClick={() => handleEdit(entry)}
+                                  className="text-blue-400 hover:text-blue-600"
+                                  title="Modifier"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(entry.id)}
+                                  className="text-red-400 hover:text-red-600"
+                                  title="Supprimer"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination mobile-friendly */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4">
+          <div className="text-sm text-gray-700">
+            Affichage de {Math.min((currentPage - 1) * pageSize + 1, totalEntries)} à{" "}
+            {Math.min(currentPage * pageSize, totalEntries)} sur {totalEntries} entrées
+          </div>
+          <div className="flex justify-center items-center space-x-2">
+            <button
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded border bg-white disabled:opacity-50"
+            >
+              Précédent
+            </button>
+            <span className="px-3 py-1">
+              Page {currentPage} sur {Math.ceil(totalEntries / pageSize)}
+            </span>
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage >= Math.ceil(totalEntries / pageSize)}
+              className="px-3 py-1 rounded border bg-white disabled:opacity-50"
+            >
+              Suivant
+            </button>
+          </div>
+        </div>
       </div>
     );
   };
@@ -431,237 +631,66 @@ const AccountList = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Lignes de compte
-          </h1>
-          <p className="text-slate-600">Gestion des opérations financières</p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setShowCreditModal(true)}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
-          >
-            <CreditCard className="h-4 w-4" />
-            <span>Créditer mon compte</span>
-          </button>
-          <button
-            onClick={() => setIsCreating(true)}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nouvelle opération</span>
-          </button>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
-          >
-            <Filter className="h-4 w-4" />
-            <span>Filtres</span>
-          </button>
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
-          >
-            <Download className="h-4 w-4" />
-            <span>Exporter</span>
-          </button>
-        </div>
-      </div>
-
-      {showFilters && (
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Date de début
-              </label>
-              <input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) =>
-                  setFilters({ ...filters, startDate: e.target.value })
-                }
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Date de fin
-              </label>
-              <input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) =>
-                  setFilters({ ...filters, endDate: e.target.value })
-                }
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Type d'opération
-              </label>
-              <select
-                value={filters.type}
-                onChange={(e) =>
-                  setFilters({ ...filters, type: e.target.value })
-                }
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-              >
-                <option value="all">Tous</option>
-                <option value="ACCOUNT_FUNDING">Crédit compte</option>
-                <option value="FLIGHT">Vols</option>
-                <option value="MEMBERSHIP">Cotisations</option>
-                <option value="INSURANCE">Assurances</option>
-                <option value="DEPOSIT">Dépôts</option>
-                <option value="WITHDRAWAL">Retraits</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Validation
-              </label>
-              <select
-                value={filters.validated}
-                onChange={(e) =>
-                  setFilters({ ...filters, validated: e.target.value })
-                }
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-              >
-                <option value="all">Tous</option>
-                <option value="true">Validés</option>
-                <option value="false">Non validés</option>
-              </select>
-            </div>
-            {isAdmin && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Membre
-                </label>
-                <select
-                  value={filters.assignedToId}
-                  onChange={(e) =>
-                    setFilters({ ...filters, assignedToId: e.target.value })
-                  }
-                  className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                >
-                  <option value="all">Tous</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.last_name} {user.first_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 sm:p-6 border-b">
-          <div className="flex items-center justify-between">
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Solde validé
-                </h2>
-                <p
-                  className={`text-2xl font-bold ${
-                    validatedBalance >= 0
-                      ? "text-emerald-600"
-                      : "text-red-600"
-                  }`}
-                >
-                  {formatAmount(validatedBalance)}
-                </p>
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Solde en attente
-                </h2>
-                <p className="text-2xl font-bold text-amber-600">
-                  {formatAmount(pendingBalance)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {renderTable()}
-
-        {/* Pagination */}
-        <div className="mt-4 flex items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700">
-              Affichage de {Math.min((currentPage - 1) * pageSize + 1, totalEntries)} à{" "}
-              {Math.min(currentPage * pageSize, totalEntries)} sur {totalEntries} entrées
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="rounded px-3 py-1 text-sm font-medium disabled:opacity-50
-                       bg-white text-gray-700 border border-gray-300 hover:bg-gray-50
-                       disabled:hover:bg-white"
-            >
-              Précédent
-            </button>
-            <span className="text-sm text-gray-700">
-              Page {currentPage} sur {Math.ceil(totalEntries / pageSize)}
-            </span>
-            <button
-              onClick={() => setCurrentPage((prev) => prev + 1)}
-              disabled={currentPage >= Math.ceil(totalEntries / pageSize)}
-              className="rounded px-3 py-1 text-sm font-medium disabled:opacity-50
-                       bg-white text-gray-700 border border-gray-300 hover:bg-gray-50
-                       disabled:hover:bg-white"
-            >
-              Suivant
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {(selectedEntry || isCreating) && (
+    <>
+      {renderTable()}
+      
+      {/* Modales */}
+      {(selectedEntry || (isCreating && isAdmin)) && !showEditModal && (
         <AccountEntryModal
           entry={selectedEntry}
           onClose={() => {
             setSelectedEntry(null);
             setIsCreating(false);
           }}
-          onUpdate={loadEntries}
+          onUpdate={refetchEntries}
         />
       )}
 
       {showEditModal && selectedEntry && (
-        <AccountEntryModal
-          entry={selectedEntry}
-          onClose={() => {
-            setShowEditModal(false);
-            setSelectedEntry(null);
-          }}
-          onUpdate={() => {
-            loadEntries();
-            setShowEditModal(false);
-            setSelectedEntry(null);
-          }}
-        />
+        isAdmin ? (
+          <AccountEntryModal
+            entry={selectedEntry}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedEntry(null);
+            }}
+            onUpdate={() => {
+              refetchEntries();
+              setShowEditModal(false);
+              setSelectedEntry(null);
+            }}
+          />
+        ) : (
+          <SimpleCreditModal
+            userId={user?.id || ""}
+            entry={selectedEntry}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedEntry(null);
+            }}
+            onSuccess={() => {
+              refetchEntries();
+              setShowEditModal(false);
+              setSelectedEntry(null);
+            }}
+          />
+        )
       )}
 
-      {showCreditModal && user && (
+      {showCreditModal && user && (isAdmin ? (
         <CreditAccountModal
           userId={user.id}
           onClose={() => setShowCreditModal(false)}
-          onSuccess={loadEntries}
+          onSuccess={refetchEntries}
         />
-      )}
-    </div>
+      ) : (
+        <SimpleCreditModal
+          userId={user.id}
+          onClose={() => setShowCreditModal(false)}
+          onSuccess={refetchEntries}
+        />
+      ))}
+    </>
   );
 };
 
