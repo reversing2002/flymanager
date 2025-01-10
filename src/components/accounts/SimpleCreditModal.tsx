@@ -279,18 +279,27 @@ export default function SimpleCreditModal({ userId, onClose, onSuccess, entry }:
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setValue("paymentMethod", method)}
                   className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-xl border-2 transition-all duration-200 ${
-                    currentMethod === method
-                      ? "bg-blue-50 border-blue-500 text-blue-700"
-                      : "border-gray-200 hover:border-gray-300 text-gray-700"
+                    method === "CARD" 
+                      ? currentMethod === "CARD"
+                        ? "bg-blue-50 border-blue-500 text-blue-700 shadow-md"
+                        : "border-blue-200 hover:border-blue-300 text-blue-700 shadow-sm hover:shadow-md"
+                      : currentMethod === method
+                        ? "bg-slate-50 border-slate-500 text-slate-700"
+                        : "border-slate-200 hover:border-slate-300 text-slate-600"
                   }`}
                 >
-                  {getPaymentMethodIcon(method)}
-                  <span className="font-medium">
+                  <div className={`${method === "CARD" ? "text-blue-600" : "text-slate-500"}`}>
+                    {getPaymentMethodIcon(method)}
+                  </div>
+                  <span className={`font-medium ${method === "CARD" ? "text-blue-700" : ""}`}>
                     {method === "CARD" && "Carte"}
                     {method === "TRANSFER" && "Virement"}
                     {method === "CHECK" && "Chèque"}
                     {method === "CASH" && "Espèces"}
                   </span>
+                  {method === "CARD" && (
+                    <span className="ml-1 text-xs text-blue-600 font-normal">• Immédiat</span>
+                  )}
                 </motion.button>
               ))}
             </div>
@@ -346,10 +355,10 @@ export default function SimpleCreditModal({ userId, onClose, onSuccess, entry }:
           </motion.button>
 
           {/* Message d'information */}
-          <p className="text-sm text-center text-gray-500">
+          <p className="text-sm text-center text-slate-500">
             {currentMethod === "CARD" 
-              ? "Le paiement sera traité immédiatement via Stripe"
-              : "Un administrateur validera votre demande"}
+              ? "Crédit sécurisé et immédiat de votre compte vol"
+              : "Vélidation préalable de la transaction"}
           </p>
         </form>
       </motion.div>
