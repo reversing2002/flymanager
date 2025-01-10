@@ -12,60 +12,74 @@ export async function getAccountEntries(
     assignedToId?: string;
   } = {}
 ): Promise<{ data: AccountEntry[]; count: number }> {
-  let query = supabase
-    .from("account_entries")
-    .select(`
-      *,
-      account_entry_types (
-        id,
-        code,
-        name,
-        description,
-        is_credit
-      ),
-      flights(
-        id,
-        flight_type_id,
-        flight_types(
+  try {
+    let query = supabase
+      .from("account_entries")
+      .select(`
+        *,
+        account_entry_types (
           id,
-          accounting_category_id,
-          accounting_categories(
+          code,
+          name,
+          description,
+          is_credit
+        ),
+        flights(
+          id,
+          flight_type_id,
+          flight_types(
             id,
-            is_club_paid
+            accounting_category_id,
+            accounting_categories(
+              id,
+              is_club_paid
+            )
           )
         )
-      )
-    `, { count: 'exact' });
+      `, { count: 'exact' });
 
-  // Appliquer les filtres
-  if (filters.startDate) {
-    query = query.gte('date', filters.startDate);
-  }
-  if (filters.endDate) {
-    query = query.lte('date', filters.endDate);
-  }
-  if (filters.type && filters.type !== 'all') {
-    query = query.eq('type_id', filters.type);
-  }
-  if (filters.validated && filters.validated !== 'all') {
-    query = query.eq('is_validated', filters.validated === 'true');
-  }
-  if (filters.assignedToId && filters.assignedToId !== 'all') {
-    query = query.eq('assigned_to_id', filters.assignedToId);
-  }
+    // Appliquer les filtres
+    if (filters.startDate) {
+      query = query.gte('date', filters.startDate);
+    }
+    if (filters.endDate) {
+      query = query.lte('date', filters.endDate);
+    }
+    if (filters.type && filters.type !== 'all') {
+      // Récupérer d'abord l'ID du type d'entrée à partir de son code
+      const { data: typeData } = await supabase
+        .from('account_entry_types')
+        .select('id')
+        .eq('code', filters.type)
+        .single();
 
-  // Ajouter la pagination
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  
-  query = query
-    .order('date', { ascending: false })
-    .range(from, to);
+      if (typeData) {
+        query = query.eq('entry_type_id', typeData.id);
+      }
+    }
+    if (filters.validated && filters.validated !== 'all') {
+      query = query.eq('is_validated', filters.validated === 'true');
+    }
+    if (filters.assignedToId && filters.assignedToId !== 'all') {
+      query = query.eq('assigned_to_id', filters.assignedToId);
+    }
 
-  const { data, error, count } = await query;
+    // Ajouter la pagination
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    
+    query = query
+      .order('date', { ascending: false })
+      .range(from, to);
 
-  if (error) throw error;
-  return { data: data || [], count: count || 0 };
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+    return { data: data || [], count: count || 0 };
+  } catch (error) {
+    console.error('Erreur dans getAccountEntries:', error);
+    throw error;
+  }
 }
 
 export async function getMembersWithBalance(): Promise<User[]> {
