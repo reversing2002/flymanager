@@ -373,9 +373,21 @@ export async function createMember({
   clubId: string;
   [key: string]: any;
 }): Promise<{ user: any; password: string }> {
+  console.log("=== Début de createMember ===");
+  console.log("Paramètres reçus:", {
+    email,
+    firstName,
+    lastName,
+    roles,
+    clubId,
+    ...userData
+  });
+  
   const password = generateRandomPassword();
+  console.log("Mot de passe généré");
   
   try {
+    // Création de l'utilisateur via le service admin
     const result = await adminService.createUser({
       email,
       password,
@@ -389,9 +401,18 @@ export async function createMember({
       clubId
     });
 
+    if (!result || !result.user) {
+      console.error("Pas de résultat de createUser:", result);
+      throw new Error("Erreur lors de la création de l'utilisateur");
+    }
+
+    console.log("Utilisateur créé avec succès:", result);
     return { user: result.user, password };
   } catch (error) {
-    console.error("Erreur lors de la création du membre:", error);
+    console.error("=== Fin de createMember - Erreur ===");
+    console.error("Erreur complète:", error);
+    console.error("Message d'erreur:", error.message);
+    console.error("Stack trace:", error.stack);
     throw error;
   }
 }

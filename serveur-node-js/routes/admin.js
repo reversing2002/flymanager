@@ -260,14 +260,18 @@ router.post('/users', checkAdminRole, async (req, res) => {
       return res.status(400).json({ error: createError.message });
     }
 
-    // Créer l'utilisateur auth
-    const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
+    // Créer l'utilisateur auth avec le même ID
+    const { error: authError } = await adminClient.rpc('create_auth_user', {
+      p_user_id: newUser.id,
+      p_email: email,
+      p_password: password,
+      p_login: login,
+      p_role: 'authenticated',
+      p_user_metadata: {
         db_id: newUser.id,
-      },
+        first_name: userData.first_name,
+        last_name: userData.last_name
+      }
     });
 
     if (authError) {
@@ -275,20 +279,6 @@ router.post('/users', checkAdminRole, async (req, res) => {
       // Nettoyer l'utilisateur créé si l'auth échoue
       await adminClient.from('users').delete().eq('id', newUser.id);
       return res.status(400).json({ error: authError.message });
-    }
-
-    // Mettre à jour l'auth_id dans la base de données
-    const { error: updateError } = await adminClient
-      .from('users')
-      .update({ auth_id: authUser.user.id })
-      .eq('id', newUser.id);
-
-    if (updateError) {
-      console.error('❌ Erreur mise à jour auth_id:', updateError);
-      // Nettoyer tout si la mise à jour échoue
-      await adminClient.auth.admin.deleteUser(authUser.user.id);
-      await adminClient.from('users').delete().eq('id', newUser.id);
-      return res.status(400).json({ error: updateError.message });
     }
 
     // Ajouter l'utilisateur au club
@@ -303,7 +293,7 @@ router.post('/users', checkAdminRole, async (req, res) => {
     if (clubError) {
       console.error('❌ Erreur ajout au club:', clubError);
       // Nettoyer tout si l'ajout au club échoue
-      await adminClient.auth.admin.deleteUser(authUser.user.id);
+      await adminClient.auth.admin.deleteUser(newUser.auth_id);
       await adminClient.from('users').delete().eq('id', newUser.id);
       return res.status(400).json({ error: clubError.message });
     }
@@ -326,7 +316,7 @@ router.post('/users', checkAdminRole, async (req, res) => {
         if (groupsError) {
           console.error('❌ Erreur ajout groupes:', groupsError);
           // Nettoyer tout si l'attribution des groupes échoue
-          await adminClient.auth.admin.deleteUser(authUser.user.id);
+          await adminClient.auth.admin.deleteUser(newUser.auth_id);
           await adminClient.from('users').delete().eq('id', newUser.id);
           return res.status(400).json({ error: groupsError.message });
         }
