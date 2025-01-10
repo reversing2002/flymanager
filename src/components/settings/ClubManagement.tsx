@@ -4,6 +4,7 @@ import { useUser } from '../../hooks/useUser';
 import { hasAnyGroup } from '../../lib/permissions';
 import DiscoveryFlightSettings from './DiscoveryFlightSettings';
 import StripeAccountSettings from './StripeAccountSettings';
+import WeatherSettings from './WeatherSettings';
 import { toast } from 'react-hot-toast';
 
 interface ClubData {
@@ -18,6 +19,7 @@ interface ClubData {
   night_flights_enabled: boolean;
   commission_rate: number;
   stripe_account_id: string | null;
+  wind_station_id: string | null;
 }
 
 interface ClubSettings {
@@ -38,6 +40,7 @@ const ClubManagement = () => {
   const tabs = [
     { id: 'general', label: 'Général' },
     { id: 'discovery', label: 'Vols découverte' },
+    { id: 'meteo', label: 'Météo' },
     ...(isSystemAdmin ? [{ id: 'stripe', label: 'Configuration Stripe' }] : []),
   ];
 
@@ -85,6 +88,17 @@ const ClubManagement = () => {
           .from('clubs')
           .update({
             stripe_account_id: formData.get('stripe_account_id') as string,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.club.id);
+
+        if (error) throw error;
+      } else if (activeTab === 'meteo') {
+        // Pour l'onglet météo, on ne met à jour que le wind_station_id
+        const { error } = await supabase
+          .from('clubs')
+          .update({
+            wind_station_id: formData.get('wind_station_id') as string,
             updated_at: new Date().toISOString()
           })
           .eq('id', user.club.id);
@@ -207,6 +221,36 @@ const ClubManagement = () => {
               />
             </div>
             <div>
+              <label htmlFor="latitude" className="block text-sm font-medium text-gray-700">
+                Latitude
+              </label>
+              <input
+                type="number"
+                step="any"
+                name="latitude"
+                id="latitude"
+                value={clubData.latitude || ''}
+                onChange={(e) => setClubData({ ...clubData, latitude: e.target.value ? Number(e.target.value) : null })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+                placeholder="Ex: 48.8566"
+              />
+            </div>
+            <div>
+              <label htmlFor="longitude" className="block text-sm font-medium text-gray-700">
+                Longitude
+              </label>
+              <input
+                type="number"
+                step="any"
+                name="longitude"
+                id="longitude"
+                value={clubData.longitude || ''}
+                onChange={(e) => setClubData({ ...clubData, longitude: e.target.value ? Number(e.target.value) : null })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+                placeholder="Ex: 2.3522"
+              />
+            </div>
+            <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                 Téléphone
               </label>
@@ -264,6 +308,33 @@ const ClubManagement = () => {
       )}
 
       {activeTab === 'discovery' && <DiscoveryFlightSettings />}
+      
+      {activeTab === 'meteo' && clubData && (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="wind_station_id" className="block text-sm font-medium text-gray-700">
+              Station météo
+            </label>
+            <input
+              type="text"
+              name="wind_station_id"
+              id="wind_station_id"
+              value={clubData.wind_station_id || ''}
+              onChange={(e) => setClubData({ ...clubData, wind_station_id: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+            />
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex justify-center rounded-md border border-transparent bg-sky-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+            >
+              {loading ? 'Enregistrement...' : 'Enregistrer'}
+            </button>
+          </div>
+        </form>
+      )}
       
       {activeTab === 'stripe' && isSystemAdmin && <StripeAccountSettings />}
     </div>

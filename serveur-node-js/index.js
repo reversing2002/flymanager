@@ -42,6 +42,7 @@ const allowedOrigins = [
 
 // Import admin router
 const adminRouter = require('./admin');
+const meteoRouter = require('./meteo');
 
 // Stripe webhook should be before any parsing middleware
 app.post("/api/webhooks/stripe", 
@@ -171,6 +172,7 @@ app.use(
 
 // Mount admin router
 app.use('/admin', adminRouter);
+app.use('/api/meteo', meteoRouter);
 
 // Configuration Twilio
 const accountSid = process.env.TWILIO_ACCOUNT_SID;

@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import WeatherWidget from '../components/weather/WeatherWidget';
 import WeatherMap from '../components/weather/WeatherMap';
+import WindWidget from '../components/weather/WindWidget';
 import { MapPin } from 'lucide-react';
 
 const Weather = () => {
@@ -20,12 +21,15 @@ const Weather = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Colonne de gauche : Carte */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold mb-4">Carte des conditions</h2>
-          <div className="h-[600px]">
-            <WeatherMap />
+        {/* Colonne de gauche : Carte et Vent */}
+        <div className="space-y-8">
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold mb-4">Carte des conditions</h2>
+            <div className="h-[600px]">
+              <WeatherMap />
+            </div>
           </div>
+          <WindWidget />
         </div>
 
         {/* Colonne de droite : Informations météo */}

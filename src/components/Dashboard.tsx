@@ -34,8 +34,9 @@ import { format } from "date-fns";
 import SunTimesDisplay from "./common/SunTimesDisplay";
 import AircraftRemarks from "./remarks/AircraftRemarks";
 import PendingDiscoveryFlights from "./discovery/PendingDiscoveryFlights";
-import WeatherWidget from "./weather/WeatherWidget";
+import DashboardWeatherWidget from "./weather/DashboardWeatherWidget";
 import SimpleCreditModal from "./accounts/SimpleCreditModal";
+import MiniWindWidget from "./weather/MiniWindWidget";
 
 const StatCard = ({
   icon,
@@ -542,6 +543,27 @@ const Dashboard = () => {
         )}
       </div>
 
+      {/* Section Météo */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
+        {/* Widget météo principal - occupe 6 colonnes sur 12 */}
+        <div className="md:col-span-6">
+          <DashboardWeatherWidget />
+        </div>
+        
+        {/* Widgets compacts - occupent 3 colonnes chacun */}
+        <div className="md:col-span-3">
+          <div className="h-full flex flex-col justify-between">
+            <MiniWindWidget />
+          </div>
+        </div>
+
+        <div className="md:col-span-3">
+          <div className="h-full flex flex-col justify-between">
+            <SunTimesDisplay />
+          </div>
+        </div>
+      </div>
+
       {/* Prochaines réservations */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
         <h2 className="text-lg font-semibold text-slate-900">Mes prochaines réservations</h2>
@@ -627,11 +649,6 @@ const Dashboard = () => {
 
       {/* Autres sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        {/* Widget Météo */}
-        <div className="col-span-1">
-          <WeatherWidget />
-        </div>
-        
         {/* Messages récents */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
 
