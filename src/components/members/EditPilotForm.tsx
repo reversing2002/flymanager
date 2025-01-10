@@ -145,6 +145,9 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     setError(null);
 
     try {
+      const dataToSubmit = { ...formData };
+      dataToSubmit.roles = formData.roles.map(role => role.toUpperCase());
+
       // Mise à jour du mot de passe si nécessaire
       if (formData.password || formData.confirmPassword) {
         if (formData.password !== formData.confirmPassword) {
@@ -158,17 +161,17 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
           return;
         }
 
-        if (formData.password) {
+        // Si c'est un admin qui modifie le mot de passe d'un autre utilisateur
+        if (isAdmin && currentUser?.id !== pilot.id) {
+          dataToSubmit.password = formData.password;
+        } else {
+          // Si l'utilisateur modifie son propre mot de passe
           const { error: passwordError } = await supabase.auth.updateUser({
             password: formData.password
           });
           if (passwordError) throw passwordError;
-          toast.success("Mot de passe mis à jour avec succès");
         }
       }
-
-      const dataToSubmit = { ...formData };
-      dataToSubmit.roles = formData.roles.map(role => role.toUpperCase());
 
       // Mise à jour des calendriers si c'est un instructeur
       if (dataToSubmit.roles.includes('INSTRUCTOR')) {

@@ -337,39 +337,94 @@ router.put('/users/:userId', checkAdminRole, async (req, res) => {
     const { userId } = req.params;
     const userData = req.body;
     console.log('✏️ Mise à jour utilisateur:', userId);
+    console.log('📝 Données reçues:', JSON.stringify(userData, null, 2));
 
-    // Mettre à jour l'utilisateur dans la base de données
-    const { data: updatedUser, error: updateError } = await adminClient
+    // Vérifier d'abord si l'utilisateur existe
+    const { data: existingUser, error: fetchError } = await adminClient
       .from('users')
-      .update(userData)
+      .select('*')
       .eq('id', userId)
-      .select()
       .single();
 
-    if (updateError) {
-      console.error('❌ Erreur mise à jour utilisateur:', updateError);
-      return res.status(400).json({ error: updateError.message });
+    if (fetchError) {
+      console.error('❌ Erreur lors de la recherche de l\'utilisateur:', fetchError);
+      return res.status(404).json({ error: 'Erreur lors de la recherche de l\'utilisateur' });
     }
 
-    // Si l'email a changé, mettre à jour l'email dans auth
-    if (userData.email) {
-      const { data: user } = await adminClient
+    if (!existingUser) {
+      console.error('❌ Utilisateur non trouvé:', userId);
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    console.log('✅ Utilisateur trouvé:', existingUser.id);
+
+    // Extraire le mot de passe des données avant la mise à jour de la table users
+    const { password, ...userDataWithoutPassword } = userData;
+    console.log('🔐 Mot de passe extrait:', password ? 'Présent' : 'Absent');
+    console.log('📝 Données à mettre à jour:', JSON.stringify(userDataWithoutPassword, null, 2));
+
+    let updatedUser = existingUser;
+
+    // Ne mettre à jour la table users que s'il y a des données à mettre à jour
+    if (Object.keys(userDataWithoutPassword).length > 0) {
+      // Mettre à jour l'utilisateur dans la base de données
+      const { data: updates, error: updateError } = await adminClient
         .from('users')
-        .select('auth_id')
+        .update(userDataWithoutPassword)
         .eq('id', userId)
-        .single();
+        .select();
 
-      if (user?.auth_id) {
+      if (updateError) {
+        console.error('❌ Erreur mise à jour utilisateur:', updateError);
+        return res.status(400).json({ error: updateError.message });
+      }
+
+      console.log('📊 Résultat de la mise à jour:', updates ? `${updates.length} lignes modifiées` : '0 ligne modifiée');
+
+      if (!updates || updates.length === 0) {
+        console.error('❌ Aucune mise à jour effectuée');
+        console.log('💡 État actuel:', JSON.stringify(existingUser, null, 2));
+        console.log('💡 Tentative de mise à jour avec:', JSON.stringify(userDataWithoutPassword, null, 2));
+        return res.status(400).json({ error: 'Aucune mise à jour effectuée' });
+      }
+
+      updatedUser = updates[0];
+      console.log('✅ Données mises à jour:', JSON.stringify(updatedUser, null, 2));
+    } else {
+      console.log('ℹ️ Pas de mise à jour de la table users nécessaire');
+    }
+
+    // Si l'email ou le mot de passe a changé, mettre à jour dans auth
+    if (userData.email || password) {
+      if (userData.email) {
         console.log('✏️ Mise à jour email auth:', userData.email);
-        const { error: authError } = await adminClient.auth.admin.updateUserById(
-          user.auth_id,
-          { email: userData.email }
-        );
+        const { error: emailError } = await adminClient
+          .rpc('update_user_email', { 
+            p_user_id: userId,
+            p_email: userData.email
+          });
 
-        if (authError) {
-          console.error('❌ Erreur mise à jour email auth:', authError);
-          return res.status(400).json({ error: authError.message });
+        if (emailError) {
+          console.error('❌ Erreur mise à jour email:', emailError);
+          return res.status(400).json({ error: emailError.message });
         }
+        console.log('✅ Email mis à jour avec succès');
+      }
+      
+      if (password) {
+        console.log('✏️ Mise à jour mot de passe via RPC');
+        const { data: passwordData, error: passwordError } = await adminClient
+          .rpc('update_auth_user', {
+            p_email: existingUser.email,
+            p_password: password,
+            p_user_metadata: null
+          });
+
+        if (passwordError) {
+          console.error('❌ Erreur mise à jour mot de passe:', passwordError);
+          return res.status(400).json({ error: passwordError.message });
+        }
+        console.log('✅ Mot de passe mis à jour avec succès');
       }
     }
 

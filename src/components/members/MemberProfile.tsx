@@ -193,7 +193,9 @@ const MemberProfile = () => {
         birth_date: formData.birth_date,
         image_url: formData.image_url,
         instructor_rate: formData.instructor_rate,
-        instructor_fee: formData.instructor_fee
+        instructor_fee: formData.instructor_fee,
+        password: formData.password, // Ajout du mot de passe
+        roles: formData.roles // Ajout des rôles
       });
 
       await loadData();

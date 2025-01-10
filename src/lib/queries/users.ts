@@ -55,7 +55,13 @@ export async function updateUser(
       throw userError;
     }
 
-    // 3. Si des rôles sont fournis, les mettre à jour via la RPC
+    // 3. Si un mot de passe est fourni, le mettre à jour via l'API admin
+    if (data.password) {
+      console.log("[updateUser] Updating password via admin API");
+      await adminService.updateUser(data.id, { password: data.password });
+    }
+
+    // 4. Si des rôles sont fournis, les mettre à jour via la RPC
     if (data.roles) {
       console.log("Updating user roles:", data.roles);
 
