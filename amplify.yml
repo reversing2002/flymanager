@@ -6,6 +6,7 @@ applications:
           commands:
             - npm ci --legacy-peer-deps
             - npm install -g typescript
+            - export NODE_OPTIONS="--max-old-space-size=8192"
         build:
           commands:
             - npx vite build
