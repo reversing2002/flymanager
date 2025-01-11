@@ -58,6 +58,7 @@ import InvoicesPage from "./pages/InvoicesPage";
 import SimpleAccountingView from "./components/accounting/SimpleAccountingView";
 import DiscoveryFlightSuccessPage from './pages/DiscoveryFlightSuccessPage';
 import DiscoveryFlightCancelPage from './pages/DiscoveryFlightCancelPage';
+import PilotStatsPage from "./components/members/PilotStatsPage";
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
@@ -125,6 +126,7 @@ function App() {
                 />
                 <Route path="members/roles" element={<RoleManagement />} />
                 <Route path="members/:id" element={<MemberProfile />} />
+                <Route path="members/:id/stats" element={<PilotStatsPage />} />
 
                 {/* Statistiques des clubs */}
                 <Route

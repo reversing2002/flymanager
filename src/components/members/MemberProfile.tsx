@@ -27,6 +27,7 @@ import { supabase } from "../../lib/supabase";
 import FFACredentialsForm from "./FFACredentialsForm";
 import FFPLUMCredentialsForm from "./FFPLUMCredentialsForm";
 import { useRoles } from "../../hooks/useRoles";
+import PilotFlightStats from "./PilotFlightStats";
 
 const getRoleBadgeColor = (role: Role) => {
   switch (role) {
@@ -390,6 +391,14 @@ const MemberProfile = () => {
                 </div>
               </div>
             </div>
+
+            {/* Statistiques de vol */}
+            {pilot && (
+              <PilotFlightStats 
+                userId={pilot.id}
+                isInstructor={pilot.roles?.includes("INSTRUCTOR")}
+              />
+            )}
 
             {/* Section Documents */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
