@@ -48,7 +48,7 @@ const MiniWindWidget: React.FC = () => {
   }, [user?.club?.id]);
 
   const WindArrow: React.FC<{ direction: number }> = ({ direction }) => {
-    const rotation = `rotate(${direction}deg)`;
+    const rotation = `rotate(${(direction + 180) % 360}deg)`;
     return (
       <ArrowUp
         size={20}

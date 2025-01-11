@@ -16,6 +16,9 @@ const supabase = createClient(
 // Stockage des données de vent par club
 let windDataByClub = new Map();
 
+// Définir une limite pour l'historique (par exemple, 24 heures de données)
+const WIND_HISTORY_LIMIT = 24 * 60 * 60 * 1000; // 24 heures en millisecondes
+
 class MeteoClient {
     constructor() {
         this.session = axios.create();
@@ -153,15 +156,34 @@ router.get('/wind-data/:clubId', async (req, res) => {
             windDataByClub.set(clubId, []);
         }
 
-        const windData = windDataByClub.get(clubId);
+        let windData = windDataByClub.get(clubId);
         
-        // Si pas de données ou données trop anciennes, mettre à jour
+        // Nettoyer les données plus anciennes que WIND_HISTORY_LIMIT
+        const now = moment();
+        windData = windData.filter(data => 
+            now.diff(moment(data.timestamp)) < WIND_HISTORY_LIMIT
+        );
+        
+        // Si pas de données ou dernière donnée trop ancienne, mettre à jour
         const lastUpdate = windData.length > 0 ? windData[windData.length - 1].timestamp : null;
-        if (!lastUpdate || moment().diff(moment(lastUpdate), 'minutes') > 5) {
+        if (!lastUpdate || now.diff(moment(lastUpdate), 'minutes') > 5) {
             const client = new MeteoClient();
             const newData = await client.fetchWindData(clubData.wind_station_id);
-            windDataByClub.set(clubId, newData);
-            return res.json(newData);
+            
+            // Fusionner les nouvelles données avec l'historique existant
+            windData = [...windData, ...newData];
+            
+            // Trier par timestamp et supprimer les doublons
+            windData = windData
+                .sort((a, b) => moment(a.timestamp).diff(moment(b.timestamp)))
+                .filter((data, index, self) => 
+                    index === self.findIndex(d => 
+                        moment(d.timestamp).isSame(moment(data.timestamp))
+                    )
+                );
+            
+            // Mettre à jour le cache
+            windDataByClub.set(clubId, windData);
         }
 
         return res.json(windData);

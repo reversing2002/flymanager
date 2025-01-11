@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ArrowUp, Wind, Clock, ArrowUpCircle, ArrowDownCircle, TrendingUp } from "lucide-react";
 import { useUser } from '@/hooks/useUser';
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface WindData {
   time: string;
-  speed: string;
+  speed: number;
   direction: number;
+  timestamp: string;
 }
 
 const WindWidget: React.FC = () => {
@@ -15,6 +18,19 @@ const WindWidget: React.FC = () => {
   const [latestWind, setLatestWind] = useState<WindData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { user } = useUser();
+
+  const formatWindDirection = (direction: number): string => {
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'];
+    const index = Math.round(((direction + 11.25) % 360) / 22.5);
+    return directions[index];
+  };
+
+  const getWindColor = (speed: number): string => {
+    if (speed < 5) return 'text-green-500';
+    if (speed < 15) return 'text-yellow-500';
+    if (speed < 25) return 'text-orange-500';
+    return 'text-red-500';
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,11 +45,14 @@ const WindWidget: React.FC = () => {
           throw new Error(`Erreur HTTP: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Données de vent reçues:', data);
         
         if (Array.isArray(data) && data.length > 0) {
-          setWindData(data);
-          setLatestWind(data[data.length - 1]);
+          // Trier les données par timestamp
+          const sortedData = data.sort((a, b) => 
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+          setWindData(sortedData);
+          setLatestWind(sortedData[sortedData.length - 1]);
           setError(null);
         } else {
           setError('Aucune donnée de vent disponible');
@@ -51,188 +70,123 @@ const WindWidget: React.FC = () => {
     }
   }, [user?.club?.id]);
 
-  const WindArrow: React.FC<{ direction: number }> = ({ direction }) => {
-    const invertedDirection = (direction + 180) % 360;
-    const rotation = `rotate(${invertedDirection}deg)`;
-    return (
-      <div className="flex items-center justify-center h-24 w-24 bg-blue-100 rounded-full">
-        <ArrowUp
-          size={48}
-          style={{ transform: rotation }}
-          className="text-blue-500"
-        />
-      </div>
-    );
+  const formatXAxis = (timestamp: string) => {
+    return format(parseISO(timestamp), 'HH:mm', { locale: fr });
   };
 
-  const getWindColor = (speed: number) => {
-    if (speed < 10) return '#22c55e';  // Vent faible : Vert
-    if (speed < 20) return '#eab308';  // Vent modéré : Jaune
-    if (speed < 30) return '#f97316';  // Vent fort : Orange
-    return '#ef4444';  // Vent très fort : Rouge
-  };
-
-  const CustomizedDot: React.FC<any> = (props) => {
-    const { cx, cy, payload } = props;
-    const speed = parseFloat(payload.speed);
-    const direction = payload.direction;
-    const color = getWindColor(speed);
-    const size = Math.max(4, Math.min(20, speed));
-
-    return (
-      <g transform={`translate(${cx},${cy})`}>
-        <circle r={size / 2} fill={color} />
-        <path
-          d={`M0,0 L0,-${size}`}
-          stroke="black"
-          strokeWidth="2"
-          transform={`rotate(${direction})`}
-        />
-      </g>
-    );
-  };
-
-  const CustomTooltip: React.FC<any> = ({ active, payload }) => {
+  const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
       return (
-        <div className="bg-white p-2 border border-gray-300 rounded shadow">
-          <p>Heure: {new Date(data.time).toLocaleString()}</p>
-          <p>Vitesse: {data.speed} km/h</p>
-          <p>Direction: {data.direction}°</p>
+        <div className="bg-white p-2 border rounded shadow">
+          <p className="text-sm">
+            {format(parseISO(label), 'HH:mm', { locale: fr })}
+          </p>
+          <p className="text-sm">
+            Vitesse: {payload[0].value} km/h
+          </p>
+          <p className="text-sm">
+            Direction: {formatWindDirection(payload[1].value)}
+          </p>
         </div>
       );
     }
     return null;
   };
 
-  const WindLegend: React.FC = () => (
-    <div className="flex flex-wrap gap-4 mt-4">
-      <div className="flex items-center">
-        <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-        <span className="text-sm">Faible (&lt;10 km/h)</span>
-      </div>
-      <div className="flex items-center">
-        <div className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
-        <span className="text-sm">Modéré (10-20 km/h)</span>
-      </div>
-      <div className="flex items-center">
-        <div className="w-3 h-3 rounded-full bg-orange-500 mr-2"></div>
-        <span className="text-sm">Fort (20-30 km/h)</span>
-      </div>
-      <div className="flex items-center">
-        <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
-        <span className="text-sm">Très Fort (&gt;30 km/h)</span>
-      </div>
-    </div>
-  );
-
-  if (error) {
-    return (
-      <Card className="bg-red-50">
-        <CardContent className="pt-6">
-          <p className="text-red-500">{error}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const averageSpeed = windData.length > 0
-    ? (windData.reduce((sum, data) => sum + parseFloat(data.speed), 0) / windData.length).toFixed(1)
-    : 'N/A';
-
-  const maxSpeed = windData.length > 0
-    ? Math.max(...windData.map(data => parseFloat(data.speed))).toFixed(1)
-    : 'N/A';
-
-  const minSpeed = windData.length > 0
-    ? Math.min(...windData.map(data => parseFloat(data.speed))).toFixed(1)
-    : 'N/A';
-
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wind className="h-5 w-5" /> Vent à Saint-Chamond (LFHG)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {latestWind && (
-              <div className="flex items-center justify-around p-4 bg-gray-50 rounded-lg">
-                <WindArrow direction={latestWind.direction} />
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-600">{latestWind.speed} km/h</p>
-                  <p className="text-lg text-gray-600">{latestWind.direction}°</p>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Wind className="h-6 w-6" />
+          Données Vent
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {error ? (
+          <div className="text-red-500">{error}</div>
+        ) : latestWind ? (
+          <div className="space-y-6">
+            {/* Dernière mesure */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5" />
+                <div>
+                  <p className="text-sm text-gray-500">Vitesse</p>
+                  <p className={`text-2xl font-bold ${getWindColor(latestWind.speed)}`}>
+                    {latestWind.speed} km/h
+                  </p>
                 </div>
               </div>
-            )}
-            <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
-              <p className="flex items-center text-gray-600">
-                <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
-                Moyenne: <span className="ml-2 font-semibold">{averageSpeed} km/h</span>
-              </p>
-              <p className="flex items-center text-gray-600">
-                <ArrowUpCircle className="h-5 w-5 mr-2 text-green-500" />
-                Maximum: <span className="ml-2 font-semibold">{maxSpeed} km/h</span>
-              </p>
-              <p className="flex items-center text-gray-600">
-                <ArrowDownCircle className="h-5 w-5 mr-2 text-red-500" />
-                Minimum: <span className="ml-2 font-semibold">{minSpeed} km/h</span>
-              </p>
+              
+              <div className="flex items-center space-x-2">
+                <ArrowUp 
+                  className="h-5 w-5" 
+                  style={{ 
+                    transform: `rotate(${(latestWind.direction + 180) % 360}deg)`,
+                    transition: 'transform 0.3s ease-in-out'
+                  }}
+                />
+                <div>
+                  <p className="text-sm text-gray-500">Direction</p>
+                  <p className="text-2xl font-bold">
+                    {formatWindDirection(latestWind.direction)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Clock className="h-5 w-5" />
+                <div>
+                  <p className="text-sm text-gray-500">Dernière mise à jour</p>
+                  <p className="text-2xl font-bold">
+                    {format(parseISO(latestWind.timestamp), 'HH:mm', { locale: fr })}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Graphique d'évolution */}
+            <div className="h-[300px] mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={windData}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    tickFormatter={formatXAxis}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="speed"
+                    name="Vitesse (km/h)"
+                    stroke="#2563eb"
+                    dot={false}
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="direction"
+                    name="Direction (°)"
+                    stroke="#dc2626"
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" /> Historique des 3 dernières heures
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {windData.length > 0 ? (
-            <>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis
-                      dataKey="time"
-                      name="Heure"
-                      tickFormatter={(time: string) => new Date(time).toLocaleTimeString()}
-                      type="category"
-                      domain={['dataMin', 'dataMax']}
-                      stroke="#64748b"
-                    />
-                    <YAxis
-                      dataKey="speed"
-                      name="Vitesse"
-                      unit=" km/h"
-                      domain={[0, 'dataMax']}
-                      stroke="#64748b"
-                    />
-                    <ZAxis
-                      dataKey="direction"
-                      name="Direction"
-                      unit="°"
-                      range={[0, 360]}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Scatter name="Données de vent" data={windData} shape={<CustomizedDot />} />
-                  </ScatterChart>
-                </ResponsiveContainer>
-              </div>
-              <WindLegend />
-            </>
-          ) : (
-            <p className="text-center text-gray-500 py-8">Chargement des données...</p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        ) : (
+          <div className="text-gray-500">Chargement des données...</div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
