@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ArrowUp, Wind, Clock, ArrowUpCircle, ArrowDownCircle, TrendingUp } from "lucide-react";
+import { Wind, Clock, TrendingUp } from "lucide-react";
 import { useUser } from '@/hooks/useUser';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useWeatherStations } from '@/hooks/useWeatherStations';
 
 interface WindData {
   time: string;
@@ -18,6 +19,9 @@ const WindWidget: React.FC = () => {
   const [latestWind, setLatestWind] = useState<WindData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { user } = useUser();
+  const { data: stations } = useWeatherStations();
+
+  console.log('Club data:', user?.club);  // Pour déboguer
 
   const formatWindDirection = (direction: number): string => {
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'];
@@ -96,9 +100,11 @@ const WindWidget: React.FC = () => {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Wind className="h-6 w-6" />
-          Données Vent
+        <CardTitle className="text-xl font-bold flex items-center gap-2">
+          <Wind className="h-6 w-6" /> Données Vent
+          <span className="text-sm font-normal ml-2">
+            {user?.club?.wind_station_name || 'Station non configurée'}
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -118,22 +124,6 @@ const WindWidget: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
-                <ArrowUp 
-                  className="h-5 w-5" 
-                  style={{ 
-                    transform: `rotate(${(latestWind.direction + 180) % 360}deg)`,
-                    transition: 'transform 0.3s ease-in-out'
-                  }}
-                />
-                <div>
-                  <p className="text-sm text-gray-500">Direction</p>
-                  <p className="text-2xl font-bold">
-                    {formatWindDirection(latestWind.direction)}
-                  </p>
-                </div>
-              </div>
-
               <div className="flex items-center space-x-2">
                 <Clock className="h-5 w-5" />
                 <div>

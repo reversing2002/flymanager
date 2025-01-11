@@ -59,25 +59,32 @@ const MiniWindWidget: React.FC = () => {
   };
 
   return (
-    <Card className="bg-white shadow-sm">
+    <Card className="w-full">
       <CardContent className="p-4">
-        <div className="flex items-center space-x-2">
-          <Wind className="h-4 w-4 text-blue-500" />
-          <span className="text-sm font-medium text-gray-500">Vent</span>
-        </div>
-        {error ? (
-          <div className="mt-2 text-sm text-gray-500">{error}</div>
-        ) : latestWind ? (
-          <div className="mt-2 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold">{latestWind.speed}</span>
-              <span className="text-sm text-gray-500">km/h</span>
-            </div>
-            <WindArrow direction={latestWind.direction} />
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2 mb-1">
+            <Wind className="h-4 w-4" />
+            <span className="text-xs text-muted-foreground">
+              {user?.club?.wind_station_name}
+            </span>
           </div>
-        ) : (
-          <div className="mt-2 text-sm text-gray-500">Chargement...</div>
-        )}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-500">Vent</span>
+          </div>
+          {error ? (
+            <div className="mt-2 text-sm text-gray-500">{error}</div>
+          ) : latestWind ? (
+            <div className="mt-2 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-2xl font-bold">{latestWind.speed}</span>
+                <span className="text-sm text-gray-500">km/h</span>
+              </div>
+              <WindArrow direction={latestWind.direction} />
+            </div>
+          ) : (
+            <div className="mt-2 text-sm text-gray-500">Chargement...</div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

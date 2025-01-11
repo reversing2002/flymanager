@@ -17,6 +17,8 @@ interface AuthContextType {
         club?: {
           id: string;
           name: string;
+          wind_station_id?: string;
+          wind_station_name?: string;
         } | null;
       })
     | null;
@@ -89,7 +91,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             club:club_members!inner(
               club:clubs(
                 id,
-                name
+                name,
+                wind_station_id,
+                wind_station_name
               )
             )
           `)
@@ -124,7 +128,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   // Transformer la structure du club pour correspondre au type attendu
                   const clubData = userData.club?.[0]?.club ? {
                     id: userData.club[0].club.id,
-                    name: userData.club[0].club.name
+                    name: userData.club[0].club.name,
+                    wind_station_id: userData.club[0].club.wind_station_id,
+                    wind_station_name: userData.club[0].club.wind_station_name
                   } : null;
 
                   setUser({
@@ -159,7 +165,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             club:club_members!inner(
               club:clubs(
                 id,
-                name
+                name,
+                wind_station_id,
+                wind_station_name
               )
             )
           `)
@@ -194,7 +202,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   // Transformer la structure du club pour correspondre au type attendu
                   const clubData = userData.club?.[0]?.club ? {
                     id: userData.club[0].club.id,
-                    name: userData.club[0].club.name
+                    name: userData.club[0].club.name,
+                    wind_station_id: userData.club[0].club.wind_station_id,
+                    wind_station_name: userData.club[0].club.wind_station_name
                   } : null;
 
                   setUser({
@@ -227,7 +237,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           *,
           club:clubs (
             id,
-            name
+            name,
+            wind_station_id,
+            wind_station_name
           )
         `)
         .eq('auth_id', user?.id)

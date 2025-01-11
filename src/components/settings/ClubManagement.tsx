@@ -6,6 +6,7 @@ import DiscoveryFlightSettings from './DiscoveryFlightSettings';
 import StripeAccountSettings from './StripeAccountSettings';
 import WeatherSettings from './WeatherSettings';
 import { toast } from 'react-hot-toast';
+import { useWeatherStations } from '../../hooks/useWeatherStations';
 
 interface ClubData {
   id: string;
@@ -20,11 +21,13 @@ interface ClubData {
   commission_rate: number;
   stripe_account_id: string | null;
   wind_station_id: string | null;
+  wind_station_name: string | null;
 }
 
 interface ClubSettings {
   id: string;
   stripe_account_id: string | null;
+  weather_station_id: string | null;
 }
 
 const ClubManagement = () => {
@@ -33,6 +36,7 @@ const ClubManagement = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [clubData, setClubData] = useState<ClubData | null>(null);
   const { user } = useUser();
+  const { data: stations, isLoading: stationsLoading } = useWeatherStations();
   const [activeTab, setActiveTab] = useState('general');
 
   const isSystemAdmin = hasAnyGroup(user, ['SYSTEM_ADMIN']);
@@ -94,11 +98,12 @@ const ClubManagement = () => {
 
         if (error) throw error;
       } else if (activeTab === 'meteo') {
-        // Pour l'onglet météo, on ne met à jour que le wind_station_id
+        // Pour l'onglet météo, on ne met à jour que le wind_station_id et le wind_station_name
         const { error } = await supabase
           .from('clubs')
           .update({
-            wind_station_id: formData.get('wind_station_id') as string,
+            wind_station_id: formData.get('weather_station_id') as string,
+            wind_station_name: stations?.find(s => s.Id_station === formData.get('weather_station_id'))?.Nom_usuel || null,
             updated_at: new Date().toISOString()
           })
           .eq('id', user.club.id);
@@ -311,18 +316,31 @@ const ClubManagement = () => {
       
       {activeTab === 'meteo' && clubData && (
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="wind_station_id" className="block text-sm font-medium text-gray-700">
+          <div className="space-y-2">
+            <label htmlFor="weather-station" className="block text-sm font-medium text-gray-700">
               Station météo
             </label>
-            <input
-              type="text"
-              name="wind_station_id"
-              id="wind_station_id"
-              value={clubData.wind_station_id || ''}
-              onChange={(e) => setClubData({ ...clubData, wind_station_id: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-            />
+            <select
+              id="weather-station"
+              name="weather_station_id"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              disabled={stationsLoading}
+              defaultValue={clubData.wind_station_id || ""}
+            >
+              <option value="">Sélectionner une station</option>
+              {Array.isArray(stations) && stations.map((station) => (
+                <option 
+                  key={station.Id_station} 
+                  value={station.Id_station}
+                  selected={station.Id_station === clubData.wind_station_id}
+                >
+                  {station.Nom_usuel} ({station.Altitude}m)
+                </option>
+              ))}
+            </select>
+            {stationsLoading && (
+              <p className="text-sm text-gray-500">Chargement des stations...</p>
+            )}
           </div>
           <div className="flex justify-end">
             <button

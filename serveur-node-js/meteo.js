@@ -193,6 +193,43 @@ router.get('/wind-data/:clubId', async (req, res) => {
     }
 });
 
+// Route pour obtenir la liste des stations
+router.get('/stations', async (req, res) => {
+    try {
+        const client = new MeteoClient();
+        const response = await client.request('GET', 'https://public-api.meteofrance.fr/public/DPObs/liste-stations');
+        console.log('Réponse API stations:', response.data);
+        
+        // Vérifier si la réponse est une chaîne CSV
+        if (typeof response.data === 'string') {
+            // Parser le CSV
+            const lines = response.data.split('\n');
+            const headers = lines[0].split(';');
+            const stations = lines.slice(1)
+                .filter(line => line.trim()) // Ignorer les lignes vides
+                .map(line => {
+                    const values = line.split(';');
+                    return {
+                        Id_station: values[0],
+                        Id_omm: values[1],
+                        Nom_usuel: values[2],
+                        Latitude: parseFloat(values[3]),
+                        Longitude: parseFloat(values[4]),
+                        Altitude: parseInt(values[5]),
+                        Date_ouverture: values[6],
+                        Pack: values[7]
+                    };
+                });
+            res.json(stations);
+        } else {
+            res.json(response.data);
+        }
+    } catch (error) {
+        console.error('Erreur lors de la récupération de la liste des stations:', error);
+        res.status(500).json({ error: 'Erreur lors de la récupération de la liste des stations' });
+    }
+});
+
 // Fonction de mise à jour périodique des données pour tous les clubs
 async function updateAllClubsWindData() {
     try {
