@@ -51,7 +51,25 @@ const FlightList = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalFlights, setTotalFlights] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
+
+  // Fonction pour vérifier si des filtres sont actifs
+  const hasActiveFilters = () => {
+    return filters.dateRange !== "all" ||
+      filters.startDate !== "" ||
+      filters.endDate !== "" ||
+      filters.aircraftTypes.length > 0 ||
+      filters.aircraftIds.length > 0 ||
+      filters.flightTypes.length > 0 ||
+      filters.validated !== "all" ||
+      filters.accountingCategories.length > 0 ||
+      filters.memberId !== null;
+  };
+
+  // Mettre à jour la taille de page quand les filtres changent
+  useEffect(() => {
+    setPageSize(hasActiveFilters() ? 5000 : 25);
+  }, [filters]);
 
   const getInstructorStudents = (flights: Flight[]) => {
     if (!user || !hasAnyGroup(user, ["INSTRUCTOR"])) {
@@ -799,6 +817,7 @@ const FlightList = () => {
                 <option value="25">25 par page</option>
                 <option value="50">50 par page</option>
                 <option value="100">100 par page</option>
+                <option value="5000">5000 par page</option>
               </select>
             </div>
           </div>

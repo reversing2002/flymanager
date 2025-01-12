@@ -16,7 +16,7 @@ interface FlightFiltersProps {
 }
 
 export interface FlightFilters {
-  dateRange: 'all' | 'thisMonth' | 'lastMonth' | 'last3Months' | 'custom';
+  dateRange: 'all' | 'thisMonth' | 'lastMonth' | 'last3Months' | 'last12Months' | 'thisYear' | 'lastYear' | 'custom';
   startDate: string;
   endDate: string;
   aircraftTypes: string[];
@@ -75,7 +75,19 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
         break;
       case 'last3Months':
         startDate = format(startOfMonth(subMonths(now, 2)), 'yyyy-MM-dd');
-        startDate = format(endOfMonth(now), 'yyyy-MM-dd');
+        endDate = format(endOfMonth(now), 'yyyy-MM-dd');
+        break;
+      case 'last12Months':
+        startDate = format(startOfMonth(subMonths(now, 11)), 'yyyy-MM-dd');
+        endDate = format(endOfMonth(now), 'yyyy-MM-dd');
+        break;
+      case 'thisYear':
+        startDate = format(new Date(now.getFullYear(), 0, 1), 'yyyy-MM-dd');
+        endDate = format(new Date(now.getFullYear(), 11, 31), 'yyyy-MM-dd');
+        break;
+      case 'lastYear':
+        startDate = format(new Date(now.getFullYear() - 1, 0, 1), 'yyyy-MM-dd');
+        endDate = format(new Date(now.getFullYear() - 1, 11, 31), 'yyyy-MM-dd');
         break;
     }
 
@@ -117,6 +129,9 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
             <option value="thisMonth">Ce mois</option>
             <option value="lastMonth">Le mois dernier</option>
             <option value="last3Months">Les 3 derniers mois</option>
+            <option value="last12Months">Les 12 derniers mois</option>
+            <option value="thisYear">Année en cours</option>
+            <option value="lastYear">Année précédente</option>
             <option value="custom">Personnalisé</option>
           </select>
 
