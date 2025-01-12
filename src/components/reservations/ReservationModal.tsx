@@ -15,7 +15,9 @@ import { hasAnyGroup } from "../../lib/permissions";
 import NewFlightForm from "../flights/NewFlightForm";
 import LightAvailabilityCalendarModal from "../availability/LightAvailabilityCalendarModal";
 import AircraftRemarksList from "../aircraft/AircraftRemarksList";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { getMemberBalance } from "../../lib/queries";
+import SimpleCreditModal from "../accounts/SimpleCreditModal";
 
 // Utility functions
 const toUTC = (localDateStr: string): string => {
@@ -493,10 +495,38 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     withInstructor: existingReservation?.instructorId ? true : false,
   });
 
+  const [balance, setBalance] = useState<{ validated: number; pending: number } | null>(null);
+
+  // Mettre à jour le solde quand le pilote change
+  useEffect(() => {
+    if (formData.pilotId) {
+      getMemberBalance(formData.pilotId).then((balanceData) => {
+        setBalance(balanceData);
+      });
+    } else {
+      setBalance(null);
+    }
+  }, [formData.pilotId]);
+
+  const handlePilotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newPilotId = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      pilotId: newPilotId,
+      instructorId: "", // Réinitialiser l'instructeur quand le pilote change
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (balance !== null && balance.pending < 0) {
+      toast.error("Votre solde est négatif. Veuillez créditer votre compte avant de réserver.");
+      setLoading(false);
+      return;
+    }
 
     try {
       // Vérifier la disponibilité avant de soumettre
@@ -601,6 +631,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     }));
   };
 
+  const [showCreditModal, setShowCreditModal] = useState(false);
+
   if (showNewFlightForm && existingReservation) {
     const duration = calculateDuration(
       existingReservation.startTime,
@@ -640,250 +672,278 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
-        
-        <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-          <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                {existingReservation ? "Modifier la réservation" : "Nouvelle réservation"}
-              </h3>
-              <button
-                onClick={onClose}
-                className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                <span className="sr-only">Fermer</span>
-                <X className="h-6 w-6" aria-hidden="true" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-4 p-4">
-                {error && (
-                  <div className="mb-4 flex items-center rounded-md bg-red-50 p-3 text-red-700">
-                    <AlertTriangle className="mr-2 h-5 w-5" />
-                    {error}
+    <>
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
+          
+          <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+            <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  {existingReservation ? "Modifier la réservation" : "Nouvelle réservation"}
+                </h3>
+                <button
+                  onClick={onClose}
+                  className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                  <span className="sr-only">Fermer</span>
+                  <X className="h-6 w-6" aria-hidden="true" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-4 p-4">
+                  {error && (
+                    <div className="mb-4 flex items-center rounded-md bg-red-50 p-3 text-red-700">
+                      <AlertTriangle className="mr-2 h-5 w-5" />
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <TimeControl
+                      label="Début"
+                      value={formData.startTime}
+                      onChange={(value) => handleTimeChange('startTime', value)}
+                      disabled={!canModifyReservation()}
+                    />
+                    
+                    <TimeControl
+                      label="Fin"
+                      value={formData.endTime}
+                      onChange={(value) => handleTimeChange('endTime', value)}
+                      disabled={!canModifyReservation()}
+                    />
                   </div>
-                )}
 
-                <div className="space-y-4">
-                  <TimeControl
-                    label="Début"
-                    value={formData.startTime}
-                    onChange={(value) => handleTimeChange('startTime', value)}
-                    disabled={!canModifyReservation()}
-                  />
-                  
-                  <TimeControl
-                    label="Fin"
-                    value={formData.endTime}
-                    onChange={(value) => handleTimeChange('endTime', value)}
-                    disabled={!canModifyReservation()}
-                  />
-                </div>
+                  {/* Sélection de l'avion */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Avion
+                    </label>
+                    <div className="flex gap-2">
+                      <select
+                        name="aircraftId"
+                        value={formData.aircraftId}
+                        onChange={handleInputChange}
+                        disabled={!canModifyReservation()}
+                        className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                          ${!canModifyReservation() ? "bg-gray-100" : ""}`}
+                      >
+                        {aircraft
+                          .filter((a) => a.status === "AVAILABLE")
+                          .map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.registration} - {a.name}
+                            </option>
+                          ))}
+                      </select>
+                      {formData.aircraftId && (
+                        <button
+                          type="button"
+                          onClick={() => setShowRemarksModal(true)}
+                          className="mt-1 inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-sky-700 hover:text-sky-800 hover:bg-sky-50 rounded-md"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          <span>Remarques</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-                {/* Sélection de l'avion */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Avion
-                  </label>
-                  <div className="flex gap-2">
+                  {/* Type de vol */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Type de vol
+                    </label>
                     <select
-                      name="aircraftId"
-                      value={formData.aircraftId}
+                      name="flightTypeId"
+                      value={formData.flightTypeId}
                       onChange={handleInputChange}
                       disabled={!canModifyReservation()}
                       className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
                         ${!canModifyReservation() ? "bg-gray-100" : ""}`}
                     >
-                      {aircraft
-                        .filter((a) => a.status === "AVAILABLE")
-                        .map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.registration} - {a.name}
-                          </option>
-                        ))}
-                    </select>
-                    {formData.aircraftId && (
-                      <button
-                        type="button"
-                        onClick={() => setShowRemarksModal(true)}
-                        className="mt-1 inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-sky-700 hover:text-sky-800 hover:bg-sky-50 rounded-md"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                        <span>Remarques</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Type de vol */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Type de vol
-                  </label>
-                  <select
-                    name="flightTypeId"
-                    value={formData.flightTypeId}
-                    onChange={handleInputChange}
-                    disabled={!canModifyReservation()}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                      ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                  >
-                    <option value="">Sélectionnez un type de vol</option>
-                    {flightTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Pilote */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Pilote
-                  </label>
-                  <select
-                    name="pilotId"
-                    value={formData.pilotId}
-                    onChange={handleInputChange}
-                    disabled={!canModifyReservation()}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                      ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                    required
-                  >
-                    <option value="">Sélectionner un pilote</option>
-                    {availablePilots.map((pilot) => (
-                      <option key={pilot.id} value={pilot.id}>
-                        {pilot.first_name} {pilot.last_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Instructeur */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Instructeur
-                  </label>
-                  <div className="flex gap-2">
-                    <select
-                      name="instructorId"
-                      value={formData.instructorId}
-                      onChange={(e) => {
-                        handleInputChange(e);
-                        const instructor = instructors.find(i => i.id === e.target.value);
-                        setSelectedInstructor(instructor || null);
-                      }}
-                      disabled={!canModifyReservation()}
-                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                        ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                    >
-                      <option value="">Aucun</option>
-                      {instructors.map((instructor) => (
-                        <option key={instructor.id} value={instructor.id}>
-                          {instructor.first_name} {instructor.last_name}
+                      <option value="">Sélectionnez un type de vol</option>
+                      {flightTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
                         </option>
                       ))}
                     </select>
-                    {formData.instructorId && (
+                  </div>
+
+                  {/* Pilote */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Pilote
+                    </label>
+                    <select
+                      name="pilotId"
+                      value={formData.pilotId}
+                      onChange={handlePilotChange}
+                      disabled={!canModifyReservation()}
+                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                        ${!canModifyReservation() ? "bg-gray-100" : ""}`}
+                      required
+                    >
+                      <option value="">Sélectionner un pilote</option>
+                      {availablePilots.map((pilot) => (
+                        <option key={pilot.id} value={pilot.id}>
+                          {pilot.first_name} {pilot.last_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Instructeur */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Instructeur
+                    </label>
+                    <div className="flex gap-2">
+                      <select
+                        name="instructorId"
+                        value={formData.instructorId}
+                        onChange={(e) => {
+                          handleInputChange(e);
+                          const instructor = instructors.find(i => i.id === e.target.value);
+                          setSelectedInstructor(instructor || null);
+                        }}
+                        disabled={!canModifyReservation()}
+                        className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                          ${!canModifyReservation() ? "bg-gray-100" : ""}`}
+                      >
+                        <option value="">Aucun</option>
+                        {instructors.map((instructor) => (
+                          <option key={instructor.id} value={instructor.id}>
+                            {instructor.first_name} {instructor.last_name}
+                          </option>
+                        ))}
+                      </select>
+                      {formData.instructorId && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAvailabilityModal(true)}
+                          className="mt-1 inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-sky-700 hover:text-sky-800 hover:bg-sky-50 rounded-md"
+                        >
+                          <Calendar className="h-4 w-4" />
+                          <span>Planning</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Commentaires */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Commentaires
+                    </label>
+                    <textarea
+                      name="comments"
+                      value={formData.comments}
+                      onChange={handleInputChange}
+                      disabled={!canModifyReservation()}
+                      rows={2}
+                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                        ${!canModifyReservation() ? "bg-gray-100" : ""}`}
+                    />
+                  </div>
+
+                  {/* Affichage du solde seulement si < 100€ et si un pilote est sélectionné */}
+                  {balance !== null && balance.pending < 100 && formData.pilotId && (
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium text-slate-600">Solde du pilote</p>
+                        <p className={`text-lg font-bold ${balance.pending < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {`${balance.pending.toFixed(2)} €`}
+                        </p>
+                      </div>
+                      {balance.pending < 0 && (
+                        <button 
+                          onClick={() => setShowCreditModal(true)}
+                          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                        >
+                          Créditer le compte
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 flex justify-between space-x-3">
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      Annuler
+                    </button>
+                    {existingReservation && canModifyReservation() && (
                       <button
                         type="button"
-                        onClick={() => setShowAvailabilityModal(true)}
-                        className="mt-1 inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-sky-700 hover:text-sky-800 hover:bg-sky-50 rounded-md"
+                        onClick={handleDelete}
+                        disabled={loading}
+                        className={`px-4 py-2 text-sm font-medium text-white rounded-lg 
+                          ${loading
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-red-600 hover:bg-red-700"}`}
                       >
-                        <Calendar className="h-4 w-4" />
-                        <span>Planning</span>
+                        {loading ? "En cours..." : "Supprimer"}
                       </button>
                     )}
                   </div>
-                </div>
-
-                {/* Commentaires */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Commentaires
-                  </label>
-                  <textarea
-                    name="comments"
-                    value={formData.comments}
-                    onChange={handleInputChange}
-                    disabled={!canModifyReservation()}
-                    rows={2}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                      ${!canModifyReservation() ? "bg-gray-100" : ""}`}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-6 flex justify-between space-x-3">
-                <div className="flex space-x-3">
-                  {existingReservation && canModifyReservation() && (
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      disabled={loading}
-                      className={`rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2
-                        ${
-                          loading
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-red-600 hover:bg-red-700 focus:ring-red-500"
-                        }`}
-                    >
-                      {loading ? "En cours..." : "Supprimer"}
-                    </button>
-                  )}
-                  {existingReservation &&
-                    onCreateFlight &&
-                    canTransformToFlight &&
-                    !hasExistingFlight && (
+                  <div className="flex space-x-3">
+                    {existingReservation && onCreateFlight && canTransformToFlight && !hasExistingFlight && (
                       <button
                         type="button"
                         onClick={() => setShowNewFlightForm(true)}
-                        className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                        className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100"
                       >
                         Transformer en vol
                       </button>
                     )}
+                    <button
+                      type="submit"
+                      disabled={loading || !canModifyReservation() || (balance !== null && balance.pending < 0)}
+                      className={`px-4 py-2 text-sm font-medium text-white rounded-lg 
+                        ${loading || !canModifyReservation() || (balance !== null && balance.pending < 0)
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700'}`}
+                    >
+                      {existingReservation ? "Modifier" : "Créer"}
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="submit"
-                  disabled={loading || !canModifyReservation()}
-                  className={`rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2
-                    ${
-                      loading || !canModifyReservation()
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
-                    }`}
-                >
-                  {loading
-                    ? "En cours..."
-                    : existingReservation
-                    ? "Modifier"
-                    : "Créer"}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
+        {showAvailabilityModal && selectedInstructor && (
+          <LightAvailabilityCalendarModal
+            userId={selectedInstructor.id}
+            userName={`${selectedInstructor.first_name} ${selectedInstructor.last_name}`}
+            onClose={() => setShowAvailabilityModal(false)}
+          />
+        )}
+        {showRemarksModal && (
+          <AircraftRemarksList
+            aircraftId={formData.aircraftId}
+            onClose={() => setShowRemarksModal(false)}
+          />
+        )}
       </div>
-      {showAvailabilityModal && selectedInstructor && (
-        <LightAvailabilityCalendarModal
-          userId={selectedInstructor.id}
-          userName={`${selectedInstructor.first_name} ${selectedInstructor.last_name}`}
-          onClose={() => setShowAvailabilityModal(false)}
+
+      {/* Modal de crédit */}
+      {showCreditModal && (
+        <SimpleCreditModal
+          onClose={() => setShowCreditModal(false)}
+          userId={formData.pilotId}
         />
       )}
-      {showRemarksModal && (
-        <AircraftRemarksList
-          aircraftId={formData.aircraftId}
-          onClose={() => setShowRemarksModal(false)}
-        />
-      )}
-    </div>
+    </>
   );
 };
 
