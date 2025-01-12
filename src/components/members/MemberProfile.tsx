@@ -165,8 +165,12 @@ const MemberProfile = () => {
       // Charger les cotisations
       setLoadingContributions(true);
       try {
-        const contributionsData = await getContributionsByUserId(id);
-        setContributions(contributionsData);
+        const data = await getContributionsByUserId(id);
+        // Trier les cotisations par date de validité (de la plus récente à la plus ancienne)
+        const sortedContributions = data.sort((a, b) => 
+          new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime()
+        );
+        setContributions(sortedContributions);
       } catch (err) {
         console.error("Erreur lors du chargement des cotisations:", err);
       } finally {
@@ -209,12 +213,18 @@ const MemberProfile = () => {
   };
 
   const loadContributions = async () => {
+    if (!id) return;
     setLoadingContributions(true);
     try {
-      const contributionsData = await getContributionsByUserId(pilot.id);
-      setContributions(contributionsData);
-    } catch (err) {
-      console.error("Erreur lors du chargement des cotisations:", err);
+      const data = await getContributionsByUserId(id);
+      // Trier les cotisations par date de validité (de la plus récente à la plus ancienne)
+      const sortedContributions = data.sort((a, b) => 
+        new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime()
+      );
+      setContributions(sortedContributions);
+    } catch (error) {
+      console.error('Erreur lors du chargement des cotisations:', error);
+      toast.error('Erreur lors du chargement des cotisations');
     } finally {
       setLoadingContributions(false);
     }
@@ -222,6 +232,90 @@ const MemberProfile = () => {
 
   const handleEditContribution = (contribution: Contribution) => {
     setEditingContribution(contribution);
+  };
+
+  const renderContributionsSection = () => {
+    if (loadingContributions) {
+      return (
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
+        </div>
+      );
+    }
+
+    if (contributions.length === 0) {
+      return (
+        <div className="text-center py-8 bg-slate-50 rounded-xl border border-slate-200">
+          <p className="text-slate-600">Aucune cotisation enregistrée</p>
+          {hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']) && (
+            <button
+              onClick={() => setShowAddContribution(true)}
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter une cotisation
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    const now = new Date();
+    // Trouver la cotisation valide la plus récente
+    const currentContribution = contributions.find(c => {
+      const validFrom = new Date(c.valid_from);
+      const validUntil = new Date(c.valid_until);
+      return validFrom <= now && validUntil >= now;
+    });
+
+    // Réorganiser les cotisations pour mettre la cotisation valide en premier
+    const sortedContributions = [...contributions].sort((a, b) => {
+      const aIsValid = currentContribution?.id === a.id;
+      const bIsValid = currentContribution?.id === b.id;
+      if (aIsValid && !bIsValid) return -1;
+      if (!aIsValid && bIsValid) return 1;
+      return new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime();
+    });
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold text-slate-900">Cotisations</h3>
+          {hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']) && (
+            <button
+              onClick={() => setShowAddContribution(true)}
+              className="inline-flex items-center gap-2 px-3 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              Nouvelle cotisation
+            </button>
+          )}
+        </div>
+
+        <div className="grid gap-4">
+          {sortedContributions.map((contribution) => {
+            const isCurrentContribution = currentContribution?.id === contribution.id;
+            return (
+              <div 
+                key={contribution.id} 
+                className={`relative ${isCurrentContribution ? 'ring-2 ring-green-500 ring-offset-2 rounded-xl' : ''}`}
+              >
+                {isCurrentContribution && (
+                  <div className="absolute -top-3 left-4 px-2 py-1 bg-green-500 text-white text-xs rounded-full z-10">
+                    Cotisation en cours
+                  </div>
+                )}
+                <ContributionCard
+                  contribution={contribution}
+                  onEdit={() => setEditingContribution(contribution)}
+                  canEdit={hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR'])}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -536,35 +630,7 @@ const MemberProfile = () => {
 
             {/* Contributions */}
             {canManageContributions && (
-              <div className="bg-white shadow rounded-lg p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-lg font-medium text-gray-900">Cotisations</h2>
-                  {isAdmin && (
-                    <button
-                      onClick={() => setShowAddContribution(true)}
-                      className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      <CreditCard className="w-4 h-4 mr-1" />
-                      Nouvelle cotisation
-                    </button>
-                  )}
-                </div>
-                <div className="space-y-4">
-                  {loadingContributions ? (
-                    <div className="flex justify-center py-4">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : (
-                    contributions.map((contribution) => (
-                      <ContributionCard
-                        key={contribution.id}
-                        contribution={contribution}
-                        onEdit={isAdmin ? () => setEditingContribution(contribution) : undefined}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
+              renderContributionsSection()
             )}
             
             {/* Section d'authentification biométrique */}
