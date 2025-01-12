@@ -410,22 +410,13 @@ const AccountList = () => {
               <span>Exporter</span>
             </button>
             {isAdmin ? (
-              <>
-                <button
-                  onClick={() => setIsCreating(true)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors w-full sm:w-auto justify-center"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Nouvelle opération</span>
-                </button>
-                <button
-                  onClick={() => setShowCreditModal(true)}
-                  className="btn btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Créditer un compte</span>
-                </button>
-              </>
+              <button
+                onClick={() => setIsCreating(true)}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors w-full sm:w-auto justify-center"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Nouvelle opération</span>
+              </button>
             ) : user && (
               <button
                 onClick={() => setShowCreditModal(true)}
