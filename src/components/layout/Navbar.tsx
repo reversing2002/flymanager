@@ -239,16 +239,59 @@ const Navbar = () => {
                 <span>Appareils</span>
               </Link>
               {canAccessMembers && (
-                <Link to="/members" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                  <Users className="w-5 h-5 mr-3" />
-                  <span>Membres</span>
-                </Link>
-              )}
-              {hasAnyGroup(currentUser, ['admin']) && (
-                <Link to="/admin/email" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                  <Mail className="w-5 h-5 mr-3" />
-                  <span>Emails groupés</span>
-                </Link>
+                hasAnyGroup(currentUser, ["ADMIN"]) ? (
+                  <div className="relative">
+                    <button
+                      onClick={() => setOpenDropdown(openDropdown === 'members' ? null : 'members')}
+                      className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                        location.pathname.startsWith('/members')
+                          ? 'text-white bg-gray-900'
+                          : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                      }`}
+                    >
+                      <Users className="w-5 h-5 mr-3" />
+                      <span>Membres</span>
+                      <ChevronDown className="w-4 h-4 ml-2" />
+                    </button>
+
+                    {openDropdown === 'members' && (
+                      <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                        <div className="py-1">
+                          <Link
+                            to="/members"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Liste des membres
+                          </Link>
+                          <Link
+                            to="/members/roles"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Gestion des rôles
+                          </Link>
+                          <Link
+                            to="/members/balances"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Soldes des membres
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link 
+                    to="/members" 
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                      location.pathname.startsWith('/members')
+                        ? 'text-white bg-gray-900'
+                        : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                    }`}
+                  >
+                    <Users className="w-5 h-5 mr-3" />
+                    <span>Membres</span>
+                  </Link>
+                )
               )}
               {canAccessTraining && (
               <Link to={canAccessTrainingAdmin ? "/training-admin" : "/training"} className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">

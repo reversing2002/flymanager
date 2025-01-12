@@ -11,6 +11,7 @@ import ProfilePage from "./components/profile/ProfilePage";
 import MemberList from "./components/members/MemberList";
 import MemberProfile from "./components/members/MemberProfile";
 import RoleManagement from "./components/members/RoleManagement";
+import MemberBalancesPage from "./components/members/MemberBalancesPage";
 import AircraftList from "./components/aircraft/AircraftList";
 import MaintenancePage from "./pages/MaintenancePage";
 import CalendarContainer from "./components/reservations/CalendarContainer";
@@ -127,6 +128,14 @@ function App() {
                 <Route path="members/roles" element={<RoleManagement />} />
                 <Route path="members/:id" element={<MemberProfile />} />
                 <Route path="members/:id/stats" element={<PilotStatsPage />} />
+                <Route
+                  path="members/balances"
+                  element={
+                    <ProtectedRoute roles={["admin"]}>
+                      <MemberBalancesPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Statistiques des clubs */}
                 <Route
