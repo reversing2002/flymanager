@@ -51,6 +51,7 @@ const AccountList = () => {
     validated: "all",
     assignedToId: "all",
   });
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Types pour les soldes
   interface BalanceData {
@@ -276,6 +277,131 @@ const AccountList = () => {
               <Filter className="h-4 w-4 mr-2" />
               <span>Filtres</span>
             </button>
+            {showFilters && (
+              <div className="w-full bg-white p-4 rounded-lg shadow-sm border border-gray-200 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date de début
+                    </label>
+                    <input
+                      type="date"
+                      value={filters.startDate}
+                      onChange={(e) =>
+                        setFilters((prev) => ({ ...prev, startDate: e.target.value }))
+                      }
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date de fin
+                    </label>
+                    <input
+                      type="date"
+                      value={filters.endDate}
+                      onChange={(e) =>
+                        setFilters((prev) => ({ ...prev, endDate: e.target.value }))
+                      }
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Statut
+                    </label>
+                    <select
+                      value={filters.validated}
+                      onChange={(e) =>
+                        setFilters((prev) => ({ ...prev, validated: e.target.value }))
+                      }
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    >
+                      <option value="all">Tous</option>
+                      <option value="true">Validés</option>
+                      <option value="false">Non validés</option>
+                    </select>
+                  </div>
+                  {isAdmin && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Rechercher un membre
+                        </label>
+                        <input
+                          type="text"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          placeholder="Rechercher..."
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Membre
+                        </label>
+                        <select
+                          value={filters.assignedToId}
+                          onChange={(e) =>
+                            setFilters((prev) => ({ ...prev, assignedToId: e.target.value }))
+                          }
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        >
+                          <option value="all">Tous</option>
+                          {users
+                            .filter(user => 
+                              searchTerm === "" || 
+                              `${user.last_name} ${user.first_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
+                            )
+                            .sort((a, b) => a.last_name.localeCompare(b.last_name))
+                            .map((user) => (
+                              <option key={user.id} value={user.id}>
+                                {user.last_name} {user.first_name}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type d'opération
+                    </label>
+                    <select
+                      value={filters.type}
+                      onChange={(e) =>
+                        setFilters((prev) => ({ ...prev, type: e.target.value }))
+                      }
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    >
+                      <option value="all">Tous</option>
+                      <option value="FLIGHT">Vol</option>
+                      <option value="MEMBERSHIP">Cotisation</option>
+                      <option value="INSURANCE">Assurance</option>
+                      <option value="DEPOSIT">Dépôt</option>
+                      <option value="WITHDRAWAL">Retrait</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={() => {
+                      setFilters({
+                        startDate: "",
+                        endDate: "",
+                        type: "all",
+                        validated: "all",
+                        assignedToId: "all",
+                      });
+                    }}
+                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Réinitialiser les filtres
+                  </button>
+                </div>
+              </div>
+            )}
             <button
               onClick={handleExport}
               className="flex items-center px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors w-full sm:w-auto justify-center"
