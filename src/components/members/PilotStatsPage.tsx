@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import {
@@ -98,6 +98,20 @@ const PilotStatsPage = () => {
   const { id } = useParams<{ id: string }>();
   const [tabValue, setTabValue] = React.useState(0);
   const currentDate = new Date();
+  
+  // Récupérer les informations du pilote
+  const { data: pilotData } = useQuery({
+    queryKey: ['pilotInfo', id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', id)
+        .single();
+      return data;
+    }
+  });
+
   const [dateRange, setDateRange] = React.useState<DateRange>({
     startDate: subMonths(startOfMonth(currentDate), 11),
     endDate: endOfMonth(currentDate),
@@ -319,20 +333,35 @@ const PilotStatsPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex justify-between items-center mb-6">
-          <Typography variant="h5" component="h1" className="text-gray-900">
-            Statistiques détaillées
-          </Typography>
-          <DateRangeFilter
-            value={dateRange}
-            onChange={handleDateRangeChange}
-            className="ml-4"
-          />
+    <div className="p-4">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div>
+          <Link 
+            to={`/members/${id}`}
+            className="text-blue-600 hover:text-blue-800 mb-2 sm:mb-0 inline-flex items-center"
+          >
+            <span className="mr-2">←</span> Retour au profil
+          </Link>
+          <h1 className="text-2xl font-bold mt-2">
+            Statistiques de {pilotData?.first_name} {pilotData?.last_name}
+          </h1>
         </div>
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
+      </div>
 
-        <Tabs value={tabValue} onChange={handleTabChange} className="border-b border-gray-200">
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          aria-label="statistiques de vol"
+          sx={{
+            '& .MuiTabs-scrollButtons': {
+              display: { xs: 'flex', sm: 'none' }
+            }
+          }}
+        >
           <Tab label="Évolution mensuelle" />
           <Tab label="Par type de vol" />
           <Tab label="Par appareil" />
@@ -527,7 +556,7 @@ const PilotStatsPage = () => {
             </Grid>
           </Grid>
         </TabPanel>
-      </div>
+      </Box>
     </div>
   );
 };
