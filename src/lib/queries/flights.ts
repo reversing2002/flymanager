@@ -26,6 +26,8 @@ export async function getFlights(
     validated?: string;
     accountingCategories?: string[];
     memberId?: string | null;
+    userId?: string | null;
+    includeStudentFlights?: boolean;
   } = {}
 ): Promise<{ data: Flight[]; count: number }> {
   let query = supabase.from("flights").select(`
@@ -52,7 +54,18 @@ export async function getFlights(
   if (filters.validated && filters.validated !== 'all') {
     query = query.eq('is_validated', filters.validated === 'yes');
   }
-  if (filters.memberId) {
+  
+  // Filtrer par utilisateur
+  if (filters.userId) {
+    if (filters.includeStudentFlights) {
+      // Pour les instructeurs, on inclut leurs vols personnels ET les vols de leurs élèves
+      query = query.or(`user_id.eq.${filters.userId},instructor_id.eq.${filters.userId}`);
+    } else {
+      // Pour les utilisateurs normaux, on ne montre que leurs vols
+      query = query.eq('user_id', filters.userId);
+    }
+  } else if (filters.memberId) {
+    // Pour les admins qui ont sélectionné un membre spécifique
     query = query.eq('user_id', filters.memberId);
   }
 

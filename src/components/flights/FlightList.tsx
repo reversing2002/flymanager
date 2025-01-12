@@ -109,84 +109,66 @@ const FlightList = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log("Starting loadData with filters:", filters);
+      console.log("Current user:", user);
+
+      const isInstructor = hasAnyGroup(user, ["INSTRUCTOR"]);
+
+      // Préparer les filtres en fonction du rôle de l'utilisateur
+      const flightFilters = {
+        ...filters,
+        userId: !hasAnyGroup(user, ["ADMIN"]) ? user?.id : filters.memberId,
+        includeStudentFlights: isInstructor
+      };
+
+      console.log("Using filters:", flightFilters);
+
       // Charger toutes les données en parallèle
       const [flightsData, aircraftData, usersData] = await Promise.all([
-        getFlights(currentPage, pageSize, {
-          dateRange: filters.dateRange,
-          startDate: filters.startDate,
-          endDate: filters.endDate,
-          aircraftTypes: filters.aircraftTypes,
-          aircraftIds: filters.aircraftIds,
-          flightTypes: filters.flightTypes,
-          validated: filters.validated,
-          accountingCategories: filters.accountingCategories,
-          memberId: filters.memberId
-        }),
+        getFlights(currentPage, pageSize, flightFilters),
         getAircraft(),
         getUsers(),
       ]);
 
-      console.log("Loaded data", {
-        flights: flightsData.data.length,
-        aircraft: aircraftData.length,
-        users: usersData.length,
-        sampleUser: usersData[0]  // Pour vérifier la structure
+      console.log("Raw flights data:", {
+        data: flightsData.data,
+        count: flightsData.count
       });
 
       // D'abord définir les utilisateurs
       setUsers(usersData);
 
-      // Pour les admins, on passe tous les utilisateurs
-      // Pour les instructeurs, on ne passe que leurs élèves
-      if (hasAnyGroup(user, ["ADMIN"])) {
-        setInstructorStudents(usersData);
-      } else if (hasAnyGroup(user, ["INSTRUCTOR"])) {
-        const studentsList = usersData.filter(u => 
-          flightsData.data.some(flight => 
-            flight.instructorId === user.id && 
-            flight.userId === u.id && 
-            flight.userId !== user.id
-          )
-        );
-        setInstructorStudents(studentsList);
-      }
-
       setAircraftList(aircraftData);
 
-      // Traiter les vols selon le rôle
-      if (user) {
-        if (hasAnyGroup(user, ["ADMIN"])) {
-          setFlights(flightsData.data);
-        } else if (hasAnyGroup(user, ["INSTRUCTOR"])) {
-          console.log("Processing instructor flights", { userId: user.id });
-          const personal = flightsData.data.filter(
-            (flight) => flight.userId === user.id
-          );
-          const students = flightsData.data.filter(
-            (flight) =>
-              flight.instructorId === user.id && flight.userId !== user.id
-          );
-          
-          // Trouver les étudiants après avoir défini les utilisateurs
-          const studentsList = usersData.filter(u => 
-            students.some(flight => flight.userId === u.id)
-          );
-          
-          console.log("Found students directly", {
-            studentCount: studentsList.length,
-            sampleStudent: studentsList[0]
-          });
-          
-          setPersonalFlights(personal);
-          setStudentFlights(students);
-          setFlights([...personal, ...students]);
-        } else {
-          setFlights(
-            flightsData.data.filter((flight) => flight.userId === user.id)
-          );
-        }
+      // Séparer les vols personnels et les vols des élèves pour les instructeurs
+      if (isInstructor) {
+        const personal = flightsData.data.filter(
+          (flight) => flight.userId === user?.id
+        );
+        const students = flightsData.data.filter(
+          (flight) => flight.instructorId === user?.id && flight.userId !== user?.id
+        );
+
+        console.log("Flight breakdown:", {
+          personal: personal.length,
+          students: students.length
+        });
+
+        setPersonalFlights(personal);
+        setStudentFlights(students);
+        
+        // Pour les instructeurs, on ne montre que leurs élèves dans la liste déroulante
+        const studentsList = usersData.filter(u => 
+          students.some(flight => flight.userId === u.id)
+        );
+        setInstructorStudents(studentsList);
+      } else if (hasAnyGroup(user, ["ADMIN"])) {
+        setInstructorStudents(usersData);
       }
 
+      // Définir les vols filtrés
+      setFlights(flightsData.data);
+      setFilteredFlights(flightsData.data);
       setTotalFlights(flightsData.count);
 
       // Load flight types
@@ -226,17 +208,9 @@ const FlightList = () => {
     // Apply filters
     let filtered = [...flights];
 
-    console.log('Applying filters:', {
-      dateRange: filters.dateRange,
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-      aircraftTypes: filters.aircraftTypes,
-      aircraftIds: filters.aircraftIds,
-      flightTypes: filters.flightTypes,
-      accountingCategories: filters.accountingCategories,
-      validated: filters.validated,
-      memberId: filters.memberId,
-      initialCount: filtered.length
+    console.log('Starting filter application:', {
+      initialFlights: flights.length,
+      filters
     });
 
     // Pour les admins, on filtre tous les vols liés au membre sélectionné
@@ -261,6 +235,7 @@ const FlightList = () => {
 
     // Filter by date range
     if (filters.dateRange !== "all") {
+      const before = filtered.length;
       filtered = filtered.filter((flight) => {
         const flightDate = new Date(flight.date);
         const start = filters.startDate ? new Date(filters.startDate) : null;
@@ -271,7 +246,13 @@ const FlightList = () => {
         }
         return true;
       });
-      console.log('After date filter:', filtered.length);
+      console.log('After date filter:', {
+        before,
+        after: filtered.length,
+        dateRange: filters.dateRange,
+        startDate: filters.startDate,
+        endDate: filters.endDate
+      });
     }
 
     // Filter by aircraft type
@@ -318,9 +299,9 @@ const FlightList = () => {
       });
     }
 
-    console.log('Final filtered count:', filtered.length);
+    console.log('Final filtered flights:', filtered.length);
     setFilteredFlights(filtered);
-  }, [flights, filters, aircraftList]);
+  }, [flights, filters, aircraftList, studentFlights, user]);
 
   const handleNewFlightSuccess = async () => {
     await loadData();
