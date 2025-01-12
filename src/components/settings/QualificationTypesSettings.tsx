@@ -38,7 +38,6 @@ export default function QualificationTypesSettings() {
       const { data, error: fetchError } = await supabase
         .from("qualification_types")
         .select("*")
-        .eq("club_id", clubId)
         .order("display_order");
 
       if (fetchError) throw fetchError;
@@ -62,6 +61,11 @@ export default function QualificationTypesSettings() {
     }
     
     try {
+      if (editingType?.is_system) {
+        toast.error("Les qualifications système ne peuvent pas être modifiées");
+        return;
+      }
+
       const qualificationData = {
         name: formData.get("name") as string,
         description: formData.get("description") as string,
@@ -172,6 +176,8 @@ export default function QualificationTypesSettings() {
                   setIsModalOpen(true);
                 }}
                 className="p-2 text-slate-600 hover:text-sky-600 rounded-lg"
+                disabled={type.is_system}
+                style={{ opacity: type.is_system ? 0.5 : 1 }}
               >
                 <Pencil className="w-4 h-4" />
               </button>
