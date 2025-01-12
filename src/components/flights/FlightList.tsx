@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Filter, Plus, X, Trash2, Check, Edit, CheckCircle2, GraduationCap, Download, Timer } from "lucide-react";
 import { getFlights, getAircraft, getUsers, validateFlight, deleteFlight } from "../../lib/queries";
 import type { Aircraft, User, Flight } from "../../types/database";
@@ -125,7 +125,7 @@ const FlightList = () => {
 
       // Charger toutes les données en parallèle
       const [flightsData, aircraftData, usersData] = await Promise.all([
-        getFlights(currentPage, pageSize, flightFilters),
+        getFlights(1, 5000, flightFilters),
         getAircraft(),
         getUsers(),
       ]);
@@ -202,7 +202,7 @@ const FlightList = () => {
 
   useEffect(() => {
     loadData();
-  }, [currentPage, filters, pageSize, user]);
+  }, [filters, user]);
 
   useEffect(() => {
     // Apply filters
@@ -415,8 +415,73 @@ const FlightList = () => {
     );
   };
 
+  const personalPaginatedFlights = useMemo(() => {
+    let personalFlights = filteredFlights;
+    
+    // Pour les admins, montrer tous les vols sauf si un membre est sélectionné
+    if (hasAnyGroup(user, ["ADMIN"])) {
+      if (filters.memberId) {
+        personalFlights = filteredFlights.filter(flight => 
+          flight.userId === filters.memberId || 
+          flight.instructorId === filters.memberId
+        );
+      }
+    } else {
+      // Pour les instructeurs et autres utilisateurs, ne montrer que leurs vols personnels
+      personalFlights = filteredFlights.filter(flight => flight.userId === user?.id);
+    }
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return personalFlights.slice(startIndex, endIndex);
+  }, [filteredFlights, currentPage, pageSize, user, filters.memberId]);
+
+  const studentPaginatedFlights = useMemo(() => {
+    if (!hasAnyGroup(user, ["INSTRUCTOR"])) return [];
+    // Pour les vols d'étudiants, montrer les vols où l'instructeur est instructeur
+    const studentFlights = filteredFlights.filter(flight => 
+      flight.instructorId === user?.id && flight.userId !== user?.id
+    );
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return studentFlights.slice(startIndex, endIndex);
+  }, [filteredFlights, currentPage, pageSize, user]);
+
+  const personalFlightTotals = useMemo(() => {
+    let personalFlights = filteredFlights;
+    
+    // Pour les admins, calculer les totaux de tous les vols sauf si un membre est sélectionné
+    if (hasAnyGroup(user, ["ADMIN"])) {
+      if (filters.memberId) {
+        personalFlights = filteredFlights.filter(flight => 
+          flight.userId === filters.memberId || 
+          flight.instructorId === filters.memberId
+        );
+      }
+    } else {
+      // Pour les instructeurs et autres utilisateurs, ne calculer que leurs vols personnels
+      personalFlights = filteredFlights.filter(flight => flight.userId === user?.id);
+    }
+
+    return {
+      totalTime: personalFlights.reduce((acc, flight) => acc + flight.duration, 0),
+      totalCost: personalFlights.reduce((acc, flight) => acc + flight.cost + (flight.instructorCost || 0), 0),
+    };
+  }, [filteredFlights, user, filters.memberId]);
+
+  const studentFlightTotals = useMemo(() => {
+    if (!hasAnyGroup(user, ["INSTRUCTOR"])) return { totalTime: 0, totalCost: 0 };
+    const studentFlights = filteredFlights.filter(flight => 
+      flight.instructorId === user?.id && flight.userId !== user?.id
+    );
+    return {
+      totalTime: studentFlights.reduce((acc, flight) => acc + flight.duration, 0),
+      totalCost: studentFlights.reduce((acc, flight) => acc + flight.cost + (flight.instructorCost || 0), 0),
+    };
+  }, [filteredFlights, user]);
+
   const renderStudentFlights = () => {
-    if (!studentFlights.length) return null;
+    if (!studentPaginatedFlights.length) return null;
     return (
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">
@@ -425,7 +490,7 @@ const FlightList = () => {
         <div className="mb-4 text-slate-600">
           Temps total d'instruction:{" "}
           {formatDuration(
-            studentFlights.reduce(
+            studentPaginatedFlights.reduce(
               (acc, flight) => acc + flight.duration,
               0
             )
@@ -471,152 +536,150 @@ const FlightList = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredFlights
-                .filter(flight => flight.instructorId === user?.id && flight.userId !== user?.id)
-                .map((flight) => {
-                  const aircraft = aircraftList.find(
-                    (a) => a.id === flight.aircraftId
-                  );
-                  const pilot = users.find((u) => u.id === flight.userId);
-                  const instructor = users.find(
-                    (u) => u.id === flight.instructorId
-                  );
+              {studentPaginatedFlights.map((flight) => {
+                const aircraft = aircraftList.find(
+                  (a) => a.id === flight.aircraftId
+                );
+                const pilot = users.find((u) => u.id === flight.userId);
+                const instructor = users.find(
+                  (u) => u.id === flight.instructorId
+                );
 
-                  console.log('Flight details:', {
-                    id: flight.id,
-                    date: flight.date,
-                    pilot: pilot ? `${pilot.first_name} ${pilot.last_name}` : 'N/A',
-                    instructor: instructor ? `${instructor.first_name} ${instructor.last_name}` : 'N/A',
-                    cost: flight.cost,
-                    instructorCost: flight.instructorCost,
-                    instructorId: flight.instructorId,
-                    flightType: flight.flightType,
-                  });
+                console.log('Flight details:', {
+                  id: flight.id,
+                  date: flight.date,
+                  pilot: pilot ? `${pilot.first_name} ${pilot.last_name}` : 'N/A',
+                  instructor: instructor ? `${instructor.first_name} ${instructor.last_name}` : 'N/A',
+                  cost: flight.cost,
+                  instructorCost: flight.instructorCost,
+                  instructorId: flight.instructorId,
+                  flightType: flight.flightType,
+                });
 
-                  return (
-                    <tr
-                      key={flight.id}
-                      className="border-b border-slate-100 hover:bg-slate-50"
-                    >
-                      <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
-                        {pilot
-                          ? `${pilot.first_name} ${pilot.last_name}`
-                          : "N/A"}
-                      </td>
-                      <td className="p-4">
-                        {new Date(flight.date).toLocaleDateString()}
-                      </td>
-                      <td className="p-4">
-                        {aircraft?.registration || "N/A"}
-                      </td>
-                      <td className="p-4 text-center">
-                        {flight.start_hour_meter && (
-                          <Timer 
-                            size={20} 
-                            className={
-                              checkHourMeterConsistency(
-                                flight,
-                                filteredFlights
-                                  .filter(f => f.aircraftId === flight.aircraftId)
-                                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                  .find(f => 
-                                    new Date(f.date).getTime() < new Date(flight.date).getTime()
-                                  )
-                              )
-                              ? "text-green-600"
-                              : "text-red-600"
-                            }
-                            title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter || 'N/A'}`}
-                          />
-                        )}
-                      </td>
-                      <td className="p-4">
-                        {flightTypes[flight.flightTypeId] ||
-                          flight.flightTypeId}
-                      </td>
-                      <td className="p-4 truncate max-w-[120px]" title={instructor ? `${instructor.first_name} ${instructor.last_name}` : "-"}>
-                        {instructor
-                          ? `${instructor.first_name} ${instructor.last_name}`
-                          : "-"}
-                      </td>
-                      <td className="p-4">
-                        {formatDuration(flight.duration)}
-                      </td>
-                      <td className="p-4 text-right">
-                        <div className="flex items-center justify-end">
-                          <span className={`${flight.flightType?.accounting_category?.is_club_paid ? 'text-green-600 font-medium' : ''}`}>
-                            {flight.flightType?.accounting_category?.is_club_paid 
-                              ? '0.00 €' 
-                              : `${(flight.cost + (flight.instructorCost || 0)).toFixed(2)} €`}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-right">
-                        {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
-                      </td>
-                      <td className="p-4 text-center">
-                        {hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id && (
-                          <button
-                            onClick={() => {
-                              setSelectedStudentId(flight.userId);
-                              setSelectedFlightId(flight.id);
-                              setShowCompetenciesModal(true);
-                            }}
-                            className="text-purple-600 hover:text-purple-800"
-                            title="Gérer les compétences"
-                          >
-                            <GraduationCap size={20} />
-                          </button>
-                        )}
-                        {!flight.validated && hasAnyGroup(user, ["ADMIN"]) ? (
-                          <button
-                            onClick={() => handleValidateFlight(flight)}
-                            className="text-green-600 hover:text-green-800"
-                            title="Valider"
-                          >
-                            <Check size={20} />
-                          </button>
-                        ) : flight.validated ? (
-                          <span className="text-green-600" title="Vol validé">
-                            <CheckCircle2 size={20} />
-                          </span>
-                        ) : null}
-                      </td>
-                      <td className="p-4 flex justify-center gap-2">
-                        {(hasAnyGroup(user, ["ADMIN"]) || !flight.validated) && (
-                          <>
-                            {(hasAnyGroup(user, ["ADMIN"]) || 
+                return (
+                  <tr
+                    key={flight.id}
+                    className="border-b border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
+                      {pilot
+                        ? `${pilot.first_name} ${pilot.last_name}`
+                        : "N/A"}
+                    </td>
+                    <td className="p-4">
+                      {new Date(flight.date).toLocaleDateString()}
+                    </td>
+                    <td className="p-4">
+                      {aircraft?.registration || "N/A"}
+                    </td>
+                    <td className="p-4 text-center">
+                      {flight.start_hour_meter && (
+                        <Timer 
+                          size={20} 
+                          className={
+                            checkHourMeterConsistency(
+                              flight,
+                              studentPaginatedFlights
+                                .filter(f => f.aircraftId === flight.aircraftId)
+                                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                .find(f => 
+                                  new Date(f.date).getTime() < new Date(flight.date).getTime()
+                                )
+                            )
+                            ? "text-green-600"
+                            : "text-red-600"
+                          }
+                          title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter || 'N/A'}`}
+                        />
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {flightTypes[flight.flightTypeId] ||
+                        flight.flightTypeId}
+                    </td>
+                    <td className="p-4 truncate max-w-[120px]" title={instructor ? `${instructor.first_name} ${instructor.last_name}` : "-"}>
+                      {instructor
+                        ? `${instructor.first_name} ${instructor.last_name}`
+                        : "-"}
+                    </td>
+                    <td className="p-4">
+                      {formatDuration(flight.duration)}
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end">
+                        <span className={`${flight.flightType?.accounting_category?.is_club_paid ? 'text-green-600 font-medium' : ''}`}>
+                          {flight.flightType?.accounting_category?.is_club_paid 
+                            ? '0.00 €' 
+                            : `${(flight.cost + (flight.instructorCost || 0)).toFixed(2)} €`}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right">
+                      {flight.instructorCost ? flight.instructorCost.toFixed(2) : "-"}
+                    </td>
+                    <td className="p-4 text-center">
+                      {hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id && (
+                        <button
+                          onClick={() => {
+                            setSelectedStudentId(flight.userId);
+                            setSelectedFlightId(flight.id);
+                            setShowCompetenciesModal(true);
+                          }}
+                          className="text-purple-600 hover:text-purple-800"
+                          title="Gérer les compétences"
+                        >
+                          <GraduationCap size={20} />
+                        </button>
+                      )}
+                      {!flight.validated && hasAnyGroup(user, ["ADMIN"]) ? (
+                        <button
+                          onClick={() => handleValidateFlight(flight)}
+                          className="text-green-600 hover:text-green-800"
+                          title="Valider"
+                        >
+                          <Check size={20} />
+                        </button>
+                      ) : flight.validated ? (
+                        <span className="text-green-600" title="Vol validé">
+                          <CheckCircle2 size={20} />
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="p-4 flex justify-center gap-2">
+                      {(hasAnyGroup(user, ["ADMIN"]) || !flight.validated) && (
+                        <>
+                          {(hasAnyGroup(user, ["ADMIN"]) || 
+                            flight.userId === user?.id || 
+                            (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
+                          ) && (
+                            <button
+                              onClick={() => setEditingFlight(flight)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Modifier"
+                            >
+                              <Edit size={20} />
+                            </button>
+                          )}
+                          {(hasAnyGroup(user, ["ADMIN"]) || 
+                            (!flight.validated && (
                               flight.userId === user?.id || 
                               (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
-                            ) && (
-                              <button
-                                onClick={() => setEditingFlight(flight)}
-                                className="text-blue-600 hover:text-blue-800"
-                                title="Modifier"
-                              >
-                                <Edit size={20} />
-                              </button>
-                            )}
-                            {(hasAnyGroup(user, ["ADMIN"]) || 
-                              (!flight.validated && (
-                                flight.userId === user?.id || 
-                                (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
-                              ))
-                            ) && (
-                              <button
-                                onClick={() => handleDeleteFlight(flight)}
-                                className="text-red-600 hover:text-red-800"
-                                title="Supprimer"
-                              >
-                                <Trash2 size={20} />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                            ))
+                          ) && (
+                            <button
+                              onClick={() => handleDeleteFlight(flight)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Supprimer"
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -783,7 +846,14 @@ const FlightList = () => {
             />
           )}
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Liste des vols</h1>
+            <h1 className="text-2xl font-bold">
+              {hasAnyGroup(user, ["ADMIN"]) 
+                ? filters.memberId 
+                  ? "Vols du membre sélectionné"
+                  : "Tous les vols"
+                : "Vos vols personnels"
+              }
+            </h1>
             <div className="flex items-center space-x-4">
               <select
                 className="border rounded-md px-3 py-2 bg-white"
@@ -806,10 +876,17 @@ const FlightList = () => {
           {hasAnyGroup(user, ["INSTRUCTOR"]) ? (
             <>
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">
-                  Vos vols personnels
-                </h2>
-                <FlightTotals flights={personalFlights} showByCategory={true} />
+                <h2 className="text-xl font-semibold mb-4">Vos vols personnels</h2>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-sm text-slate-600">Temps de vol total</div>
+                    <div className="text-2xl font-semibold">{formatDuration(personalFlightTotals.totalTime)}</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm text-slate-600">Montant total</div>
+                    <div className="text-2xl font-semibold">{personalFlightTotals.totalCost.toFixed(2)} €</div>
+                  </div>
+                </div>
                 <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
                   <table className="w-full text-sm whitespace-nowrap">
                     <thead>
@@ -850,7 +927,7 @@ const FlightList = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {personalFlights.map((flight) => {
+                      {personalPaginatedFlights.map((flight) => {
                         const aircraft = aircraftList.find(
                           (a) => a.id === flight.aircraftId
                         );
@@ -893,7 +970,7 @@ const FlightList = () => {
                                   className={
                                     checkHourMeterConsistency(
                                       flight,
-                                      personalFlights
+                                      personalPaginatedFlights
                                         .filter(f => f.aircraftId === flight.aircraftId)
                                         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                                         .find(f => 
@@ -1045,7 +1122,7 @@ const FlightList = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredFlights.map((flight) => {
+                    {personalPaginatedFlights.map((flight) => {
                       const aircraft = aircraftList.find(
                         (a) => a.id === flight.aircraftId
                       );
@@ -1088,7 +1165,7 @@ const FlightList = () => {
                                 className={
                                   checkHourMeterConsistency(
                                     flight,
-                                    filteredFlights
+                                    personalPaginatedFlights
                                       .filter(f => f.aircraftId === flight.aircraftId)
                                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                                       .find(f => 
@@ -1200,13 +1277,14 @@ const FlightList = () => {
       <div className="mt-4 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-700">
-            Affichage de {Math.min((currentPage - 1) * pageSize + 1, totalFlights)} à{" "}
-            {Math.min(currentPage * pageSize, totalFlights)} sur {totalFlights} vols
+            {filteredFlights.length > 0 
+              ? `Affichage de ${(currentPage - 1) * pageSize + 1} à ${Math.min(currentPage * pageSize, filteredFlights.length)}`
+              : "Aucun vol"} sur {filteredFlights.length} vol{filteredFlights.length !== 1 ? 's' : ''}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
             className="rounded px-3 py-1 text-sm font-medium disabled:opacity-50
                      bg-white text-gray-700 border border-gray-300 hover:bg-gray-50
@@ -1215,11 +1293,11 @@ const FlightList = () => {
             Précédent
           </button>
           <span className="text-sm text-gray-700">
-            Page {currentPage} sur {Math.ceil(totalFlights / pageSize)}
+            Page {currentPage} sur {Math.max(1, Math.ceil(filteredFlights.length / pageSize))}
           </span>
           <button
             onClick={() => setCurrentPage((prev) => prev + 1)}
-            disabled={currentPage >= Math.ceil(totalFlights / pageSize)}
+            disabled={currentPage >= Math.ceil(filteredFlights.length / pageSize)}
             className="rounded px-3 py-1 text-sm font-medium disabled:opacity-50
                      bg-white text-gray-700 border border-gray-300 hover:bg-gray-50
                      disabled:hover:bg-white"
