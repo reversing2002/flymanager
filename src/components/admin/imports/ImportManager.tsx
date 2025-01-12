@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plane, Users, Receipt, Calendar, FileText, CreditCard, Wallet, Stethoscope } from 'lucide-react';
+import { Plane, Users, Receipt, Calendar, FileText, CreditCard, Wallet, Stethoscope, Award } from 'lucide-react';
 import FlightImportTab from './FlightImportTab';
 import AccountImportTab from './AccountImportTab';
 import MemberImportTab from './MemberImportTab';
@@ -8,11 +8,13 @@ import AccountTypeJsonTab from './AccountTypeJsonTab';
 import MemberContributionImportTab from './MemberContributionImportTab';
 import BalanceImportTab from './BalanceImportTab';
 import MedicalImportTab from './MedicalImportTab';
+import QualificationImportTab from './QualificationImportTab';
 
 const TABS = [
   { id: 'avions', label: 'Avions', icon: Plane, component: AircraftJsonTab },
   { id: 'membres', label: 'Membres', icon: Users, component: MemberImportTab },
   { id: 'medicaux', label: 'Certificats Médicaux', icon: Stethoscope, component: MedicalImportTab },
+  { id: 'qualifications', label: 'Qualifications', icon: Award, component: QualificationImportTab },
   { id: 'types-compta', label: 'Types Compta', icon: FileText, component: AccountTypeJsonTab },
   { id: 'comptes', label: 'Comptes', icon: Receipt, component: AccountImportTab },
   { id: 'vols', label: 'Vols', icon: Calendar, component: FlightImportTab },
@@ -31,6 +33,7 @@ const ImportManager = () => {
           <li>Appareils</li>
           <li>Membres</li>
           <li>Certificats Médicaux</li>
+          <li>Qualifications</li>
           <li>Types d'opérations comptables</li>
           <li>Opérations comptables</li>
           <li>Vols</li>
