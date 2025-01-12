@@ -7,12 +7,15 @@ import type { User } from '../../types/database';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import toast from 'react-hot-toast';
+import { Download, FileText } from 'lucide-react';
 
 interface MemberBalance {
   user: User;
   validatedBalance: number;
   pendingBalance: number;
 }
+
+type BalanceFilter = 'all' | 'negative' | 'positive';
 
 const MemberBalancesPage = () => {
   const { user } = useAuth();
@@ -23,6 +26,7 @@ const MemberBalancesPage = () => {
     direction: 'asc' | 'desc';
   }>({ key: 'name', direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
+  const [balanceFilter, setBalanceFilter] = useState<BalanceFilter>('all');
 
   const loadData = async () => {
     try {
@@ -75,6 +79,78 @@ const MemberBalancesPage = () => {
     }));
   };
 
+  const exportToCSV = () => {
+    const headers = ['Nom', 'Prénom', 'Solde validé', 'Solde en attente', 'Solde total'];
+    const csvContent = filteredMembers.map(member => [
+      member.user.last_name,
+      member.user.first_name,
+      member.validatedBalance.toFixed(2),
+      member.pendingBalance.toFixed(2),
+      (member.validatedBalance + member.pendingBalance).toFixed(2)
+    ]);
+
+    const csv = [
+      headers.join(','),
+      ...csvContent.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `soldes_membres_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+  };
+
+  const exportToPDF = () => {
+    const content = filteredMembers.map(member => ({
+      nom: `${member.user.last_name} ${member.user.first_name}`,
+      soldeValide: member.validatedBalance.toFixed(2) + ' €',
+      soldeAttente: member.pendingBalance.toFixed(2) + ' €',
+      soldeTotal: (member.validatedBalance + member.pendingBalance).toFixed(2) + ' €'
+    }));
+
+    // Créer un objet pour l'impression
+    const printContent = document.createElement('div');
+    printContent.innerHTML = `
+      <style>
+        @media print {
+          table { width: 100%; border-collapse: collapse; }
+          th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+          th { background-color: #f8f9fa; }
+        }
+      </style>
+      <h1>Soldes des membres - ${format(new Date(), 'dd/MM/yyyy')}</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Solde validé</th>
+            <th>Solde en attente</th>
+            <th>Solde total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${content.map(row => `
+            <tr>
+              <td>${row.nom}</td>
+              <td>${row.soldeValide}</td>
+              <td>${row.soldeAttente}</td>
+              <td>${row.soldeTotal}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // Ouvrir la fenêtre d'impression
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent.innerHTML);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
   const sortedMembers = [...members].sort((a, b) => {
     if (sortConfig.key === 'name') {
       const nameA = `${a.user.last_name} ${a.user.first_name}`.toLowerCase();
@@ -96,10 +172,18 @@ const MemberBalancesPage = () => {
     return 0;
   });
 
-  const filteredMembers = sortedMembers.filter((member) => {
-    const searchStr = `${member.user.first_name} ${member.user.last_name}`.toLowerCase();
-    return searchStr.includes(searchTerm.toLowerCase());
-  });
+  const filteredMembers = sortedMembers
+    .filter((member) => {
+      const searchStr = `${member.user.first_name} ${member.user.last_name}`.toLowerCase();
+      const matchesSearch = searchStr.includes(searchTerm.toLowerCase());
+      
+      const totalBalance = member.validatedBalance + member.pendingBalance;
+      const matchesBalanceFilter = balanceFilter === 'all' ||
+        (balanceFilter === 'negative' && totalBalance < 0) ||
+        (balanceFilter === 'positive' && totalBalance >= 0);
+      
+      return matchesSearch && matchesBalanceFilter;
+    });
 
   const getSortIcon = (key: keyof MemberBalance | 'name') => {
     if (sortConfig.key !== key) return '↕';
@@ -125,7 +209,7 @@ const MemberBalancesPage = () => {
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-4">Soldes des membres</h1>
-        <div className="mb-4">
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
           <input
             type="text"
             placeholder="Rechercher un membre..."
@@ -133,6 +217,31 @@ const MemberBalancesPage = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          <select
+            value={balanceFilter}
+            onChange={(e) => setBalanceFilter(e.target.value as BalanceFilter)}
+            className="w-full md:w-auto px-4 py-2 border rounded-lg"
+          >
+            <option value="all">Tous les soldes</option>
+            <option value="negative">Soldes négatifs</option>
+            <option value="positive">Soldes positifs</option>
+          </select>
+          <div className="flex gap-2">
+            <button
+              onClick={exportToCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              <Download className="w-4 h-4" />
+              CSV
+            </button>
+            <button
+              onClick={exportToPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <FileText className="w-4 h-4" />
+              PDF
+            </button>
+          </div>
         </div>
       </div>
 
