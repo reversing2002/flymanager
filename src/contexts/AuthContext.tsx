@@ -313,6 +313,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
+      // Nettoyer d'abord l'état local
+      setUser(null);
+      setSession(null);
+      
+      // Déconnexion de Supabase
       const { error } = await supabase.auth.signOut();
 
       if (error) {
@@ -321,8 +326,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Rediriger vers la page de connexion après la déconnexion réussie
       console.log(" Déconnexion réussie");
-      navigate("/login");
+      
+      // Attendre un court instant pour s'assurer que tout est nettoyé
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      navigate("/login", { replace: true });
     } catch (error) {
       console.error(" Erreur inattendue:", error);
       setError(AUTH_ERRORS.UNKNOWN_ERROR);
