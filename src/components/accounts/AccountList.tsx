@@ -9,13 +9,15 @@ import {
   CreditCard,
   Pencil,
   Trash2,
+  Check,
 } from "lucide-react";
 import type { AccountEntry, User } from "../../types/database";
 import { 
   getAccountEntries, 
   deleteAccountEntry,
   calculateMemberBalance,
-  calculatePendingBalance
+  calculatePendingBalance,
+  validateAccountEntry
 } from "../../lib/queries/accounts";
 import { getUsers } from "../../lib/queries/users";
 import AccountEntryModal from "./AccountEntryModal";
@@ -209,6 +211,17 @@ const AccountList = () => {
     setShowEditModal(true);
   };
 
+  const handleValidateEntry = async (entry: AccountEntry) => {
+    try {
+      await validateAccountEntry(entry.id);
+      toast.success("Entrée validée avec succès");
+      refetchEntries();
+    } catch (error) {
+      console.error("Error validating entry:", error);
+      toast.error("Erreur lors de la validation de l'entrée");
+    }
+  };
+
   const renderTable = () => {
     const filteredEntries = entries.filter((entry) => {
       // Filtre par date de début
@@ -299,95 +312,6 @@ const AccountList = () => {
           </div>
         </div>
 
-        {showFilters && (
-          <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date de début
-                </label>
-                <input
-                  type="date"
-                  value={filters.startDate}
-                  onChange={(e) =>
-                    setFilters({ ...filters, startDate: e.target.value })
-                  }
-                  className="w-full border rounded-md px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date de fin
-                </label>
-                <input
-                  type="date"
-                  value={filters.endDate}
-                  onChange={(e) =>
-                    setFilters({ ...filters, endDate: e.target.value })
-                  }
-                  className="w-full border rounded-md px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Type
-                </label>
-                <select
-                  value={filters.type}
-                  onChange={(e) =>
-                    setFilters({ ...filters, type: e.target.value })
-                  }
-                  className="w-full border rounded-md px-3 py-2"
-                >
-                  <option value="all">Tous</option>
-                  <option value="FLIGHT">Vol</option>
-                  <option value="MEMBERSHIP">Cotisation</option>
-                  <option value="INSURANCE">Assurance</option>
-                  <option value="ACCOUNT_FUNDING">Crédit de compte</option>
-                  <option value="BALANCE_RESET">Remise à zéro</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Validé
-                </label>
-                <select
-                  value={filters.validated}
-                  onChange={(e) =>
-                    setFilters({ ...filters, validated: e.target.value })
-                  }
-                  className="w-full border rounded-md px-3 py-2"
-                >
-                  <option value="all">Tous</option>
-                  <option value="true">Oui</option>
-                  <option value="false">Non</option>
-                </select>
-              </div>
-              {isAdmin && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Membre
-                  </label>
-                  <select
-                    value={filters.assignedToId || "all"}
-                    onChange={(e) =>
-                      setFilters({ ...filters, assignedToId: e.target.value })
-                    }
-                    className="w-full border rounded-md px-3 py-2"
-                  >
-                    <option value="all">Tous</option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.first_name} {user.last_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Soldes de l'utilisateur connecté */}
         {!isAdmin && user && balanceData && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -462,7 +386,17 @@ const AccountList = () => {
                     </td>
                     <td className="p-4 text-center hidden sm:table-cell">
                       {entry.is_validated ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" />
+                        <span className="text-green-600" title="Entrée validée">
+                          <CheckCircle2 className="h-5 w-5 mx-auto" />
+                        </span>
+                      ) : isAdmin ? (
+                        <button
+                          onClick={() => handleValidateEntry(entry)}
+                          className="text-green-600 hover:text-green-800"
+                          title="Valider"
+                        >
+                          <Check className="h-5 w-5 mx-auto" />
+                        </button>
                       ) : (
                         "-"
                       )}

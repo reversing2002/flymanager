@@ -317,3 +317,12 @@ export async function calculateTotalBalance(userId: string, date: string) {
   if (error) throw error;
   return balance || 0;
 }
+
+export async function validateAccountEntry(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("account_entries")
+    .update({ is_validated: true })
+    .eq("id", id);
+
+  if (error) throw error;
+}

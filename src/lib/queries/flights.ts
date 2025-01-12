@@ -50,7 +50,7 @@ export async function getFlights(
     query = query.in('flight_type_id', filters.flightTypes);
   }
   if (filters.validated && filters.validated !== 'all') {
-    query = query.eq('is_validated', filters.validated === 'true');
+    query = query.eq('is_validated', filters.validated === 'yes');
   }
   if (filters.memberId) {
     query = query.eq('user_id', filters.memberId);
@@ -82,7 +82,7 @@ export async function getFlights(
     cost: flight.cost,
     instructor_fee: flight.instructor_fee,
     paymentMethod: flight.payment_method,
-    isValidated: flight.is_validated,
+    validated: flight.is_validated,
     accountingCategory: flight.flight_type?.accounting_category?.name,
     createdAt: flight.created_at,
     updatedAt: flight.updated_at,

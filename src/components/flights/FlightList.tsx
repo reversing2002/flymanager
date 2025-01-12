@@ -310,7 +310,7 @@ const FlightList = () => {
     // Filter by validation status
     if (filters.validated !== "all") {
       filtered = filtered.filter((flight) =>
-        filters.validated === "yes" ? !flight.validated : flight.validated
+        filters.validated === "yes" ? flight.validated : !flight.validated
       );
       console.log('After validation filter:', {
         validationStatus: filters.validated,
@@ -417,7 +417,7 @@ const FlightList = () => {
           </button>
         )}
         {(hasAnyGroup(user, ["ADMIN"]) || 
-          (!flight.isValidated && (
+          (!flight.validated && (
             flight.userId === user?.id || 
             (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
           ))
@@ -587,7 +587,7 @@ const FlightList = () => {
                             <GraduationCap size={20} />
                           </button>
                         )}
-                        {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
+                        {!flight.validated && hasAnyGroup(user, ["ADMIN"]) ? (
                           <button
                             onClick={() => handleValidateFlight(flight)}
                             className="text-green-600 hover:text-green-800"
@@ -595,14 +595,14 @@ const FlightList = () => {
                           >
                             <Check size={20} />
                           </button>
-                        ) : flight.isValidated ? (
+                        ) : flight.validated ? (
                           <span className="text-green-600" title="Vol validé">
                             <CheckCircle2 size={20} />
                           </span>
                         ) : null}
                       </td>
                       <td className="p-4 flex justify-center gap-2">
-                        {(hasAnyGroup(user, ["ADMIN"]) || !flight.isValidated) && (
+                        {(hasAnyGroup(user, ["ADMIN"]) || !flight.validated) && (
                           <>
                             {(hasAnyGroup(user, ["ADMIN"]) || 
                               flight.userId === user?.id || 
@@ -617,7 +617,7 @@ const FlightList = () => {
                               </button>
                             )}
                             {(hasAnyGroup(user, ["ADMIN"]) || 
-                              (!flight.isValidated && (
+                              (!flight.validated && (
                                 flight.userId === user?.id || 
                                 (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
                               ))
@@ -964,7 +964,7 @@ const FlightList = () => {
                                   <GraduationCap size={20} />
                                 </button>
                               )}
-                              {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
+                              {!flight.validated && hasAnyGroup(user, ["ADMIN"]) ? (
                                 <button
                                   onClick={() => handleValidateFlight(flight)}
                                   className="text-green-600 hover:text-green-800"
@@ -972,14 +972,14 @@ const FlightList = () => {
                                 >
                                   <Check size={20} />
                                 </button>
-                              ) : flight.isValidated ? (
+                              ) : flight.validated ? (
                                 <span className="text-green-600" title="Vol validé">
                                   <CheckCircle2 size={20} />
                                 </span>
                               ) : null}
                             </td>
                             <td className="p-4 flex justify-center gap-2">
-                              {(hasAnyGroup(user, ["ADMIN"]) || !flight.isValidated) && (
+                              {(hasAnyGroup(user, ["ADMIN"]) || !flight.validated) && (
                                 <>
                                   {(hasAnyGroup(user, ["ADMIN"]) || 
                                     flight.userId === user?.id || 
@@ -994,7 +994,7 @@ const FlightList = () => {
                                     </button>
                                   )}
                                   {(hasAnyGroup(user, ["ADMIN"]) || 
-                                    (!flight.isValidated && (
+                                    (!flight.validated && (
                                       flight.userId === user?.id || 
                                       (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
                                     ))
@@ -1159,7 +1159,7 @@ const FlightList = () => {
                                 <GraduationCap size={20} />
                               </button>
                             )}
-                            {!flight.isValidated && hasAnyGroup(user, ["ADMIN"]) ? (
+                            {!flight.validated && hasAnyGroup(user, ["ADMIN"]) ? (
                               <button
                                 onClick={() => handleValidateFlight(flight)}
                                 className="text-green-600 hover:text-green-800"
@@ -1167,14 +1167,14 @@ const FlightList = () => {
                               >
                                 <Check size={20} />
                               </button>
-                            ) : flight.isValidated ? (
+                            ) : flight.validated ? (
                               <span className="text-green-600" title="Vol validé">
                                 <CheckCircle2 size={20} />
                               </span>
                             ) : null}
                           </td>
                           <td className="p-4 flex justify-center gap-2">
-                            {(hasAnyGroup(user, ["ADMIN"]) || !flight.isValidated) && (
+                            {(hasAnyGroup(user, ["ADMIN"]) || !flight.validated) && (
                               <>
                                 {(hasAnyGroup(user, ["ADMIN"]) || 
                                   flight.userId === user?.id || 
@@ -1189,7 +1189,7 @@ const FlightList = () => {
                                   </button>
                                 )}
                                 {(hasAnyGroup(user, ["ADMIN"]) || 
-                                  (!flight.isValidated && (
+                                  (!flight.validated && (
                                     flight.userId === user?.id || 
                                     (hasAnyGroup(user, ["INSTRUCTOR"]) && flight.instructorId === user?.id)
                                   ))

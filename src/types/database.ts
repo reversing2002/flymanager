@@ -122,7 +122,7 @@ export interface Flight {
   instructor_cost?: number;  // Coût total de l'instruction pour ce vol
   instructor_fee?: number;   // Taux horaire de l'instructeur appliqué pour ce vol
   payment_method: PaymentMethod;
-  is_validated: boolean;
+  validated: boolean;
   accounting_category: string;
   created_at: string;
   updated_at: string;
