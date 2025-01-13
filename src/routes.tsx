@@ -3,9 +3,10 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import PublicLayout from './components/public/PublicLayout';
 import HomePage from './components/public/HomePage';
 import LoginPage from './components/auth/LoginPage';
-import FAQ from './components/auth/FAQ';
+import FAQ from './components/public/FAQPage';
 import ContactPage from './components/public/ContactPage';
 import CGVPage from './components/public/CGVPage';
+import PricingPage from './components/public/PricingPage';
 import { useAuth } from './contexts/AuthContext';
 
 // Protège les routes qui nécessitent une authentification
@@ -41,6 +42,10 @@ export const router = createBrowserRouter([
       {
         path: '/cgv',
         element: <CGVPage />,
+      },
+      {
+        path: '/pricing',
+        element: <PricingPage />,
       },
       // Ajoutez ici les autres routes publiques
     ],

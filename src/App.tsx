@@ -66,6 +66,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import PublicLayout from "./components/public/PublicLayout";
 import HomePage from "./components/public/HomePage";
+import PricingPage from "./components/public/PricingPage";
 import ContactPage from "./components/public/ContactPage";
 import CGVPage from "./components/public/CGVPage";
 import FAQPage from "./components/public/FAQPage";
@@ -97,6 +98,7 @@ function App() {
               <Route element={<PublicLayout />}>
                 <Route index element={<RootPage />} />
                 <Route path="/features" element={<FeaturesPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/faq" element={<FAQPage />} />
                 <Route path="/cgv" element={<CGVPage />} />
                 <Route path="/rgpd" element={<RGPDPage />} />
