@@ -65,7 +65,7 @@ const PublicSidebar: React.FC<PublicSidebarProps> = ({ isOpen, toggleSidebar }) 
     setIsLoading(true);
     try {
       await signIn(credentials.email, credentials.password);
-      navigate('/dashboard');  // Redirection vers le dashboard après connexion
+      navigate('/');  // Redirection vers la page d'accueil après connexion
       toast.success('Connexion réussie');
     } catch (error) {
       toast.error('Email ou mot de passe incorrect');

@@ -34,7 +34,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles, allowA
       "Rôles utilisateur:",
       user.roles
     );
-    // Afficher un message d'erreur et rester sur la même page
     toast.error("Vous n'avez pas les permissions nécessaires pour accéder à cette page");
     return <Navigate to="/" replace />;
   }
