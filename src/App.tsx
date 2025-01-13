@@ -71,6 +71,7 @@ import CGVPage from "./components/public/CGVPage";
 import FAQPage from "./components/public/FAQPage";
 import FeaturesPage from "./components/public/FeaturesPage";
 import LegalPage from "./components/public/LegalPage";
+import RootPage from "./components/RootPage";
 
 // Initialiser dayjs avec la locale française
 dayjs.locale('fr');
@@ -87,16 +88,13 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <AuthProvider>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Toaster position="top-right" />
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Router>
+          <AuthProvider>
             <Routes>
-              {/* Public Layout */}
+              {/* Pages publiques */}
               <Route element={<PublicLayout />}>
-                <Route index element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/create-club" element={<CreateClubPage />} />
+                <Route index element={<RootPage />} />
                 <Route path="/features" element={<FeaturesPage />} />
                 <Route path="/faq" element={<FAQPage />} />
                 <Route path="/contact" element={<ContactPage />} />
@@ -104,9 +102,11 @@ function App() {
                 <Route path="/cgv" element={<CGVPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/update-password" element={<UpdatePasswordPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/create-club" element={<CreateClubPage />} />
               </Route>
 
-              {/* Discovery Flight Routes */}
+              {/* Routes de vol découverte */}
               <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
               <Route path="/discovery/qr2" element={<EnhancedDiscoveryPage />} />
               <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
@@ -118,164 +118,61 @@ function App() {
               <Route path="/discovery-flights/:flightId/client" element={<DiscoveryFlightClientPage />} />
               <Route path="/discovery-flights/:flightId/confirmation" element={<DiscoveryFlightSuccess />} />
 
-              {/* Protected routes - MainLayout */}
+              {/* Routes protégées */}
               <Route
-                path="/app"
                 element={
                   <ProtectedRoute>
                     <MainLayout />
                   </ProtectedRoute>
                 }
               >
-                {/* Dashboard comme page d'accueil */}
-                <Route index element={<Dashboard />} />
+                {/* Dashboard */}
+                <Route path="/dashboard" element={<Dashboard />} />
 
                 {/* Profile */}
-                <Route path="profile" element={<ProfilePage />} />
+                <Route path="/profile" element={<ProfilePage />} />
 
                 {/* Members */}
-                <Route
-                  path="members"
-                  element={
-                    <ProtectedRoute>
-                      <MemberList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="members/roles" element={<RoleManagement />} />
-                <Route path="members/:id" element={<MemberProfile />} />
-                <Route path="members/:id/stats" element={<PilotStatsPage />} />
-                <Route
-                  path="members/balances"
-                  element={
-                    <ProtectedRoute roles={["admin"]}>
-                      <MemberBalancesPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/members" element={<ProtectedRoute><MemberList /></ProtectedRoute>} />
+                <Route path="/members/roles" element={<RoleManagement />} />
+                <Route path="/members/:id" element={<MemberProfile />} />
+                <Route path="/members/:id/stats" element={<PilotStatsPage />} />
+                <Route path="/members/balances" element={<ProtectedRoute roles={["admin"]}><MemberBalancesPage /></ProtectedRoute>} />
 
                 {/* Statistiques des clubs */}
-                <Route
-                  path="club-stats"
-                  element={
-                    <ProtectedRoute>
-                      <ClubStatsPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/club-stats" element={<ProtectedRoute><ClubStatsPage /></ProtectedRoute>} />
 
                 {/* Factures */}
-                <Route
-                  path="invoices"
-                  element={
-                    <ProtectedRoute roles={["admin"]}>
-                      <InvoicesPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/invoices" element={<ProtectedRoute roles={["admin"]}><InvoicesPage /></ProtectedRoute>} />
 
                 {/* Instructor Students */}
-                <Route
-                  path="instructor-students"
-                  element={
-                    <ProtectedRoute roles={["instructor"]}>
-                      <InstructorStudentsPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/instructor-students" element={<ProtectedRoute roles={["instructor"]}><InstructorStudentsPage /></ProtectedRoute>} />
 
                 {/* Aircraft */}
-                <Route path="aircraft" element={<AircraftList />} />
-                <Route
-                  path="aircraft/:id/maintenance"
-                  element={
-                    <ProtectedRoute roles={["admin", "mechanic"]}>
-                      <MaintenancePage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/aircraft" element={<AircraftList />} />
+                <Route path="/aircraft/:id/maintenance" element={<ProtectedRoute roles={["admin", "mechanic"]}><MaintenancePage /></ProtectedRoute>} />
 
                 {/* Discovery Flights */}
-                <Route
-                  path="discovery-flights"
-                  element={
-                    <ProtectedRoute roles={["admin", "discovery", "instructor"]}>
-                      <DiscoveryFlightsPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/discovery-flights" element={<ProtectedRoute roles={["admin", "discovery", "instructor"]}><DiscoveryFlightsPage /></ProtectedRoute>} />
 
                 {/* Reservations */}
-                <Route
-                  path="reservations"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor", "pilot", "mechanic"]}>
-                      <CalendarContainer />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="my-reservations"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
-                      <ReservationList />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/reservations" element={<ProtectedRoute roles={["admin", "instructor", "pilot", "mechanic"]}><CalendarContainer /></ProtectedRoute>} />
+                <Route path="/my-reservations" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><ReservationList /></ProtectedRoute>} />
 
                 {/* Flights */}
-                <Route
-                  path="flights"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
-                      <FlightList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="flights/new"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
-                      <NewFlightForm />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="instructor-flights"
-                  element={
-                    <ProtectedRoute roles={["instructor"]}>
-                      <InstructorFlightsPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/flights" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><FlightList /></ProtectedRoute>} />
+                <Route path="/flights/new" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><NewFlightForm /></ProtectedRoute>} />
+                <Route path="/instructor-flights" element={<ProtectedRoute roles={["instructor"]}><InstructorFlightsPage /></ProtectedRoute>} />
 
                 {/* Accounts */}
-                <Route path="accounts" element={<AccountList />} />
-                <Route
-                  path="notifications"
-                  element={
-                    <ProtectedRoute roles={["admin"]}>
-                      <NotificationList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="instructor-billing"
-                  element={
-                    <ProtectedRoute roles={["admin"]}>
-                      <InstructorBillingList />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/accounts" element={<AccountList />} />
+                <Route path="/notifications" element={<ProtectedRoute roles={["admin"]}><NotificationList /></ProtectedRoute>} />
+                <Route path="/instructor-billing" element={<ProtectedRoute roles={["admin"]}><InstructorBillingList /></ProtectedRoute>} />
 
                 {/* Chat */}
                 <Route
-                  path="chat"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
-                      <ChatPage />
-                    </ProtectedRoute>
-                  }
+                  path="/chat"
+                  element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><ChatPage /></ProtectedRoute>}
                 >
                   <Route index element={<ChatList />} />
                   <Route path="room/:roomId" element={<ChatRoom />} />
@@ -283,128 +180,48 @@ function App() {
                 </Route>
 
                 {/* Events */}
-                <Route path="events" element={<EventsPage />} />
+                <Route path="/events" element={<EventsPage />} />
 
                 {/* Documentation */}
-                <Route path="documentation" element={
-                  <ProtectedRoute>
-                    <DocumentationPage />
-                  </ProtectedRoute>
-                } />
+                <Route path="/documentation" element={<ProtectedRoute><DocumentationPage /></ProtectedRoute>} />
 
                 {/* Training */}
-                <Route path="training" element={<TrainingPage />} />
-                <Route path="training/:moduleId" element={<TrainingModuleDetails />} />
-                <Route
-                  path="training-admin"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor"]}>
-                      <TrainingAdminPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/training" element={<TrainingPage />} />
+                <Route path="/training/:moduleId" element={<TrainingModuleDetails />} />
+                <Route path="/training-admin" element={<ProtectedRoute roles={["admin", "instructor"]}><TrainingAdminPage /></ProtectedRoute>} />
 
                 {/* Progression */}
-                <Route
-                  path="progression"
-                  element={
-                    <ProtectedRoute roles={["instructor", "pilot"]}>
-                      <ProgressionPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="progression/admin"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor"]}>
-                      <ProgressionAdminPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="progression/students"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor"]}>
-                      <StudentProgressionsPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/progression" element={<ProtectedRoute roles={["instructor", "pilot"]}><ProgressionPage /></ProtectedRoute>} />
+                <Route path="/progression/admin" element={<ProtectedRoute roles={["admin", "instructor"]}><ProgressionAdminPage /></ProtectedRoute>} />
+                <Route path="/progression/students" element={<ProtectedRoute roles={["admin", "instructor"]}><StudentProgressionsPage /></ProtectedRoute>} />
 
                 {/* Availability Management */}
-                <Route
-                  path="availability"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor", "mechanic", "pilot"]}>
-                      <AvailabilityManagementPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="availability/instructor/:id"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor"]}>
-                      <InstructorAvailabilityPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="availability/aircraft/:id"
-                  element={
-                    <ProtectedRoute roles={["admin", "mechanic"]}>
-                      <AircraftAvailabilityPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/availability" element={<ProtectedRoute roles={["admin", "instructor", "mechanic", "pilot"]}><AvailabilityManagementPage /></ProtectedRoute>} />
+                <Route path="/availability/instructor/:id" element={<ProtectedRoute roles={["admin", "instructor"]}><InstructorAvailabilityPage /></ProtectedRoute>} />
+                <Route path="/availability/aircraft/:id" element={<ProtectedRoute roles={["admin", "mechanic"]}><AircraftAvailabilityPage /></ProtectedRoute>} />
 
                 {/* Stats */}
-                <Route path="stats" element={<StatsPage />} />
+                <Route path="/stats" element={<StatsPage />} />
 
                 {/* Settings */}
-                <Route
-                  path="settings"
-                  element={
-                    <ProtectedRoute groups={["ADMIN"]}>
-                      <SettingsPage />
-                    </ProtectedRoute>
-                  }
-                >
+                <Route path="/settings" element={<ProtectedRoute groups={["ADMIN"]}><SettingsPage /></ProtectedRoute>}>
                   <Route path="accounting-migration" element={<AccountingMigrationSettings />} />
                 </Route>
 
                 {/* Email - Admin only */}
-                <Route
-                  path="admin/email"
-                  element={
-                    <ProtectedRoute roles={["admin"]}>
-                      <EmailMembersPage />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/admin/email" element={<ProtectedRoute roles={["admin"]}><EmailMembersPage /></ProtectedRoute>} />
 
                 {/* Weather */}
-                <Route
-                  path="weather"
-                  element={
-                    <ProtectedRoute roles={["admin", "instructor", "pilot"]}>
-                      <Weather />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/weather" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><Weather /></ProtectedRoute>} />
 
                 {/* Comptabilité */}
-                <Route
-                  path="accounting"
-                  element={
-                    <ProtectedRoute>
-                      <SimpleAccountingView />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/accounting" element={<ProtectedRoute><SimpleAccountingView /></ProtectedRoute>} />
               </Route>
             </Routes>
-          </LocalizationProvider>
-        </AuthProvider>
-      </Router>
+            <Toaster position="bottom-right" />
+          </AuthProvider>
+        </Router>
+      </LocalizationProvider>
     </QueryClientProvider>
   );
 }
