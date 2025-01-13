@@ -55,6 +55,11 @@ const Footer = () => {
                   CGV
                 </Link>
               </li>
+              <li>
+                <Link to="/rgpd" className="text-gray-400 hover:text-white transition-colors">
+                  RGPD
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -62,7 +67,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-gray-800">
           <p className="text-gray-400 text-sm text-center">
-            © {new Date().getFullYear()} MELBA CAPITAL - SASU au capital de 2 700 000€ - RCS Saint-Etienne 840 514 913
+            {new Date().getFullYear()} MELBA CAPITAL - SASU au capital de 2 700 000€ - RCS Saint-Etienne 840 514 913
           </p>
         </div>
       </div>

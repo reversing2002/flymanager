@@ -72,6 +72,7 @@ import FAQPage from "./components/public/FAQPage";
 import FeaturesPage from "./components/public/FeaturesPage";
 import LegalPage from "./components/public/LegalPage";
 import RootPage from "./components/RootPage";
+import RGPDPage from "./components/public/RGPDPage";
 
 // Initialiser dayjs avec la locale française
 dayjs.locale('fr');
@@ -97,9 +98,10 @@ function App() {
                 <Route index element={<RootPage />} />
                 <Route path="/features" element={<FeaturesPage />} />
                 <Route path="/faq" element={<FAQPage />} />
+                <Route path="/cgv" element={<CGVPage />} />
+                <Route path="/rgpd" element={<RGPDPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/legal" element={<LegalPage />} />
-                <Route path="/cgv" element={<CGVPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/update-password" element={<UpdatePasswordPage />} />
                 <Route path="/login" element={<LoginPage />} />
