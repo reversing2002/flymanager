@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import EmailIcon from '@mui/icons-material/Email';
-import PhoneIcon from '@mui/icons-material/Phone';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import toast from 'react-hot-toast';
 
@@ -139,15 +138,6 @@ const ContactPage = () => {
                 <h3 className="text-white font-medium">Email</h3>
                 <p className="text-gray-300">contact@4fly.fr</p>
                 <p className="text-gray-400 text-sm">Réponse sous 24h ouvrées</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <PhoneIcon className="text-blue-500 mt-1" />
-              <div>
-                <h3 className="text-white font-medium">Téléphone</h3>
-                <p className="text-gray-300">+33 (0)1 23 45 67 89</p>
-                <p className="text-gray-400 text-sm">Du lundi au vendredi, 9h-18h</p>
               </div>
             </div>
 

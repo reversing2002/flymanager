@@ -117,17 +117,17 @@ const HomePage = () => {
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link
-                to="/create-club"
+                to="/login"
                 className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:from-blue-700 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-blue-500/25 transform hover:-translate-y-0.5"
               >
-                Essayer gratuitement
+                Se connecter
               </Link>
 
               <Link
-                to="/features"
+                to="/contact"
                 className="bg-black/40 backdrop-blur-sm border border-white/20 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white/10 transition-all duration-300 hover:border-white/30"
               >
-                Voir les fonctionnalités
+                Nous contacter
               </Link>
             </div>
           </motion.div>
@@ -164,16 +164,16 @@ const HomePage = () => {
           <section className="py-20">
             <div className="container mx-auto px-4 text-center">
               <h2 className="text-3xl font-bold text-white mb-8">
-                Envie d'essayer ?
+                Vous souhaitez en savoir plus ?
               </h2>
               <p className="text-xl text-gray-200 mb-8">
-                C'est gratuit et sans engagement. Commencez dès maintenant et découvrez comme il est facile de gérer votre club !
+                Découvrez comment 4fly peut vous aider à simplifier la gestion de votre club aéronautique.
               </p>
               <Link
-                to="/create-club"
-                className="inline-block bg-blue-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-600 transition-colors shadow-lg"
+                to="/contact"
+                className="inline-block bg-blue-500/20 border border-blue-500/30 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-500/30 transition-all duration-300 hover:border-blue-500/50"
               >
-                Créer mon club gratuitement
+                Contactez-nous
               </Link>
             </div>
           </section>

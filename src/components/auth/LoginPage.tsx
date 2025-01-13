@@ -172,7 +172,7 @@ const LoginPage = () => {
                 sx={{ color: 'rgba(255,255,255,0.7)' }}
               />
               <Link
-                to="/forgot-password"
+                to="/reset-password"
                 className="text-sm text-blue-500 hover:text-blue-400 transition-colors"
               >
                 Mot de passe oublié ?
@@ -193,18 +193,6 @@ const LoginPage = () => {
                 "Se connecter"
               )}
             </Button>
-
-            <div className="text-center mt-6">
-              <p className="text-gray-400">
-                Pas encore de compte ?{" "}
-                <Link
-                  to="/register"
-                  className="text-blue-500 hover:text-blue-400 font-medium transition-colors"
-                >
-                  Créer un compte
-                </Link>
-              </p>
-            </div>
           </motion.form>
         </div>
       </motion.div>
