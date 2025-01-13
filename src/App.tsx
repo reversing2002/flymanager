@@ -64,6 +64,13 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
+import PublicLayout from "./components/public/PublicLayout";
+import HomePage from "./components/public/HomePage";
+import ContactPage from "./components/public/ContactPage";
+import CGVPage from "./components/public/CGVPage";
+import FAQPage from "./components/public/FAQPage";
+import FeaturesPage from "./components/public/FeaturesPage";
+import LegalPage from "./components/public/LegalPage";
 
 // Initialiser dayjs avec la locale française
 dayjs.locale('fr');
@@ -85,11 +92,21 @@ function App() {
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Toaster position="top-right" />
             <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/create-club" element={<CreateClubPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/update-password" element={<UpdatePasswordPage />} />
+              {/* Public Layout */}
+              <Route element={<PublicLayout />}>
+                <Route index element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/create-club" element={<CreateClubPage />} />
+                <Route path="/features" element={<FeaturesPage />} />
+                <Route path="/faq" element={<FAQPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/legal" element={<LegalPage />} />
+                <Route path="/cgv" element={<CGVPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/update-password" element={<UpdatePasswordPage />} />
+              </Route>
+
+              {/* Discovery Flight Routes */}
               <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
               <Route path="/discovery/qr2" element={<EnhancedDiscoveryPage />} />
               <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
@@ -103,7 +120,7 @@ function App() {
 
               {/* Protected routes - MainLayout */}
               <Route
-                path="/"
+                path="/app"
                 element={
                   <ProtectedRoute>
                     <MainLayout />
