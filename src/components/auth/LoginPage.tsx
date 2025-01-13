@@ -49,7 +49,7 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signIn(email, password);
+      await signIn(email, password, rememberMe);
       toast.success("Connexion réussie !");
     } catch (error) {
       toast.error("Erreur de connexion. Vérifiez vos identifiants.");
