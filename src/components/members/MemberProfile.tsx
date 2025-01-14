@@ -24,8 +24,9 @@ import type { Medical } from "./MedicalCard";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "../../lib/supabase";
-import FFACredentialsForm from "./FFACredentialsForm";
-import FFPLUMCredentialsForm from "./FFPLUMCredentialsForm";
+// Temporairement désactivé
+// import FFACredentialsForm from "./FFACredentialsForm";
+// import FFPLUMCredentialsForm from "./FFPLUMCredentialsForm";
 import { useRoles } from "../../hooks/useRoles";
 import PilotFlightStats from "./PilotFlightStats";
 
@@ -111,6 +112,7 @@ const MemberProfile = () => {
   const canEdit = isAdmin || isInstructor || isOwnProfile;
   const canManageContributions = isAdmin || isInstructor;
   const hasFullAccess = isAdmin || isInstructor;
+  const canManageQualificationsAndLicenses = isAdmin || isInstructor; // Nouvelle variable pour la gestion des qualifications et licences
 
   useEffect(() => {
     loadData();
@@ -501,7 +503,7 @@ const MemberProfile = () => {
                 <div className="bg-white rounded-lg shadow">
                   <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                     <h3 className="text-lg font-medium text-gray-900">Licences</h3>
-                    {canEdit && (
+                    {canManageQualificationsAndLicenses && (
                       <button
                         onClick={() => setIsAddingLicense(true)}
                         className="inline-flex items-center p-1 border border-transparent rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500"
@@ -518,6 +520,7 @@ const MemberProfile = () => {
                       onCloseEditModal={() => setIsEditingLicense(false)}
                       selectedLicense={selectedLicense}
                       onSelectLicense={setSelectedLicense}
+                      canEdit={canManageQualificationsAndLicenses}
                     />
                   </div>
                 </div>
@@ -528,7 +531,7 @@ const MemberProfile = () => {
                 <div className="bg-white rounded-lg shadow">
                   <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                     <h3 className="text-lg font-medium text-gray-900">Qualifications</h3>
-                    {canEdit && (
+                    {canManageQualificationsAndLicenses && (
                       <button
                         onClick={() => setIsQualificationsModalOpen(true)}
                         className="inline-flex items-center p-1 border border-transparent rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500"
@@ -543,6 +546,7 @@ const MemberProfile = () => {
                       isEditModalOpen={isQualificationsModalOpen}
                       onOpenEditModal={() => setIsQualificationsModalOpen(true)}
                       onCloseEditModal={() => setIsQualificationsModalOpen(false)}
+                      canEdit={canManageQualificationsAndLicenses}
                     />
                   </div>
                 </div>
@@ -616,14 +620,18 @@ const MemberProfile = () => {
             </div>
 
             {/* Section des identifiants SMILE FFA */}
+            {/* Temporairement désactivé
             {(isAdmin || isOwnProfile) && (
               <FFACredentialsForm userId={id} />
             )}
+            */}
 
             {/* Section des identifiants FFPLUM */}
+            {/* Temporairement désactivé
             {(isAdmin || isOwnProfile) && (
               <FFPLUMCredentialsForm userId={id} />
             )}
+            */}
 
             {/* Section de l'historique d'activité */}
             <ActivityTimeline userId={id} />

@@ -17,6 +17,7 @@ interface QualificationsCardProps {
   isEditModalOpen: boolean;
   onOpenEditModal: () => void;
   onCloseEditModal: () => void;
+  canEdit?: boolean;
 }
 
 const fetchQualifications = async (userId: string) => {
@@ -41,10 +42,11 @@ const QualificationsCard: React.FC<QualificationsCardProps> = ({
   isEditModalOpen,
   onOpenEditModal,
   onCloseEditModal,
+  canEdit: canEditProp,
 }) => {
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
-  const canEdit = hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']);
+  const canEdit = canEditProp ?? hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']);
   const [selectedQualification, setSelectedQualification] = useState<PilotQualification | null>(null);
 
   const { data: qualifications = [], isLoading } = useQuery({

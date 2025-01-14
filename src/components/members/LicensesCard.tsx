@@ -19,6 +19,7 @@ interface LicensesCardProps {
   onCloseEditModal: () => void;
   selectedLicense: PilotLicense | null;
   onSelectLicense: (license: PilotLicense) => void;
+  canEdit?: boolean;
 }
 
 const fetchLicenses = async (userId: string) => {
@@ -59,10 +60,11 @@ const LicensesCard: React.FC<LicensesCardProps> = ({
   onCloseEditModal,
   selectedLicense,
   onSelectLicense,
+  canEdit: canEditProp,
 }) => {
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
-  const canEdit = hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']);
+  const canEdit = canEditProp ?? hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']);
 
   const { data: licenses = [], isLoading } = useQuery({
     queryKey: ['licenses', userId],
