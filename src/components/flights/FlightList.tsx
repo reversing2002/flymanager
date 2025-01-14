@@ -13,9 +13,9 @@ import { hasAnyGroup } from "../../lib/permissions";
 import CompetenciesModal from "../progression/CompetenciesModal";
 
 // Fonction utilitaire pour vérifier la cohérence des horamètres
-const checkHourMeterConsistency = (currentFlight: Flight, flights: Flight[]): boolean => {
+const checkHourMeterConsistency = (currentFlight: Flight, flights: Flight[]): { isConsistent: boolean; previousFlight: Flight | null } => {
   if (!currentFlight.start_hour_meter || !currentFlight.end_hour_meter) {
-    return true; // Si pas d'horamètres, on considère que c'est cohérent
+    return { isConsistent: true, previousFlight: null }; // Si pas d'horamètres, on considère que c'est cohérent
   }
 
   // Trouver le vol précédent pour le même avion
@@ -45,11 +45,14 @@ const checkHourMeterConsistency = (currentFlight: Flight, flights: Flight[]): bo
 
   // Vérifier la cohérence avec le vol précédent
   if (previousFlight && previousFlight.end_hour_meter) {
-    return currentFlight.start_hour_meter === previousFlight.end_hour_meter;
+    return {
+      isConsistent: currentFlight.start_hour_meter === previousFlight.end_hour_meter,
+      previousFlight
+    };
   }
 
   // Si pas de vol précédent ou pas d'horamètre de fin, on considère que c'est cohérent
-  return true;
+  return { isConsistent: true, previousFlight: null };
 };
 
 const FlightList = () => {
@@ -84,6 +87,7 @@ const FlightList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalFlights, setTotalFlights] = useState(0);
   const [pageSize, setPageSize] = useState(25);
+  const [inconsistentFlights, setInconsistentFlights] = useState<Set<string>>(new Set());
 
   // Fonction pour vérifier si des filtres sont actifs
   const hasActiveFilters = () => {
@@ -235,6 +239,21 @@ const FlightList = () => {
   useEffect(() => {
     loadData();
   }, [filters, user]);
+
+  useEffect(() => {
+    // Mettre à jour la liste des vols incohérents
+    const newInconsistentFlights = new Set<string>();
+    
+    filteredFlights.forEach(flight => {
+      const { isConsistent, previousFlight } = checkHourMeterConsistency(flight, filteredFlights);
+      if (!isConsistent && previousFlight) {
+        newInconsistentFlights.add(flight.id);
+        newInconsistentFlights.add(previousFlight.id);
+      }
+    });
+    
+    setInconsistentFlights(newInconsistentFlights);
+  }, [filteredFlights]);
 
   useEffect(() => {
     // Apply filters
@@ -597,10 +616,14 @@ const FlightList = () => {
                   flightType: flight.flightType,
                 });
 
+                const { isConsistent, previousFlight } = checkHourMeterConsistency(flight, filteredFlights);
+
                 return (
                   <tr
                     key={flight.id}
-                    className="border-b border-slate-100 hover:bg-slate-50"
+                    className={`border-b border-slate-100 hover:bg-slate-50 ${
+                      !isConsistent || inconsistentFlights.has(flight.id) ? 'bg-red-50' : ''
+                    }`}
                   >
                     <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
                       {pilot
@@ -619,14 +642,14 @@ const FlightList = () => {
                           <Timer 
                             size={20} 
                             className={
-                              checkHourMeterConsistency(
-                                flight,
-                                filteredFlights
-                              )
+                              isConsistent && !inconsistentFlights.has(flight.id)
                               ? "text-green-600"
                               : "text-red-600"
                             }
-                            title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter}`}
+                            title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter}${
+                              !isConsistent ? " ⚠️ Incohérence avec le vol précédent" : 
+                              inconsistentFlights.has(flight.id) ? " ⚠️ Vol lié à une incohérence" : ""
+                            }`}
                           />
                           <span className="text-xs text-slate-600">
                             {flight.start_hour_meter} → {flight.end_hour_meter}
@@ -990,10 +1013,14 @@ const FlightList = () => {
                           flightType: flight.flightType,
                         });
 
+                        const { isConsistent, previousFlight } = checkHourMeterConsistency(flight, personalPaginatedFlights);
+
                         return (
                           <tr
                             key={flight.id}
-                            className="border-b border-slate-100 hover:bg-slate-50"
+                            className={`border-b border-slate-100 hover:bg-slate-50 ${
+                              !isConsistent || inconsistentFlights.has(flight.id) ? 'bg-red-50' : ''
+                            }`}
                           >
                             <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
                               {pilot
@@ -1012,14 +1039,14 @@ const FlightList = () => {
                                   <Timer 
                                     size={20} 
                                     className={
-                                      checkHourMeterConsistency(
-                                        flight,
-                                        personalPaginatedFlights
-                                      )
+                                      isConsistent && !inconsistentFlights.has(flight.id)
                                       ? "text-green-600"
                                       : "text-red-600"
                                     }
-                                    title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter}`}
+                                    title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter}${
+                                      !isConsistent ? " ⚠️ Incohérence avec le vol précédent" : 
+                                      inconsistentFlights.has(flight.id) ? " ⚠️ Vol lié à une incohérence" : ""
+                                    }`}
                                   />
                                   <span className="text-xs text-slate-600">
                                     {flight.start_hour_meter} → {flight.end_hour_meter}
@@ -1185,10 +1212,14 @@ const FlightList = () => {
                         flightType: flight.flightType,
                       });
 
+                      const { isConsistent, previousFlight } = checkHourMeterConsistency(flight, personalPaginatedFlights);
+
                       return (
                         <tr
                           key={flight.id}
-                          className="border-b border-slate-100 hover:bg-slate-50"
+                          className={`border-b border-slate-100 hover:bg-slate-50 ${
+                            !isConsistent || inconsistentFlights.has(flight.id) ? 'bg-red-50' : ''
+                          }`}
                         >
                           <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
                             {pilot
@@ -1207,14 +1238,14 @@ const FlightList = () => {
                                 <Timer 
                                   size={20} 
                                   className={
-                                    checkHourMeterConsistency(
-                                      flight,
-                                      personalPaginatedFlights
-                                    )
+                                    isConsistent && !inconsistentFlights.has(flight.id)
                                     ? "text-green-600"
                                     : "text-red-600"
                                   }
-                                  title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter}`}
+                                  title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter}${
+                                    !isConsistent ? " ⚠️ Incohérence avec le vol précédent" : 
+                                    inconsistentFlights.has(flight.id) ? " ⚠️ Vol lié à une incohérence" : ""
+                                  }`}
                                 />
                                 <span className="text-xs text-slate-600">
                                   {flight.start_hour_meter} → {flight.end_hour_meter}
