@@ -610,6 +610,29 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Messages et Événements */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Messages récents */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">Messages récents</h2>
+          </div>
+          <div className="h-[320px] overflow-y-auto">
+            <RecentMessages />
+          </div>
+        </div>
+
+        {/* Événements à venir */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">Événements à venir</h2>
+          </div>
+          <div className="h-[320px] overflow-y-auto">
+            <UpcomingEvents />
+          </div>
+        </div>
+      </div>
+
       {/* Grille 2 colonnes pour les vols découverte et remarques avions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Vols découverte */}
@@ -647,28 +670,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Autres sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        {/* Messages récents */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-
-          <div className="h-[320px] overflow-y-auto">
-            <RecentMessages />
-          </div>
-        </div>
-
-        {/* Événements à venir */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">Événements à venir</h2>
-          </div>
-          <div className="h-[320px] overflow-y-auto">
-            <UpcomingEvents />
-          </div>
-        </div>
-      </div>
-
-      {/* Modal de réservation */}
+      {/* Modals */}
       {selectedReservation && (
         <ReservationModal
           startTime={new Date(selectedReservation.startTime)}

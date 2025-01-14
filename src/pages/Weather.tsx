@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import WeatherWidget from '../components/weather/WeatherWidget';
 import WeatherMap from '../components/weather/WeatherMap';
-import WindWidget from '../components/weather/WindWidget';
+import MiniWindWidget from '../components/weather/MiniWindWidget';
 import { MapPin } from 'lucide-react';
 
 const Weather = () => {
@@ -29,7 +29,7 @@ const Weather = () => {
               <WeatherMap />
             </div>
           </div>
-          <WindWidget />
+          <MiniWindWidget />
         </div>
 
         {/* Colonne de droite : Informations météo */}
