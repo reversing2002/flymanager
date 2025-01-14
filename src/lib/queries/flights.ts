@@ -75,6 +75,7 @@ export async function getFlights(
   
   query = query
     .order('date', { ascending: false })
+    .order('start_hour_meter', { ascending: false })
     .range(from, to);
 
   const { data, error, count } = await query;

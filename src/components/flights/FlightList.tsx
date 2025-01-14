@@ -13,11 +13,43 @@ import { hasAnyGroup } from "../../lib/permissions";
 import CompetenciesModal from "../progression/CompetenciesModal";
 
 // Fonction utilitaire pour vérifier la cohérence des horamètres
-const checkHourMeterConsistency = (currentFlight: Flight, previousFlight: Flight | undefined): boolean => {
-  if (!previousFlight || !currentFlight.start_hour_meter || !previousFlight.end_hour_meter) {
-    return true; // Si pas de vol précédent ou pas d'horamètres, on considère que c'est cohérent
+const checkHourMeterConsistency = (currentFlight: Flight, flights: Flight[]): boolean => {
+  if (!currentFlight.start_hour_meter || !currentFlight.end_hour_meter) {
+    return true; // Si pas d'horamètres, on considère que c'est cohérent
   }
-  return currentFlight.start_hour_meter === previousFlight.end_hour_meter;
+
+  // Trouver le vol précédent pour le même avion
+  const previousFlights = flights
+    .filter(f => 
+      f.aircraftId === currentFlight.aircraftId && // Même avion
+      (
+        new Date(f.date).getTime() < new Date(currentFlight.date).getTime() || // Date antérieure
+        (
+          new Date(f.date).getTime() === new Date(currentFlight.date).getTime() && // Même date
+          (f.start_hour_meter || 0) < (currentFlight.start_hour_meter || 0) // Horamètre inférieur
+        )
+      )
+    )
+    .sort((a, b) => {
+      // Trier par date décroissante
+      const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateComparison !== 0) return dateComparison;
+      
+      // Si même date, trier par horamètre décroissant
+      const aStart = a.start_hour_meter || 0;
+      const bStart = b.start_hour_meter || 0;
+      return bStart - aStart;
+    });
+
+  const previousFlight = previousFlights[0];
+
+  // Vérifier la cohérence avec le vol précédent
+  if (previousFlight && previousFlight.end_hour_meter) {
+    return currentFlight.start_hour_meter === previousFlight.end_hour_meter;
+  }
+
+  // Si pas de vol précédent ou pas d'horamètre de fin, on considère que c'est cohérent
+  return true;
 };
 
 const FlightList = () => {
@@ -206,7 +238,16 @@ const FlightList = () => {
 
   useEffect(() => {
     // Apply filters
-    let filtered = [...flights];
+    let filtered = [...flights].sort((a, b) => {
+      // D'abord trier par date décroissante
+      const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateComparison !== 0) return dateComparison;
+      
+      // Si même date, trier par horamètre décroissant
+      const aStart = a.start_hour_meter || 0;
+      const bStart = b.start_hour_meter || 0;
+      return bStart - aStart;
+    });
 
     console.log('Starting filter application:', {
       initialFlights: flights.length,
@@ -573,24 +614,24 @@ const FlightList = () => {
                       {aircraft?.registration || "N/A"}
                     </td>
                     <td className="p-4 text-center">
-                      {flight.start_hour_meter && (
-                        <Timer 
-                          size={20} 
-                          className={
-                            checkHourMeterConsistency(
-                              flight,
-                              studentPaginatedFlights
-                                .filter(f => f.aircraftId === flight.aircraftId)
-                                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                .find(f => 
-                                  new Date(f.date).getTime() < new Date(flight.date).getTime()
-                                )
-                            )
-                            ? "text-green-600"
-                            : "text-red-600"
-                          }
-                          title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter || 'N/A'}`}
-                        />
+                      {flight.start_hour_meter && flight.end_hour_meter && (
+                        <div className="flex items-center justify-center gap-2">
+                          <Timer 
+                            size={20} 
+                            className={
+                              checkHourMeterConsistency(
+                                flight,
+                                filteredFlights
+                              )
+                              ? "text-green-600"
+                              : "text-red-600"
+                            }
+                            title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter}`}
+                          />
+                          <span className="text-xs text-slate-600">
+                            {flight.start_hour_meter} → {flight.end_hour_meter}
+                          </span>
+                        </div>
                       )}
                     </td>
                     <td className="p-4">
@@ -702,6 +743,8 @@ const FlightList = () => {
         "Type de vol": flightTypes[flight.flightTypeId] || "Inconnu",
         "Durée": formatDuration(flight.duration),
         "Atterrissages": flight.landings,
+        "Horamètre début": flight.start_hour_meter || "-",
+        "Horamètre fin": flight.end_hour_meter || "-",
         "Validé": flight.validated ? "Oui" : "Non",
         "Remarques": flight.remarks || "-"
       };
@@ -964,24 +1007,24 @@ const FlightList = () => {
                               {aircraft?.registration || "N/A"}
                             </td>
                             <td className="p-4 text-center">
-                              {flight.start_hour_meter && (
-                                <Timer 
-                                  size={20} 
-                                  className={
-                                    checkHourMeterConsistency(
-                                      flight,
-                                      personalPaginatedFlights
-                                        .filter(f => f.aircraftId === flight.aircraftId)
-                                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                        .find(f => 
-                                          new Date(f.date).getTime() < new Date(flight.date).getTime()
-                                        )
-                                    )
-                                    ? "text-green-600"
-                                    : "text-red-600"
-                                  }
-                                  title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter || 'N/A'}`}
-                                />
+                              {flight.start_hour_meter && flight.end_hour_meter && (
+                                <div className="flex items-center justify-center gap-2">
+                                  <Timer 
+                                    size={20} 
+                                    className={
+                                      checkHourMeterConsistency(
+                                        flight,
+                                        personalPaginatedFlights
+                                      )
+                                      ? "text-green-600"
+                                      : "text-red-600"
+                                    }
+                                    title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter}`}
+                                  />
+                                  <span className="text-xs text-slate-600">
+                                    {flight.start_hour_meter} → {flight.end_hour_meter}
+                                  </span>
+                                </div>
                               )}
                             </td>
                             <td className="p-4">
@@ -1159,24 +1202,24 @@ const FlightList = () => {
                             {aircraft?.registration || "N/A"}
                           </td>
                           <td className="p-4 text-center">
-                            {flight.start_hour_meter && (
-                              <Timer 
-                                size={20} 
-                                className={
-                                  checkHourMeterConsistency(
-                                    flight,
-                                    personalPaginatedFlights
-                                      .filter(f => f.aircraftId === flight.aircraftId)
-                                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                      .find(f => 
-                                        new Date(f.date).getTime() < new Date(flight.date).getTime()
-                                      )
-                                  )
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                                }
-                                title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter || 'N/A'}`}
-                              />
+                            {flight.start_hour_meter && flight.end_hour_meter && (
+                              <div className="flex items-center justify-center gap-2">
+                                <Timer 
+                                  size={20} 
+                                  className={
+                                    checkHourMeterConsistency(
+                                      flight,
+                                      personalPaginatedFlights
+                                    )
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                  }
+                                  title={`Horamètre départ: ${flight.start_hour_meter}, fin: ${flight.end_hour_meter}`}
+                                />
+                                <span className="text-xs text-slate-600">
+                                  {flight.start_hour_meter} → {flight.end_hour_meter}
+                                </span>
+                              </div>
                             )}
                           </td>
                           <td className="p-4">
