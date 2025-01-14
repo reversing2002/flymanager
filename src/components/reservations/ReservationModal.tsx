@@ -265,22 +265,30 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     if (!existingReservation) return true;
 
     // Accès total si on est impliqué dans la réservation
-    return (
+    const isInvolved = (
       existingReservation.userId === currentUser.id ||
       existingReservation.pilotId === currentUser.id ||
       existingReservation.instructorId === currentUser.id
     );
+
+    console.log("=== Permissions Debug ===");
+    console.log("Current User:", {
+      id: currentUser.id,
+      roles: currentUser.roles || []
+    });
+    console.log("Reservation:", {
+      userId: existingReservation.userId,
+      pilotId: existingReservation.pilotId,
+      instructorId: existingReservation.instructorId,
+      fullReservation: existingReservation
+    });
+    console.log("Is Involved:", isInvolved);
+
+    return isInvolved;
   };
 
   const canTransformToFlight = useMemo(() => {
-    if (!currentUser || !existingReservation) return false;
-
-    const userRoles = currentUser.roles || [];
-    const isAdmin = userRoles.includes("ADMIN");
-    const isOwner = currentUser.id === existingReservation.userId;
-    const isInstructor = currentUser.id === existingReservation.instructorId;
-
-    return isAdmin || isOwner || isInstructor;
+    return canModifyReservation();
   }, [currentUser, existingReservation]);
 
   const handleInputChange = (
