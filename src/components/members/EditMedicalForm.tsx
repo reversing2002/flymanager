@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import type { Medical, MedicalType } from '../../types/medicals';
 import { useAuth } from '../../contexts/AuthContext';
 import { format, addMonths } from 'date-fns';
+import { useMedicalMutations } from '../../hooks/useMedicalMutations';
 
 interface EditMedicalFormProps {
   userId: string;
@@ -38,6 +39,8 @@ const EditMedicalForm: React.FC<EditMedicalFormProps> = ({
   }));
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [documentPreview, setDocumentPreview] = useState<string | null>(null);
+
+  const { createMedical, updateMedical } = useMedicalMutations(userId);
 
   useEffect(() => {
     loadMedicalTypes().then(() => {
@@ -211,21 +214,11 @@ const EditMedicalForm: React.FC<EditMedicalFormProps> = ({
       };
 
       if (medical) {
-        const { error: updateError } = await supabase
-          .from('medicals')
-          .update(medicalData)
-          .eq('id', medical.id);
-
-        if (updateError) throw updateError;
+        await updateMedical.mutateAsync({ id: medical.id, data: medicalData });
       } else {
-        const { error: insertError } = await supabase
-          .from('medicals')
-          .insert([medicalData]);
-
-        if (insertError) throw insertError;
+        await createMedical.mutateAsync(medicalData);
       }
 
-      toast.success(medical ? 'Certificat médical mis à jour' : 'Certificat médical ajouté');
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {

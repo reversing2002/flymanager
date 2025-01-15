@@ -24,11 +24,9 @@ import type { Medical } from "./MedicalCard";
 import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "../../lib/supabase";
-// Temporairement désactivé
-// import FFACredentialsForm from "./FFACredentialsForm";
-// import FFPLUMCredentialsForm from "./FFPLUMCredentialsForm";
 import { useRoles } from "../../hooks/useRoles";
 import PilotFlightStats from "./PilotFlightStats";
+import { useMedicals } from "../../hooks/useMedicals";
 
 const getRoleBadgeColor = (role: Role) => {
   switch (role) {
@@ -82,8 +80,7 @@ const MemberProfile = () => {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [showFFAModal, setShowFFAModal] = useState(false);
   const [showFFPLUMModal, setShowFFPLUMModal] = useState(false);
-  const [medicals, setMedicals] = useState<Medical[]>([]);
-  const [loadingMedicals, setLoadingMedicals] = useState(true);
+  const { data: medicals, isLoading: loadingMedicals } = useMedicals(id || '');
   const [selectedLicense, setSelectedLicense] = useState<License | null>(null);
   const [selectedMedical, setSelectedMedical] = useState<Medical | null>(null);
   const [selectedContribution, setSelectedContribution] = useState<Contribution | null>(null);
@@ -136,34 +133,6 @@ const MemberProfile = () => {
 
       setPilot(pilotData);
       
-      // Charger les certificats médicaux
-      setLoadingMedicals(true);
-      try {
-        if (!id) {
-          console.warn("Pas d'ID utilisateur, impossible de charger les certificats médicaux");
-          setMedicals([]);
-          return;
-        }
-
-        const { data: medicalsData, error: medicalsError } = await supabase
-          .from('medicals')
-          .select('*, medical_types(*)')
-          .eq('user_id', id)
-          .order('obtained_at', { ascending: false });
-
-        if (medicalsError) {
-          console.error("Erreur lors du chargement des certificats médicaux:", medicalsError);
-          setMedicals([]);
-        } else {
-          setMedicals(medicalsData || []);
-        }
-      } catch (err) {
-        console.error("Erreur lors du chargement des certificats médicaux:", err);
-        setMedicals([]);
-      } finally {
-        setLoadingMedicals(false);
-      }
-
       // Charger les cotisations
       setLoadingContributions(true);
       try {

@@ -6,6 +6,7 @@ import { Medical } from '../../types/medicals';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { useMedicalMutations } from '../../hooks/useMedicalMutations';
 
 interface MedicalCardProps {
   medical: Medical;
@@ -15,6 +16,7 @@ interface MedicalCardProps {
 
 const MedicalCard: React.FC<MedicalCardProps> = ({ medical, onEdit, canEdit }) => {
   const queryClient = useQueryClient();
+  const { deleteMedical } = useMedicalMutations(medical.user_id);
 
   if (!medical) {
     return (
@@ -45,13 +47,7 @@ const MedicalCard: React.FC<MedicalCardProps> = ({ medical, onEdit, canEdit }) =
     }
 
     try {
-      const { error } = await supabase
-        .from('medicals')
-        .delete()
-        .eq('id', medical.id);
-
-      if (error) throw error;
-
+      await deleteMedical.mutateAsync(medical.id);
       toast.success('Certificat médical supprimé');
       queryClient.invalidateQueries(['medicals']);
     } catch (error) {
@@ -69,7 +65,7 @@ const MedicalCard: React.FC<MedicalCardProps> = ({ medical, onEdit, canEdit }) =
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-900">
-              {medical.medical_types?.name}
+              {medical.medical_type?.name}
             </h3>
             <div className="mt-1 text-sm text-gray-500 space-y-1">
               <div className="flex items-center">

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import type { Contribution } from '../../types/contribution';
-import { createContribution, updateContribution } from '../../lib/queries/contributions';
+import { useContributionMutations } from '../../hooks/useContributionMutations';
 
 interface EditContributionFormProps {
   userId: string;
@@ -24,6 +24,8 @@ const EditContributionForm: React.FC<EditContributionFormProps> = ({
   onSuccess,
   currentContribution,
 }) => {
+  const { createContribution, updateContribution } = useContributionMutations(userId);
+  
   const [formData, setFormData] = useState({
     valid_from: currentContribution?.valid_from ? 
       new Date(currentContribution.valid_from).toISOString().split('T')[0] : 
@@ -54,10 +56,13 @@ const EditContributionForm: React.FC<EditContributionFormProps> = ({
       };
 
       if (currentContribution) {
-        await updateContribution(currentContribution.id, contributionData);
+        await updateContribution.mutateAsync({
+          id: currentContribution.id,
+          data: contributionData
+        });
         toast.success('Cotisation mise à jour');
       } else {
-        await createContribution(contributionData);
+        await createContribution.mutateAsync(contributionData);
         toast.success('Cotisation créée');
       }
 
