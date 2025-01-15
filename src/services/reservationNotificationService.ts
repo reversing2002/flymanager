@@ -350,6 +350,53 @@ export async function sendReservationModification(reservation: Reservation, chan
   }
 }
 
+export async function deleteReservationReminders(reservation: Reservation): Promise<void> {
+  try {
+    const userId = reservation.pilot_id || (reservation as any).pilotId || reservation.user_id || (reservation as any).userId;
+    const clubId = reservation.club_id || (reservation as any).clubId;
+    const instructorId = reservation.instructor_id || (reservation as any).instructorId;
+
+    // Supprimer les notifications de rappel pour le pilote
+    const { error: pilotError } = await supabase
+      .from('notifications')
+      .delete()
+      .match({
+        user_id: userId,
+        club_id: clubId,
+        type: NOTIFICATION_TYPES.PILOT_REMINDER,
+        sent: false
+      });
+
+    if (pilotError) {
+      console.error('Erreur lors de la suppression des notifications de rappel du pilote:', pilotError);
+      throw pilotError;
+    }
+
+    // Si un instructeur était assigné, supprimer également ses notifications
+    if (instructorId) {
+      const { error: instructorError } = await supabase
+        .from('notifications')
+        .delete()
+        .match({
+          user_id: instructorId,
+          club_id: clubId,
+          type: NOTIFICATION_TYPES.INSTRUCTOR_REMINDER,
+          sent: false
+        });
+
+      if (instructorError) {
+        console.error('Erreur lors de la suppression des notifications de rappel de l\'instructeur:', instructorError);
+        throw instructorError;
+      }
+    }
+
+    console.log('Notifications de rappel supprimées avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la suppression des notifications de rappel:', error);
+    throw error;
+  }
+}
+
 function formatChangesForEmail(changes: Partial<Reservation>): string {
   const formattedChanges: string[] = [];
 
@@ -382,6 +429,9 @@ export async function sendReservationCancellation(reservation: Reservation): Pro
   try {
     console.log('Envoi de la notification d\'annulation');
     console.log('Données de la réservation (annulation):', JSON.stringify(reservation, null, 2));
+    
+    // Supprimer d'abord les rappels existants
+    await deleteReservationReminders(reservation);
     
     const emailData = await getReservationEmailData(reservation);
     if (!emailData) return;

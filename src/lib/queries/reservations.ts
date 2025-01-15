@@ -1,7 +1,7 @@
 import { supabase } from '../supabase';
 import type { Reservation } from '../../types/database';
 import { v4 as uuidv4 } from 'uuid';
-import { sendReservationConfirmation, scheduleReservationReminder, sendReservationModification, sendReservationCancellation } from '../../services/reservationNotificationService';
+import { sendReservationConfirmation, scheduleReservationReminder, sendReservationModification, sendReservationCancellation, deleteReservationReminders } from '../../services/reservationNotificationService';
 
 // Fonction pour vérifier les préférences de notification d'un utilisateur
 async function checkNotificationPreferences(userId: string) {
@@ -197,8 +197,8 @@ const toSnakeCase = (data: Partial<Reservation>) => {
 
 export async function updateReservation(id: string, data: Partial<Reservation>): Promise<void> {
   try {
-    // Récupérer la réservation actuelle
-    const { data: currentReservation, error: fetchError } = await supabase
+    // Récupérer la réservation avant la mise à jour
+    const { data: oldReservation, error: fetchError } = await supabase
       .from('reservations')
       .select('*')
       .eq('id', id)
@@ -206,28 +206,34 @@ export async function updateReservation(id: string, data: Partial<Reservation>):
 
     if (fetchError) throw fetchError;
 
-    // Convertir les données en snake_case avant la mise à jour
-    const snakeCaseData = toSnakeCase(data);
-
     // Mettre à jour la réservation
     const { error: updateError } = await supabase
       .from('reservations')
-      .update(snakeCaseData)
+      .update(toSnakeCase(data))
       .eq('id', id);
 
     if (updateError) throw updateError;
 
-    // Convertir en camelCase avant d'envoyer la notification
-    const camelCaseReservation = toCamelCase(currentReservation);
+    // Convertir en camelCase avant d'envoyer les notifications
+    const camelCaseOldReservation = toCamelCase(oldReservation);
     
+    // Supprimer les anciennes notifications de rappel
+    await deleteReservationReminders(camelCaseOldReservation);
+
     // Envoyer la notification de modification
     await sendNotificationWithPreferences(
-      currentReservation.pilot_id,
+      oldReservation.pilot_id,
       'modified_reservation',
       sendReservationModification,
-      camelCaseReservation,
+      camelCaseOldReservation,
       data
     );
+
+    // Planifier un nouveau rappel si nécessaire
+    if (data.start_time || data.startTime) {
+      const updatedReservation = { ...camelCaseOldReservation, ...data };
+      await scheduleReservationReminder(updatedReservation);
+    }
 
   } catch (error) {
     console.error('Erreur lors de la mise à jour de la réservation:', error);
@@ -246,6 +252,12 @@ export async function deleteReservation(id: string): Promise<void> {
 
     if (fetchError) throw fetchError;
 
+    // Convertir en camelCase avant d'envoyer les notifications
+    const camelCaseReservation = toCamelCase(reservation);
+    
+    // Supprimer les notifications de rappel
+    await deleteReservationReminders(camelCaseReservation);
+
     // Supprimer la réservation
     const { error: deleteError } = await supabase
       .from('reservations')
@@ -254,9 +266,6 @@ export async function deleteReservation(id: string): Promise<void> {
 
     if (deleteError) throw deleteError;
 
-    // Convertir en camelCase avant d'envoyer la notification
-    const camelCaseReservation = toCamelCase(reservation);
-    
     // Envoyer la notification d'annulation
     await sendNotificationWithPreferences(
       reservation.pilot_id,
