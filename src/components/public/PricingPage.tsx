@@ -8,6 +8,7 @@ import {
   Star as StarIcon,
   Diamond as DiamondIcon
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 interface Plan {
   name: string;
@@ -21,21 +22,28 @@ interface Plan {
 }
 
 const PricingPage: React.FC = () => {
+  const navigate = useNavigate();
   const plans: Plan[] = [
     {
-      name: 'Gratuit',
+      name: 'Découverte',
       icon: RocketIcon,
       price: '0€',
       description: 'Parfait pour démarrer',
-      commission: '3% sur les paiements CB',
+      commission: '3% de frais sur les paiements CB',
       support: 'Support par email',
       features: [
-        'Gestion des réservations',
-        'Planning en ligne',
+        'Gestion des réservations et plannings',
         'Gestion des membres',
-        'Suivi des heures de vol',
-        'Tableau de bord basique',
-        'Documentation en ligne',
+        'Suivi de la flotte et des potentiels',
+        'Suivi des cotisations, qualifications et licences',
+        'Statistiques membres et heures de vols',
+        'Tableau de bords personnalisés',
+        'Gestion de la documentation du club',
+        'Messagerie interne',
+        'Alertes e-mails et mailing groupé',
+        'Accepter la CB, contrat VAD inclus',
+        'Gestions des comptes pilotes',
+        'Météo aéronautique et balises de vent locales'
       ],
     },
     {
@@ -47,28 +55,26 @@ const PricingPage: React.FC = () => {
       commission: '2% sur les paiements CB',
       support: 'Support prioritaire',
       features: [
-        'Toutes les fonctionnalités gratuites',
-        'Gestion avancée des formations',
-        'Suivi maintenance détaillé',
-        'Statistiques avancées',
-        'Tableau de bord personnalisable',
-        'API disponible',
-        'Support technique dédié',
+        'Toutes les fonctionnalités du pack Découverte +',
+        'Personnalisation des fiches membres, infos des vols et aéronefs',
+        'Suivi des formations des élèves et aquisition de compétences',
+        'QCM d\'entrainements en ligne suivi par les instructeurs',
+        'Paiement en ligne et gestion des vols découvertes avec conversations SMS', 
+        'Accès API',
+        'Sauvegardes automatiques'
       ],
     },
     {
       name: 'Enterprise',
       icon: DiamondIcon,
       price: 'Sur mesure',
-      description: 'Pour les grands clubs',
+      description: 'Pour les + grands clubs',
       commission: '2% sur les paiements CB',
       support: 'Support VIP 24/7',
       features: [
         'Toutes les fonctionnalités Pro',
-        'Hébergement dédié',
-        'Personnalisation complète',
+        'Hébergement sur mesure',
         'Formation sur site',
-        'Intégration sur mesure',
         'Support technique prioritaire',
         'Account manager dédié',
       ],
@@ -171,6 +177,7 @@ const PricingPage: React.FC = () => {
                 </ul>
 
                 <button
+                  onClick={() => navigate(plan.price === 'Sur mesure' ? '/contact' : '/create-club')}
                   className={`w-full rounded-lg py-3 px-6 font-medium transition-colors duration-300 ${
                     plan.highlighted
                       ? 'bg-white text-blue-500 hover:bg-blue-50'
