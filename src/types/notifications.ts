@@ -6,7 +6,8 @@ export type NotificationType =
   | 'license_expiring'
   | 'medical_expiring'
   | 'qualification_expiring'
-  | 'bulk_email';
+  | 'bulk_email'
+  | 'CONTACT_RESPONSE';
 
 export interface EmailNotification {
   id: string;

@@ -701,8 +701,14 @@ async function processNotifications() {
         for (const notification of notifications) {
           console.log(`\n📨 Traitement de la notification ${notification.id}...`);
           try {
-            if (!notification.users?.email) {
-              console.error(`❌ Email manquant pour l'utilisateur de la notification ${notification.id}`);
+            // Vérifier si nous avons un email de destinataire (soit via user_id soit via recipient_email)
+            const recipientEmail = notification.recipient_email || notification.users?.email;
+            const recipientName = notification.users 
+              ? `${notification.users.first_name} ${notification.users.last_name}`
+              : notification.variables?.name || 'Utilisateur';
+
+            if (!recipientEmail) {
+              console.error(`❌ Aucun email de destinataire trouvé pour la notification ${notification.id}`);
               continue;
             }
 
@@ -724,11 +730,15 @@ async function processNotifications() {
               continue;
             }
 
-            console.log(`📝 Préparation de l'email pour ${notification.users.email}...`);
+            console.log(`📝 Préparation de l'email pour ${recipientEmail}...`);
             console.log(`📋 Template: ${template.name}`);
 
-            // Remplacer les variables dans le HTML
+            // Remplacer les variables dans le HTML et le sujet
             let htmlContent = template.html_content;
+            let subject = notification.type === 'bulk_email' 
+              ? notification.variables.subject 
+              : template.subject;
+
             for (const [key, value] of Object.entries(notification.variables)) {
               let formattedValue = value;
               
@@ -744,7 +754,9 @@ async function processNotifications() {
                 }
               }
               
+              // Remplacer dans le contenu HTML et le sujet
               htmlContent = htmlContent.replace(new RegExp(`{${key}}`, 'g'), formattedValue);
+              subject = subject.replace(new RegExp(`{${key}}`, 'g'), formattedValue);
             }
 
             const emailData = {
@@ -756,13 +768,11 @@ async function processNotifications() {
                   },
                   To: [
                     {
-                      Email: process.env.NODE_ENV === 'production' ? notification.users.email : 'eddy@yopmail.com',
-                      Name: `${notification.users.first_name} ${notification.users.last_name}`
+                      Email: process.env.NODE_ENV === 'production' ? recipientEmail : 'eddy@yopmail.com',
+                      Name: recipientName
                     }
                   ],
-                  Subject: notification.type === 'bulk_email' 
-                    ? notification.variables.subject 
-                    : template.subject,
+                  Subject: subject,
                   HTMLPart: htmlContent
                 }
               ]
@@ -802,10 +812,9 @@ async function processNotifications() {
           }
         }
       } catch (error) {
-        console.error(`❌ Erreur lors du traitement des notifications pour le club ${club.id}:`, error);
+        console.error(`❌ Erreur lors du traitement du club ${club.id}:`, error);
       }
     }
-    console.log('\n✨ Cycle de traitement des notifications terminé');
   } catch (error) {
     console.error('❌ Erreur lors du traitement des notifications:', error);
   }
@@ -1827,7 +1836,7 @@ async function generateInstructorCalendarToken(instructorId) {
   // Récupérer tous les calendriers de l'instructeur
   const { data: calendars, error: fetchError } = await supabase
     .from('instructor_calendars')
-    .select('*')
+    .select('calendar_token')
     .eq('instructor_id', instructorId);
 
   if (fetchError) throw fetchError;
