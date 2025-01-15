@@ -107,9 +107,9 @@ const MemberProfile = () => {
   const isInstructor = hasAnyGroup(currentUser, ["INSTRUCTOR"]);
   const isOwnProfile = currentUser?.id === id;
   const canEdit = isAdmin || isInstructor || isOwnProfile;
-  const canManageContributions = isAdmin || isInstructor;
+  const canManageContributions = isAdmin; // Seuls les admins peuvent gérer les cotisations
   const hasFullAccess = isAdmin || isInstructor;
-  const canManageQualificationsAndLicenses = isAdmin || isInstructor; // Nouvelle variable pour la gestion des qualifications et licences
+  const canManageQualificationsAndLicenses = isAdmin || isInstructor;
 
   useEffect(() => {
     loadData();
@@ -218,7 +218,7 @@ const MemberProfile = () => {
       return (
         <div className="text-center py-8 bg-slate-50 rounded-xl border border-slate-200">
           <p className="text-slate-600">Aucune cotisation enregistrée</p>
-          {hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']) && (
+          {hasAnyGroup(currentUser, ['ADMIN']) && (
             <button
               onClick={() => setShowAddContribution(true)}
               className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
@@ -252,7 +252,7 @@ const MemberProfile = () => {
       <div className="space-y-4">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold text-slate-900">Cotisations</h3>
-          {hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR']) && (
+          {hasAnyGroup(currentUser, ['ADMIN']) && (
             <button
               onClick={() => setShowAddContribution(true)}
               className="inline-flex items-center gap-2 px-3 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors text-sm"
@@ -279,7 +279,7 @@ const MemberProfile = () => {
                 <ContributionCard
                   contribution={contribution}
                   onEdit={() => setEditingContribution(contribution)}
-                  canEdit={hasAnyGroup(currentUser, ['ADMIN', 'INSTRUCTOR'])}
+                  canEdit={hasAnyGroup(currentUser, ['ADMIN'])}
                 />
               </div>
             );
