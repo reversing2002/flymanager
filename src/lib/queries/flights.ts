@@ -195,6 +195,23 @@ export async function createFlight(data: Partial<Flight>): Promise<Flight> {
     throw new Error("Types d'entrées comptables non trouvés");
   }
 
+  // Récupérer les informations du type de vol pour vérifier si c'est payé par le club
+  const { data: flightType, error: flightTypeError } = await supabase
+    .from("flight_types")
+    .select(`
+      *,
+      accounting_category:accounting_categories!accounting_category_id(*)
+    `)
+    .eq("id", data.flightTypeId)
+    .single();
+
+  if (flightTypeError) {
+    console.error("Erreur lors de la récupération du type de vol", flightTypeError);
+    throw flightTypeError;
+  }
+
+  const isClubPaid = flightType?.accounting_category?.is_club_paid || false;
+
   // Créer l'entrée pour le coût de l'avion
   const { error: flightEntryError } = await supabase
     .from("account_entries")
@@ -205,12 +222,13 @@ export async function createFlight(data: Partial<Flight>): Promise<Flight> {
       flight_id: newFlight.id,
       entry_type_id: flightTypeId,
       date: data.date,
-      amount: -data.cost,
+      amount: isClubPaid ? 0 : -data.cost,
       payment_method: data.paymentMethod,
       description: data.instructorId 
         ? `Vol instruction ${student.first_name} ${student.last_name} - ${data.duration}min`
         : `Vol ${data.aircraftId} - ${data.duration}min`,
       is_validated: false,
+      is_club_paid: isClubPaid,
     });
 
   if (flightEntryError) {
@@ -349,6 +367,23 @@ export async function updateFlight(
   // S'assurer que la date est au bon format (YYYY-MM-DD)
   const formattedDate = new Date(data.date || "").toISOString().split('T')[0];
 
+  // Récupérer les informations du type de vol pour vérifier si c'est payé par le club
+  const { data: flightType, error: flightTypeError } = await supabase
+    .from("flight_types")
+    .select(`
+      *,
+      accounting_category:accounting_categories!accounting_category_id(*)
+    `)
+    .eq("id", data.flightTypeId)
+    .single();
+
+  if (flightTypeError) {
+    console.error("Erreur lors de la récupération du type de vol", flightTypeError);
+    throw flightTypeError;
+  }
+
+  const isClubPaid = flightType?.accounting_category?.is_club_paid || false;
+
   // Créer l'entrée pour le coût de l'avion
   console.log("Création de l'entrée comptable pour l'avion...");
   const { error: flightEntryError } = await supabase
@@ -358,13 +393,13 @@ export async function updateFlight(
       user_id: data.userId,
       entry_type_id: flightTypeId,
       date: formattedDate,
-      amount: -Math.abs(data.cost || 0),
+      amount: isClubPaid ? 0 : -Math.abs(data.cost || 0),
       payment_method: data.paymentMethod,
       description: `Vol ${aircraft.registration} - ${((data.duration || 0) / 60).toFixed(1)}h`,
       flight_id: id,
       assigned_to_id: data.userId,
       is_validated: false,
-      is_club_paid: false,
+      is_club_paid: isClubPaid,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });
