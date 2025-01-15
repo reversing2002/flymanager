@@ -65,7 +65,7 @@ const Navbar = () => {
   const canAccessTrainingAdmin = hasPermission(currentUser, PERMISSIONS.TRAINING_MODIFY);
   const canAccessEvents = hasPermission(currentUser, PERMISSIONS.EVENT_VIEW);
   const canAccessChat = hasPermission(currentUser, PERMISSIONS.CHAT_VIEW);
-  const canManageAvailability = hasPermission(currentUser, PERMISSIONS.SETTINGS_MODIFY);
+  const canManageAvailability = hasPermission(currentUser, PERMISSIONS.TRAINING_MODIFY);
   const canAccessDiscoveryFlights = hasPermission(currentUser, PERMISSIONS.DISCOVERY_FLIGHT_VIEW);
   const canAccessDocumentation = hasPermission(currentUser, PERMISSIONS.DOC_VIEW);
   const canViewPlanning = hasPermission(currentUser, PERMISSIONS.PLANNING_VIEW);
@@ -220,6 +220,10 @@ const Navbar = () => {
                       <ClipboardList className="w-5 h-5 mr-3" />
                       <span>Facturation</span>
                     </Link>
+                    <Link to="/instructor-availability" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                      <CalendarDays className="w-5 h-5 mr-3" />
+                      <span>Mes disponibilités</span>
+                    </Link>
                   </>
                 )}
                 {showMyProgression && (
@@ -228,6 +232,17 @@ const Navbar = () => {
                     <span>Ma progression</span>
                   </Link>
                 )}
+              </div>
+            )}
+
+            {/* Section Administration des disponibilités pour les admins */}
+            {hasAnyGroup(currentUser, ["ADMIN"]) && (
+              <div className="py-4">
+                <div className="px-4 py-2 text-sm text-gray-500 uppercase">Administration</div>
+                <Link to="/availability-management" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                  <CalendarDays className="w-5 h-5 mr-3" />
+                  <span>Gestion des disponibilités</span>
+                </Link>
               </div>
             )}
 

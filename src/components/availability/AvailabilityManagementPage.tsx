@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Plane, Users, Filter, Search, RefreshCw } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Calendar, Plane, Users, Filter, Search } from 'lucide-react';
 import { getAircraft } from '../../lib/queries/aircraft';
 import { getUsers } from '../../lib/queries/users';
 import { hasAnyGroup } from '../../lib/permissions';
 import { useAuth } from '../../contexts/AuthContext';
-import { syncInstructorCalendars } from '../../lib/services/calendarSync';
 import AvailabilityCalendar from './AvailabilityCalendar';
-import { toast } from 'react-hot-toast';
 
 const AvailabilityManagementPage = () => {
   const { user } = useAuth();
@@ -22,25 +20,6 @@ const AvailabilityManagementPage = () => {
 
   // Si l'utilisateur est instructeur mais pas admin, on force son ID
   const effectiveInstructorId = isInstructor && !isAdmin ? user?.id : selectedInstructorId;
-
-  const queryClient = useQueryClient();
-
-  const syncCalendarMutation = useMutation({
-    mutationFn: (instructorId: string) => syncInstructorCalendars(instructorId),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['availabilities']);
-      toast.success('Calendriers synchronisés avec succès');
-    },
-    onError: (error) => {
-      console.error('Erreur de synchronisation:', error);
-      toast.error('Erreur lors de la synchronisation des calendriers');
-    }
-  });
-
-  const handleSyncCalendars = async () => {
-    if (!effectiveInstructorId) return;
-    await syncCalendarMutation.mutateAsync(effectiveInstructorId);
-  };
 
   const { data: aircraft = [], isLoading: loadingAircraft } = useQuery({
     queryKey: ['aircraft'],
@@ -137,20 +116,6 @@ const AvailabilityManagementPage = () => {
                 <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
             </div>
-
-            {/* Bouton de synchronisation des calendriers */}
-            {effectiveInstructorId && (
-              <div className="flex items-end">
-                <button
-                  onClick={handleSyncCalendars}
-                  disabled={syncCalendarMutation.isLoading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  <RefreshCw className={`h-5 w-5 mr-2 ${syncCalendarMutation.isLoading ? 'animate-spin' : ''}`} />
-                  Synchroniser les calendriers
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}

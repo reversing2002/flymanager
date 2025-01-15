@@ -50,10 +50,14 @@ const LoginPage = () => {
     e.preventDefault();
     try {
       await signIn(email, password, rememberMe);
-      toast.success("Connexion réussie !");
-    } catch (error) {
-      toast.error("Erreur de connexion. Vérifiez vos identifiants.");
-      console.error("Erreur lors de la connexion:", error);
+      if (!error) {
+        toast.success("Connexion réussie !");
+      } else {
+        toast.error(error);
+      }
+    } catch (err) {
+      console.error("Erreur lors de la connexion:", err);
+      toast.error("Une erreur inattendue est survenue");
     }
   };
 
