@@ -353,7 +353,10 @@ const Navbar = () => {
 
         {/* User section at bottom */}
         <div className="border-t border-gray-700 p-4 flex-shrink-0">
-          <div className="flex items-center space-x-3">
+          <div 
+            className="flex items-center space-x-3 cursor-pointer hover:bg-[#2a2f3e] p-2 rounded-lg transition-colors"
+            onClick={() => navigate(`/members/${currentUser?.id}`)}
+          >
             {currentUser?.image_url ? (
               <img
                 src={currentUser.image_url}
