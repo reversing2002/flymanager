@@ -2,6 +2,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plane, Clock, UserIcon, Edit } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { Aircraft, User, Reservation } from '../../types/database';
 
 interface ReservationCardProps {
@@ -21,6 +22,8 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
   onEdit,
   canEdit,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-sm transition-shadow">
       <div className="flex items-start justify-between">
@@ -44,12 +47,26 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-slate-600">
               <UserIcon className="h-4 w-4" />
-              <span>Pilote: {pilot ? `${pilot.first_name} ${pilot.last_name}` : 'Non assigné'}</span>
+              <span>Pilote: {pilot ? (
+                <button
+                  onClick={() => navigate(`/members/${pilot.id}`)}
+                  className="text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  {pilot.first_name} {pilot.last_name}
+                </button>
+              ) : 'Non assigné'}</span>
             </div>
             {instructor && (
               <div className="flex items-center gap-2 text-slate-600">
                 <UserIcon className="h-4 w-4" />
-                <span>Instructeur: {instructor.first_name} {instructor.last_name}</span>
+                <span>Instructeur: {' '}
+                  <button
+                    onClick={() => navigate(`/members/${instructor.id}`)}
+                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    {instructor.first_name} {instructor.last_name}
+                  </button>
+                </span>
               </div>
             )}
           </div>

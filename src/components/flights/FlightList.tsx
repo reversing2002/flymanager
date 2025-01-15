@@ -11,6 +11,7 @@ import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { hasAnyGroup } from "../../lib/permissions";
 import CompetenciesModal from "../progression/CompetenciesModal";
+import { useNavigate } from "react-router-dom";
 
 // Fonction utilitaire pour vérifier la cohérence des horamètres
 const checkHourMeterConsistency = (currentFlight: Flight, flights: Flight[]): { isConsistent: boolean; previousFlight: Flight | null } => {
@@ -57,6 +58,7 @@ const checkHourMeterConsistency = (currentFlight: Flight, flights: Flight[]): { 
 
 const FlightList = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [flights, setFlights] = useState<Flight[]>([]);
   const [filteredFlights, setFilteredFlights] = useState<Flight[]>([]);
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
@@ -626,9 +628,14 @@ const FlightList = () => {
                     }`}
                   >
                     <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
-                      {pilot
-                        ? `${pilot.first_name} ${pilot.last_name}`
-                        : "N/A"}
+                      {pilot && (
+                        <button
+                          onClick={() => navigate(`/members/${pilot.id}`)}
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-left"
+                        >
+                          {pilot.first_name} {pilot.last_name}
+                        </button>
+                      )}
                     </td>
                     <td className="p-4">
                       {new Date(flight.date).toLocaleDateString()}
@@ -662,9 +669,14 @@ const FlightList = () => {
                         flight.flightTypeId}
                     </td>
                     <td className="p-4 truncate max-w-[120px]" title={instructor ? `${instructor.first_name} ${instructor.last_name}` : "-"}>
-                      {instructor
-                        ? `${instructor.first_name} ${instructor.last_name}`
-                        : "-"}
+                      {instructor && (
+                        <button
+                          onClick={() => navigate(`/members/${instructor.id}`)}
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-left"
+                        >
+                          {instructor.first_name} {instructor.last_name}
+                        </button>
+                      )}
                     </td>
                     <td className="p-4">
                       {formatDuration(flight.duration)}
@@ -1023,9 +1035,14 @@ const FlightList = () => {
                             }`}
                           >
                             <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
-                              {pilot
-                                ? `${pilot.first_name} ${pilot.last_name}`
-                                : "N/A"}
+                              {pilot && (
+                                <button
+                                  onClick={() => navigate(`/members/${pilot.id}`)}
+                                  className="text-blue-600 hover:text-blue-800 hover:underline text-left"
+                                >
+                                  {pilot.first_name} {pilot.last_name}
+                                </button>
+                              )}
                             </td>
                             <td className="p-4">
                               {new Date(flight.date).toLocaleDateString()}
@@ -1059,9 +1076,14 @@ const FlightList = () => {
                                 flight.flightTypeId}
                             </td>
                             <td className="p-4 truncate max-w-[120px]" title={instructor ? `${instructor.first_name} ${instructor.last_name}` : "-"}>
-                              {instructor
-                                ? `${instructor.first_name} ${instructor.last_name}`
-                                : "-"}
+                              {instructor && (
+                                <button
+                                  onClick={() => navigate(`/members/${instructor.id}`)}
+                                  className="text-blue-600 hover:text-blue-800 hover:underline text-left"
+                                >
+                                  {instructor.first_name} {instructor.last_name}
+                                </button>
+                              )}
                             </td>
                             <td className="p-4">
                               {formatDuration(flight.duration)}
@@ -1222,9 +1244,14 @@ const FlightList = () => {
                           }`}
                         >
                           <td className="p-4 truncate max-w-[120px]" title={pilot ? `${pilot.first_name} ${pilot.last_name}` : "N/A"}>
-                            {pilot
-                              ? `${pilot.first_name} ${pilot.last_name}`
-                              : "N/A"}
+                            {pilot && (
+                              <button
+                                onClick={() => navigate(`/members/${pilot.id}`)}
+                                className="text-blue-600 hover:text-blue-800 hover:underline text-left"
+                              >
+                                {pilot.first_name} {pilot.last_name}
+                              </button>
+                            )}
                           </td>
                           <td className="p-4">
                             {new Date(flight.date).toLocaleDateString()}
@@ -1258,9 +1285,14 @@ const FlightList = () => {
                               flight.flightTypeId}
                           </td>
                           <td className="p-4 truncate max-w-[120px]" title={instructor ? `${instructor.first_name} ${instructor.last_name}` : "-"}>
-                            {instructor
-                              ? `${instructor.first_name} ${instructor.last_name}`
-                              : "-"}
+                            {instructor && (
+                              <button
+                                onClick={() => navigate(`/members/${instructor.id}`)}
+                                className="text-blue-600 hover:text-blue-800 hover:underline text-left"
+                              >
+                                {instructor.first_name} {instructor.last_name}
+                              </button>
+                            )}
                           </td>
                           <td className="p-4">
                             {formatDuration(flight.duration)}

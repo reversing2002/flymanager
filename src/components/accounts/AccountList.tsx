@@ -483,9 +483,14 @@ const AccountList = () => {
                       {new Date(entry.date).toLocaleDateString()}
                     </td>
                     <td className="p-4 whitespace-nowrap">
-                      {assignedUser
-                        ? `${assignedUser.first_name} ${assignedUser.last_name}`
-                        : "-"}
+                      {assignedUser ? (
+                        <button
+                          onClick={() => navigate(`/members/${assignedUser.id}`)}
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-left"
+                        >
+                          {assignedUser.first_name} {assignedUser.last_name}
+                        </button>
+                      ) : "-"}
                     </td>
                     <td className="p-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
