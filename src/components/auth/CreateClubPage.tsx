@@ -1,8 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { Logo } from "../common/Logo";
 import { supabase } from "../../lib/supabase";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Stepper,
+  Step,
+  StepLabel,
+  Button,
+  TextField,
+  Typography,
+  Box,
+  Container,
+  Paper,
+} from "@mui/material";
+import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
+import PersonIcon from "@mui/icons-material/Person";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 interface CreateClubFormData {
   clubName: string;
@@ -14,8 +31,44 @@ interface CreateClubFormData {
   adminLogin: string;
 }
 
+const steps = [
+  {
+    icon: <AirplanemodeActiveIcon />,
+    title: "Information du club",
+    description: "Identité de votre aéroclub",
+  },
+  {
+    icon: <PersonIcon />,
+    title: "Compte administrateur",
+    description: "Vos informations personnelles",
+  },
+  {
+    icon: <VpnKeyIcon />,
+    title: "Identifiants",
+    description: "Créez vos accès",
+  },
+];
+
+const generateLogin = (firstName: string, lastName: string): string => {
+  // Retire les accents et caractères spéciaux
+  const normalizeString = (str: string) => {
+    return str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
+  };
+
+  const normalizedFirstName = normalizeString(firstName);
+  const normalizedLastName = normalizeString(lastName);
+
+  // Prend la première lettre du prénom et le nom complet
+  return `${normalizedFirstName.charAt(0)}${normalizedLastName}`;
+};
+
 const CreateClubPage = () => {
   const { user } = useAuth();
+  const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<CreateClubFormData>({
     clubName: "",
     clubCode: "",
@@ -34,6 +87,11 @@ const CreateClubPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (activeStep !== steps.length - 1) {
+      handleNext();
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
@@ -52,8 +110,6 @@ const CreateClubPage = () => {
       );
 
       if (clubError) throw clubError;
-
-      // Rediriger vers la page de login
       window.location.href = "/login";
     } catch (error: any) {
       setError(error.message);
@@ -64,153 +120,267 @@ const CreateClubPage = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      
+      // Génère automatiquement le login quand le prénom ou le nom change
+      if (name === 'adminFirstName' || name === 'adminLastName') {
+        const firstName = name === 'adminFirstName' ? value : prev.adminFirstName;
+        const lastName = name === 'adminLastName' ? value : prev.adminLastName;
+        
+        if (firstName && lastName) {
+          newData.adminLogin = generateLogin(firstName, lastName);
+        }
+      }
+      
+      return newData;
+    });
+  };
+
+  const handleNext = () => {
+    setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
+  };
+
+  const handleBack = () => {
+    setActiveStep((prev) => Math.max(prev - 1, 0));
+  };
+
+  const commonTextFieldProps = {
+    fullWidth: true,
+    variant: "outlined" as const,
+    sx: {
+      mb: 3,
+      "& .MuiOutlinedInput-root": {
+        "& fieldset": {
+          borderColor: "rgba(255, 255, 255, 0.23)",
+        },
+        "&:hover fieldset": {
+          borderColor: "rgba(255, 255, 255, 0.5)",
+        },
+        "&.Mui-focused fieldset": {
+          borderColor: "#3f51b5",
+        },
+      },
+      "& .MuiInputLabel-root": {
+        color: "rgba(255, 255, 255, 0.7)",
+      },
+      "& .MuiOutlinedInput-input": {
+        color: "white",
+      },
+    },
+  };
+
+  const renderStepContent = (step: number) => {
+    switch (step) {
+      case 0:
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <TextField
+              label="Nom du club"
+              name="clubName"
+              value={formData.clubName}
+              onChange={handleChange}
+              required
+              {...commonTextFieldProps}
+            />
+            <TextField
+              label="Code OACI ou identifiant de l'aérodrome"
+              name="clubCode"
+              value={formData.clubCode}
+              onChange={handleChange}
+              required
+              placeholder="ex: LFHL, LF4226"
+              inputProps={{
+                maxLength: 10,
+                pattern: "[A-Za-z0-9]{3,10}",
+                style: { textTransform: "uppercase" },
+              }}
+              helperText="Le code doit contenir entre 3 et 10 caractères alphanumériques"
+              {...commonTextFieldProps}
+            />
+          </motion.div>
+        );
+      case 1:
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <TextField
+              label="Prénom"
+              name="adminFirstName"
+              value={formData.adminFirstName}
+              onChange={handleChange}
+              required
+              {...commonTextFieldProps}
+            />
+            <TextField
+              label="Nom"
+              name="adminLastName"
+              value={formData.adminLastName}
+              onChange={handleChange}
+              required
+              {...commonTextFieldProps}
+            />
+          </motion.div>
+        );
+      case 2:
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <TextField
+              label="Email"
+              name="adminEmail"
+              type="email"
+              value={formData.adminEmail}
+              onChange={handleChange}
+              required
+              {...commonTextFieldProps}
+            />
+            <TextField
+              label="Mot de passe"
+              name="adminPassword"
+              type="password"
+              value={formData.adminPassword}
+              onChange={handleChange}
+              required
+              {...commonTextFieldProps}
+            />
+          </motion.div>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1d21] flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="flex flex-col items-center">
+    <Container maxWidth="sm" sx={{ minHeight: "100vh", py: 8 }}>
+      <Paper
+        elevation={3}
+        sx={{
+          backgroundColor: "#1a1d21",
+          p: { xs: 2, sm: 4 },
+          borderRadius: 2,
+          color: "white",
+        }}
+      >
+        <Box className="flex flex-col items-center mb-8">
           <Logo className="mb-2" />
-          <p className="text-gray-400 text-sm">Créer votre aéroclub</p>
-        </div>
+          <Typography variant="subtitle1" sx={{ color: "gray.400" }}>
+            Créez votre aéroclub
+          </Typography>
+        </Box>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="clubName" className="text-gray-300 text-sm">
-                Nom du club
-              </label>
-              <input
-                id="clubName"
-                name="clubName"
-                type="text"
-                value={formData.clubName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#2a2e33] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
+        <Stepper
+          activeStep={activeStep}
+          alternativeLabel
+          sx={{
+            mb: 6,
+            "& .MuiStepLabel-label": {
+              color: "rgba(255, 255, 255, 0.7)",
+              "&.Mui-active": {
+                color: "white",
+              },
+            },
+            "& .MuiStepIcon-root": {
+              color: "rgba(255, 255, 255, 0.3)",
+              "&.Mui-active": {
+                color: "#3f51b5",
+              },
+              "&.Mui-completed": {
+                color: "#4caf50",
+              },
+            },
+          }}
+        >
+          {steps.map((step) => (
+            <Step key={step.title}>
+              <StepLabel
+                icon={step.icon}
+                optional={
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "rgba(255, 255, 255, 0.5)" }}
+                  >
+                    {step.description}
+                  </Typography>
+                }
+              >
+                {step.title}
+              </StepLabel>
+            </Step>
+          ))}
+        </Stepper>
 
-            <div>
-              <label htmlFor="clubCode" className="text-gray-300 text-sm">
-                Code OACI ou identifiant de l'aérodrome
-              </label>
-              <input
-                id="clubCode"
-                name="clubCode"
-                type="text"
-                value={formData.clubCode}
-                onChange={handleChange}
-                placeholder="ex: LFHL, LF4226"
-                className="w-full px-3 py-2 bg-[#2a2e33] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-                required
-                maxLength={10}
-                pattern="[A-Za-z0-9]{3,10}"
-                title="Le code doit contenir entre 3 et 10 caractères alphanumériques"
-              />
-            </div>
+        <form onSubmit={handleSubmit}>
+          <Box sx={{ minHeight: "250px" }}>
+            <AnimatePresence mode="wait">
+              {renderStepContent(activeStep)}
+            </AnimatePresence>
+          </Box>
 
-            <div>
-              <label htmlFor="adminEmail" className="text-gray-300 text-sm">
-                Email de l'administrateur
-              </label>
-              <input
-                id="adminEmail"
-                name="adminEmail"
-                type="email"
-                value={formData.adminEmail}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#2a2e33] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
+          {error && (
+            <Typography
+              color="error"
+              variant="body2"
+              sx={{ mt: 2, textAlign: "center" }}
+            >
+              {error}
+            </Typography>
+          )}
 
-            <div>
-              <label htmlFor="adminLogin" className="text-gray-300 text-sm">
-                Login de l'administrateur
-              </label>
-              <input
-                id="adminLogin"
-                name="adminLogin"
-                type="text"
-                value={formData.adminLogin}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#2a2e33] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="adminPassword" className="text-gray-300 text-sm">
-                Mot de passe
-              </label>
-              <input
-                id="adminPassword"
-                name="adminPassword"
-                type="password"
-                value={formData.adminPassword}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#2a2e33] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="adminFirstName" className="text-gray-300 text-sm">
-                Prénom de l'administrateur
-              </label>
-              <input
-                id="adminFirstName"
-                name="adminFirstName"
-                type="text"
-                value={formData.adminFirstName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#2a2e33] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="adminLastName" className="text-gray-300 text-sm">
-                Nom de l'administrateur
-              </label>
-              <input
-                id="adminLastName"
-                name="adminLastName"
-                type="text"
-                value={formData.adminLastName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#2a2e33] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
-          </div>
-
-          {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Création en cours..." : "Créer le club"}
-          </button>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
+            <Button
+              variant="outlined"
+              onClick={handleBack}
+              disabled={activeStep === 0}
+              startIcon={<ArrowBackIcon />}
+              sx={{
+                color: "white",
+                borderColor: "rgba(255, 255, 255, 0.23)",
+                "&:hover": {
+                  borderColor: "white",
+                },
+              }}
+            >
+              Précédent
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+              endIcon={
+                activeStep === steps.length - 1 ? (
+                  <AirplanemodeActiveIcon />
+                ) : (
+                  <ArrowForwardIcon />
+                )
+              }
+              sx={{
+                bgcolor: "#3f51b5",
+                "&:hover": {
+                  bgcolor: "#303f9f",
+                },
+              }}
+            >
+              {loading
+                ? "Création en cours..."
+                : activeStep === steps.length - 1
+                ? "Créer le club"
+                : "Suivant"}
+            </Button>
+          </Box>
         </form>
-
-        <div className="text-center">
-          <a
-            href="/login"
-            className="text-sm text-gray-400 hover:text-gray-300"
-          >
-            Déjà un compte ? Se connecter
-          </a>
-        </div>
-      </div>
-    </div>
+      </Paper>
+    </Container>
   );
 };
 
