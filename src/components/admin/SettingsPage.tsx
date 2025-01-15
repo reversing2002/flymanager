@@ -26,6 +26,7 @@ import {
   ChevronDown,
   ArrowRightLeft,
   CreditCard,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
@@ -45,6 +46,7 @@ import BackupSettings from "../settings/BackupSettings";
 import SmileSettings from "../settings/SmileSettings";
 import AccountingMigrationSettings from "../settings/AccountingMigrationSettings";
 import StripeAccountSettings from "../settings/StripeAccountSettings";
+import ContactMessagesSettings from "../settings/ContactMessagesSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -78,7 +80,8 @@ type TabType =
   | "backups"
   | "weather"
   | "smile"
-  | "adminTest";
+  | "adminTest"
+  | "contactMessages";
 
 const SettingsPage = () => {
   const { user } = useAuth();
@@ -118,6 +121,7 @@ const SettingsPage = () => {
     { id: "api", label: "API", icon: Terminal },
     { id: "backups", label: "Sauvegardes", icon: DatabaseBackup },
     { id: "smile", label: "SMILE", icon: Building2 },
+    { id: "contactMessages", label: "Messages de Contact", icon: MessageSquare },
     // Tests admin
     { id: "adminTest", label: "Tests Admin", icon: Shield },
   ] as const;
@@ -348,6 +352,7 @@ const SettingsPage = () => {
           {activeTab === "smile" && <SmileSettings />}
           {activeTab === "api" && <ApiExplorer />}
           {activeTab === "backups" && <BackupSettings />}
+          {activeTab === "contactMessages" && <ContactMessagesSettings />}
           {activeTab === "adminTest" && <AdminTestPage />}
         </div>
       </div>
