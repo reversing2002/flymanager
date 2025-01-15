@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, PieChart, LineChart } from './charts';
 import { Clock, Calendar, Plane, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { format, subMonths, startOfYear, endOfYear, subYears } from 'date-fns';
+import { format, subMonths, startOfYear, endOfYear, subYears, differenceInDays, addDays, isSameDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { DateRangeSelector } from '../common/DateRangeSelector';
 import { getFlightTypes } from '../../lib/queries/flightTypes';
@@ -23,6 +23,22 @@ const StatsPage = () => {
     monthlyComparison: [],
     flightsWithInstructor: []
   });
+
+  // Calcul de la période de comparaison
+  const getPreviousYearDates = (start: Date, end: Date) => {
+    // Si c'est l'année en cours (du 1er janvier à aujourd'hui)
+    if (isSameDay(start, startOfYear(new Date()))) {
+      return {
+        previousStart: startOfYear(subYears(new Date(), 1)),
+        previousEnd: subYears(new Date(), 1)
+      };
+    }
+    // Sinon, on garde la logique normale de comparaison période à période
+    const diffInDays = differenceInDays(end, start);
+    const previousStart = subYears(start, 1);
+    const previousEnd = addDays(previousStart, diffInDays);
+    return { previousStart, previousEnd };
+  };
 
   const loadMonthlyComparison = async () => {
     try {
@@ -62,11 +78,33 @@ const StatsPage = () => {
   const loadStats = async () => {
     try {
       setLoading(true);
+
       // Get flights by aircraft
       const { data: flightsByAircraft } = await supabase.rpc('get_flights_by_aircraft', {
         start_date: dateRange.startDate.toISOString(),
         end_date: dateRange.endDate.toISOString()
       });
+
+      let combinedFlightsByAircraft = flightsByAircraft?.map(flight => ({
+        ...flight,
+        year: 'Période actuelle',
+      })) || [];
+
+      // Charger les données de la période précédente
+      const { previousStart, previousEnd } = getPreviousYearDates(dateRange.startDate, dateRange.endDate);
+      
+      const { data: previousPeriodFlights } = await supabase.rpc('get_flights_by_aircraft', {
+        start_date: previousStart.toISOString(),
+        end_date: previousEnd.toISOString()
+      });
+
+      if (previousPeriodFlights) {
+        const previousPeriodData = previousPeriodFlights.map(flight => ({
+          ...flight,
+          year: 'Période précédente',
+        }));
+        combinedFlightsByAircraft = [...combinedFlightsByAircraft, ...previousPeriodData];
+      }
 
       // Get flights by instructor
       const { data: flightsByInstructor } = await supabase.rpc('get_flights_by_instructor', {
@@ -111,9 +149,9 @@ const StatsPage = () => {
       const monthlyComparison = await loadMonthlyComparison();
 
       setStats({
-        flightsByAircraft: flightsByAircraft || [],
-        flightsByInstructor: flightsByInstructor || [],
-        flightsByType: flightsByType || [],
+        flightsByAircraft: combinedFlightsByAircraft,
+        flightsByInstructor,
+        flightsByType,
         monthlyComparison,
         flightsWithInstructor: transformedFlightsWithInstructor
       });
@@ -161,16 +199,21 @@ const StatsPage = () => {
     );
   }
 
+  const isCurrentYear = 
+    dateRange.startDate.getTime() === startOfYear(new Date()).getTime() &&
+    dateRange.endDate.getTime() === endOfYear(new Date()).getTime();
+
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Statistiques</h1>
+        <h2 className="text-lg text-gray-600 mb-4">
+          Du {format(dateRange.startDate, 'dd MMMM yyyy', { locale: fr })} au {format(dateRange.endDate, 'dd MMMM yyyy', { locale: fr })}
+        </h2>
         <p className="text-slate-600">Analyse détaillée de l'activité du club</p>
-      </div>
-
-      <div className="mb-6">
         <DateRangeSelector
           onChange={(range) => setDateRange(range)}
+          initialRange={dateRange}
         />
       </div>
 
@@ -179,12 +222,21 @@ const StatsPage = () => {
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Plane className="h-5 w-5 text-slate-600" />
             Heures de vol par appareil
+            {dateRange && (
+              <span className="block text-sm font-normal text-gray-500">
+                Comparaison avec la période<br />du {format(getPreviousYearDates(dateRange.startDate, dateRange.endDate).previousStart, 'dd/MM/yyyy', { locale: fr })} au {format(getPreviousYearDates(dateRange.startDate, dateRange.endDate).previousEnd, 'dd/MM/yyyy', { locale: fr })}
+              </span>
+            )}
           </h2>
           <BarChart
             data={stats.flightsByAircraft}
             xKey="registration"
             yKey="total_hours"
-            color="#3b82f6"
+            compareKey="year"
+            colors={{
+              'Période actuelle': '#3b82f6',
+              'Période précédente': '#93c5fd'
+            }}
           />
         </div>
 
