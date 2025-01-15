@@ -134,12 +134,12 @@ const FeaturesPage: React.FC = () => {
         <WavyBackground 
           className="max-w-full"
           containerClassName="h-screen"
-          colors={['#0369a1', '#0284c7', '#0ea5e9', '#38bdf8', '#7dd3fc']}
+          colors={['#0f172a', '#1e3a8a', '#172554', '#1e40af', '#1e3a8a']}
           waveWidth={200}
-          backgroundFill="#0f172a"
+          backgroundFill="#020617"
           blur={3}
           speed="slow"
-          waveOpacity={0.1}
+          waveOpacity={0.2}
         />
       </div>
 
