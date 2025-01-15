@@ -108,7 +108,7 @@ const HomePage = () => {
             className="max-w-7xl mx-auto text-center"
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-8 drop-shadow-2xl">
-              Gérez votre club{' '}
+              Gérez votre aéroclub{' '}
               <span className="text-blue-400 bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent">simplement</span>
             </h1>
             <p className="text-xl text-gray-100 mb-12 max-w-3xl mx-auto drop-shadow-xl font-medium">

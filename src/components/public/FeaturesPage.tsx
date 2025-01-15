@@ -11,6 +11,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import SecurityIcon from '@mui/icons-material/Security';
 import { Link } from 'react-router-dom';
+import { WavyBackground } from '@/components/ui/wavy-background';
 
 const features = [
   {
@@ -125,72 +126,68 @@ const features = [
   }
 ];
 
-const FeaturesPage = () => {
+const FeaturesPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#1a1d21] pt-20">
-      {/* Hero Section */}
-      <div className="py-16 px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-7xl mx-auto text-center"
-        >
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-8">
-            Fonctionnalités complètes pour votre{' '}
-            <span className="text-blue-500">aéroclub</span>
-          </h1>
-          <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
-            Découvrez toutes les fonctionnalités qui font de 4fly la solution la plus complète pour la gestion de votre aéroclub.
-          </p>
-        </motion.div>
+    <div className="min-h-screen relative">
+      {/* Background avec WavyBackground */}
+      <div className="fixed inset-0 -z-10">
+        <WavyBackground 
+          className="max-w-full"
+          containerClassName="h-screen"
+          colors={['#0369a1', '#0284c7', '#0ea5e9', '#38bdf8', '#7dd3fc']}
+          waveWidth={200}
+          backgroundFill="#0f172a"
+          blur={3}
+          speed="slow"
+          waveOpacity={0.1}
+        />
       </div>
 
-      {/* Features Grid */}
-      <div className="py-16 px-4 sm:px-6 lg:px-8 bg-[#212529]">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-[#2a2e33] p-6 rounded-lg hover:bg-[#363b42] transition-colors"
-              >
-                <div className="text-blue-500 mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold text-white mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-300 mb-4">{feature.description}</p>
-                <ul className="space-y-2">
-                  {feature.details.map((detail, idx) => (
-                    <li key={idx} className="text-gray-400 flex items-center">
-                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></span>
-                      {detail}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-8">
-            Prêt à moderniser votre aéroclub ?
-          </h2>
-          <p className="text-xl text-gray-300 mb-8">
-            Commencez gratuitement et découvrez toutes ces fonctionnalités par vous-même.
-          </p>
-          <Link
-            to="/create-club"
-            className="inline-block bg-blue-500 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-600 transition-colors shadow-lg"
+      {/* Contenu */}
+      <div className="relative z-10">
+        {/* Hero Section */}
+        <div className="pt-32 pb-24 px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-7xl mx-auto text-center"
           >
-            Créer mon club gratuitement
-          </Link>
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              Nos Fonctionnalités
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-200 max-w-3xl mx-auto">
+              Découvrez tous les outils qui font de notre plateforme la solution idéale pour votre aéroclub
+            </p>
+          </motion.div>
+        </div>
+
+        {/* Grid des fonctionnalités */}
+        <div className="py-16 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="bg-black/50 backdrop-blur-md border border-white/10 p-8 rounded-xl hover:bg-white/5 transition-all duration-300"
+                >
+                  <div className="text-blue-400 mb-4">{feature.icon}</div>
+                  <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
+                  <p className="text-gray-300 mb-4">{feature.description}</p>
+                  <ul className="space-y-2">
+                    {feature.details.map((detail, idx) => (
+                      <li key={idx} className="flex items-center text-gray-300">
+                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2"></span>
+                        {detail}
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
