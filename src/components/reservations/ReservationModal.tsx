@@ -881,21 +881,24 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                   )}
                 </div>
 
-                <div className="mt-6 flex justify-between space-x-3">
-                  <div className="flex space-x-3">
+                <div className="mt-6 flex flex-col space-y-6">
+                  <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                     <button
-                      type="button"
-                      onClick={onClose}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                      type="submit"
+                      disabled={loading || !canModifyReservation() || (balance !== null && balance.pending < 0)}
+                      className={`w-full sm:w-auto px-4 py-2 text-sm font-medium text-white rounded-lg 
+                        ${loading || !canModifyReservation() || (balance !== null && balance.pending < 0)
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
-                      Annuler
+                      {existingReservation ? "Modifier" : "Créer"}
                     </button>
                     {existingReservation && canModifyReservation() && (
                       <button
                         type="button"
                         onClick={handleDelete}
                         disabled={loading}
-                        className={`px-4 py-2 text-sm font-medium text-white rounded-lg 
+                        className={`w-full sm:w-auto px-4 py-2 text-sm font-medium text-white rounded-lg 
                           ${loading
                             ? "bg-gray-400 cursor-not-allowed"
                             : "bg-red-600 hover:bg-red-700"}`}
@@ -904,27 +907,18 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                       </button>
                     )}
                   </div>
-                  <div className="flex space-x-3">
-                    {existingReservation && onCreateFlight && canTransformToFlight && !hasExistingFlight && (
+                  
+                  {existingReservation && onCreateFlight && canTransformToFlight && !hasExistingFlight && (
+                    <div className="sm:flex sm:justify-end">
                       <button
                         type="button"
                         onClick={() => setShowNewFlightForm(true)}
-                        className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100"
+                        className="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 shadow-sm"
                       >
-                        Transformer en vol
+                        Valider mon vol
                       </button>
-                    )}
-                    <button
-                      type="submit"
-                      disabled={loading || !canModifyReservation() || (balance !== null && balance.pending < 0)}
-                      className={`px-4 py-2 text-sm font-medium text-white rounded-lg 
-                        ${loading || !canModifyReservation() || (balance !== null && balance.pending < 0)
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700'}`}
-                    >
-                      {existingReservation ? "Modifier" : "Créer"}
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </form>
             </div>
