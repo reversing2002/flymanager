@@ -45,8 +45,8 @@ const AvailabilityModal: React.FC<AvailabilityModalProps> = ({
   const [formData, setFormData] = useState({
     startDate: availability?.start_time ? format(new Date(availability.start_time), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
     endDate: availability?.end_time ? format(new Date(availability.end_time), "yyyy-MM-dd") : format(addDays(new Date(), 1), "yyyy-MM-dd"),
-    startTime: availability?.start_time ? format(new Date(availability.start_time), "HH:mm") : '09:00',
-    endTime: availability?.end_time ? format(new Date(availability.end_time), "HH:mm") : '17:00',
+    startTime: availability?.start_time ? format(new Date(availability.start_time), "HH:mm") : '00:01',
+    endTime: availability?.end_time ? format(new Date(availability.end_time), "HH:mm") : '23:59',
     recurringDays: availability?.recurrence_pattern ? 
       availability.recurrence_pattern.split(';')[1].replace('BYDAY=', '').split(',') : 
       ['MO'],
