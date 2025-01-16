@@ -460,11 +460,14 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
             required
           >
             <option value="">Sélectionner un appareil</option>
-            {aircraft.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.registration} - {a.name} - {a.hourlyRate.toFixed(2)}€/h
-              </option>
-            ))}
+            {aircraft
+              .filter((a) => a.status === "AVAILABLE" || a.status === "MAINTENANCE")
+              .map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.registration} - {a.name} - {a.hourlyRate.toFixed(2)}€/h
+                  {a.status === "MAINTENANCE" ? " (En maintenance)" : ""}
+                </option>
+              ))}
           </select>
         </div>
 

@@ -496,11 +496,14 @@ const EditFlightForm: React.FC<EditFlightFormProps> = ({
             required
           >
             <option value="">Sélectionner un avion</option>
-            {aircraftList.map((aircraft) => (
-              <option key={aircraft.id} value={aircraft.id}>
-                {aircraft.registration}
-              </option>
-            ))}
+            {aircraftList
+              .filter((a) => a.status === "AVAILABLE" || a.status === "MAINTENANCE")
+              .map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.registration} - {a.name}
+                  {a.status === "MAINTENANCE" ? " (En maintenance)" : ""}
+                </option>
+              ))}
           </select>
         </div>
 

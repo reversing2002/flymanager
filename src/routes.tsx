@@ -7,7 +7,6 @@ import FAQ from './components/public/FAQPage';
 import ContactPage from './components/public/ContactPage';
 import CGVPage from './components/public/CGVPage';
 import PricingPage from './components/public/PricingPage';
-import WelcomeAI from './components/welcome/WelcomeAI';
 import { useAuth } from './contexts/AuthContext';
 
 // Protège les routes qui nécessitent une authentification
@@ -60,11 +59,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      {
-        path: '/app/welcome',
-        element: <WelcomeAI />,
-      },
-      // Vos autres routes d'application
+      // Vos routes d'application existantes
     ],
   },
 ]);

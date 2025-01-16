@@ -740,10 +740,11 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                           ${!canModifyReservation() ? "bg-gray-100" : ""}`}
                       >
                         {aircraft
-                          .filter((a) => a.status === "AVAILABLE")
+                          .filter((a) => a.status === "AVAILABLE" || a.status === "MAINTENANCE")
                           .map((a) => (
                             <option key={a.id} value={a.id}>
                               {a.registration} - {a.name}
+                              {a.status === "MAINTENANCE" ? " (En maintenance)" : ""}
                             </option>
                           ))}
                       </select>

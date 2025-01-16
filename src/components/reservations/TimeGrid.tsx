@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { setMinutes, setHours, differenceInMinutes, format, isToday } from "date-fns";
 import { Aircraft, Reservation, User, Availability } from "../../types/database";
 import { useAuth } from "../../contexts/AuthContext";
-import { Plane, Moon, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Plane, Moon, AlertTriangle, CheckCircle2, Wrench } from "lucide-react";
 import ReservationModal from "./ReservationModal";
 import { getSunTimes } from "../../lib/sunTimes";
 import { supabase } from "../../lib/supabase";
@@ -162,9 +162,10 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     setTimeSlots(generateTimeSlots());
   }, [selectedDate, clubCoordinates, nightFlightsEnabled]);
 
-  // Filtrer les appareils disponibles et les instructeurs en fonction des filtres
+  // Filtrer les avions pour n'afficher que ceux avec le statut AVAILABLE ou MAINTENANCE
+  // et appliquer les filtres de type d'avion
   const filteredAircraft = useMemo(() => {
-    let filtered = aircraft.filter(a => a.status === "AVAILABLE");
+    let filtered = aircraft.filter((a) => a.status === "AVAILABLE" || a.status === "MAINTENANCE");
     
     if (filters?.aircraftTypes?.length > 0) {
       filtered = filtered.filter(a => filters.aircraftTypes.includes(a.id));
@@ -671,6 +672,20 @@ const TimeGrid: React.FC<TimeGridProps> = ({
 
   const renderAircraftHeader = (aircraft: Aircraft) => {
     const stats = maintenanceStats.aircraft_stats.find(stat => stat.id === aircraft.id);
+    
+    // Afficher une clé à molette si l'avion est en maintenance
+    if (aircraft.status === "MAINTENANCE") {
+      return (
+        <div className="flex items-center gap-2">
+          <span>{aircraft.registration}</span>
+          <div className="flex items-center gap-1 text-amber-500" title="Avion en maintenance">
+            <Wrench className="h-4 w-4" />
+            <span className="text-xs">En maintenance</span>
+          </div>
+        </div>
+      );
+    }
+
     if (!stats) return <span>{aircraft.registration}</span>;
 
     const getMaintenanceIcon = () => {
