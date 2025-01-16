@@ -1,12 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const Anthropic = require('@anthropic-ai/sdk');
+const openaiRouter = require('./openai');
 const { verifyToken } = require('./middleware/auth');
 
-// Initialiser le client Anthropic avec la clé API
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Vérifier quelle API utiliser
+const useOpenAI = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 0;
+
+if (useOpenAI) {
+  console.log('🤖 Utilisation de GPT-4 pour l\'assistant');
+  module.exports = openaiRouter;
+} else {
+  console.log('🤖 Utilisation de Claude pour l\'assistant');
+  
+  // Initialiser le client Anthropic avec la clé API
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
 
 // Configuration du système pour Claude
 const systemPrompt = `
@@ -304,3 +314,4 @@ function checkConfigComplete(config) {
 }
 
 module.exports = router;
+}

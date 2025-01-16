@@ -43,6 +43,7 @@ const allowedOrigins = [
 // Import admin router
 const adminRouter = require('./admin');
 const meteoRouter = require('./meteo');
+const claudeRouter = require('./claude'); // Correction du chemin d'importation de Claude
 
 // Stripe webhook should be before any parsing middleware
 app.post("/api/webhooks/stripe", 
@@ -171,8 +172,9 @@ app.use(
 );
 
 // Mount admin router
-app.use('/admin', adminRouter);
+app.use('/api/admin', adminRouter);
 app.use('/api/meteo', meteoRouter);
+app.use('/api/claude', claudeRouter);
 
 // Configuration Twilio
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -1831,29 +1833,26 @@ async function isChecked(page, selector, options = {}) {
 
 // Fonction pour générer un token unique pour un instructeur
 async function generateInstructorCalendarToken(instructorId) {
-  const token = crypto.randomBytes(32).toString('hex');
+  console.log('🔑 Génération d\'un nouveau token pour l\'instructeur:', instructorId);
   
   // Récupérer tous les calendriers de l'instructeur
-  const { data: calendars, error: fetchError } = await supabase
+  const { data: instructor } = await supabase
     .from('instructor_calendars')
     .select('calendar_token')
-    .eq('instructor_id', instructorId);
+    .eq('instructor_id', instructorId)
+    .single();
 
-  if (fetchError) throw fetchError;
-  
-  if (!calendars || calendars.length === 0) {
-    throw new Error('Aucun calendrier trouvé pour cet instructeur');
-  }
+  const calendarToken = instructor?.calendar_token || crypto.randomBytes(32).toString('hex');
 
-  // Mettre à jour le token pour le premier calendrier
+  // Mettre à jour le token
   const { error: updateError } = await supabase
     .from('instructor_calendars')
-    .update({ calendar_token: token })
-    .eq('id', calendars[0].id);
+    .update({ calendar_token: calendarToken })
+    .eq('instructor_id', instructorId);
     
   if (updateError) throw updateError;
   
-  return token;
+  return calendarToken;
 }
 
 // Fonction pour générer le flux iCal des réservations
@@ -1868,7 +1867,7 @@ async function generateInstructorCalendar(instructorId) {
   try {
     // Récupérer les réservations de l'instructeur
     console.log('🔍 Recherche des réservations pour l\'instructeur...');
-    const { data: reservations, error: reservationsError } = await supabase
+    const { data: reservations, error } = await supabase
       .from('reservations')
       .select(`
         *,
@@ -1885,9 +1884,9 @@ async function generateInstructorCalendar(instructorId) {
       .gte('start_time', new Date().toISOString())
       .order('start_time', { ascending: true });
 
-    if (reservationsError) {
-      console.error('❌ Erreur lors de la récupération des réservations:', reservationsError);
-      throw reservationsError;
+    if (error) {
+      console.error('❌ Erreur lors de la récupération des réservations:', error);
+      throw error;
     }
 
     console.log(`📊 ${reservations?.length || 0} réservations trouvées`);
