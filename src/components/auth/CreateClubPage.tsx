@@ -20,6 +20,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import toast from "react-hot-toast";
 
 interface CreateClubFormData {
   clubName: string;
@@ -110,9 +111,20 @@ const CreateClubPage = () => {
       );
 
       if (clubError) throw clubError;
-      window.location.href = "/login";
+      
+      // Connexion automatique après la création du club
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.adminEmail,
+        password: formData.adminPassword,
+      });
+
+      if (signInError) throw signInError;
+
+      // La redirection sera gérée automatiquement par le hook useAuth
+      toast.success("Votre club a été créé avec succès !");
     } catch (error: any) {
       setError(error.message);
+      toast.error("Une erreur est survenue lors de la création du club");
     } finally {
       setLoading(false);
     }

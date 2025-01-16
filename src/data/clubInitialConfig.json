@@ -1,0 +1,62 @@
+{
+  "club": {
+    "name": "Aéroclub de Versailles",
+    "oaci": "LFPV",
+    "contact": {
+      "admin": {
+        "firstName": "Vincent",
+        "lastName": "Leroy",
+        "email": "vincent.leroy@ac-versailles.com"
+      }
+    },
+    "address": {
+      "street": "5 rue Hélène Boucher",
+      "city": "Versailles",
+      "postalCode": "78000",
+      "country": "France",
+      "coordinates": {
+        "latitude": 48.7833,
+        "longitude": 2.1000
+      }
+    },
+    "settings": {
+      "language": "fr",
+      "timezone": "Europe/Paris",
+      "currency": "EUR",
+      "bookingSettings": {
+        "maxAdvanceBookingDays": 30,
+        "maxBookingDurationHours": 12,
+        "allowOvernightBookings": false,
+        "requireInstructorValidation": true
+      }
+    },
+    "features": {
+      "booking": true,
+      "maintenance": true,
+      "training": true,
+      "billing": true,
+      "weather": true,
+      "notam": true
+    },
+    "modules": {
+      "stripe": {
+        "enabled": true,
+        "currency": "EUR",
+        "country": "FR"
+      },
+      "mailjet": {
+        "enabled": true,
+        "templates": {
+          "welcome": "welcome-template-fr",
+          "booking": "booking-confirmation-fr",
+          "invoice": "invoice-template-fr"
+        }
+      }
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-16T02:07:04+01:00",
+    "createdAt": "2025-01-16T02:07:04+01:00"
+  }
+}

@@ -1,21 +1,55 @@
 import { FC, ReactElement, ReactNode } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
+import { Box } from "@mui/material";
 
 interface MainLayoutProps {
   children?: ReactNode;
 }
 
 const MainLayout: FC<MainLayoutProps> = ({ children }): ReactElement => {
+  const location = useLocation();
+  const isAIPage = location.pathname === "/welcome" && location.search.includes("ai=true");
+
   return (
-    <div className="min-h-screen bg-slate-50 md:pl-64">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white md:left-64">
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: isAIPage ? '#1E1E1E' : '#F8FAFC',
+        paddingLeft: { md: '16rem' },
+        '& .MuiContainer-root, & .MuiBox-root, & main': isAIPage ? {
+          backgroundColor: '#1E1E1E !important',
+        } : {},
+      }}
+    >
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: { xs: 0, md: '16rem' },
+          right: 0,
+          zIndex: 50,
+          bgcolor: isAIPage ? '#1E1E1E' : 'white',
+        }}
+      >
         <Navbar />
-      </div>
-      <main className="pt-16 container mx-auto px-4 py-8">
+      </Box>
+      <Box
+        component="main"
+        sx={{
+          paddingTop: '4rem',
+          paddingX: isAIPage ? 0 : '1rem',
+          paddingY: isAIPage ? 0 : '2rem',
+          margin: '0 auto',
+          backgroundColor: isAIPage ? '#1E1E1E' : 'transparent',
+          '& > *': isAIPage ? {
+            backgroundColor: '#1E1E1E !important',
+          } : {},
+        }}
+      >
         {children || <Outlet />}
-      </main>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

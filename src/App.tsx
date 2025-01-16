@@ -74,8 +74,10 @@ import FeaturesPage from "./components/public/FeaturesPage";
 import LegalPage from "./components/public/LegalPage";
 import RootPage from "./components/RootPage";
 import RGPDPage from "./components/public/RGPDPage";
+import WelcomeDashboard from './components/dashboard/WelcomeDashboard';
+import WelcomeAI from "./components/welcome/WelcomeAI";
 
-// Initialiser dayjs avec la locale française
+// Initialiser dayjs avec la locale francaise
 dayjs.locale('fr');
 
 function App() {
@@ -132,6 +134,7 @@ function App() {
               >
                 {/* Dashboard */}
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/welcome" element={<WelcomeAI />} />
 
                 {/* Profile */}
                 <Route path="/profile" element={<ProfilePage />} />
