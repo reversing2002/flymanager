@@ -676,26 +676,26 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     // Afficher une clé à molette si l'avion est en maintenance
     if (aircraft.status === "MAINTENANCE") {
       return (
-        <div className="flex items-center gap-2">
-          <span>{aircraft.registration}</span>
-          <div className="flex items-center gap-1 text-amber-500" title="Avion en maintenance">
-            <Wrench className="h-4 w-4" />
-            <span className="text-xs">En maintenance</span>
+        <div className="flex items-center gap-1">
+          <span className="truncate">{aircraft.registration}</span>
+          <div className="flex items-center gap-0.5 text-amber-500" title="Avion en maintenance">
+            <Wrench className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="text-[0.65rem] sm:text-xs hidden sm:inline">En maintenance</span>
           </div>
         </div>
       );
     }
 
-    if (!stats) return <span>{aircraft.registration}</span>;
+    if (!stats) return <span className="truncate">{aircraft.registration}</span>;
 
     const getMaintenanceIcon = () => {
       switch (stats.maintenance_status) {
         case 'URGENT':
-          return <AlertTriangle className="h-4 w-4 text-red-500" />;
+          return <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />;
         case 'WARNING':
-          return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+          return <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500" />;
         case 'OK':
-          return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+          return <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />;
         default:
           return null;
       }
@@ -716,7 +716,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
 
     return (
       <div className="flex items-center space-x-2">
-        <span>{aircraft.registration}</span>
+        <span className="truncate">{aircraft.registration}</span>
         <div className="group relative">
           {getMaintenanceIcon()}
           <div className="absolute left-1/2 -translate-x-1/2 top-full hidden group-hover:block bg-white border border-gray-200 rounded-md p-2 shadow-lg z-50 w-48">
@@ -761,33 +761,35 @@ const TimeGrid: React.FC<TimeGridProps> = ({
             <div
               className="sticky top-0 bg-white z-10 grid"
               style={{
-                gridTemplateColumns: `repeat(${sortedAircraft.length + filteredInstructors.length}, minmax(${(sortedAircraft.length + filteredInstructors.length) > 1 ? '150px' : '200px'}, 1fr))`,
+                gridTemplateColumns: `repeat(${sortedAircraft.length + filteredInstructors.length}, minmax(${(sortedAircraft.length + filteredInstructors.length) > 1 ? '120px' : '200px'}, 1fr))`,
               }}
             >
               {sortedAircraft.map((aircraft) => (
                 <div
                   key={`header-${aircraft.id}`}
-                  className="p-2 text-center border-b border-r border-slate-200"
+                  className="p-1 sm:p-2 text-center border-b border-r border-slate-200"
                 >
-                  <div className="flex flex-col items-center justify-center gap-1">
-                    <div className="flex items-center justify-center gap-2">
-                      <Plane className="h-4 w-4" />
+                  <div className="flex flex-col items-center justify-center gap-0.5 sm:gap-1">
+                    <div className="flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base">
+                      <Plane className="h-3 w-3 sm:h-4 sm:w-4" />
                       {renderAircraftHeader(aircraft)}
                     </div>
-                    <span className="text-xs text-slate-500">{aircraft.name}</span>
+                    <span className="text-[0.65rem] sm:text-xs text-slate-500 truncate w-full">{aircraft.name}</span>
                   </div>
                 </div>
               ))}
               {filteredInstructors.map((instructor) => (
                 <div
                   key={`header-instructor-${instructor.id}`}
-                  className="p-2 text-center border-b border-r border-slate-200"
+                  className="p-1 sm:p-2 text-center border-b border-r border-slate-200"
                 >
-                  <div className="flex flex-col items-center justify-center gap-1">
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="font-medium">{instructor.first_name} {instructor.last_name}</span>
+                  <div className="flex flex-col items-center justify-center gap-0.5 sm:gap-1">
+                    <div className="flex items-center justify-center gap-1 sm:gap-2">
+                      <span className="font-medium text-sm sm:text-base truncate w-full">
+                        {instructor.first_name} {instructor.last_name}
+                      </span>
                     </div>
-                    <span className="text-xs text-slate-500">Instructeur</span>
+                    <span className="text-[0.65rem] sm:text-xs text-slate-500">Instructeur</span>
                   </div>
                 </div>
               ))}
@@ -796,7 +798,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
             <div
               className="grid"
               style={{
-                gridTemplateColumns: `repeat(${sortedAircraft.length + filteredInstructors.length}, minmax(${(sortedAircraft.length + filteredInstructors.length) > 1 ? '150px' : '200px'}, 1fr))`,
+                gridTemplateColumns: `repeat(${sortedAircraft.length + filteredInstructors.length}, minmax(${(sortedAircraft.length + filteredInstructors.length) > 1 ? '120px' : '200px'}, 1fr))`,
               }}
             >
               {sortedAircraft.map((aircraft) => (
