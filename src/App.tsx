@@ -157,6 +157,7 @@ function App() {
 
                 {/* Aircraft */}
                 <Route path="/aircraft" element={<AircraftList />} />
+                <Route path="/aircraft/:aircraftId" element={<AircraftList />} />
                 <Route path="/aircraft/:id/maintenance" element={<ProtectedRoute roles={["admin", "mechanic"]}><MaintenancePage /></ProtectedRoute>} />
 
                 {/* Discovery Flights */}

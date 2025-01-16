@@ -22,9 +22,11 @@ import { hasAnyGroup } from '../../lib/permissions';
 import clsx from 'clsx';
 import MonthlyAccountSummary from './tables/MonthlyAccountSummary';
 import MonthlyAircraftHours from './tables/MonthlyAircraftHours';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Vérifier si l'utilisateur est admin
   if (!hasAnyGroup(user, ['ADMIN'])) {
@@ -90,10 +92,9 @@ const AdminDashboard = () => {
             <div className="mt-4 text-2xl font-bold">{memberStats?.active_members || '0'}</div>
           </div>
         </div>
+
         
       </div>
-
-
 
       {/* Tableau des sommes mensuelles par type d'entrée */}
       <div className="col-span-full">
@@ -183,8 +184,12 @@ const AdminDashboard = () => {
             État de la flotte
           </h2>
           <div className="space-y-4 max-h-[600px] overflow-y-auto">
-            {fleetStats?.aircraft_stats?.filter(aircraft => aircraft.status === 'AVAILABLE').map(aircraft => (
-              <div key={aircraft.id} className="p-4 bg-white border rounded-lg">
+            {fleetStats?.aircraft_stats?.filter(aircraft => aircraft.status !== 'UNAVAILABLE').map(aircraft => (
+              <div 
+                key={aircraft.id} 
+                className="p-4 bg-white border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                onClick={() => navigate(`/aircraft/${aircraft.id}`)}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className={clsx(
@@ -196,17 +201,17 @@ const AdminDashboard = () => {
                         'bg-green-500': aircraft.maintenance_status === 'OK',
                       }
                     )} />
-                    <Plane className={clsx(
-                      "h-4 w-4",
-                      {
-                        'bg-red-500': aircraft.maintenance_status === 'OVERDUE',
-                        'bg-orange-500': aircraft.maintenance_status === 'URGENT',
-                        'bg-yellow-500': aircraft.maintenance_status === 'WARNING',
-                        'bg-green-500': aircraft.maintenance_status === 'OK',
-                      }
-                    )} />
+                    <Plane className="h-4 w-4 text-slate-600" />
                     <span className="font-medium">{aircraft.registration}</span>
                     <span className="text-sm text-slate-500">{aircraft.name} ({aircraft.model})</span>
+                    <span className={clsx(
+                      "px-2 py-1 text-xs font-medium rounded-full",
+                      aircraft.status === "AVAILABLE" && "bg-emerald-100 text-emerald-800",
+                      aircraft.status === "MAINTENANCE" && "bg-amber-100 text-amber-800"
+                    )}>
+                      {aircraft.status === "AVAILABLE" && "Disponible"}
+                      {aircraft.status === "MAINTENANCE" && "En maintenance"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-slate-600">

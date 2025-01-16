@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Search, Filter, Plus, AlertTriangle, ArrowUpDown } from "lucide-react";
 import type { Aircraft } from "../../types/database";
 import { getAircraft } from "../../lib/queries/aircraft";
@@ -13,6 +13,7 @@ import { toast } from "react-hot-toast";
 
 const AircraftList = () => {
   const navigate = useNavigate();
+  const { aircraftId } = useParams();
   const { user } = useAuth();
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,6 +49,15 @@ const AircraftList = () => {
   useEffect(() => {
     loadAircraft();
   }, []);
+
+  useEffect(() => {
+    if (aircraftId && aircraft.length > 0) {
+      const selectedAircraft = aircraft.find(a => a.id === aircraftId);
+      if (selectedAircraft) {
+        setSearchQuery(selectedAircraft.registration);
+      }
+    }
+  }, [aircraftId, aircraft]);
 
   const filteredAircraft = aircraft.filter((a) => {
     const matchesSearch =
