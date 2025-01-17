@@ -27,8 +27,20 @@ const CONTACT_REASONS = [
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Veuillez entrer votre nom'),
-  email: z.string().email('Email invalide').optional(),
-  phone: z.string().min(10, 'Numéro de téléphone invalide').optional(),
+  email: z.string()
+    .transform(e => e === "" ? undefined : e)
+    .pipe(
+      z.string()
+        .email('Format d\'email invalide')
+        .optional()
+    ),
+  phone: z.string()
+    .transform(p => p === "" ? undefined : p)
+    .pipe(
+      z.string()
+        .regex(/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/, 'Format de téléphone invalide')
+        .optional()
+    ),
   contactReason: z.enum(CONTACT_REASONS),
   customSubject: z.string().min(3, 'Veuillez entrer un sujet').optional(),
   message: z.string().min(10, 'Votre message est un peu court'),
@@ -64,15 +76,18 @@ const ContactPage = () => {
     handleSubmit,
     reset,
     watch,
-    formState: { errors },
+    formState: { errors, isValid, dirtyFields },
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
+    mode: "onChange",
     defaultValues: {
       contactReason: "Demande d'informations générales"
     }
   });
 
   const selectedReason = watch('contactReason');
+  const watchEmail = watch("email");
+  const watchPhone = watch("phone");
 
   React.useEffect(() => {
     setShowCustomSubject(selectedReason === 'Autre');
@@ -153,56 +168,96 @@ const ContactPage = () => {
                 },
                 '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
                 '& .MuiOutlinedInput-input': { color: 'white' },
+                '& .MuiFormHelperText-root': { color: 'rgba(255,255,255,0.6)' },
               }}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TextField
-                fullWidth
-                label="Email"
-                variant="outlined"
-                type="email"
-                {...register('email')}
-                error={!!errors.email}
-                helperText={errors.email?.message}
-                InputProps={{
-                  startAdornment: <EmailIcon className="mr-2 text-gray-400" />,
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
-                    '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
-                    backgroundColor: 'rgba(255,255,255,0.05)',
-                  },
-                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                  '& .MuiOutlinedInput-input': { color: 'white' },
-                }}
-              />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              <div className="contact-field-wrapper">
+                <TextField
+                  fullWidth
+                  label="Email"
+                  variant="outlined"
+                  {...register("email")}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                  InputProps={{
+                    startAdornment: <EmailIcon className="text-gray-400 mr-2" />,
+                  }}
+                  placeholder="votre@email.com"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                      '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                      '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
+                      backgroundColor: 'rgba(255,255,255,0.05)',
+                    },
+                    '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+                    '& .MuiOutlinedInput-input': { color: 'white' },
+                    '& .MuiFormHelperText-root': { color: 'rgba(255,255,255,0.6)' },
+                  }}
+                />
+                {watchEmail && !errors.email && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="text-green-500 text-sm mt-1"
+                  >
+                    ✓ Format d'email valide
+                  </motion.div>
+                )}
+              </div>
 
-              <TextField
-                fullWidth
-                label="Téléphone"
-                variant="outlined"
-                type="tel"
-                {...register('phone')}
-                error={!!errors.phone}
-                helperText={errors.phone?.message}
-                InputProps={{
-                  startAdornment: <PhoneIcon className="mr-2 text-gray-400" />,
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
-                    '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
-                    backgroundColor: 'rgba(255,255,255,0.05)',
-                  },
-                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                  '& .MuiOutlinedInput-input': { color: 'white' },
-                }}
-              />
-            </div>
+              <div className="contact-field-wrapper">
+                <TextField
+                  fullWidth
+                  label="Téléphone"
+                  variant="outlined"
+                  {...register("phone")}
+                  error={!!errors.phone}
+                  helperText={errors.phone?.message}
+                  InputProps={{
+                    startAdornment: <PhoneIcon className="text-gray-400 mr-2" />,
+                  }}
+                  placeholder="06 12 34 56 78"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                      '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                      '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
+                      backgroundColor: 'rgba(255,255,255,0.05)',
+                    },
+                    '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+                    '& .MuiOutlinedInput-input': { color: 'white' },
+                    '& .MuiFormHelperText-root': { color: 'rgba(255,255,255,0.6)' },
+                  }}
+                />
+                {watchPhone && !errors.phone && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="text-green-500 text-sm mt-1"
+                  >
+                    ✓ Format de téléphone valide
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+
+            {!watchEmail && !watchPhone && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-amber-500 text-sm text-center mt-2"
+              >
+                Renseignez au moins un moyen de contact
+              </motion.div>
+            )}
 
             <TextField
               select
@@ -228,6 +283,7 @@ const ContactPage = () => {
                 '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
                 '& .MuiOutlinedInput-input': { color: 'white' },
                 '& .MuiSelect-select': { color: 'white' },
+                '& .MuiFormHelperText-root': { color: 'rgba(255,255,255,0.6)' },
               }}
             >
               {CONTACT_REASONS.map((reason) => (
@@ -262,6 +318,7 @@ const ContactPage = () => {
                     },
                     '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
                     '& .MuiOutlinedInput-input': { color: 'white' },
+                    '& .MuiFormHelperText-root': { color: 'rgba(255,255,255,0.6)' },
                   }}
                 />
               </motion.div>
@@ -293,6 +350,7 @@ const ContactPage = () => {
                   color: 'white',
                   paddingLeft: '2.5rem',
                 },
+                '& .MuiFormHelperText-root': { color: 'rgba(255,255,255,0.6)' },
               }}
             />
 
