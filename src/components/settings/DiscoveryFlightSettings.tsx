@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Plus, GripVertical, X } from 'lucide-react';
+import { Plus, GripVertical, X, Edit2, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { hasAnyGroup } from '../../lib/permissions';
 
 interface DiscoveryFlightPrice {
   id: string;
@@ -21,103 +22,226 @@ interface DiscoveryFlightFeature {
   display_order: number;
 }
 
+interface PriceWithFeatures extends DiscoveryFlightPrice {
+  selectedFeatures: DiscoveryFlightFeature[];
+}
+
 export default function DiscoveryFlightSettings() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [price, setPrice] = useState<DiscoveryFlightPrice | null>(null);
+  const [prices, setPrices] = useState<PriceWithFeatures[]>([]);
   const [features, setFeatures] = useState<DiscoveryFlightFeature[]>([]);
   const [newFeature, setNewFeature] = useState('');
+  const [editingPrice, setEditingPrice] = useState<string | null>(null);
+  const [expandedPrice, setExpandedPrice] = useState<string | null>(null);
   const { user } = useAuth();
   const clubId = user?.club?.id;
+  const canEdit = hasAnyGroup(user, ['ADMIN']);
 
   useEffect(() => {
     if (clubId) {
-      fetchPrice();
-      fetchFeatures();
+      fetchFeatures().then(() => fetchPrices());
     }
   }, [clubId]);
 
-  const fetchPrice = async () => {
+  const fetchPrices = async () => {
     if (!clubId) return;
 
     try {
-      const { data, error } = await supabase
+      // 1. Récupérer les prix de base
+      const { data: pricesData, error: pricesError } = await supabase
         .from('discovery_flight_prices')
-        .select('*')
+        .select(`
+          id,
+          club_id,
+          price,
+          duration,
+          created_at,
+          updated_at
+        `)
         .eq('club_id', clubId)
-        .single();
+        .order('price');
 
-      if (error) throw error;
-      setPrice(data);
+      if (pricesError) throw pricesError;
+
+      // 2. Pour chaque prix, récupérer ses caractéristiques
+      const pricesWithFeatures = await Promise.all((pricesData || []).map(async (price) => {
+        const { data: featureData, error: featureError } = await supabase
+          .from('discovery_flight_price_features')
+          .select(`
+            discovery_flight_features (
+              id,
+              club_id,
+              description,
+              display_order
+            )
+          `)
+          .eq('price_id', price.id);
+
+        if (featureError) throw featureError;
+
+        return {
+          ...price,
+          selectedFeatures: featureData?.map(item => item.discovery_flight_features) || []
+        };
+      }));
+
+      setPrices(pricesWithFeatures);
     } catch (error) {
-      console.error('Error fetching discovery flight price:', error);
-      toast.error('Impossible de charger le prix du vol découverte');
+      console.error('Error fetching discovery flight prices:', error);
+      toast.error('Impossible de charger les prix des vols découverte');
     }
   };
 
-  const fetchFeatures = async () => {
-    if (!clubId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('discovery_flight_features')
-        .select('*')
-        .eq('club_id', clubId)
-        .order('display_order');
-
-      if (error) throw error;
-      setFeatures(data || []);
-    } catch (error) {
-      console.error('Error fetching discovery flight features:', error);
-      toast.error('Impossible de charger les prestations');
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!clubId) return;
+  const handleAddPrice = async () => {
+    if (!clubId || !canEdit) return;
 
     setLoading(true);
-    setError(null);
-
-    const formData = new FormData(e.currentTarget);
-    const values = {
-      price: Number(formData.get('price')),
-      duration: Number(formData.get('duration')),
-      club_id: clubId,
-      updated_at: new Date().toISOString(),
-    };
-
     try {
-      if (price) {
-        // Update
-        const { error } = await supabase
-          .from('discovery_flight_prices')
-          .update(values)
-          .eq('id', price.id);
+      // 1. Insérer le nouveau prix
+      const { data: newPrice, error: insertError } = await supabase
+        .from('discovery_flight_prices')
+        .insert([{
+          club_id: clubId,
+          price: 0,
+          duration: 30,
+        }])
+        .select(`
+          id,
+          club_id,
+          price,
+          duration,
+          created_at,
+          updated_at
+        `)
+        .single();
 
-        if (error) throw error;
-      } else {
-        // Insert
-        const { error } = await supabase
-          .from('discovery_flight_prices')
-          .insert([values]);
+      if (insertError) throw insertError;
 
-        if (error) throw error;
-      }
+      // 2. Ajouter à l'état local avec un tableau vide de caractéristiques
+      const priceWithFeatures = {
+        ...newPrice,
+        selectedFeatures: []
+      };
 
-      toast.success('Prix du vol découverte mis à jour');
-      fetchPrice();
+      setPrices(current => [...current, priceWithFeatures]);
+      setEditingPrice(newPrice.id);
+      setExpandedPrice(newPrice.id);
     } catch (error) {
-      console.error('Error saving discovery flight price:', error);
-      setError('Impossible de mettre à jour le prix');
-      toast.error('Erreur lors de la mise à jour du prix');
+      console.error('Error adding price:', error);
+      toast.error('Erreur lors de l\'ajout du tarif');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleUpdatePrice = async (priceId: string, values: Partial<DiscoveryFlightPrice>) => {
+    if (!clubId || !canEdit) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('discovery_flight_prices')
+        .update({
+          ...values,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', priceId);
+
+      if (error) throw error;
+
+      setPrices(current => 
+        current.map(p => 
+          p.id === priceId 
+            ? { ...p, ...values, updated_at: new Date().toISOString() }
+            : p
+        )
+      );
+
+      toast.success('Prix mis à jour');
+    } catch (error) {
+      console.error('Error updating price:', error);
+      toast.error('Erreur lors de la mise à jour du prix');
+    } finally {
+      setLoading(false);
+      setEditingPrice(null);
+    }
+  };
+
+  const handleDeletePrice = async (priceId: string) => {
+    if (!canEdit || !confirm('Êtes-vous sûr de vouloir supprimer ce tarif ?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('discovery_flight_prices')
+        .delete()
+        .eq('id', priceId);
+
+      if (error) throw error;
+
+      setPrices(prices.filter(p => p.id !== priceId));
+      toast.success('Tarif supprimé');
+    } catch (error) {
+      console.error('Error deleting price:', error);
+      toast.error('Erreur lors de la suppression du tarif');
+    }
+  };
+
+  const handleToggleFeature = async (priceId: string, feature: DiscoveryFlightFeature) => {
+    if (!canEdit) return;
+
+    const price = prices.find(p => p.id === priceId);
+    const hasFeature = price?.selectedFeatures.some(f => f.id === feature.id);
+
+    try {
+      if (hasFeature) {
+        // Supprimer la caractéristique
+        const { error } = await supabase
+          .from('discovery_flight_price_features')
+          .delete()
+          .eq('price_id', priceId)
+          .eq('feature_id', feature.id);
+
+        if (error) throw error;
+
+        // Mise à jour optimiste
+        setPrices(current =>
+          current.map(p =>
+            p.id === priceId
+              ? { ...p, selectedFeatures: p.selectedFeatures.filter(f => f.id !== feature.id) }
+              : p
+          )
+        );
+      } else {
+        // Ajouter la caractéristique
+        const { error } = await supabase
+          .from('discovery_flight_price_features')
+          .insert([{
+            price_id: priceId,
+            feature_id: feature.id
+          }]);
+
+        if (error) throw error;
+
+        // Mise à jour optimiste
+        setPrices(current =>
+          current.map(p =>
+            p.id === priceId
+              ? { ...p, selectedFeatures: [...p.selectedFeatures, feature] }
+              : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling feature:', error);
+      toast.error('Erreur lors de la mise à jour des caractéristiques');
+      await fetchPrices(); // Recharger en cas d'erreur
+    }
+  };
+
   const handleAddFeature = async (e: React.FormEvent) => {
+    if (!canEdit) return;
+
     e.preventDefault();
     if (!clubId || !newFeature.trim()) return;
 
@@ -142,6 +266,8 @@ export default function DiscoveryFlightSettings() {
   };
 
   const handleDeleteFeature = async (id: string) => {
+    if (!canEdit) return;
+
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette prestation ?')) return;
 
     try {
@@ -187,12 +313,33 @@ export default function DiscoveryFlightSettings() {
     }
   };
 
+  const fetchFeatures = async () => {
+    if (!clubId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('discovery_flight_features')
+        .select('*')
+        .eq('club_id', clubId)
+        .order('display_order');
+
+      if (error) throw error;
+      setFeatures(data || []);
+      
+      // Recharger les prix pour mettre à jour les associations
+      await fetchPrices();
+    } catch (error) {
+      console.error('Error fetching discovery flight features:', error);
+      toast.error('Impossible de charger les caractéristiques');
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-lg font-medium text-slate-900">Prix du vol découverte</h3>
+        <h3 className="text-lg font-medium text-slate-900">Tarifs des vols découverte</h3>
         <p className="mt-1 text-sm text-slate-500">
-          Configurez le prix et la durée du vol découverte pour votre club.
+          Configurez les différents tarifs et caractéristiques des vols découverte.
         </p>
       </div>
 
@@ -202,80 +349,141 @@ export default function DiscoveryFlightSettings() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {loading ? (
-          <div className="animate-pulse space-y-6">
-            <div className="h-10 bg-slate-200 rounded"></div>
-            <div className="h-10 bg-slate-200 rounded"></div>
+      <div className="space-y-4">
+        {prices.map((price) => (
+          <div key={price.id} className="bg-white rounded-lg border border-slate-200 shadow-sm">
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {editingPrice === price.id ? (
+                    <>
+                      <input
+                        type="number"
+                        min="0"
+                        max="1000"
+                        step="0.01"
+                        value={price.price}
+                        onChange={(e) => setPrices(prices.map(p =>
+                          p.id === price.id ? { ...p, price: Number(e.target.value) } : p
+                        ))}
+                        className="w-24 rounded-lg border-slate-300"
+                      />
+                      <span>€</span>
+                      <input
+                        type="number"
+                        min="15"
+                        max="120"
+                        value={price.duration}
+                        onChange={(e) => setPrices(prices.map(p =>
+                          p.id === price.id ? { ...p, duration: Number(e.target.value) } : p
+                        ))}
+                        className="w-24 rounded-lg border-slate-300"
+                      />
+                      <span>min</span>
+                    </>
+                  ) : (
+                    <div className="text-lg font-medium">
+                      {price.price}€ - {price.duration} minutes
+                    </div>
+                  )}
+                </div>
+                
+                {canEdit && (
+                  <div className="flex items-center gap-2">
+                    {editingPrice === price.id ? (
+                      <button
+                        onClick={() => handleUpdatePrice(price.id, price)}
+                        className="p-1 text-sky-600 hover:text-sky-700"
+                      >
+                        <Check className="h-5 w-5" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setEditingPrice(price.id)}
+                        className="p-1 text-slate-400 hover:text-slate-600"
+                      >
+                        <Edit2 className="h-5 w-5" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeletePrice(price.id)}
+                      className="p-1 text-slate-400 hover:text-red-600"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => setExpandedPrice(expandedPrice === price.id ? null : price.id)}
+                      className="p-1 text-slate-400 hover:text-slate-600"
+                    >
+                      {expandedPrice === price.id ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {expandedPrice === price.id && (
+              <div className="border-t border-slate-200 p-4">
+                <h4 className="text-sm font-medium text-slate-700 mb-2">Caractéristiques incluses</h4>
+                <div className="space-y-2">
+                  {features.map((feature) => (
+                    <label key={feature.id} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={price.selectedFeatures.some(f => f.id === feature.id)}
+                        onChange={() => handleToggleFeature(price.id, feature)}
+                        disabled={!canEdit}
+                        className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                      />
+                      <span className="text-sm text-slate-600">{feature.description}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Prix (€)
-              </label>
-              <input
-                type="number"
-                name="price"
-                required
-                min="0"
-                step="0.01"
-                value={price?.price ?? ''}
-                onChange={(e) => setPrice(prev => prev ? {...prev, price: Number(e.target.value)} : null)}
-                className="w-full rounded-lg border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
-              />
-            </div>
+        ))}
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Durée (minutes)
-              </label>
-              <input
-                type="number"
-                name="duration"
-                required
-                min="0"
-                value={price?.duration ?? ''}
-                onChange={(e) => setPrice(prev => prev ? {...prev, duration: Number(e.target.value)} : null)}
-                className="w-full rounded-lg border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
-              />
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
-              >
-                {loading ? 'Enregistrement...' : 'Enregistrer'}
-              </button>
-            </div>
-          </>
+        {canEdit && (
+          <button
+            onClick={handleAddPrice}
+            disabled={loading}
+            className="w-full py-2 px-4 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-slate-400 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
+          >
+            <Plus className="h-5 w-5 inline-block mr-1" />
+            Ajouter un tarif
+          </button>
         )}
-      </form>
+      </div>
 
       <div className="border-t pt-8">
-        <h3 className="text-lg font-medium text-slate-900 mb-4">Prestations incluses</h3>
+        <h3 className="text-lg font-medium text-slate-900 mb-4">Liste des caractéristiques</h3>
         
-        <form onSubmit={handleAddFeature} className="mb-6">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newFeature}
-              onChange={(e) => setNewFeature(e.target.value)}
-              placeholder="Nouvelle prestation..."
-              className="flex-1 rounded-lg border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
-            />
-            <button
-              type="submit"
-              disabled={!newFeature.trim()}
-              className="inline-flex items-center gap-1 py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
-            >
-              <Plus className="h-4 w-4" />
-              Ajouter
-            </button>
-          </div>
-        </form>
+        {canEdit && (
+          <form onSubmit={handleAddFeature} className="mb-6">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newFeature}
+                onChange={(e) => setNewFeature(e.target.value)}
+                placeholder="Nouvelle caractéristique..."
+                className="flex-1 rounded-lg border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
+              />
+              <button
+                type="submit"
+                disabled={!newFeature.trim()}
+                className="inline-flex items-center gap-1 py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter
+              </button>
+            </div>
+          </form>
+        )}
 
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="features">
@@ -304,13 +512,15 @@ export default function DiscoveryFlightSettings() {
                           <GripVertical className="h-4 w-4" />
                         </div>
                         <span className="flex-1">{feature.description}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteFeature(feature.id)}
-                          className="p-1 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                        {canEdit && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFeature(feature.id)}
+                            className="p-1 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     )}
                   </Draggable>
