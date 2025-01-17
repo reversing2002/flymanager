@@ -34,6 +34,8 @@ export default function DiscoveryFlightSettings() {
   const [newFeature, setNewFeature] = useState('');
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [expandedPrice, setExpandedPrice] = useState<string | null>(null);
+  const [newPrice, setNewPrice] = useState({ price: 0, duration: 30 });
+  const [showNewPriceForm, setShowNewPriceForm] = useState(false);
   const { user } = useAuth();
   const clubId = user?.club?.id;
   const canEdit = hasAnyGroup(user, ['ADMIN']);
@@ -98,13 +100,12 @@ export default function DiscoveryFlightSettings() {
 
     setLoading(true);
     try {
-      // 1. Insérer le nouveau prix
-      const { data: newPrice, error: insertError } = await supabase
+      const { data: newPriceData, error: insertError } = await supabase
         .from('discovery_flight_prices')
         .insert([{
           club_id: clubId,
-          price: 0,
-          duration: 30,
+          price: newPrice.price,
+          duration: newPrice.duration,
         }])
         .select(`
           id,
@@ -118,15 +119,16 @@ export default function DiscoveryFlightSettings() {
 
       if (insertError) throw insertError;
 
-      // 2. Ajouter à l'état local avec un tableau vide de caractéristiques
       const priceWithFeatures = {
-        ...newPrice,
+        ...newPriceData,
         selectedFeatures: []
       };
 
       setPrices(current => [...current, priceWithFeatures]);
-      setEditingPrice(newPrice.id);
-      setExpandedPrice(newPrice.id);
+      setShowNewPriceForm(false);
+      setNewPrice({ price: 0, duration: 30 });
+      setExpandedPrice(newPriceData.id);
+      toast.success('Nouveau tarif ajouté');
     } catch (error) {
       console.error('Error adding price:', error);
       toast.error('Erreur lors de l\'ajout du tarif');
@@ -143,7 +145,8 @@ export default function DiscoveryFlightSettings() {
       const { error } = await supabase
         .from('discovery_flight_prices')
         .update({
-          ...values,
+          price: values.price,
+          duration: values.duration,
           updated_at: new Date().toISOString()
         })
         .eq('id', priceId);
@@ -153,7 +156,7 @@ export default function DiscoveryFlightSettings() {
       setPrices(current => 
         current.map(p => 
           p.id === priceId 
-            ? { ...p, ...values, updated_at: new Date().toISOString() }
+            ? { ...p, price: values.price, duration: values.duration, updated_at: new Date().toISOString() }
             : p
         )
       );
@@ -336,129 +339,169 @@ export default function DiscoveryFlightSettings() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h3 className="text-lg font-medium text-slate-900">Tarifs des vols découverte</h3>
-        <p className="mt-1 text-sm text-slate-500">
-          Configurez les différents tarifs et caractéristiques des vols découverte.
-        </p>
-      </div>
-
-      {error && (
-        <div className="p-4 bg-red-50 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
-
-      <div className="space-y-4">
-        {prices.map((price) => (
-          <div key={price.id} className="bg-white rounded-lg border border-slate-200 shadow-sm">
-            <div className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  {editingPrice === price.id ? (
-                    <>
-                      <input
-                        type="number"
-                        min="0"
-                        max="1000"
-                        step="0.01"
-                        value={price.price}
-                        onChange={(e) => setPrices(prices.map(p =>
-                          p.id === price.id ? { ...p, price: Number(e.target.value) } : p
-                        ))}
-                        className="w-24 rounded-lg border-slate-300"
-                      />
-                      <span>€</span>
-                      <input
-                        type="number"
-                        min="15"
-                        max="120"
-                        value={price.duration}
-                        onChange={(e) => setPrices(prices.map(p =>
-                          p.id === price.id ? { ...p, duration: Number(e.target.value) } : p
-                        ))}
-                        className="w-24 rounded-lg border-slate-300"
-                      />
-                      <span>min</span>
-                    </>
-                  ) : (
-                    <div className="text-lg font-medium">
-                      {price.price}€ - {price.duration} minutes
-                    </div>
-                  )}
-                </div>
-                
-                {canEdit && (
-                  <div className="flex items-center gap-2">
-                    {editingPrice === price.id ? (
-                      <button
-                        onClick={() => handleUpdatePrice(price.id, price)}
-                        className="p-1 text-sky-600 hover:text-sky-700"
-                      >
-                        <Check className="h-5 w-5" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setEditingPrice(price.id)}
-                        className="p-1 text-slate-400 hover:text-slate-600"
-                      >
-                        <Edit2 className="h-5 w-5" />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDeletePrice(price.id)}
-                      className="p-1 text-slate-400 hover:text-red-600"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => setExpandedPrice(expandedPrice === price.id ? null : price.id)}
-                      className="p-1 text-slate-400 hover:text-slate-600"
-                    >
-                      {expandedPrice === price.id ? (
-                        <ChevronUp className="h-5 w-5" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5" />
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {expandedPrice === price.id && (
-              <div className="border-t border-slate-200 p-4">
-                <h4 className="text-sm font-medium text-slate-700 mb-2">Caractéristiques incluses</h4>
-                <div className="space-y-2">
-                  {features.map((feature) => (
-                    <label key={feature.id} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={price.selectedFeatures.some(f => f.id === feature.id)}
-                        onChange={() => handleToggleFeature(price.id, feature)}
-                        disabled={!canEdit}
-                        className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                      />
-                      <span className="text-sm text-slate-600">{feature.description}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-medium text-slate-900">Tarifs des vols découverte</h2>
         {canEdit && (
           <button
-            onClick={handleAddPrice}
+            onClick={() => setShowNewPriceForm(true)}
+            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
             disabled={loading}
-            className="w-full py-2 px-4 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-slate-400 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
           >
-            <Plus className="h-5 w-5 inline-block mr-1" />
+            <Plus className="h-4 w-4 mr-1" />
             Ajouter un tarif
           </button>
         )}
       </div>
+
+      {showNewPriceForm && (
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
+          <h3 className="text-sm font-medium text-slate-900 mb-4">Nouveau tarif</h3>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="new-price" className="block text-sm font-medium text-slate-700">
+                Prix (€)
+              </label>
+              <input
+                type="number"
+                id="new-price"
+                value={newPrice.price}
+                onChange={(e) => setNewPrice(prev => ({ ...prev, price: Number(e.target.value) }))}
+                className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="new-duration" className="block text-sm font-medium text-slate-700">
+                Durée (minutes)
+              </label>
+              <input
+                type="number"
+                id="new-duration"
+                value={newPrice.duration}
+                onChange={(e) => setNewPrice(prev => ({ ...prev, duration: Number(e.target.value) }))}
+                className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNewPriceForm(false);
+                  setNewPrice({ price: 0, duration: 30 });
+                }}
+                className="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleAddPrice}
+                disabled={loading || newPrice.price <= 0 || newPrice.duration <= 0}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Ajout...' : 'Ajouter'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {prices.map((price) => (
+        <div key={price.id} className="bg-white rounded-lg border border-slate-200 shadow-sm">
+          <div className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {editingPrice === price.id ? (
+                  <>
+                    <input
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="0.01"
+                      value={price.price}
+                      onChange={(e) => setPrices(prices.map(p =>
+                        p.id === price.id ? { ...p, price: Number(e.target.value) } : p
+                      ))}
+                      className="w-24 rounded-lg border-slate-300"
+                    />
+                    <span>€</span>
+                    <input
+                      type="number"
+                      min="15"
+                      max="120"
+                      value={price.duration}
+                      onChange={(e) => setPrices(prices.map(p =>
+                        p.id === price.id ? { ...p, duration: Number(e.target.value) } : p
+                      ))}
+                      className="w-24 rounded-lg border-slate-300"
+                    />
+                    <span>min</span>
+                  </>
+                ) : (
+                  <div className="text-lg font-medium">
+                    {price.price}€ - {price.duration} minutes
+                  </div>
+                )}
+              </div>
+              
+              {canEdit && (
+                <div className="flex items-center gap-2">
+                  {editingPrice === price.id ? (
+                    <button
+                      onClick={() => handleUpdatePrice(price.id, price)}
+                      className="p-1 text-sky-600 hover:text-sky-700"
+                    >
+                      <Check className="h-5 w-5" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setEditingPrice(price.id)}
+                      className="p-1 text-slate-400 hover:text-slate-600"
+                    >
+                      <Edit2 className="h-5 w-5" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDeletePrice(price.id)}
+                    className="p-1 text-slate-400 hover:text-red-600"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setExpandedPrice(expandedPrice === price.id ? null : price.id)}
+                    className="p-1 text-slate-400 hover:text-slate-600"
+                  >
+                    {expandedPrice === price.id ? (
+                      <ChevronUp className="h-5 w-5" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {expandedPrice === price.id && (
+            <div className="border-t border-slate-200 p-4">
+              <h4 className="text-sm font-medium text-slate-700 mb-2">Caractéristiques incluses</h4>
+              <div className="space-y-2">
+                {features.map((feature) => (
+                  <label key={feature.id} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={price.selectedFeatures.some(f => f.id === feature.id)}
+                      onChange={() => handleToggleFeature(price.id, feature)}
+                      disabled={!canEdit}
+                      className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                    />
+                    <span className="text-sm text-slate-600">{feature.description}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
 
       <div className="border-t pt-8">
         <h3 className="text-lg font-medium text-slate-900 mb-4">Liste des caractéristiques</h3>
