@@ -451,7 +451,7 @@ const WelcomeAI = () => {
       console.log('📤 Envoi de la configuration à Claude:', requestBody);
       
       setIsTyping(true);
-      const response = await fetch(`${apiUrl}/api/claude/start`, {
+      const response = await fetch(`${apiUrl}/api/openai/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -538,7 +538,7 @@ const WelcomeAI = () => {
 
     try {
       setIsTyping(true);
-      const response = await fetch(`${apiUrl}/api/claude/chat`, {
+      const response = await fetch(`${apiUrl}/api/openai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

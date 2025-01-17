@@ -1,6 +1,7 @@
+import React from 'react';
 import { useForm } from 'react-hook-form';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -18,6 +19,7 @@ interface FormData {
   total_weight: number;
   preferred_dates?: string;
   comments?: string;
+  formula_id: number;
 }
 
 const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({ 
@@ -34,6 +36,23 @@ const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({
 
   const queryClient = useQueryClient();
   const { user } = useAuth();
+
+  // Récupérer les formules disponibles pour le club
+  const { data: formulas } = useQuery({
+    queryKey: ['discovery_flight_prices', user?.club?.id],
+    queryFn: async () => {
+      if (!user?.club?.id) return [];
+      const { data, error } = await supabase
+        .from('discovery_flight_prices')
+        .select('*')
+        .eq('club_id', user.club.id)
+        .order('duration', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.club?.id
+  });
 
   if (!user?.club?.id) {
     console.error('No club associated with user');
@@ -141,6 +160,26 @@ const NewDiscoveryFlightModal: React.FC<NewDiscoveryFlightModalProps> = ({
             />
             {errors.total_weight && (
               <p className="mt-1 text-sm text-red-600">{errors.total_weight.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Formule
+            </label>
+            <select
+              {...register('formula_id', { required: 'Formule requise' })}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">Sélectionner une formule</option>
+              {formulas?.map((formula) => (
+                <option key={formula.id} value={formula.id}>
+                  {formula.duration} minutes - {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(formula.price)}
+                </option>
+              ))}
+            </select>
+            {errors.formula_id && (
+              <p className="mt-1 text-sm text-red-600">{errors.formula_id.message}</p>
             )}
           </div>
 

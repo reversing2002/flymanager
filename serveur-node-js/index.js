@@ -43,6 +43,8 @@ const allowedOrigins = [
 // Import admin router
 const adminRouter = require('./admin');
 const meteoRouter = require('./meteo');
+const claudeRouter = require('./claude'); // Correction du chemin d'importation de Claude
+const openaiRouter = require('./openai');
 
 // Stripe webhook should be before any parsing middleware
 app.post("/api/webhooks/stripe", 
@@ -171,8 +173,10 @@ app.use(
 );
 
 // Mount admin router
-app.use('/admin', adminRouter);
+app.use('/api/admin', adminRouter);
 app.use('/api/meteo', meteoRouter);
+app.use('/api/claude', claudeRouter);
+app.use('/api/openai', openaiRouter);
 
 // Configuration Twilio
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -1243,7 +1247,15 @@ app.post("/api/stripe/create-discovery-flight-session", async (req, res) => {
     // Récupérer les détails du vol depuis Supabase
     const { data: flight, error: flightError } = await supabase
       .from('discovery_flights')
-      .select('*, clubs:club_id(name)')
+      .select(`
+        *,
+        clubs:club_id(name),
+        formula:formula_id(
+          id,
+          price,
+          duration
+        )
+      `)
       .eq('id', flightId)
       .single();
 
@@ -1257,43 +1269,19 @@ app.post("/api/stripe/create-discovery-flight-session", async (req, res) => {
       return res.status(404).json({ error: 'Vol non trouvé' });
     }
 
-    console.log('Vol trouvé:', {
-      id: flight.id,
-      club_id: flight.club_id,
-      club_name: flight.clubs?.name
-    });
-
-    // Vérifier si le prix existe déjà
-    const { data: existingPrice, error: checkError } = await supabase
-      .from('discovery_flight_prices')
-      .select('*')
-      .eq('club_id', flight.club_id);
-
-    console.log('Prix existants pour le club:', existingPrice);
-
-    // Si le prix n'existe pas, créer un prix par défaut
-    if (!existingPrice || existingPrice.length === 0) {
-      console.log('Création d\'un prix par défaut pour le club:', flight.club_id);
-      const { data: newPrice, error: insertError } = await supabase
-        .from('discovery_flight_prices')
-        .insert([
-          { club_id: flight.club_id, price: 199.99 } // Prix par défaut
-        ])
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('Erreur lors de la création du prix par défaut:', insertError);
-        return res.status(500).json({ error: 'Erreur lors de la création du prix' });
-      }
-
-      console.log('Prix par défaut créé:', newPrice);
-      priceData = newPrice;
-    } else {
-      priceData = existingPrice[0];
+    if (!flight.formula) {
+      console.error('Formule non trouvée pour le vol:', flightId);
+      return res.status(400).json({ error: 'Formule de vol non définie' });
     }
 
-    console.log('Prix final utilisé:', priceData);
+    console.log('Vol et formule trouvés:', {
+      id: flight.id,
+      club_id: flight.club_id,
+      club_name: flight.clubs?.name,
+      formula_id: flight.formula_id,
+      price: flight.formula.price,
+      duration: flight.formula.duration
+    });
 
     // Créer la session de paiement Stripe
     const session = await stripe.checkout.sessions.create({
@@ -1303,10 +1291,10 @@ app.post("/api/stripe/create-discovery-flight-session", async (req, res) => {
           price_data: {
             currency: 'eur',
             product_data: {
-              name: 'Vol découverte',
+              name: `Vol découverte - ${flight.formula.duration} minutes`,
               description: `Vol découverte - ${flight.clubs?.name || 'Réservation'}`,
             },
-            unit_amount: Math.round(priceData.price * 100), // Convertir en centimes et s'assurer que c'est un entier
+            unit_amount: Math.round(flight.formula.price * 100), // Convertir en centimes et s'assurer que c'est un entier
           },
           quantity: 1,
         },
@@ -1831,29 +1819,26 @@ async function isChecked(page, selector, options = {}) {
 
 // Fonction pour générer un token unique pour un instructeur
 async function generateInstructorCalendarToken(instructorId) {
-  const token = crypto.randomBytes(32).toString('hex');
+  console.log('🔑 Génération d\'un nouveau token pour l\'instructeur:', instructorId);
   
   // Récupérer tous les calendriers de l'instructeur
-  const { data: calendars, error: fetchError } = await supabase
+  const { data: instructor } = await supabase
     .from('instructor_calendars')
     .select('calendar_token')
-    .eq('instructor_id', instructorId);
+    .eq('instructor_id', instructorId)
+    .single();
 
-  if (fetchError) throw fetchError;
-  
-  if (!calendars || calendars.length === 0) {
-    throw new Error('Aucun calendrier trouvé pour cet instructeur');
-  }
+  const calendarToken = instructor?.calendar_token || crypto.randomBytes(32).toString('hex');
 
-  // Mettre à jour le token pour le premier calendrier
+  // Mettre à jour le token
   const { error: updateError } = await supabase
     .from('instructor_calendars')
-    .update({ calendar_token: token })
-    .eq('id', calendars[0].id);
+    .update({ calendar_token: calendarToken })
+    .eq('instructor_id', instructorId);
     
   if (updateError) throw updateError;
   
-  return token;
+  return calendarToken;
 }
 
 // Fonction pour générer le flux iCal des réservations
@@ -1868,7 +1853,7 @@ async function generateInstructorCalendar(instructorId) {
   try {
     // Récupérer les réservations de l'instructeur
     console.log('🔍 Recherche des réservations pour l\'instructeur...');
-    const { data: reservations, error: reservationsError } = await supabase
+    const { data: reservations, error } = await supabase
       .from('reservations')
       .select(`
         *,
@@ -1885,9 +1870,9 @@ async function generateInstructorCalendar(instructorId) {
       .gte('start_time', new Date().toISOString())
       .order('start_time', { ascending: true });
 
-    if (reservationsError) {
-      console.error('❌ Erreur lors de la récupération des réservations:', reservationsError);
-      throw reservationsError;
+    if (error) {
+      console.error('❌ Erreur lors de la récupération des réservations:', error);
+      throw error;
     }
 
     console.log(`📊 ${reservations?.length || 0} réservations trouvées`);

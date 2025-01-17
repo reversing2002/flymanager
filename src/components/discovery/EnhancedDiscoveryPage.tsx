@@ -10,7 +10,6 @@ import { Logo } from '../common/Logo'
 export default function EnhancedDiscoveryPage() {
   const { user } = useAuth()
   const clubId = user?.club?.id
-  const qrCodeUrl = `${window.location.origin}/discovery/new${clubId ? `?club=${clubId}` : ''}`
 
   // Récupération des informations du club
   const { data: clubData } = useQuery({
@@ -28,45 +27,57 @@ export default function EnhancedDiscoveryPage() {
     enabled: !!clubId,
   })
 
-  // Récupération des informations du vol découverte
-  const { data: discoveryFlightPrice } = useQuery({
-    queryKey: ['discoveryFlightPrice', clubId],
+  // Récupération des informations des vols découverte avec leurs caractéristiques
+  const { data: discoveryFlightPrices } = useQuery({
+    queryKey: ['discoveryFlightPrices', clubId],
     queryFn: async () => {
-      if (!clubId) return null
-      const { data, error } = await supabase
+      if (!clubId) return null;
+      
+      // 1. Récupérer les prix de base
+      const { data: pricesData, error: pricesError } = await supabase
         .from('discovery_flight_prices')
-        .select('*')
+        .select(`
+          id,
+          club_id,
+          price,
+          duration
+        `)
         .eq('club_id', clubId)
-        .single()
-      if (error) throw error
-      return data
+        .order('price');
+
+      if (pricesError) throw pricesError;
+
+      // 2. Pour chaque prix, récupérer ses caractéristiques
+      const pricesWithFeatures = await Promise.all((pricesData || []).map(async (price) => {
+        const { data: featureData, error: featureError } = await supabase
+          .from('discovery_flight_price_features')
+          .select(`
+            discovery_flight_features (
+              id,
+              description,
+              display_order
+            )
+          `)
+          .eq('price_id', price.id)
+          .order('discovery_flight_features (display_order)');
+
+        if (featureError) throw featureError;
+
+        return {
+          ...price,
+          features: featureData?.map(item => item.discovery_flight_features) || []
+        };
+      }));
+
+      return pricesWithFeatures;
     },
     enabled: !!clubId,
   })
 
-  // Récupération des prestations incluses
-  const { data: features } = useQuery({
-    queryKey: ['discoveryFlightFeatures', clubId],
-    queryFn: async () => {
-      if (!clubId) return null
-      const { data, error } = await supabase
-        .from('discovery_flight_features')
-        .select('*')
-        .eq('club_id', clubId)
-        .order('display_order')
-      if (error) throw error
-      return data || []
-    },
-    enabled: !!clubId,
-  })
-
-  const discoveryFlightInfo = {
-    price: discoveryFlightPrice?.price ? `${discoveryFlightPrice.price}€` : '130€',
-    duration: discoveryFlightPrice?.duration ? `${discoveryFlightPrice.duration} minutes` : '30 minutes',
-  }
-  
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(qrCodeUrl)
+    navigator.clipboard.writeText(`${window.location.origin}/discovery/new?${new URLSearchParams({
+      ...(clubId ? { club: clubId } : {}),
+    }).toString()}`)
     toast.success("L'URL a été copiée dans votre presse-papiers")
   }
 
@@ -99,7 +110,7 @@ export default function EnhancedDiscoveryPage() {
             Vol Découverte
           </h1>
           <p className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-3xl font-semibold text-transparent md:text-4xl lg:text-5xl">
-            {discoveryFlightInfo.price}
+            Découvrez nos formules
           </p>
           <p className="mt-4 text-xl text-white/90">
             Offrez-vous une expérience inoubliable !
@@ -114,73 +125,79 @@ export default function EnhancedDiscoveryPage() {
         </motion.div>
       </div>
 
-      {/* QR Code Section with Glass Effect */}
-      <div className="relative z-10 mx-auto -mt-20 max-w-md">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="backdrop-blur-xl backdrop-filter mx-4 rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl"
-        >
-          <div className="flex flex-col items-center justify-center">
-            <h2 className="mb-6 text-2xl font-semibold text-white">Réservez maintenant</h2>
-            <div className="rounded-xl bg-white p-4 shadow-lg transition-transform hover:scale-105">
-              <QRCodeSVG
-                value={qrCodeUrl}
-                size={200}
-                level="H"
-                includeMargin={true}
-              />
-            </div>
-            <div className="mt-6 w-full">
-              <div className="mb-2 text-sm text-gray-300">URL du formulaire :</div>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 rounded bg-white/5 px-3 py-2 font-mono text-sm text-white backdrop-blur">
-                  {qrCodeUrl}
-                </code>
-                <button
-                  onClick={copyToClipboard}
-                  className="rounded-md bg-white/10 p-2 hover:bg-white/20"
-                >
-                  <Copy className="h-4 w-4 text-white" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
       {/* Main Content with Cards */}
       <div className="mx-auto max-w-6xl px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="grid gap-8 md:grid-cols-2"
+          className="grid gap-8 md:grid-cols-2 lg:grid-cols-3"
         >
-          <div className="backdrop-blur-xl backdrop-filter rounded-xl border border-white/10 bg-white/5 p-8 text-white">
-            <h2 className="mb-8 text-2xl font-semibold">Vol découverte inclus :</h2>
-            <ul className="space-y-6">
-              {features?.map((feature, index) => (
-                <motion.li
-                  key={feature.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 * index }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="rounded-full bg-gradient-to-r from-orange-400 to-orange-600 p-1">
-                    <div className="h-2 w-2 rounded-full bg-white" />
-                  </div>
-                  <span className="text-lg">{feature.description}</span>
-                </motion.li>
-              ))}
-            </ul>
-          </div>
+          {discoveryFlightPrices?.map((formula, index) => (
+            <motion.div
+              key={formula.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 * index }}
+              className="backdrop-blur-xl backdrop-filter rounded-xl border border-white/10 bg-white/5 p-8 text-white"
+            >
+              <div className="mb-6 text-center">
+                <h2 className="text-3xl font-bold">{formula.price}€</h2>
+                <p className="text-lg text-white/70">{formula.duration} minutes</p>
+              </div>
+              <ul className="space-y-4 mb-8">
+                {formula.features?.map((feature, featureIndex) => (
+                  <motion.li
+                    key={feature.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 * featureIndex }}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="rounded-full bg-gradient-to-r from-orange-400 to-orange-600 p-1">
+                      <div className="h-2 w-2 rounded-full bg-white" />
+                    </div>
+                    <span className="text-lg">{feature.description}</span>
+                  </motion.li>
+                ))}
+              </ul>
+              
+              {/* QR Code spécifique à la formule */}
+              <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="rounded-xl bg-white p-4 shadow-lg transition-transform hover:scale-105">
+                  <QRCodeSVG
+                    value={`${window.location.origin}/discovery/new?${new URLSearchParams({
+                      ...(clubId ? { club: clubId } : {}),
+                      formula: formula.id
+                    }).toString()}`}
+                    size={150}
+                    level="H"
+                    includeMargin={true}
+                  />
+                </div>
+              </div>
 
-          <div className="backdrop-blur-xl backdrop-filter rounded-xl border border-white/10 bg-white/5 p-8 text-white">
+              <div>
+                <a
+                  href={`/discovery/new?${new URLSearchParams({
+                    ...(clubId ? { club: clubId } : {}),
+                    formula: formula.id
+                  }).toString()}`}
+                  className="block w-full rounded-lg bg-gradient-to-r from-orange-400 to-orange-600 px-4 py-3 text-center font-semibold text-white transition-transform hover:scale-105"
+                >
+                  Réserver maintenant
+                </a>
+              </div>
+            </motion.div>
+          ))}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="backdrop-blur-xl backdrop-filter rounded-xl border border-white/10 bg-white/5 p-8 text-white md:col-span-2 lg:col-span-3"
+          >
             <h3 className="mb-8 text-2xl font-semibold">Nous contacter</h3>
-            <div className="space-y-6 text-gray-200">
+            <div className="grid gap-6 md:grid-cols-3">
               {[
                 { icon: MapPin, text: clubData?.address || "Aérodrome" },
                 { icon: Phone, text: clubData?.phone || "Contactez-nous" },
@@ -198,7 +215,7 @@ export default function EnhancedDiscoveryPage() {
                 </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </div>
     </div>

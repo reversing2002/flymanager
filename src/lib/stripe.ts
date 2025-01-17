@@ -20,6 +20,7 @@ interface DiscoveryFlightData {
   flightId: string;
   customerEmail: string;
   customerPhone: string;
+  formula_id: string;
 }
 
 // Utility functions for Stripe

@@ -16,11 +16,13 @@ interface FormData {
   preferred_dates?: string
   comments?: string
   club_id: string
+  formula_id: string
 }
 
 export default function NewDiscoveryFlightPage() {
   const [searchParams] = useSearchParams()
   const clubId = searchParams.get('club')
+  const formulaId = searchParams.get('formula')
 
   const { data: club } = useQuery({
     queryKey: ['club', clubId],
@@ -35,6 +37,44 @@ export default function NewDiscoveryFlightPage() {
       return data
     },
     enabled: !!clubId,
+  })
+
+  const { data: selectedFormula } = useQuery({
+    queryKey: ['discoveryFlightFormula', clubId, formulaId],
+    queryFn: async () => {
+      if (!clubId || !formulaId) return null
+
+      // 1. Récupérer la formule
+      const { data: priceData, error: priceError } = await supabase
+        .from('discovery_flight_prices')
+        .select('*')
+        .eq('id', formulaId)
+        .eq('club_id', clubId)
+        .single()
+
+      if (priceError) throw priceError
+
+      // 2. Récupérer les caractéristiques de la formule
+      const { data: featureData, error: featureError } = await supabase
+        .from('discovery_flight_price_features')
+        .select(`
+          discovery_flight_features (
+            id,
+            description,
+            display_order
+          )
+        `)
+        .eq('price_id', formulaId)
+        .order('discovery_flight_features (display_order)')
+
+      if (featureError) throw featureError
+
+      return {
+        ...priceData,
+        features: featureData?.map(item => item.discovery_flight_features) || []
+      }
+    },
+    enabled: !!clubId && !!formulaId,
   })
 
   const { data: discoveryFlightPrice } = useQuery({
@@ -59,11 +99,16 @@ export default function NewDiscoveryFlightPage() {
   } = useForm<FormData>({
     defaultValues: {
       club_id: clubId || '',
+      formula_id: formulaId || '',
     },
   })
 
   const onSubmit = async (data: FormData) => {
     try {
+      if (!selectedFormula) {
+        throw new Error('Aucune formule sélectionnée');
+      }
+
       // Créer la réservation dans Supabase
       const { data: flightData, error: flightError } = await supabase
         .from('discovery_flights')
@@ -76,6 +121,7 @@ export default function NewDiscoveryFlightPage() {
             preferred_dates: data.preferred_dates,
             comments: data.comments,
             club_id: data.club_id,
+            formula_id: data.formula_id,
             status: 'PENDING',
           },
         ])
@@ -109,6 +155,7 @@ export default function NewDiscoveryFlightPage() {
         flightId: flightData.id,
         customerEmail: data.contact_email,
         customerPhone: data.contact_phone,
+        formula_id: selectedFormula.id
       })
 
       await redirectToCheckout(sessionId)
@@ -151,8 +198,8 @@ export default function NewDiscoveryFlightPage() {
             Réserver votre vol découverte
           </h1>
           <p className="text-xl text-white/80">
-            {discoveryFlightPrice?.duration || 30} minutes de vol pour{' '}
-            {discoveryFlightPrice?.price || 130}€
+            {selectedFormula?.duration || 30} minutes de vol pour{' '}
+            {selectedFormula?.price || 130}€
           </p>
         </motion.div>
       </div>
@@ -165,6 +212,19 @@ export default function NewDiscoveryFlightPage() {
           transition={{ delay: 0.3 }}
           className="backdrop-blur-xl backdrop-filter rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl"
         >
+          {selectedFormula?.features && selectedFormula.features.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-white mb-4">Cette formule inclut :</h2>
+              <ul className="space-y-2">
+                {selectedFormula.features.map((feature: any) => (
+                  <li key={feature.id} className="flex items-center gap-2 text-white/80">
+                    <div className="h-1.5 w-1.5 rounded-full bg-orange-500"></div>
+                    <span>{feature.description}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Contact Information */}
             <div className="grid gap-6 md:grid-cols-2">
@@ -238,6 +298,9 @@ export default function NewDiscoveryFlightPage() {
               <div>
                 <label className="block text-sm font-medium text-white">
                   Poids total (kg)
+                  <span className="ml-1 text-xs text-white/60">
+                    (maximum 200kg)
+                  </span>
                 </label>
                 <div className="relative">
                   <Weight className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-white/50" />
@@ -248,7 +311,7 @@ export default function NewDiscoveryFlightPage() {
                     {...register('total_weight', {
                       required: 'Le poids total est requis',
                       min: { value: 30, message: "Le poids doit être d'au moins 30kg" },
-                      max: { value: 300, message: 'Le poids total ne peut pas dépasser 300kg' },
+                      max: { value: 200, message: 'Le poids total ne peut pas dépasser 200kg' },
                     })}
                   />
                 </div>

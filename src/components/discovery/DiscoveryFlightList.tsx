@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { createStripeSession, redirectToCheckout } from '../../lib/stripe';
 import { 
   Users, 
   Calendar, 
@@ -17,10 +18,11 @@ import {
   UserCircle,
   CheckCircle,
   CheckCheck,
-  ClipboardCheck,
   FileCheck,
   FileX,
-  Lock
+  Lock,
+  CreditCard,
+  ClipboardCheck
 } from 'lucide-react';
 import { 
   Button,
@@ -85,6 +87,11 @@ const DiscoveryFlightList: React.FC<DiscoveryFlightListProps> = ({ viewMode = 'l
             id,
             registration,
             name
+          ),
+          formula:discovery_flight_prices!discovery_flights_formula_id_fkey(
+            id,
+            price,
+            duration
           )
         `)
         .order('date', { ascending: true })
@@ -240,6 +247,27 @@ Dates préférées : ${flight.preferred_dates}`;
     } catch (err) {
       console.error('Erreur:', err);
       toast.error('Une erreur est survenue');
+    }
+  };
+
+  const handlePaymentClick = async (flight: DiscoveryFlight) => {
+    try {
+      if (!flight.formula) {
+        toast.error('Aucune formule sélectionnée pour ce vol');
+        return;
+      }
+
+      const sessionId = await createStripeSession({
+        flightId: flight.id,
+        customerEmail: flight.contact_email || '',
+        customerPhone: flight.contact_phone || '',
+        formula_id: flight.formula.id
+      });
+
+      await redirectToCheckout(sessionId);
+    } catch (error) {
+      console.error('Erreur lors du paiement:', error);
+      toast.error('Erreur lors de l\'initialisation du paiement');
     }
   };
 
@@ -509,6 +537,20 @@ Dates préférées : ${flight.preferred_dates}`;
                             />
                           </Tooltip>
 
+                          {!flight.payment_status && flight.formula && (
+                            <Tooltip label="Payer par carte bancaire">
+                              <Button
+                                size="md"
+                                colorScheme="green"
+                                onClick={() => handlePaymentClick(flight)}
+                                leftIcon={<CreditCard className="h-5 w-5" />}
+                                className="shadow-sm hover:shadow-md transition-all duration-200"
+                              >
+                                Payer {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(flight.formula.price)}
+                              </Button>
+                            </Tooltip>
+                          )}
+
                           {canAddFlight && (
                             <Button
                               size="md"
@@ -530,6 +572,14 @@ Dates préférées : ${flight.preferred_dates}`;
                         <Users className="h-5 w-5 text-gray-500" />
                         <span>{flight.passenger_count} passager(s)</span>
                       </div>
+                      {flight.formula && (
+                        <div className="flex items-center gap-2 bg-gray-50/80 p-3 rounded-lg">
+                          <Clock className="h-5 w-5 text-gray-500" />
+                          <span>
+                            {flight.formula.duration} min - {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(flight.formula.price)}
+                          </span>
+                        </div>
+                      )}
                       {flight.preferred_dates && (
                         <div className="flex items-center gap-2 bg-gray-50/80 p-3 rounded-lg">
                           <Calendar className="h-5 w-5 text-gray-500" />
@@ -555,6 +605,16 @@ Dates préférées : ${flight.preferred_dates}`;
                         {getStatusIcon(flight.status)}
                         <span className="truncate font-medium">
                           {getStatusLabel(flight.status)}
+                        </span>
+                      </div>
+                      <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                        flight.payment_status === 'paid' ? 'bg-green-50' : 'bg-yellow-50'
+                      }`}>
+                        <CreditCard className={`h-5 w-5 ${
+                          flight.payment_status === 'paid' ? 'text-green-500' : 'text-yellow-500'
+                        }`} />
+                        <span className="truncate font-medium">
+                          {flight.payment_status === 'paid' ? 'Payé' : 'En attente de paiement'}
                         </span>
                       </div>
                     </div>
