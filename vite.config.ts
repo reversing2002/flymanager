@@ -29,9 +29,11 @@ export default defineConfig({
           "react-vendor": ["react", "react-dom", "react-router-dom"],
           "stripe-vendor": ["@stripe/stripe-js"],
           "date-vendor": ["date-fns"],
+          "pdf-vendor": ["pdfjs-dist"],
         },
       },
     },
     chunkSizeWarningLimit: 1000
   },
+  publicDir: 'public',
 });

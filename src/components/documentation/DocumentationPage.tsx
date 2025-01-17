@@ -123,13 +123,13 @@ const DocumentationPage: React.FC = () => {
     setEditingDocument(document);
   };
 
-  const handleDownloadDocument = async (document: Document) => {
+  const handleDownloadDocument = async (doc: Document) => {
     try {
-      const blob = await downloadDocument(document.file_url);
+      const blob = await downloadDocument(doc.file_url);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = document.title;
+      a.download = doc.title;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

@@ -10,6 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import EditDocumentModal from './EditDocumentModal';
 import NewDocumentCard from './NewDocumentCard';
+import PDFViewer from './PDFViewer';
 
 interface DocumentListProps {
   documents: Document[];
@@ -39,6 +40,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
   const { user } = useAuth();
   const isAdmin = hasAnyGroup(user, ['ADMIN']);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [selectedPDF, setSelectedPDF] = useState<Document | null>(null);
 
   const handleMoveDocument = async (currentIndex: number, direction: 'up' | 'down') => {
     if (!isAdmin) return;
@@ -143,6 +145,14 @@ const DocumentList: React.FC<DocumentListProps> = ({
     }
   };
 
+  const handleViewDocument = (document: Document) => {
+    if (document.file_type === 'PDF') {
+      setSelectedPDF(document);
+    } else {
+      onDownload(document);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-48">
@@ -172,32 +182,15 @@ const DocumentList: React.FC<DocumentListProps> = ({
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="mt-4 space-y-4">
           {sortedDocuments.map((document, index) => (
             <div
               key={document.id}
-              className="bg-white rounded-lg shadow-sm border p-4"
+              onClick={() => handleViewDocument(document)}
+              className="group relative flex items-center justify-between rounded-lg border bg-white p-4 shadow-sm transition-all hover:shadow-md hover:cursor-pointer"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                 <div className="flex items-start sm:items-center gap-3">
-                  {isAdmin && (
-                    <div className="hidden sm:flex flex-col gap-1">
-                      <button
-                        onClick={() => handleMoveDocument(index, 'up')}
-                        disabled={index === 0}
-                        className={`p-1 rounded hover:bg-gray-100 ${index === 0 ? 'text-gray-300' : 'text-gray-500'}`}
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleMoveDocument(index, 'down')}
-                        disabled={index === sortedDocuments.length - 1}
-                        className={`p-1 rounded hover:bg-gray-100 ${index === sortedDocuments.length - 1 ? 'text-gray-300' : 'text-gray-500'}`}
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
                   {getFileIcon(document.file_type)}
                   <div>
                     <h3 className="font-medium">{document.title}</h3>
@@ -217,61 +210,68 @@ const DocumentList: React.FC<DocumentListProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 mt-2 sm:mt-0 border-t sm:border-t-0 pt-2 sm:pt-0">
+                <div 
+                  className="flex items-center space-x-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {isAdmin && (
-                    <div className="flex sm:hidden gap-2 mr-2">
-                      <button
-                        onClick={() => handleMoveDocument(index, 'up')}
-                        disabled={index === 0}
-                        className={`p-2 rounded-lg border ${index === 0 ? 'text-gray-300 border-gray-200' : 'text-gray-500 border-gray-300'}`}
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleMoveDocument(index, 'down')}
-                        disabled={index === sortedDocuments.length - 1}
-                        className={`p-2 rounded-lg border ${index === sortedDocuments.length - 1 ? 'text-gray-300 border-gray-200' : 'text-gray-500 border-gray-300'}`}
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <>
+                      <div className="flex flex-row sm:flex-col gap-1">
+                        <button
+                          onClick={() => handleMoveDocument(index, 'up')}
+                          disabled={index === 0}
+                          className={`rounded p-1 hover:bg-gray-100 ${index === 0 ? 'text-gray-300' : 'text-gray-500'}`}
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleMoveDocument(index, 'down')}
+                          disabled={index === sortedDocuments.length - 1}
+                          className={`rounded p-1 hover:bg-gray-100 ${index === sortedDocuments.length - 1 ? 'text-gray-300' : 'text-gray-500'}`}
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </>
                   )}
                   <button
-                    onClick={() => handleDownload(document)}
-                    className="p-2 text-slate-400 hover:text-sky-600 rounded-lg hover:bg-sky-50 border border-gray-200"
-                    title="Télécharger"
+                    onClick={() => handleViewDocument(document)}
+                    className="rounded p-2 text-blue-600 hover:bg-blue-50"
+                    title="Voir le document"
                   >
-                    <Download className="h-4 w-4" />
+                    <Eye className="h-4 w-4" />
                   </button>
-
-                  {onEdit && (
-                    <button
-                      onClick={() => onEdit(document)}
-                      className="p-2 text-slate-400 hover:text-sky-600 rounded-lg hover:bg-sky-50 border border-gray-200"
-                      title="Modifier"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                  )}
-
-                  {onDelete && (
-                    <button
-                      onClick={() => {
-                        if (window.confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
-                          onDelete(document.id);
-                        }
-                      }}
-                      className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 border border-gray-200"
-                      title="Supprimer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={() => onEdit(document)}
+                        className="rounded p-2 text-gray-500 hover:bg-gray-100"
+                        title="Modifier"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(document.id)}
+                        className="rounded p-2 text-red-500 hover:bg-red-50"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {selectedPDF && (
+        <PDFViewer
+          url={selectedPDF.file_url}
+          isOpen={!!selectedPDF}
+          onClose={() => setSelectedPDF(null)}
+        />
       )}
 
       {editingDocument && (
