@@ -57,6 +57,14 @@ const MemberList = () => {
     loadMembers();
   }, []);
 
+  // Vérifier si l'utilisateur est admin
+  const isAdmin = hasAnyGroup(user, ['admin']);
+
+  // Définir le statut de filtrage par défaut en fonction du rôle
+  useEffect(() => {
+    setSelectedMembershipStatus(isAdmin ? 'all' : 'valid');
+  }, [isAdmin]);
+
   const filteredMembers = members.filter((member) => {
     const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/);
     const memberFields = [
@@ -79,6 +87,12 @@ const MemberList = () => {
       return isAfter(validUntil, new Date());
     })();
 
+    // Si l'utilisateur n'est pas admin, ne montrer que les cotisations valides
+    if (!isAdmin && !isMembershipValid) {
+      return false;
+    }
+
+    // Pour les admins, appliquer le filtre sélectionné
     const matchesMembershipStatus =
       selectedMembershipStatus === "all" ||
       (selectedMembershipStatus === "valid" && isMembershipValid) ||
