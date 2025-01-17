@@ -1062,7 +1062,31 @@ ${stations.slice(1).map(s =>
                           lineHeight: 1.6,
                         }}
                       >
-                        {message.content}
+                        {message.content.split('\n').map((line, lineIndex) => {
+                          // Traiter les lignes qui commencent par ###
+                          if (line.startsWith('###')) {
+                            return (
+                              <>
+                                {lineIndex > 0 && <span style={{ display: 'block', height: '1em' }} />}
+                                <span style={{ display: 'block', textDecoration: 'underline' }}>
+                                  {line.replace(/^###\s*/, '')}
+                                </span>
+                              </>
+                            );
+                          }
+                          
+                          // Traiter le texte en gras
+                          return (
+                            <span key={lineIndex} style={{ display: 'block' }}>
+                              {line.split(/(\*\*.*?\*\*)/).map((part, index) => {
+                                if (part.startsWith('**') && part.endsWith('**')) {
+                                  return <strong key={index}>{part.slice(2, -2)}</strong>;
+                                }
+                                return part;
+                              })}
+                            </span>
+                          );
+                        })}
                       </Typography>
                       <Typography
                         variant="caption"
@@ -1086,7 +1110,7 @@ ${stations.slice(1).map(s =>
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, scale: 0.8 }}
               >
                 <Box 
                   sx={{ 
