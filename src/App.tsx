@@ -98,6 +98,16 @@ function App() {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Router>
             <AuthProvider>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: '#ffffff',
+                    color: '#333333',
+                  },
+                }}
+              />
               <Routes>
                 {/* Pages publiques */}
                 <Route element={<PublicLayout />}>
@@ -229,7 +239,6 @@ function App() {
                   <Route path="/accounting" element={<ProtectedRoute><SimpleAccountingView /></ProtectedRoute>} />
                 </Route>
               </Routes>
-              <Toaster position="bottom-right" />
             </AuthProvider>
           </Router>
         </LocalizationProvider>
