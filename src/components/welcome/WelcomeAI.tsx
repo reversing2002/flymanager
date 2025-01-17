@@ -28,12 +28,15 @@ import toast from 'react-hot-toast';
 import { Editor } from '@monaco-editor/react';
 import ImportValidationBox from './ImportValidationBox';
 import { useNavigate } from 'react-router-dom';
+import { resetClubData } from '../../lib/queries/dataReset';
+import JsonEditorModal from '../progression/admin/JsonEditorModal';
 
 interface Message {
   id: string;
   role: 'assistant' | 'user';
   content: string;
   timestamp: Date;
+  config?: any;
 }
 
 interface WeatherStation {
@@ -115,6 +118,65 @@ const ConfigEditor = ({ config, onChange }: { config: Partial<ClubConfig>; onCha
   );
 };
 
+interface JsonConfigModalProps {
+  open: boolean;
+  onClose: () => void;
+  config: any;
+}
+
+const JsonConfigModal: React.FC<JsonConfigModalProps> = ({ open, onClose, config }) => {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      closeAfterTransition
+      slots={{ backdrop: Fade }}
+    >
+      <Fade in={open}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: { xs: '90%', sm: '600px' },
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            boxShadow: 24,
+            p: 4,
+            maxHeight: '80vh',
+            overflow: 'auto',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <Typography variant="h6" component="h2">
+              Configuration OpenAI
+            </Typography>
+            <IconButton onClick={onClose} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Box sx={{ height: '400px', border: '1px solid rgba(0, 0, 0, 0.12)', borderRadius: 1 }}>
+            <Editor
+              height="100%"
+              defaultLanguage="json"
+              value={JSON.stringify(config, null, 2)}
+              options={{
+                readOnly: true,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                wordWrap: 'on',
+                theme: 'vs-dark',
+              }}
+            />
+          </Box>
+        </Box>
+      </Fade>
+    </Modal>
+  );
+};
+
 const WelcomeAI = () => {
   const { user, session } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -129,6 +191,8 @@ const WelcomeAI = () => {
   const [jsonContent, setJsonContent] = useState<string>('');
   const [showConfig, setShowConfig] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [conversationConfig, setConversationConfig] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
@@ -320,7 +384,9 @@ const WelcomeAI = () => {
           type: aircraft.type,
           registration: aircraft.registration,
           hourlyRate: aircraft.hourly_rate,
-          capacity: aircraft.capacity
+          capacity: aircraft.capacity || (aircraft.type === 'PLANE' ? 4 : 2), // 4 places pour avion, 2 pour ULM
+          status: 'AVAILABLE',
+          hour_format: 'CLASSIC'
         })) || [],
         members: existingMembers?.map(member => ({
           role: member.role,
@@ -417,14 +483,42 @@ const WelcomeAI = () => {
     }
   };
 
+  const extractConfigFromMessage = (content: string): any | null => {
+    const configMatch = content.match(/<config>([\s\S]*?)<\/config>/);
+    if (configMatch && configMatch[1]) {
+      try {
+        return JSON.parse(configMatch[1]);
+      } catch (error) {
+        console.error('Erreur lors du parsing de la configuration:', error);
+        return null;
+      }
+    }
+    return null;
+  };
+
   const handleAssistantMessage = (content: string) => {
     const newMessage: Message = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       role: 'assistant',
-      content,
+      content: cleanConfigFromMessage(content),
       timestamp: new Date(),
     };
+
+    // Extraire la configuration si présente
+    const config = extractConfigFromMessage(content);
+    if (config) {
+      newMessage.config = config;
+      setConversationConfig(prev => [...prev, config]);
+      
+      // Mettre à jour clubConfig avec les nouvelles données
+      setClubConfig(prevConfig => ({
+        ...prevConfig,
+        ...config,
+      }));
+    }
+
     setMessages(prev => [...prev, newMessage]);
+    setIsTyping(false);
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -491,6 +585,11 @@ const WelcomeAI = () => {
         throw new Error("Club ID non trouvé");
       }
 
+      // Réinitialiser les données du club avant l'import
+      console.log('Réinitialisation des données du club...');
+      await resetClubData(user.club.id, user.id);
+      console.log('Réinitialisation terminée');
+
       // Préparation des données des avions
       const aircraftData = clubConfig.aircrafts?.map(aircraft => {
         const formattedAircraft = {
@@ -500,7 +599,7 @@ const WelcomeAI = () => {
           registration: aircraft.registration,
           hourly_rate: Number(aircraft.hourlyRate),
           capacity: aircraft.capacity || (aircraft.type === 'PLANE' ? 4 : 2), // 4 places pour avion, 2 pour ULM
-          status: 'AVAILABLE',
+          status: aircraft.status || 'AVAILABLE', // Utiliser le statut du JSON ou 'AVAILABLE' par défaut
           hour_format: 'CLASSIC'
         };
         console.log('Aircraft data:', formattedAircraft);
@@ -510,15 +609,14 @@ const WelcomeAI = () => {
       // Préparation des données des membres
       const memberData = clubConfig.members?.map(member => {
         const formattedMember = {
-          club_id: user.club.id,
+          id: crypto.randomUUID(),
           first_name: member.firstName,
           last_name: member.lastName,
           email: member.email,
-          role: member.role,
-          status: 'ACTIVE'
+          login: member.email // Utiliser l'email comme login par défaut
         };
         console.log('Member data:', formattedMember);
-        return formattedMember;
+        return { ...formattedMember, role: member.role }; // On garde le rôle pour plus tard
       });
 
       console.log('Données préparées :', { aircraftData, memberData });
@@ -573,41 +671,65 @@ const WelcomeAI = () => {
         console.log('Import des membres...');
         
         for (const member of memberData) {
-          // Vérifier si le membre existe déjà
-          const { data: existingMember, error: findError } = await supabase
-            .from('users')  // Correction du nom de la table
-            .select('id')
-            .eq('email', member.email)
-            .maybeSingle();  // La politique RLS filtre déjà les utilisateurs du club
+          try {
+            // 1. Créer l'utilisateur dans public.users
+            const { data: newUser, error: userError } = await supabase
+              .from('users')
+              .insert({
+                first_name: member.first_name,
+                last_name: member.last_name,
+                email: member.email,
+                login: member.email // Utiliser l'email comme login par défaut
+              })
+              .select()
+              .single();
 
-          if (findError) {
-            console.error('Erreur lors de la recherche du membre:', findError);
-            continue;
-          }
-
-          if (existingMember) {
-            // Mise à jour du membre existant
-            const { error: updateError } = await supabase
-              .from('users')  // Correction du nom de la table
-              .update(member)
-              .eq('id', existingMember.id);
-
-            if (updateError) {
-              console.error('Erreur lors de la mise à jour du membre:', updateError);
-            } else {
-              console.log('Membre mis à jour:', member.email);
+            if (userError) {
+              console.error('Erreur lors de la création de l\'utilisateur:', userError);
+              continue;
             }
-          } else {
-            // Création d'un nouveau membre
-            const { error: insertError } = await supabase
-              .from('users')  // Correction du nom de la table
-              .insert(member);
 
-            if (insertError) {
-              console.error('Erreur lors de la création du membre:', insertError);
-            } else {
-              console.log('Nouveau membre créé:', member.email);
+            // 2. Créer l'utilisateur dans auth.users
+            const { error: authError } = await supabase.rpc(
+              'create_auth_user',
+              {
+                p_email: member.email,
+                p_login: member.email,
+                p_password: 'ChangeMe123!', // Mot de passe temporaire
+                p_role: member.role,
+                p_user_id: newUser.id,
+                p_user_metadata: {
+                  first_name: member.first_name,
+                  last_name: member.last_name,
+                  login: member.email
+                }
+              }
+            );
+
+            if (authError) {
+              console.error('Erreur lors de la création de l\'utilisateur auth:', authError);
+              // Supprimer l'utilisateur public si l'auth échoue
+              await supabase.from('users').delete().eq('id', newUser.id);
+              continue;
             }
+
+            // 3. Ajouter l'utilisateur comme membre du club
+            const { error: memberError } = await supabase.rpc(
+              'add_club_member',
+              {
+                p_club_id: user.club.id,
+                p_user_id: newUser.id
+              }
+            );
+
+            if (memberError) {
+              console.error('Erreur lors de l\'ajout au club:', memberError);
+              continue;
+            }
+
+            console.log('Nouveau membre créé:', member.email);
+          } catch (error) {
+            console.error('Erreur lors du traitement du membre:', error);
           }
         }
       }
@@ -627,26 +749,51 @@ const WelcomeAI = () => {
 
   const applyConfig = async () => {
     try {
-      if (!user?.club_id) throw new Error("Club ID non trouvé");
+      if (!user?.club?.id) throw new Error("Club ID non trouvé");
 
       // Insérer les avions
       if (clubConfig.aircrafts?.length) {
         const aircraftWithClubId = clubConfig.aircrafts.map(aircraft => ({
           ...aircraft,
-          club_id: user.club_id,
-          status: 'AVAILABLE',
+          club_id: user.club.id,
+          status: aircraft.status || 'AVAILABLE', // Utiliser le statut du JSON ou 'AVAILABLE' par défaut
         }));
         await supabase.from('aircraft').insert(aircraftWithClubId);
       }
 
       // Insérer les membres
       if (clubConfig.members?.length) {
-        const membersWithClubId = clubConfig.members.map(member => ({
-          ...member,
-          club_id: user.club_id,
-          status: 'ACTIVE',
-        }));
-        await supabase.from('users').insert(membersWithClubId);
+        for (const member of clubConfig.members) {
+          try {
+            // 1. Créer l'utilisateur avec un UUID
+            const { data: newUser, error: userError } = await supabase
+              .from('users')
+              .insert({
+                id: crypto.randomUUID(),
+                ...member,
+                status: 'ACTIVE'
+              })
+              .select()
+              .single();
+
+            if (userError) throw userError;
+
+            // 2. Créer la relation club_member
+            if (newUser) {
+              const { error: memberError } = await supabase
+                .from('club_members')
+                .insert({
+                  user_id: newUser.id,
+                  club_id: user.club.id
+                });
+
+              if (memberError) throw memberError;
+            }
+          } catch (error) {
+            console.error('Erreur lors de la création du membre:', error);
+            throw error;
+          }
+        }
       }
 
       // Mettre à jour les paramètres
@@ -654,7 +801,7 @@ const WelcomeAI = () => {
         await supabase
           .from('club_settings')
           .upsert({
-            club_id: user.club_id,
+            club_id: user.club.id,
             ...clubConfig.settings,
           });
       }
@@ -776,6 +923,10 @@ ${stations.slice(1).map(s =>
       //handleAssistantMessage('Votre navigateur ne supporte pas la géolocalisation. Pourriez-vous me donner les coordonnées de votre club manuellement ?');
     }
   }, []);
+
+  const handleOpenConfigModal = () => {
+    setIsConfigModalOpen(true);
+  };
 
   return (
     <>
@@ -1098,6 +1249,14 @@ ${stations.slice(1).map(s =>
                   <SendIcon />
                 </IconButton>
               </Tooltip>
+              <Button
+                variant="outlined"
+                startIcon={<SettingsIcon />}
+                onClick={handleOpenConfigModal}
+                size="small"
+              >
+                Voir la configuration
+              </Button>
               {configComplete && (
                 <Tooltip title="Créer mon club">
                   <Button
@@ -1124,52 +1283,16 @@ ${stations.slice(1).map(s =>
         </Paper>
 
         {/* Modal de configuration */}
-        {false && (
-          <Modal
-            open={showConfig}
-            onClose={() => setShowConfig(false)}
-            closeAfterTransition
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Fade in={showConfig}>
-              <Paper
-                sx={{
-                  width: '90%',
-                  maxWidth: 800,
-                  maxHeight: '90vh',
-                  overflow: 'auto',
-                  p: 3,
-                  outline: 'none',
-                  borderRadius: 2,
-                  bgcolor: '#2D2D2D',
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                }}
-              >
-                <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="h6" sx={{ color: '#FFFFFF' }}>Configuration</Typography>
-                  <IconButton 
-                    onClick={() => setShowConfig(false)}
-                    sx={{ 
-                      color: '#FFFFFF',
-                      '&:hover': {
-                        bgcolor: 'rgba(255, 255, 255, 0.1)',
-                      },
-                    }}
-                  >
-                    <CloseIcon />
-                  </IconButton>
-                </Box>
-                <ConfigEditor config={clubConfig} onChange={setClubConfig} />
-                <ImportValidationBox config={clubConfig} />
-              </Paper>
-            </Fade>
-          </Modal>
-        )}
+        <JsonEditorModal
+          isOpen={isConfigModalOpen}
+          onClose={() => setIsConfigModalOpen(false)}
+          value={JSON.stringify({
+            currentConfig: clubConfig,
+            configHistory: conversationConfig
+          }, null, 2)}
+          readOnly
+          mode="view"
+        />
       </Box>
     </>
   );
