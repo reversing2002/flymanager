@@ -163,6 +163,7 @@ const CreateClubPage = () => {
     sx: {
       mb: 3,
       "& .MuiOutlinedInput-root": {
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
         "& fieldset": {
           borderColor: "rgba(255, 255, 255, 0.23)",
         },
@@ -174,10 +175,13 @@ const CreateClubPage = () => {
         },
       },
       "& .MuiInputLabel-root": {
-        color: "rgba(255, 255, 255, 0.7)",
+        color: "#fff",
       },
       "& .MuiOutlinedInput-input": {
-        color: "white",
+        color: "#fff",
+      },
+      "& .MuiFormHelperText-root": {
+        color: "rgba(255, 255, 255, 0.7)",
       },
     },
   };
@@ -295,20 +299,34 @@ const CreateClubPage = () => {
           activeStep={activeStep}
           alternativeLabel
           sx={{
-            mb: 6,
-            "& .MuiStepLabel-label": {
-              color: "rgba(255, 255, 255, 0.7)",
-              "&.Mui-active": {
-                color: "white",
+            mb: 4,
+            '& .MuiStepLabel-label': {
+              color: 'rgba(255, 255, 255, 0.5)',
+              '&.Mui-completed': {
+                color: '#90caf9',
+              },
+              '&.Mui-active': {
+                color: '#fff',
               },
             },
-            "& .MuiStepIcon-root": {
-              color: "rgba(255, 255, 255, 0.3)",
-              "&.Mui-active": {
-                color: "#3f51b5",
+            '& .MuiStepIcon-root': {
+              color: 'rgba(255, 255, 255, 0.3)',
+              '&.Mui-completed': {
+                color: '#90caf9',
               },
-              "&.Mui-completed": {
-                color: "#4caf50",
+              '&.Mui-active': {
+                color: '#3f51b5',
+              },
+            },
+            '& .MuiStepConnector-line': {
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+            },
+            '& .MuiStepConnector-root.Mui-completed .MuiStepConnector-line': {
+              borderColor: '#90caf9',
+            },
+            '& .MuiStepLabel-iconContainer': {
+              '& .MuiSvgIcon-root': {
+                fontSize: '2rem',
               },
             },
           }}
@@ -349,45 +367,33 @@ const CreateClubPage = () => {
             </Typography>
           )}
 
-          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
             <Button
-              variant="outlined"
+              startIcon={<ArrowBackIcon />}
               onClick={handleBack}
               disabled={activeStep === 0}
-              startIcon={<ArrowBackIcon />}
               sx={{
-                color: "white",
-                borderColor: "rgba(255, 255, 255, 0.23)",
-                "&:hover": {
-                  borderColor: "white",
+                color: "#fff",
+                "&.Mui-disabled": {
+                  color: "rgba(255, 255, 255, 0.3)",
                 },
               }}
             >
-              Précédent
+              PRÉCÉDENT
             </Button>
             <Button
-              type="submit"
+              endIcon={activeStep === steps.length - 1 ? undefined : <ArrowForwardIcon />}
               variant="contained"
-              disabled={loading}
-              endIcon={
-                activeStep === steps.length - 1 ? (
-                  <AirplanemodeActiveIcon />
-                ) : (
-                  <ArrowForwardIcon />
-                )
-              }
+              onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}
               sx={{
-                bgcolor: "#3f51b5",
+                backgroundColor: "#3f51b5",
+                color: "#fff",
                 "&:hover": {
-                  bgcolor: "#303f9f",
+                  backgroundColor: "#303f9f",
                 },
               }}
             >
-              {loading
-                ? "Création en cours..."
-                : activeStep === steps.length - 1
-                ? "Créer le club"
-                : "Suivant"}
+              {activeStep === steps.length - 1 ? "CRÉER LE CLUB" : "SUIVANT"}
             </Button>
           </Box>
         </form>
