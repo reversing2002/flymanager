@@ -236,7 +236,7 @@ export default function PagePermissionsSettings() {
       if (!user?.club?.id) throw new Error('No club selected');
       const allRoles = await getAllAvailableRoles(user.club.id);
       // Filtrer le rôle superadmin
-      return allRoles.filter(role => role.toLowerCase() !== 'superadmin');
+      return allRoles.filter(role => role.toLowerCase() !== 'SYSTEM_ADMIN');
     },
     enabled: !!user?.club?.id,
   });

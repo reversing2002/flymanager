@@ -10,7 +10,7 @@ const roleLabels = new Map<string, string>([
   ['mechanic', 'Mécanicien'],
   ['discovery', 'Découverte'],
   ['modelist', 'Modéliste'],
-  ['superadmin', 'Super Admin'],
+  ['SYSTEM_ADMIN', 'Super Admin'],
   ['ulm_pilot', 'Pilote ULM'],
   ['tresorier', 'Trésorier']
 ]);
@@ -45,7 +45,7 @@ export const getRoleBadgeClass = (role: string): string => {
     ['mechanic', 'bg-gradient-to-r from-purple-500/20 to-purple-500/10 text-purple-500 border border-purple-500/20'],
     ['discovery', 'bg-gradient-to-r from-pink-500/20 to-pink-500/10 text-pink-500 border border-pink-500/20'],
     ['modelist', 'bg-gradient-to-r from-indigo-500/20 to-indigo-500/10 text-indigo-500 border border-indigo-500/20'],
-    ['superadmin', 'bg-gradient-to-r from-rose-600/20 to-rose-600/10 text-rose-600 border border-rose-600/20'],
+    ['SYSTEM_ADMIN', 'bg-gradient-to-r from-rose-600/20 to-rose-600/10 text-rose-600 border border-rose-600/20'],
     ['ulm_pilot', 'bg-gradient-to-r from-orange-500/20 to-orange-500/10 text-orange-500 border border-orange-500/20'],
     ['tresorier', 'bg-gradient-to-r from-teal-500/20 to-teal-500/10 text-teal-500 border border-teal-500/20']
   ]);
@@ -65,7 +65,7 @@ export const getRoleBadgeColor = (role: string): string => {
     ['mechanic', 'secondary'],
     ['discovery', 'info'],
     ['modelist', 'default'],
-    ['superadmin', 'error'],
+    ['SYSTEM_ADMIN', 'error'],
     ['ulm_pilot', 'warning'],
     ['tresorier', 'success']
   ]);
@@ -150,6 +150,7 @@ export function hasAnyGroup(userGroups: string[], groupCodes: string[]): boolean
  */
 export function getSystemRoles(): SystemRole[] {
   return [
+    'SYSTEM_ADMIN',
     'ADMIN',
     'INSTRUCTOR',
     'PILOT',

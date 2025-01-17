@@ -103,7 +103,6 @@ const SettingsPage = () => {
     { id: "flightTypes", label: "Types de vol", icon: ListOrdered },
     { id: "accountTypes", label: "Types de compte", icon: Receipt },
     { id: "accountingCategories", label: "Catégories comptables", icon: Calculator },
-    { id: "accountingMigration", label: "Migration comptable", icon: ArrowRightLeft },
     { id: "stripeAccount", label: "Compte Stripe", icon: CreditCard },
     // Qualifications et licences
     { id: "qualifications", label: "Qualifications", icon: Award },
@@ -118,25 +117,26 @@ const SettingsPage = () => {
     { id: "permissions", label: "Permissions", icon: Lock },
     // Autres
     { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "api", label: "API", icon: Terminal },
+    // Admin système uniquement
+    { id: "accountingMigration", label: "Migration comptable", icon: ArrowRightLeft },
     { id: "backups", label: "Sauvegardes", icon: DatabaseBackup },
     { id: "smile", label: "SMILE", icon: Building2 },
     { id: "contactMessages", label: "Messages de Contact", icon: MessageSquare },
-    // Tests admin
+    { id: "api", label: "API", icon: Terminal },
     { id: "adminTest", label: "Tests Admin", icon: Shield },
   ] as const;
 
   // Filtrer les onglets en fonction des permissions
   const availableTabs = tabs.filter(tab => {
-    if (tab.id === "api") {
-      return user && hasAnyGroup(user, ["superadmin"]);
+    if (["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration"].includes(tab.id)) {
+      return user && hasAnyGroup(user, ["SYSTEM_ADMIN"]);
     }
     return true;
   });
 
   useEffect(() => {
     // Si l'onglet actif n'est pas disponible pour l'utilisateur, rediriger vers "club"
-    if (activeTab === "api" && (!user || !hasAnyGroup(user, ["superadmin"]))) {
+    if (["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration"].includes(activeTab) && (!user || !hasAnyGroup(user, ["SYSTEM_ADMIN"]))) {
       setActiveTab("club");
       toast.error("Accès non autorisé. Seuls les super-administrateurs peuvent accéder à cette page.");
     }
@@ -265,6 +265,9 @@ const SettingsPage = () => {
                   >
                     <Icon className="h-4 w-4" />
                     {tab.label}
+                    {["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration"].includes(tab.id) && (
+                      <Shield className="h-3 w-3 ml-auto text-rose-500" />
+                    )}
                   </button>
                 );
               })}
@@ -288,6 +291,9 @@ const SettingsPage = () => {
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
+                {["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration"].includes(tab.id) && (
+                  <Shield className="h-3 w-3 ml-auto text-rose-500" />
+                )}
               </button>
             );
           })}

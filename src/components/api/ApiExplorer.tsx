@@ -33,7 +33,7 @@ const ApiExplorer = () => {
   const { user } = useAuth();
 
   // Vérifier si l'utilisateur est SUPERADMIN
-  if (!user || !hasAnyGroup(user, ["superadmin"])) {
+  if (!user || !hasAnyGroup(user, ["SYSTEM_ADMIN"])) {
     toast.error("Accès non autorisé. Seuls les super-administrateurs peuvent accéder à cette page.");
     return <Navigate to="/" replace />;
   }
