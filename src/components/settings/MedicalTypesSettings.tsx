@@ -97,17 +97,18 @@ const EditMedicalTypeForm: React.FC<EditMedicalTypeFormProps> = ({
               variant="outlined"
               size="small"
             />
-            <TextField
-              fullWidth
-              label="Période de validité (mois)"
-              name="validity_period"
-              type="number"
-              value={formData.validity_period || ""}
-              onChange={handleChange}
-              disabled={!formData.requires_end_date}
-              variant="outlined"
-              size="small"
-            />
+            {formData.requires_end_date && (
+              <TextField
+                fullWidth
+                label="Période de validité (mois)"
+                name="validity_period"
+                type="number"
+                value={formData.validity_period || ""}
+                onChange={handleChange}
+                variant="outlined"
+                size="small"
+              />
+            )}
             <FormControlLabel
               control={
                 <Checkbox
