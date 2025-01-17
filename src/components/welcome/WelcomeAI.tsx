@@ -672,58 +672,21 @@ const WelcomeAI = () => {
         
         for (const member of memberData) {
           try {
-            // 1. Créer l'utilisateur dans public.users
-            const { data: newUser, error: userError } = await supabase
-              .from('users')
-              .insert({
-                first_name: member.first_name,
-                last_name: member.last_name,
-                email: member.email,
-                login: member.email // Utiliser l'email comme login par défaut
-              })
-              .select()
-              .single();
-
-            if (userError) {
-              console.error('Erreur lors de la création de l\'utilisateur:', userError);
-              continue;
-            }
-
-            // 2. Créer l'utilisateur dans auth.users
-            const { error: authError } = await supabase.rpc(
-              'create_auth_user',
-              {
-                p_email: member.email,
-                p_login: member.email,
-                p_password: 'ChangeMe123!', // Mot de passe temporaire
-                p_role: member.role,
-                p_user_id: newUser.id,
-                p_user_metadata: {
-                  first_name: member.first_name,
-                  last_name: member.last_name,
-                  login: member.email
-                }
-              }
-            );
-
-            if (authError) {
-              console.error('Erreur lors de la création de l\'utilisateur auth:', authError);
-              // Supprimer l'utilisateur public si l'auth échoue
-              await supabase.from('users').delete().eq('id', newUser.id);
-              continue;
-            }
-
-            // 3. Ajouter l'utilisateur comme membre du club
-            const { error: memberError } = await supabase.rpc(
-              'add_club_member',
+            // Utiliser la fonction RPC create_member
+            const { data: newMember, error: createError } = await supabase.rpc(
+              'create_member',
               {
                 p_club_id: user.club.id,
-                p_user_id: newUser.id
+                p_first_name: member.first_name,
+                p_last_name: member.last_name,
+                p_email: member.email,
+                p_login: member.email,
+                p_role: member.role
               }
             );
 
-            if (memberError) {
-              console.error('Erreur lors de l\'ajout au club:', memberError);
+            if (createError) {
+              console.error('Erreur lors de la création du membre:', createError);
               continue;
             }
 
@@ -765,7 +728,7 @@ const WelcomeAI = () => {
       if (clubConfig.members?.length) {
         for (const member of clubConfig.members) {
           try {
-            // 1. Créer l'utilisateur avec un UUID
+            // 1. Créer l'utilisateur dans public.users
             const { data: newUser, error: userError } = await supabase
               .from('users')
               .insert({
