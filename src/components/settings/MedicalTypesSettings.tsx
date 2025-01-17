@@ -165,11 +165,16 @@ export default function MedicalTypesSettings() {
 
   const handleSubmit = async (data: Partial<MedicalType>) => {
     try {
+      if (!user?.club?.id) {
+        throw new Error("Vous devez être associé à un club pour effectuer cette action");
+      }
+
       if (editingType) {
         const { error } = await supabase
           .from("medical_types")
           .update(data)
-          .eq("id", editingType.id);
+          .eq("id", editingType.id)
+          .eq("club_id", user.club?.id); // Assure que l'utilisateur modifie un type de son club
 
         if (error) throw error;
         toast.success("Type de certificat modifié avec succès");
@@ -177,7 +182,8 @@ export default function MedicalTypesSettings() {
         const { error } = await supabase.from("medical_types").insert([
           {
             ...data,
-            club_id: user?.club_id,
+            club_id: user.club?.id,
+            system_type: false, // Les types créés par les utilisateurs ne sont pas des types système
             display_order: types.length,
           },
         ]);
@@ -189,11 +195,9 @@ export default function MedicalTypesSettings() {
       setIsModalOpen(false);
       setEditingType(undefined);
       fetchTypes();
-    } catch (error) {
-      console.error("Error saving medical type:", error);
-      toast.error(
-        "Erreur lors de l'enregistrement du type de certificat médical"
-      );
+    } catch (error: any) {
+      console.error("Error managing medical type:", error);
+      toast.error(error.message || "Erreur lors de la gestion du type de certificat");
     }
   };
 
