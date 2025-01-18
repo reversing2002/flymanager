@@ -7,6 +7,7 @@ import FAQ from './components/public/FAQPage';
 import ContactPage from './components/public/ContactPage';
 import CGVPage from './components/public/CGVPage';
 import PricingPage from './components/public/PricingPage';
+import AboutUsPage from './components/public/AboutUsPage';
 import { useAuth } from './contexts/AuthContext';
 
 // Protège les routes qui nécessitent une authentification
@@ -26,6 +27,10 @@ export const router = createBrowserRouter([
       {
         path: '/',
         element: <HomePage />,
+      },
+      {
+        path: '/about',
+        element: <AboutUsPage />,
       },
       {
         path: '/login',

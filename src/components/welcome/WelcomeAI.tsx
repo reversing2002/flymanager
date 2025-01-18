@@ -30,6 +30,9 @@ import ImportValidationBox from './ImportValidationBox';
 import { useNavigate } from 'react-router-dom';
 import { resetClubData } from '../../lib/queries/dataReset';
 import JsonEditorModal from '../progression/admin/JsonEditorModal';
+import CheckIcon from '@mui/icons-material/Check';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ChatIcon from '@mui/icons-material/Chat';
 
 interface Message {
   id: string;
@@ -184,6 +187,7 @@ const WelcomeAI = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [clubConfig, setClubConfig] = useState<Partial<ClubConfig>>({});
   const [configComplete, setConfigComplete] = useState(false);
+  const [showConfigBanner, setShowConfigBanner] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [nearbyStations, setNearbyStations] = useState<WeatherStation[]>([]);
   const [conversationStarted, setConversationStarted] = useState(false);
@@ -922,347 +926,348 @@ ${stations.slice(1).map(s =>
           overflow: 'hidden',
         }}
       >
-        <Paper
-          elevation={0}
-          sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            borderRadius: 0,
-            bgcolor: '#1E1E1E',
-            position: 'relative',
-            border: 'none',
-          }}
-        >
-          {/* Menu des paramètres */}
-          {false && (
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 16,
-                right: 16,
-                zIndex: 1,
-              }}
-            >
-              <Tooltip title="Paramètres de configuration">
-                <IconButton
-                  onClick={(e) => setAnchorEl(e.currentTarget)}
-                  sx={{
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    color: '#FFFFFF',
-                    '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.15)',
-                    },
-                  }}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-              </Tooltip>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={() => setAnchorEl(null)}
-                TransitionComponent={Fade}
-                sx={{
-                  '& .MuiPaper-root': {
-                    bgcolor: '#2D2D2D',
-                    color: '#FFFFFF',
-                    borderRadius: 2,
-                    minWidth: 180,
-                    boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.5)',
-                  },
-                }}
-              >
-                <MenuItem
-                  onClick={() => {
-                    setShowConfig(true);
-                    setAnchorEl(null);
-                  }}
-                  sx={{
-                    '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    },
-                  }}
-                >
-                  <SettingsIcon sx={{ mr: 1.5, fontSize: 20 }} />
-                  Configuration JSON
-                </MenuItem>
-              </Menu>
-            </Box>
-          )}
-
-          {/* Zone des messages */}
-          <Box
-            sx={{
-              flex: 1,
-              overflow: 'auto',
-              p: { xs: 2, sm: 3 },
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
-          >
-            <AnimatePresence mode="popLayout">
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                >
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      bgcolor: message.role === 'assistant' ? '#2D2D2D' : '#383838',
-                      maxWidth: { xs: '90%', sm: '80%' },
-                      ml: message.role === 'assistant' ? 0 : 'auto',
-                      mr: message.role === 'assistant' ? 'auto' : 0,
-                      overflow: 'hidden',
-                      borderRadius: 2,
-                      position: 'relative',
-                    }}
-                  >
-                    <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                        {message.role === 'assistant' ? (
-                          <Avatar
-                            sx={{
-                              bgcolor: '#5C5C5C',
-                              width: 32,
-                              height: 32,
-                            }}
-                          >
-                            <SmartToyIcon fontSize="small" />
-                          </Avatar>
-                        ) : (
-                          <Avatar
-                            sx={{
-                              bgcolor: '#4A4A4A',
-                              width: 32,
-                              height: 32,
-                            }}
-                          >
-                            <PersonIcon fontSize="small" />
-                          </Avatar>
-                        )}
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ color: '#FFFFFF', opacity: 0.9 }}
-                        >
-                          {message.role === 'assistant' ? 'Assistant' : 'Vous'}
-                        </Typography>
-                      </Box>
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          color: '#FFFFFF',
-                          whiteSpace: 'pre-wrap',
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        {message.content.split('\n').map((line, lineIndex) => {
-                          // Traiter les lignes qui commencent par ###
-                          if (line.startsWith('###')) {
-                            return (
-                              <>
-                                {lineIndex > 0 && <span style={{ display: 'block', height: '1em' }} />}
-                                <span style={{ display: 'block', textDecoration: 'underline' }}>
-                                  {line.replace(/^###\s*/, '')}
-                                </span>
-                              </>
-                            );
-                          }
-                          
-                          // Traiter le texte en gras
-                          return (
-                            <span key={lineIndex} style={{ display: 'block' }}>
-                              {line.split(/(\*\*.*?\*\*)/).map((part, index) => {
-                                if (part.startsWith('**') && part.endsWith('**')) {
-                                  return <strong key={index}>{part.slice(2, -2)}</strong>;
-                                }
-                                return part;
-                              })}
-                            </span>
-                          );
-                        })}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          mt: 2,
-                          display: 'block',
-                          textAlign: message.role === 'assistant' ? 'left' : 'right',
-                          color: '#FFFFFF',
-                          opacity: 0.5,
-                        }}
-                      >
-                        {new Date(message.timestamp).toLocaleTimeString()}
-                      </Typography>
-                    </Box>
-                  </Paper>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {isTyping && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-              >
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: '#2D2D2D',
-                  }}
-                >
-                  <CircularProgress size={20} sx={{ color: '#FFFFFF' }} />
-                  <Typography variant="body2" sx={{ color: '#FFFFFF', opacity: 0.7 }}>
-                    Assistant en train d'écrire...
-                  </Typography>
-                </Box>
-              </motion.div>
-            )}
-
-            {configComplete && !isTyping && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    mt: 4,
-                  }}
-                >
-                  <Button
-                    variant="contained"
-                    onClick={handleImport}
-                    sx={{
-                      ml: 2,
-                      borderRadius: '16px',
-                      bgcolor: '#22C55E',
-                      color: '#FFFFFF',
-                      transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        bgcolor: '#16A34A',
-                        transform: 'scale(1.05)',
-                      },
-                    }}
-                  >
-                    Créer mon club
-                  </Button>
-                </Box>
-              </motion.div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </Box>
-
-          {/* Zone de saisie */}
+        {/* Bannière de configuration */}
+        {configComplete && showConfigBanner && (
           <Paper
             elevation={0}
-            component="form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
             sx={{
-              p: { xs: 1.5, sm: 2.5 },
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-              bgcolor: '#2D2D2D',
+              bgcolor: '#22C55E',
+              p: { xs: 2, sm: 3 },
               position: 'sticky',
-              bottom: 0,
+              top: 0,
               zIndex: 10,
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+              borderRadius: 0,
+              borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
             }}
           >
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                gap: 1.5, 
-                alignItems: 'flex-end', 
-                maxWidth: 'lg', 
-                mx: 'auto',
-                position: 'relative',
-              }}
-            >
-              <TextareaAutosize
-                ref={inputRef}
-                aria-label="Message à l'assistant"
-                placeholder="Écrivez votre message ici..."
-                minRows={1}
-                maxRows={4}
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  try {
-                    JSON.parse(e.target.value);
-                    setJsonContent(e.target.value);
-                  } catch {}
-                }}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-                    e.preventDefault();
-                    handleSubmit();
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  resize: 'none',
-                  border: 'none',
-                  outline: 'none',
-                  padding: '12px',
-                  paddingRight: '48px',
-                  backgroundColor: '#383838',
-                  color: '#FFFFFF',
-                  borderRadius: '12px',
-                  fontSize: '16px',
-                  lineHeight: '1.5',
-                  fontFamily: 'inherit',
-                }}
-              />
-              <IconButton
-                type="submit"
-                disabled={!input.trim() || isTyping}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
                 sx={{
-                  position: 'absolute',
-                  right: '8px',
-                  bottom: '8px',
-                  bgcolor: input.trim() ? '#22C55E' : 'transparent',
-                  color: input.trim() ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)',
-                  '&:hover': {
-                    bgcolor: input.trim() ? '#16A34A' : 'rgba(255, 255, 255, 0.1)',
-                  },
-                  transition: 'all 0.2s ease-in-out',
-                  width: '36px',
-                  height: '36px',
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  bgcolor: 'rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <SendIcon fontSize="small" />
-              </IconButton>
+                <CheckIcon sx={{ color: '#FFFFFF' }} />
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ color: '#FFFFFF', fontWeight: 600 }}>
+                  Configuration terminée !
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#FFFFFF', opacity: 0.9 }}>
+                  Vous pouvez créer votre club maintenant ou continuer la conversation pour ajouter des éléments
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', sm: 'auto' } }}>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  // Fermer la bannière et focus sur la zone de saisie
+                  setShowConfigBanner(false);
+                  inputRef.current?.focus();
+                }}
+                size="large"
+                sx={{
+                  flex: { xs: 1, sm: 'none' },
+                  color: '#FFFFFF',
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                  '&:hover': {
+                    borderColor: '#FFFFFF',
+                    bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                }}
+                startIcon={<ChatIcon />}
+              >
+                Continuer la conversation
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleImport}
+                size="large"
+                sx={{
+                  flex: { xs: 1, sm: 'none' },
+                  bgcolor: '#FFFFFF',
+                  color: '#22C55E',
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                  },
+                }}
+                endIcon={<ArrowForwardIcon />}
+              >
+                Commencer à utiliser 4Fly
+              </Button>
             </Box>
           </Paper>
-        </Paper>
+        )}
+        
+        {/* Zone des messages */}
+        <Box
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+            p: { xs: 2, sm: 3 },
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          <AnimatePresence mode="popLayout">
+            {messages.map((message) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              >
+                <Paper
+                  elevation={0}
+                  sx={{
+                    bgcolor: message.role === 'assistant' ? '#2D2D2D' : '#383838',
+                    maxWidth: { xs: '90%', sm: '80%' },
+                    ml: message.role === 'assistant' ? 0 : 'auto',
+                    mr: message.role === 'assistant' ? 'auto' : 0,
+                    overflow: 'hidden',
+                    borderRadius: 2,
+                    position: 'relative',
+                  }}
+                >
+                  <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                      {message.role === 'assistant' ? (
+                        <Avatar
+                          sx={{
+                            bgcolor: '#5C5C5C',
+                            width: 32,
+                            height: 32,
+                          }}
+                        >
+                          <SmartToyIcon fontSize="small" />
+                        </Avatar>
+                      ) : (
+                        <Avatar
+                          sx={{
+                            bgcolor: '#4A4A4A',
+                            width: 32,
+                            height: 32,
+                          }}
+                        >
+                          <PersonIcon fontSize="small" />
+                        </Avatar>
+                      )}
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ color: '#FFFFFF', opacity: 0.9 }}
+                      >
+                        {message.role === 'assistant' ? 'Assistant' : 'Vous'}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: '#FFFFFF',
+                        whiteSpace: 'pre-wrap',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {message.content.split('\n').map((line, lineIndex) => {
+                        // Traiter les lignes qui commencent par ###
+                        if (line.startsWith('###')) {
+                          return (
+                            <>
+                              {lineIndex > 0 && <span style={{ display: 'block', height: '1em' }} />}
+                              <span style={{ display: 'block', textDecoration: 'underline' }}>
+                                {line.replace(/^###\s*/, '')}
+                              </span>
+                            </>
+                          );
+                        }
+                        
+                        // Traiter le texte en gras
+                        return (
+                          <span key={lineIndex} style={{ display: 'block' }}>
+                            {line.split(/(\*\*.*?\*\*)/).map((part, index) => {
+                              if (part.startsWith('**') && part.endsWith('**')) {
+                                return <strong key={index}>{part.slice(2, -2)}</strong>;
+                              }
+                              return part;
+                            })}
+                          </span>
+                        );
+                      })}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        mt: 2,
+                        display: 'block',
+                        textAlign: message.role === 'assistant' ? 'left' : 'right',
+                        color: '#FFFFFF',
+                        opacity: 0.5,
+                      }}
+                    >
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </Typography>
+                  </Box>
+                </Paper>
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
-        {/* Modal de configuration */}
-        <JsonEditorModal
-          isOpen={isConfigModalOpen}
-          onClose={() => setIsConfigModalOpen(false)}
-          value={JSON.stringify({
-            currentConfig: clubConfig,
-            configHistory: conversationConfig
-          }, null, 2)}
-          readOnly
-          mode="view"
-        />
+          {isTyping && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+            >
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 2,
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: '#2D2D2D',
+                }}
+              >
+                <CircularProgress size={20} sx={{ color: '#FFFFFF' }} />
+                <Typography variant="body2" sx={{ color: '#FFFFFF', opacity: 0.7 }}>
+                  Assistant en train d'écrire...
+                </Typography>
+              </Box>
+            </motion.div>
+          )}
+
+          {configComplete && !isTyping && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  mt: 4,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={handleImport}
+                  sx={{
+                    ml: 2,
+                    borderRadius: '16px',
+                    bgcolor: '#22C55E',
+                    color: '#FFFFFF',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      bgcolor: '#16A34A',
+                      transform: 'scale(1.05)',
+                    },
+                  }}
+                >
+                  Créer mon club
+                </Button>
+              </Box>
+            </motion.div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </Box>
+
+        {/* Zone de saisie */}
+        <Paper
+          elevation={0}
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+          sx={{
+            p: { xs: 1.5, sm: 2.5 },
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            bgcolor: '#2D2D2D',
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 10,
+          }}
+        >
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              gap: 1.5, 
+              alignItems: 'flex-end', 
+              maxWidth: 'lg', 
+              mx: 'auto',
+              position: 'relative',
+            }}
+          >
+            <TextareaAutosize
+              ref={inputRef}
+              aria-label="Message à l'assistant"
+              placeholder="Écrivez votre message ici..."
+              minRows={1}
+              maxRows={4}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                try {
+                  JSON.parse(e.target.value);
+                  setJsonContent(e.target.value);
+                } catch {}
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              style={{
+                width: '100%',
+                resize: 'none',
+                border: 'none',
+                outline: 'none',
+                padding: '12px',
+                paddingRight: '48px',
+                backgroundColor: '#383838',
+                color: '#FFFFFF',
+                borderRadius: '12px',
+                fontSize: '16px',
+                lineHeight: '1.5',
+                fontFamily: 'inherit',
+              }}
+            />
+            <IconButton
+              type="submit"
+              disabled={!input.trim() || isTyping}
+              sx={{
+                position: 'absolute',
+                right: '8px',
+                bottom: '8px',
+                bgcolor: input.trim() ? '#22C55E' : 'transparent',
+                color: input.trim() ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)',
+                '&:hover': {
+                  bgcolor: input.trim() ? '#16A34A' : 'rgba(255, 255, 255, 0.1)',
+                },
+                transition: 'all 0.2s ease-in-out',
+                width: '36px',
+                height: '36px',
+              }}
+            >
+              <SendIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </Paper>
       </Box>
     </>
   );

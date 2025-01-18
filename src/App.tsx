@@ -76,6 +76,7 @@ import FeaturesPage from "./components/public/FeaturesPage";
 import LegalPage from "./components/public/LegalPage";
 import RootPage from "./components/RootPage";
 import RGPDPage from "./components/public/RGPDPage";
+import AboutUsPage from "./components/public/AboutUsPage";
 import WelcomeDashboard from './components/dashboard/WelcomeDashboard';
 import WelcomeAI from "./components/welcome/WelcomeAI";
 
@@ -112,6 +113,7 @@ function App() {
                 {/* Pages publiques */}
                 <Route element={<PublicLayout />}>
                   <Route index element={<RootPage />} />
+                  <Route path="/about" element={<AboutUsPage />} />
                   <Route path="/features" element={<FeaturesPage />} />
                   <Route path="/pricing" element={<PricingPage />} />
                   <Route path="/faq" element={<FAQPage />} />
