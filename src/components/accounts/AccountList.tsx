@@ -376,11 +376,16 @@ const AccountList = () => {
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     >
                       <option value="all">Tous</option>
+                      <option value="SUBSCRIPTION">Cotisation</option>
+                      <option value="MEMBERSHIP">Adhésion</option>
                       <option value="FLIGHT">Vol</option>
-                      <option value="MEMBERSHIP">Cotisation</option>
+                      <option value="INSTRUCTION">Instruction</option>
+                      <option value="FUEL">Essence</option>
+                      <option value="MAINTENANCE">Maintenance</option>
                       <option value="INSURANCE">Assurance</option>
-                      <option value="DEPOSIT">Dépôt</option>
-                      <option value="WITHDRAWAL">Retrait</option>
+                      <option value="FFA">FFA</option>
+                      <option value="ACCOUNT_FUNDING">Approvisionnement compte</option>
+                      <option value="OTHER">Autre</option>
                     </select>
                   </div>
                 </div>
