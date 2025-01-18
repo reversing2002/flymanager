@@ -916,8 +916,8 @@ ${stations.slice(1).map(s =>
           flexDirection: 'column',
           bgcolor: '#1E1E1E',
           position: 'relative',
-          width: 'calc(100% - 64px)',
-          marginLeft: '64px',
+          width: { xs: '100%', sm: 'calc(100% - 64px)' },
+          marginLeft: { xs: 0, sm: '64px' },
           marginTop: '80px',
           overflow: 'hidden',
         }}
@@ -1016,15 +1016,15 @@ ${stations.slice(1).map(s =>
                     elevation={0}
                     sx={{
                       bgcolor: message.role === 'assistant' ? '#2D2D2D' : '#383838',
-                      maxWidth: '80%',
+                      maxWidth: { xs: '90%', sm: '80%' },
                       ml: message.role === 'assistant' ? 0 : 'auto',
                       mr: message.role === 'assistant' ? 'auto' : 0,
                       overflow: 'hidden',
-                      borderRadius: 3,
+                      borderRadius: 2,
                       position: 'relative',
                     }}
                   >
-                    <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                    <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                         {message.role === 'assistant' ? (
                           <Avatar
@@ -1170,19 +1170,36 @@ ${stations.slice(1).map(s =>
           {/* Zone de saisie */}
           <Paper
             elevation={0}
+            component="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
             sx={{
-              p: { xs: 2, sm: 3 },
+              p: { xs: 1.5, sm: 2.5 },
               borderTop: '1px solid rgba(255, 255, 255, 0.1)',
               bgcolor: '#2D2D2D',
+              position: 'sticky',
+              bottom: 0,
+              zIndex: 10,
             }}
           >
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', maxWidth: 'lg', mx: 'auto' }}>
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                gap: 1.5, 
+                alignItems: 'flex-end', 
+                maxWidth: 'lg', 
+                mx: 'auto',
+                position: 'relative',
+              }}
+            >
               <TextareaAutosize
                 ref={inputRef}
                 aria-label="Message à l'assistant"
                 placeholder="Écrivez votre message ici..."
-                minRows={2}
-                maxRows={6}
+                minRows={1}
+                maxRows={4}
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value);
@@ -1192,79 +1209,45 @@ ${stations.slice(1).map(s =>
                   } catch {}
                 }}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
                     e.preventDefault();
                     handleSubmit();
                   }
                 }}
                 style={{
                   width: '100%',
-                  padding: '16px',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  fontSize: '1rem',
-                  fontFamily: 'inherit',
                   resize: 'none',
+                  border: 'none',
+                  outline: 'none',
+                  padding: '12px',
+                  paddingRight: '48px',
                   backgroundColor: '#383838',
                   color: '#FFFFFF',
-                  outline: 'none',
-                  transition: 'all 0.2s ease-in-out',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  lineHeight: '1.5',
+                  fontFamily: 'inherit',
                 }}
               />
-              <Tooltip title="Envoyer le message (Entrée)">
-                <IconButton
-                  color="primary"
-                  onClick={handleSubmit}
-                  disabled={!input.trim() || isTyping}
-                  sx={{
-                    width: { xs: 48, sm: 56 },
-                    height: { xs: 48, sm: 56 },
-                    borderRadius: '16px',
-                    bgcolor: '#0D99FF',
-                    color: '#FFFFFF',
-                    transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
-                      bgcolor: '#0B87E3',
-                      transform: 'scale(1.05)',
-                    },
-                    '&.Mui-disabled': {
-                      bgcolor: 'rgba(255, 255, 255, 0.1)',
-                      color: 'rgba(255, 255, 255, 0.3)',
-                    },
-                  }}
-                >
-                  <SendIcon />
-                </IconButton>
-              </Tooltip>
-              <Button
-                variant="outlined"
-                startIcon={<SettingsIcon />}
-                onClick={handleOpenConfigModal}
-                size="small"
+              <IconButton
+                type="submit"
+                disabled={!input.trim() || isTyping}
+                sx={{
+                  position: 'absolute',
+                  right: '8px',
+                  bottom: '8px',
+                  bgcolor: input.trim() ? '#22C55E' : 'transparent',
+                  color: input.trim() ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)',
+                  '&:hover': {
+                    bgcolor: input.trim() ? '#16A34A' : 'rgba(255, 255, 255, 0.1)',
+                  },
+                  transition: 'all 0.2s ease-in-out',
+                  width: '36px',
+                  height: '36px',
+                }}
               >
-                Voir la configuration
-              </Button>
-              {configComplete && (
-                <Tooltip title="Créer mon club">
-                  <Button
-                    variant="contained"
-                    onClick={handleImport}
-                    sx={{
-                      ml: 2,
-                      borderRadius: '16px',
-                      bgcolor: '#22C55E',
-                      color: '#FFFFFF',
-                      transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        bgcolor: '#16A34A',
-                        transform: 'scale(1.05)',
-                      },
-                    }}
-                  >
-                    Créer mon club
-                  </Button>
-                </Tooltip>
-              )}
+                <SendIcon fontSize="small" />
+              </IconButton>
             </Box>
           </Paper>
         </Paper>
