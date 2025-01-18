@@ -22,6 +22,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
+import AdminTest from '../../components/admin/AdminTest';
 
 const userFormSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -274,6 +275,15 @@ export default function AdminTestPage() {
               ))}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Schéma de la Base de Données</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AdminTest />
         </CardContent>
       </Card>
     </div>

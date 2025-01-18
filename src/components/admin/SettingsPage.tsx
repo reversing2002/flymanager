@@ -57,6 +57,7 @@ import ImportManager from "./imports/ImportManager";
 import NotificationList from "./NotificationList";
 import WeatherSettings from "./WeatherSettings";
 import AdminTestPage from "../../pages/settings/AdminTestPage";
+import ClubList from "./ClubList";
 
 type TabType =
   | "club"
@@ -81,7 +82,8 @@ type TabType =
   | "weather"
   | "smile"
   | "adminTest"
-  | "contactMessages";
+  | "contactMessages"
+  | "clubs";
 
 const SettingsPage = () => {
   const { user } = useAuth();
@@ -96,6 +98,8 @@ const SettingsPage = () => {
     // Gestion du club
     { id: "club", label: "Club", icon: Building },
     { id: "announcements", label: "Annonces", icon: Megaphone },
+    // Gestion globale
+    { id: "clubs", label: "Gestion des clubs", icon: Building2, systemAdmin: true },
     // Imports
     { id: "imports", label: "Imports", icon: Upload },
     // Configuration
@@ -128,7 +132,7 @@ const SettingsPage = () => {
 
   // Filtrer les onglets en fonction des permissions
   const availableTabs = tabs.filter(tab => {
-    if (["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration"].includes(tab.id)) {
+    if (["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration", "clubs"].includes(tab.id)) {
       return user && hasAnyGroup(user, ["SYSTEM_ADMIN"]);
     }
     return true;
@@ -136,7 +140,7 @@ const SettingsPage = () => {
 
   useEffect(() => {
     // Si l'onglet actif n'est pas disponible pour l'utilisateur, rediriger vers "club"
-    if (["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration"].includes(activeTab) && (!user || !hasAnyGroup(user, ["SYSTEM_ADMIN"]))) {
+    if (["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration", "clubs"].includes(activeTab) && (!user || !hasAnyGroup(user, ["SYSTEM_ADMIN"]))) {
       setActiveTab("club");
       toast.error("Accès non autorisé. Seuls les super-administrateurs peuvent accéder à cette page.");
     }
@@ -265,7 +269,7 @@ const SettingsPage = () => {
                   >
                     <Icon className="h-4 w-4" />
                     {tab.label}
-                    {["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration"].includes(tab.id) && (
+                    {["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration", "clubs"].includes(tab.id) && (
                       <Shield className="h-3 w-3 ml-auto text-rose-500" />
                     )}
                   </button>
@@ -291,7 +295,7 @@ const SettingsPage = () => {
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
-                {["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration"].includes(tab.id) && (
+                {["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration", "clubs"].includes(tab.id) && (
                   <Shield className="h-3 w-3 ml-auto text-rose-500" />
                 )}
               </button>
@@ -360,6 +364,9 @@ const SettingsPage = () => {
           {activeTab === "backups" && <BackupSettings />}
           {activeTab === "contactMessages" && <ContactMessagesSettings />}
           {activeTab === "adminTest" && <AdminTestPage />}
+          {activeTab === "clubs" && hasAnyGroup(user, ["SYSTEM_ADMIN"]) && (
+            <ClubList />
+          )}
         </div>
       </div>
     </div>
