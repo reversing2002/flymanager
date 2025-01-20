@@ -79,6 +79,7 @@ import RGPDPage from "./components/public/RGPDPage";
 import AboutUsPage from "./components/public/AboutUsPage";
 import WelcomeDashboard from './components/dashboard/WelcomeDashboard';
 import WelcomeAI from "./components/welcome/WelcomeAI";
+import { GoogleTagManager } from "./components/GoogleTagManager";
 
 // Initialiser dayjs avec la locale francaise
 dayjs.locale('fr');
@@ -94,11 +95,12 @@ function App() {
   });
 
   return (
-    <ThemeProvider theme={theme}>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Router>
             <AuthProvider>
+              <GoogleTagManager />
               <Toaster
                 position="top-right"
                 toastOptions={{
@@ -244,8 +246,8 @@ function App() {
             </AuthProvider>
           </Router>
         </LocalizationProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
