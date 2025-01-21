@@ -84,10 +84,13 @@ export async function getAccountEntries(
 }
 
 export async function getMemberBalance(userId: string) {
+  const nextDay = new Date();
+  nextDay.setDate(nextDay.getDate() + 1);
+
   const { data: balances, error } = await supabase
     .rpc('calculate_pending_balance_from_date', {
       p_user_id: userId,
-      p_date: new Date().toISOString()
+      p_date: nextDay.toISOString()
     });
 
   if (error) throw error;

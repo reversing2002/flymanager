@@ -138,17 +138,18 @@ const TimeControl: React.FC<TimeControlProps> = ({ value, onChange, label, disab
             >
               <span className="text-gray-500">{dateString}</span>
             </button>
-            <button
-              type="button"
-              onClick={() => !disabled && setShowTimePicker(!showTimePicker)}
-              className={`rounded-md border px-3 py-2 text-sm ${
-                disabled
-                  ? "border-gray-200 bg-gray-50 text-gray-500"
-                  : "border-gray-300 hover:border-blue-500"
-              }`}
+            <select
+              value={`${getValidDate(value).getHours().toString().padStart(2, '0')}:${getValidDate(value).getMinutes().toString().padStart(2, '0')}`}
+              onChange={(e) => handleTimeSelect(e.target.value)}
+              disabled={disabled}
+              className="rounded-md border px-3 py-2 text-sm"
             >
-              <span className="font-medium">{timeString}</span>
-            </button>
+              {timeOptions.map((timeStr) => (
+                <option key={timeStr} value={timeStr}>
+                  {timeStr}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex space-x-1">
             <button
@@ -188,21 +189,6 @@ const TimeControl: React.FC<TimeControlProps> = ({ value, onChange, label, disab
               disabled ? "bg-gray-100" : ""
             }`}
           />
-        )}
-
-        {showTimePicker && (
-          <div className="absolute z-10 mt-1 max-h-60 w-48 overflow-auto rounded-md border border-gray-300 bg-white shadow-lg">
-            {timeOptions.map((timeStr) => (
-              <button
-                key={timeStr}
-                type="button"
-                onClick={() => handleTimeSelect(timeStr)}
-                className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
-              >
-                {timeStr}
-              </button>
-            ))}
-          </div>
         )}
       </div>
     </div>
@@ -449,7 +435,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         instructorId: existingReservation.instructorId || "",
         comments: existingReservation.comments || "",
         flightTypeId: existingReservation.flightTypeId || "",
-        withInstructor: Boolean(existingReservation.instructorId),
+        withInstructor: !!existingReservation.instructorId,
       });
     }
   }, [
@@ -486,21 +472,63 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     );
   }, [users]);
 
-  const [formData, setFormData] = useState({
-    userId: existingReservation?.userId || currentUser?.id || "",
-    pilotId: existingReservation?.pilotId || currentUser?.id || "",
-    aircraftId:
-      preselectedAircraftId ||
-      existingReservation?.aircraftId ||
-      propAircraft?.[0]?.id ||
-      "",
-    startTime: formatDateForInput(startTime),
-    endTime: formatDateForInput(endTime),
-    instructorId: existingReservation?.instructorId || "",
-    comments: comments || existingReservation?.comments || "",
-    flightTypeId:
-      preselectedFlightTypeId || existingReservation?.flightTypeId || "",
-    withInstructor: existingReservation?.instructorId ? true : false,
+  const [formData, setFormData] = useState<{
+    startTime: string;
+    endTime: string;
+    aircraftId: string;
+    pilotId: string;
+    userId: string;
+    instructorId?: string;
+    flightTypeId?: string;
+    withInstructor: boolean;
+  }>(() => {
+    // Si c'est une nouvelle réservation
+    if (!existingReservation) {
+      let startDate: Date;
+      let endDate: Date;
+
+      // Si des heures sont passées en paramètres (via TimeGrid), les utiliser
+      if (startTime && endTime) {
+        startDate = new Date(startTime);
+        endDate = new Date(endTime);
+      } else {
+        // Sinon, utiliser l'heure actuelle arrondie au quart d'heure suivant
+        const now = new Date();
+        const currentMinutes = now.getMinutes();
+        const roundedMinutes = Math.ceil(currentMinutes / 15) * 15;
+        startDate = new Date(now);
+        startDate.setMinutes(roundedMinutes, 0, 0);
+        
+        endDate = new Date(startDate);
+        endDate.setHours(endDate.getHours() + 1);
+      }
+
+      // Utiliser le premier avion disponible si aucun n'est présélectionné
+      const defaultAircraftId = preselectedAircraftId || propAircraft?.[0]?.id || aircraft?.[0]?.id || "";
+
+      return {
+        startTime: formatDateForInput(startDate),
+        endTime: formatDateForInput(endDate),
+        aircraftId: defaultAircraftId,
+        pilotId: currentUser?.id || "",
+        userId: currentUser?.id || "",
+        instructorId: "",
+        flightTypeId: preselectedFlightTypeId || "",
+        withInstructor: false,
+      };
+    }
+
+    // Si c'est une réservation existante, utiliser ses valeurs
+    return {
+      startTime: formatDateForInput(new Date(existingReservation.startTime)),
+      endTime: formatDateForInput(new Date(existingReservation.endTime)),
+      aircraftId: existingReservation.aircraftId,
+      pilotId: existingReservation.pilotId,
+      userId: existingReservation.userId,
+      instructorId: existingReservation.instructorId || "",
+      flightTypeId: existingReservation.flightTypeId || "",
+      withInstructor: !!existingReservation.instructorId,
+    };
   });
 
   const [balance, setBalance] = useState<{ validated: number; pending: number } | null>(null);
@@ -527,44 +555,43 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    if (balance !== null && balance.pending < 0) {
-      toast.error("Votre solde est négatif. Veuillez créditer votre compte avant de réserver.");
-      setLoading(false);
+    if (!canModifyReservation()) {
+      setError("Vous n'avez pas les permissions nécessaires pour modifier cette réservation");
       return;
     }
 
     try {
+      setLoading(true);
+      setError("");
+
       // Vérifier la disponibilité avant de soumettre
       if (!checkAircraftAvailability(formData.aircraftId)) {
-        setLoading(false);
         return;
       }
 
-      // Convert local times to UTC before sending to the database
       const reservationData = {
-        ...formData,
         startTime: toUTC(formData.startTime),
         endTime: toUTC(formData.endTime),
-        instructorId: formData.instructorId || null,
+        aircraftId: formData.aircraftId,
+        pilotId: formData.pilotId,
+        userId: currentUser?.id, // Utiliser l'ID de l'utilisateur connecté comme userId
+        instructorId: formData.withInstructor ? formData.instructorId : null,
+        flightTypeId: formData.flightTypeId,
       };
 
-      // Create or update the reservation
       if (existingReservation) {
         await updateReservation(existingReservation.id, reservationData);
+        toast.success("Réservation mise à jour avec succès");
       } else {
         await createReservation(reservationData);
+        toast.success("Réservation créée avec succès");
       }
 
       onSuccess();
       onClose();
-    } catch (error: any) {
-      console.error("Erreur lors de la sauvegarde:", error);
-      setError(
-        error.message || "Une erreur est survenue lors de la sauvegarde"
-      );
+    } catch (err) {
+      console.error("Error submitting reservation:", err);
+      setError("Une erreur est survenue lors de la soumission de la réservation");
     } finally {
       setLoading(false);
     }
