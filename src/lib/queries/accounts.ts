@@ -181,10 +181,13 @@ export async function getMembershipStatus(userId: string): Promise<boolean> {
 
 // Fonction pour calculer le solde validé
 export async function calculateMemberBalance(userId: string, date: string) {
+  const nextDay = new Date(date);
+  nextDay.setDate(nextDay.getDate() + 1);
+  
   const { data: balance, error } = await supabase
     .rpc('calculate_balance_from_date', {
       p_user_id: userId,
-      p_date: date
+      p_date: nextDay.toISOString()
     });
 
   if (error) throw error;
@@ -193,24 +196,28 @@ export async function calculateMemberBalance(userId: string, date: string) {
 
 // Fonction pour calculer le solde en attente (solde final après application des transactions non validées)
 export async function calculatePendingBalance(userId: string, date: string): Promise<number> {
+  const nextDay = new Date(date);
+  nextDay.setDate(nextDay.getDate() + 1);
+
   const { data, error } = await supabase
     .rpc('calculate_pending_balance_from_date', {
       p_user_id: userId,
-      p_date: date
+      p_date: nextDay.toISOString()
     });
 
   if (error) throw error;
   
-  // La fonction retourne maintenant un objet avec pending_amount
   return data[0]?.pending_amount || 0;
 }
 
-// Fonction pour calculer le solde total (validé + en attente)
 export async function calculateTotalBalance(userId: string, date: string) {
+  const nextDay = new Date(date);
+  nextDay.setDate(nextDay.getDate() + 1);
+
   const { data: balance, error } = await supabase
     .rpc('calculate_total_balance_from_date', {
       p_user_id: userId,
-      p_date: date
+      p_date: nextDay.toISOString()
     });
 
   if (error) throw error;

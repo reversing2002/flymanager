@@ -110,23 +110,25 @@ const AccountList = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Requête pour les soldes
   const { data: balanceData, isLoading: balanceLoading } = useQuery({
     queryKey: ["balance", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       
+      const nextDay = new Date();
+      nextDay.setDate(nextDay.getDate() + 1);
+  
       const { data, error } = await supabase
         .rpc('calculate_pending_balance_from_date', {
           p_user_id: user.id,
-          p_date: new Date().toISOString()
+          p_date: nextDay.toISOString()
         });
-
+  
       if (error) {
         console.error("Erreur lors du calcul des soldes:", error);
         throw error;
       }
-
+  
       console.log("Données de solde reçues:", data);
       return data?.[0] || null;
     },

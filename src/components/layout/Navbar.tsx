@@ -88,8 +88,11 @@ const Navbar = () => {
       <div className="fixed top-0 left-0 right-0 z-50 bg-[#1a1f2e] border-b border-gray-700 flex items-center justify-between">
         {/* Logo et bouton menu */}
         <div className="flex items-center">
-          <div className="px-8 py-2 z-50 bg-[#1a1f2e]">
+          <div className="px-8 py-2 z-50 bg-[#1a1f2e] lg:block hidden">
             <Logo className="h-8" />
+          </div>
+          <div className="px-8 py-2 z-50 bg-[#1a1f2e] lg:hidden block" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+            <Logo className="h-8 cursor-pointer" disableLink={true} />
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
