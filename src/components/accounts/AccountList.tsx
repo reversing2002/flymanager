@@ -266,11 +266,10 @@ const AccountList = () => {
                 setCurrentPage(1);
               }}
             >
-              <option value="5">5 par page</option>
-              <option value="10">10 par page</option>
-              <option value="25">25 par page</option>
               <option value="50">50 par page</option>
               <option value="100">100 par page</option>
+              <option value="500">500 par page</option>
+              <option value="1000">1000 par page</option> 
             </select>
             <button
               onClick={() => setShowFilters(!showFilters)}
