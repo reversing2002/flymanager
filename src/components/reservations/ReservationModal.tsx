@@ -447,11 +447,17 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
   // Get all pilots and instructors
   const allPilots = useMemo(() => {
-    return users.filter((u) => {
-      return u.roles?.some((role) => 
-        ["PILOT", "INSTRUCTOR"].some(r => r.toLowerCase() === role.toLowerCase())
-      );
-    });
+    return users
+      .filter((u) => {
+        return u.roles?.some((role) => 
+          ["PILOT", "INSTRUCTOR"].some(r => r.toLowerCase() === role.toLowerCase())
+        );
+      })
+      .sort((a, b) => {
+        const nameA = `${a.last_name} ${a.first_name}`.toLowerCase();
+        const nameB = `${b.last_name} ${b.first_name}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
   }, [users]);
 
   // Filter pilots based on permissions
@@ -467,9 +473,15 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   }, [allPilots, currentUser]);
 
   const instructors = useMemo(() => {
-    return users.filter((u) =>
-      u.roles?.some((role) => ["INSTRUCTOR"].some(r => r.toLowerCase() === role.toLowerCase()))
-    );
+    return users
+      .filter((u) =>
+        u.roles?.some((role) => ["INSTRUCTOR"].some(r => r.toLowerCase() === role.toLowerCase()))
+      )
+      .sort((a, b) => {
+        const nameA = `${a.last_name} ${a.first_name}`.toLowerCase();
+        const nameB = `${b.last_name} ${b.first_name}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
   }, [users]);
 
   const [formData, setFormData] = useState<{
@@ -827,7 +839,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                       <option value="">Sélectionner un pilote</option>
                       {availablePilots.map((pilot) => (
                         <option key={pilot.id} value={pilot.id}>
-                          {pilot.first_name} {pilot.last_name}
+                          {pilot.last_name} {pilot.first_name}
                         </option>
                       ))}
                     </select>
@@ -854,7 +866,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                         <option value="">Aucun</option>
                         {instructors.map((instructor) => (
                           <option key={instructor.id} value={instructor.id}>
-                            {instructor.first_name} {instructor.last_name}
+                            {instructor.last_name} {instructor.first_name}
                           </option>
                         ))}
                       </select>

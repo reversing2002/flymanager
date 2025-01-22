@@ -233,9 +233,15 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
                   required
                 >
                   <option value="">Sélectionner un utilisateur</option>
-                  {users.map((u) => (
+                  {users
+                    .sort((a, b) => {
+                      const nameA = `${a.last_name} ${a.first_name}`.toLowerCase();
+                      const nameB = `${b.last_name} ${b.first_name}`.toLowerCase();
+                      return nameA.localeCompare(nameB);
+                    })
+                    .map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.first_name} {u.last_name}
+                      {u.last_name} {u.first_name}
                     </option>
                   ))}
                 </select>
@@ -254,9 +260,15 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
                   required
                 >
                   <option value="">Sélectionner un utilisateur</option>
-                  {users.map((u) => (
+                  {users
+                    .sort((a, b) => {
+                      const nameA = `${a.last_name} ${a.first_name}`.toLowerCase();
+                      const nameB = `${b.last_name} ${b.first_name}`.toLowerCase();
+                      return nameA.localeCompare(nameB);
+                    })
+                    .map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.first_name} {u.last_name}
+                      {u.last_name} {u.first_name}
                     </option>
                   ))}
                 </select>
