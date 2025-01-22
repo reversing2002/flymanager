@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import { Download, FileText } from 'lucide-react';
+import { exportToCSV, exportToPDF } from "../../utils/exportUtils";
 
 interface MemberBalance {
   user: User;
@@ -79,9 +80,9 @@ const MemberBalancesPage = () => {
     }));
   };
 
-  const exportToCSV = () => {
+  const handleExportCSV = () => {
     const headers = ['Nom', 'Prénom', 'Solde validé', 'Solde en attente', 'Solde total'];
-    const csvContent = filteredMembers.map(member => [
+    const data = filteredMembers.map(member => [
       member.user.last_name,
       member.user.first_name,
       member.validatedBalance.toFixed(2),
@@ -89,66 +90,29 @@ const MemberBalancesPage = () => {
       (member.validatedBalance + member.pendingBalance).toFixed(2)
     ]);
 
-    const csv = [
-      headers.join(','),
-      ...csvContent.map(row => row.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `soldes_membres_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    link.click();
+    exportToCSV({
+      filename: 'soldes_membres',
+      headers,
+      data
+    });
   };
 
-  const exportToPDF = () => {
-    const content = filteredMembers.map(member => ({
-      nom: `${member.user.last_name} ${member.user.first_name}`,
-      soldeValide: member.validatedBalance.toFixed(2) + ' €',
-      soldeAttente: member.pendingBalance.toFixed(2) + ' €',
-      soldeTotal: (member.validatedBalance + member.pendingBalance).toFixed(2) + ' €'
-    }));
+  const handleExportPDF = () => {
+    const headers = ['Nom', 'Prénom', 'Solde validé', 'Solde en attente', 'Solde total'];
+    const data = filteredMembers.map(member => [
+      member.user.last_name,
+      member.user.first_name,
+      `${member.validatedBalance.toFixed(2)} €`,
+      `${member.pendingBalance.toFixed(2)} €`,
+      `${(member.validatedBalance + member.pendingBalance).toFixed(2)} €`
+    ]);
 
-    // Créer un objet pour l'impression
-    const printContent = document.createElement('div');
-    printContent.innerHTML = `
-      <style>
-        @media print {
-          table { width: 100%; border-collapse: collapse; }
-          th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-          th { background-color: #f8f9fa; }
-        }
-      </style>
-      <h1>Soldes des membres - ${format(new Date(), 'dd/MM/yyyy')}</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Solde validé</th>
-            <th>Solde en attente</th>
-            <th>Solde total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${content.map(row => `
-            <tr>
-              <td>${row.nom}</td>
-              <td>${row.soldeValide}</td>
-              <td>${row.soldeAttente}</td>
-              <td>${row.soldeTotal}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
-
-    // Ouvrir la fenêtre d'impression
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent.innerHTML);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    exportToPDF({
+      filename: 'soldes_membres',
+      headers,
+      data,
+      title: 'Soldes des membres'
+    });
   };
 
   const sortedMembers = [...members].sort((a, b) => {
@@ -226,20 +190,20 @@ const MemberBalancesPage = () => {
             <option value="negative">Soldes négatifs</option>
             <option value="positive">Soldes positifs</option>
           </select>
-          <div className="flex gap-2">
+          <div className="flex space-x-4">
             <button
-              onClick={exportToCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
-              <Download className="w-4 h-4" />
-              CSV
+              <FileText size={20} />
+              <span>CSV</span>
             </button>
             <button
-              onClick={exportToPDF}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
             >
-              <FileText className="w-4 h-4" />
-              PDF
+              <Download size={20} />
+              <span>PDF</span>
             </button>
           </div>
         </div>

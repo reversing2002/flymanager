@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, Plus, UserCog } from "lucide-react";
+import { Search, Filter, Plus, UserCog, Download, FileText } from "lucide-react";
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { exportToCSV, exportToPDF } from "../../utils/exportUtils";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import type { User as UserType } from "../../types/database";
 import type { Contribution } from "../../types/contribution";
 import { getMembersWithBalance } from "../../lib/queries/users";
@@ -21,6 +26,53 @@ const MemberList = () => {
   const [allContributions, setAllContributions] = useState<Contribution[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+
+  const handleExportCSV = () => {
+    const headers = ['Nom', 'Prénom', 'Email', 'Date de fin de cotisation', 'Montant'];
+    const data = filteredMembers.map(member => {
+      const lastContribution = member.contributions && member.contributions.length > 0
+        ? [...member.contributions].sort((a, b) => new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime())[0]
+        : null;
+
+      return [
+        member.last_name || '',
+        member.first_name || '',
+        member.email || '',
+        lastContribution?.valid_until ? format(new Date(lastContribution.valid_until), 'dd-MM-yyyy', { locale: fr }) : '',
+        lastContribution?.account_entry?.amount !== undefined ? Math.abs(lastContribution.account_entry.amount).toString() : ''
+      ];
+    });
+
+    exportToCSV({
+      filename: 'liste_membres',
+      headers,
+      data
+    });
+  };
+
+  const handleExportPDF = () => {
+    const headers = ['Nom', 'Prénom', 'Email', 'Date de fin', 'Montant'];
+    const data = filteredMembers.map(member => {
+      const lastContribution = member.contributions && member.contributions.length > 0
+        ? [...member.contributions].sort((a, b) => new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime())[0]
+        : null;
+
+      return [
+        member.last_name || '',
+        member.first_name || '',
+        member.email || '',
+        lastContribution?.valid_until ? format(new Date(lastContribution.valid_until), 'dd-MM-yyyy', { locale: fr }) : '',
+        lastContribution?.account_entry?.amount !== undefined ? `${Math.abs(lastContribution.account_entry.amount)} €` : ''
+      ];
+    });
+
+    exportToPDF({
+      filename: 'liste_membres',
+      headers,
+      data,
+      title: 'Liste des membres'
+    });
+  };
 
   const loadMembers = async () => {
     try {
@@ -80,10 +132,10 @@ const MemberList = () => {
     // Vérifier si la cotisation est valide
     const isMembershipValid = member.contributions && member.contributions.length > 0 && (() => {
       const sortedContributions = [...member.contributions].sort(
-        (a, b) => new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime()
+        (a, b) => new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime()
       );
       const lastContribution = sortedContributions[0];
-      const validUntil = addMonths(new Date(lastContribution.valid_from), 12);
+      const validUntil = new Date(lastContribution.valid_until);
       return isAfter(validUntil, new Date());
     })();
 
@@ -99,6 +151,40 @@ const MemberList = () => {
       (selectedMembershipStatus === "expired" && !isMembershipValid);
 
     return matchesSearch && matchesMembershipStatus;
+  })
+  // Tri par année de dernière cotisation DESC puis par nom ASC
+  .sort((a, b) => {
+    // Récupérer la dernière cotisation pour chaque membre
+    const getLastContribution = (member: typeof a) => {
+      if (!member.contributions || member.contributions.length === 0) return null;
+      return [...member.contributions].sort(
+        (x, y) => new Date(y.valid_until).getTime() - new Date(x.valid_until).getTime()
+      )[0];
+    };
+
+    const aContrib = getLastContribution(a);
+    const bContrib = getLastContribution(b);
+
+    // Comparer les dates de fin au niveau du jour (ignorer les heures)
+    const aDay = aContrib ? new Date(new Date(aContrib.valid_until).setHours(0, 0, 0, 0)) : new Date(0);
+    const bDay = bContrib ? new Date(new Date(bContrib.valid_until).setHours(0, 0, 0, 0)) : new Date(0);
+    
+    if (aDay.getTime() !== bDay.getTime()) {
+      return bDay.getTime() - aDay.getTime(); // DESC
+    }
+
+    // Si même date, trier par nom puis prénom
+    const aName = (a.last_name || '').toLowerCase();
+    const bName = (b.last_name || '').toLowerCase();
+    
+    if (aName !== bName) {
+      return aName.localeCompare(bName); // ASC
+    }
+    
+    // Si même nom, trier par prénom
+    const aFirstName = (a.first_name || '').toLowerCase();
+    const bFirstName = (b.first_name || '').toLowerCase();
+    return aFirstName.localeCompare(bFirstName); // ASC
   });
 
   if (loading) {
@@ -123,6 +209,20 @@ const MemberList = () => {
         <h1 className="text-2xl font-semibold text-slate-900 mb-4 sm:mb-0">Membres</h1>
         {hasAnyGroup(user, ["ADMIN"]) && (
           <div className="flex space-x-4">
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              <FileText size={20} />
+              <span>CSV</span>
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              <Download size={20} />
+              <span>PDF</span>
+            </button>
             <button
               onClick={() => setIsAddMemberOpen(true)}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
