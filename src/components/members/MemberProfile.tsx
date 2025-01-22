@@ -279,6 +279,7 @@ const MemberProfile = () => {
                 <ContributionCard
                   contribution={contribution}
                   onEdit={() => setEditingContribution(contribution)}
+                  onDelete={loadContributions}
                   canEdit={hasAnyGroup(currentUser, ['ADMIN'])}
                 />
               </div>

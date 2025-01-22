@@ -216,3 +216,51 @@ export async function getAllActiveContributions(): Promise<Contribution[]> {
 
   return data || [];
 }
+
+export async function deleteContribution(contributionId: string) {
+  // Récupérer d'abord la contribution pour avoir l'ID de la transaction
+  const { data: contribution, error: fetchError } = await supabase
+    .from("member_contributions")
+    .select("account_entry_id")
+    .eq("id", contributionId)
+    .single();
+
+  if (fetchError) {
+    throw fetchError;
+  }
+
+  // Supprimer d'abord la contribution
+  const { error: deleteContribError } = await supabase
+    .from("member_contributions")
+    .delete()
+    .eq("id", contributionId);
+
+  if (deleteContribError) {
+    throw deleteContribError;
+  }
+
+  // Si une transaction est associée et qu'elle existe, la supprimer aussi
+  if (contribution?.account_entry_id) {
+    const { data: accountEntry, error: fetchEntryError } = await supabase
+      .from("account_entries")
+      .select("is_validated")
+      .eq("id", contribution.account_entry_id)
+      .single();
+
+    if (fetchEntryError) {
+      throw fetchEntryError;
+    }
+
+    // Ne supprimer la transaction que si elle n'est pas validée
+    if (!accountEntry.is_validated) {
+      const { error: deleteEntryError } = await supabase
+        .from("account_entries")
+        .delete()
+        .eq("id", contribution.account_entry_id);
+
+      if (deleteEntryError) {
+        throw deleteEntryError;
+      }
+    }
+  }
+}
