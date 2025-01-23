@@ -13,8 +13,8 @@ interface ExportOptions {
 
 export const exportToCSV = ({ filename, headers, data }: ExportOptions) => {
   const csv = [
-    headers.join(','),
-    ...data.map(row => row.join(','))
+    headers.join(';'),
+    ...data.map(row => row.join(';'))
   ].join('\n');
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
