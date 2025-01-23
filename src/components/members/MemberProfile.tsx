@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { User, AlertTriangle, Edit, ChevronLeft, CreditCard, Plus } from "lucide-react";
+import { User, AlertTriangle, Edit, ChevronLeft, CreditCard, Plus, Receipt, Plane, CalendarRange } from "lucide-react";
 import { getUserById, updateUser } from "../../lib/queries";
 import type { User as UserType } from "../../types/database";
 import type { Contribution } from "../../types/contribution";
@@ -347,7 +347,7 @@ const MemberProfile = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header with back button and edit */}
       <div className="bg-white border-b border-gray-200 px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center max-w-7xl mx-auto gap-4">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center text-gray-600 hover:text-gray-900"
@@ -355,15 +355,38 @@ const MemberProfile = () => {
             <ChevronLeft className="w-5 h-5 mr-1" />
             Retour à la liste
           </button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           {canEdit && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Modifier
-            </button>
-          )}
+              <>
+                <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => navigate(`/accounts?member=${pilot?.id}`)}
+                    className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                  >
+                    <Receipt className="w-4 h-4 mr-2" />
+                    <span>Finances</span>
+                  </button>
+                  <button
+                    onClick={() => navigate(`/flights?member=${pilot?.id}`)}
+                    className="flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                  >
+                    <Plane className="w-4 h-4 mr-2" />
+                    <span>Vols</span>
+                  </button>
+      
+                  {canEdit && (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center justify-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 col-span-2 sm:col-span-1"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      <span>Modifier</span>
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

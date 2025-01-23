@@ -11,7 +11,7 @@ import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import { hasAnyGroup } from "../../lib/permissions";
 import CompetenciesModal from "../progression/CompetenciesModal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // Fonction utilitaire pour vérifier la cohérence des horamètres
 const checkHourMeterConsistency = (currentFlight: Flight, flights: Flight[]): { isConsistent: boolean; previousFlight: Flight | null } => {
@@ -59,6 +59,7 @@ const checkHourMeterConsistency = (currentFlight: Flight, flights: Flight[]): { 
 const FlightList = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [flights, setFlights] = useState<Flight[]>([]);
   const [filteredFlights, setFilteredFlights] = useState<Flight[]>([]);
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
@@ -237,6 +238,18 @@ const FlightList = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const memberId = params.get("member");
+    if (memberId) {
+      setFilters(prev => ({
+        ...prev,
+        memberId
+      }));
+      setShowFilters(true);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     loadData();

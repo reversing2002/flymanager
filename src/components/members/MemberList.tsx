@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, Plus, UserCog, Download, FileText } from "lucide-react";
+import { Search, Filter, Plus, UserCog, Download, FileText, MoreVertical } from "lucide-react";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { exportToCSV, exportToPDF } from "../../utils/exportUtils";
@@ -26,6 +26,7 @@ const MemberList = () => {
   const [allContributions, setAllContributions] = useState<Contribution[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const handleExportCSV = () => {
     const headers = ['Nom', 'Prénom', 'Email', 'Date de fin de cotisation', 'Montant'];
@@ -208,35 +209,83 @@ const MemberList = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <h1 className="text-2xl font-semibold text-slate-900 mb-4 sm:mb-0">Membres</h1>
         {hasAnyGroup(user, ["ADMIN"]) && (
-          <div className="flex space-x-4">
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              <FileText size={20} />
-              <span>CSV</span>
-            </button>
-            <button
-              onClick={handleExportPDF}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              <Download size={20} />
-              <span>PDF</span>
-            </button>
-            <button
-              onClick={() => setIsAddMemberOpen(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Ajouter un membre
-            </button>
-            <button
-              onClick={() => navigate('/members/roles')}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <UserCog className="h-5 w-5 mr-2" />
-              Attribuer les rôles
-            </button>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <div className="flex gap-2 w-full sm:w-auto order-1">
+              <button
+                onClick={() => setIsAddMemberOpen(true)}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Plus className="h-5 w-5" />
+                <span className="text-sm">Nouveau membre</span>
+              </button>
+              <button
+                onClick={() => navigate('/members/roles')}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <UserCog className="h-5 w-5" />
+                <span className="text-sm">Gérer les rôles</span>
+              </button>
+            </div>
+            
+            {/* Version mobile du bouton export */}
+            <div className="relative sm:hidden order-2 w-full">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="flex items-center justify-center gap-2 w-full px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors text-sm"
+                title="Options d'export"
+              >
+                <Download className="w-4 h-4" />
+                <span>Options d'export</span>
+              </button>
+              {showExportMenu && (
+                <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                  <div className="py-1" role="menu" aria-orientation="vertical">
+                    <button
+                      onClick={() => {
+                        handleExportCSV();
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 flex items-center"
+                      role="menuitem"
+                    >
+                      <FileText className="w-4 h-4 mr-3" />
+                      Format CSV
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleExportPDF();
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 flex items-center"
+                      role="menuitem"
+                    >
+                      <Download className="w-4 h-4 mr-3" />
+                      Format PDF
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Version desktop des boutons export */}
+            <div className="hidden sm:flex gap-2 w-full sm:w-auto order-2">
+              <button
+                onClick={handleExportCSV}
+                className="flex items-center justify-center px-4 py-2 bg-green-600/90 text-white rounded hover:bg-green-700 transition-colors"
+                title="Exporter en CSV"
+              >
+                <FileText className="w-5 h-5 mr-2" />
+                <span>CSV</span>
+              </button>
+              <button
+                onClick={handleExportPDF}
+                className="flex items-center justify-center px-4 py-2 bg-red-600/90 text-white rounded hover:bg-red-700 transition-colors"
+                title="Exporter en PDF"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                <span>PDF</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -8,11 +8,12 @@ import { getAircraft, getReservations, getUsers, getAvailabilitiesForPeriod } fr
 import { hasAnyGroup } from "../../lib/permissions";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const ReservationList: React.FC = () => {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -24,11 +25,21 @@ const ReservationList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const memberId = params.get('member');
+    if (memberId) {
+      setSelectedMemberId(memberId);
+      setViewMode('week'); // Force le mode liste quand un membre est sélectionné
+    }
+  }, [location.search]);
 
   // Load initial data
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedMemberId]);
 
   const loadData = async () => {
     try {
@@ -65,10 +76,17 @@ const ReservationList: React.FC = () => {
 
     let filtered = [...reservations];
 
-    // Filter reservations based on user role
-    if (!hasAnyGroup(currentUser, ['ADMIN'])) {
+    // Si un membre spécifique est sélectionné, on montre toutes ses réservations
+    if (selectedMemberId) {
       filtered = filtered.filter(r => 
-        r.pilotId === currentUser?.id || // User is pilot
+        r.userId === selectedMemberId || // Membre en tant que pilote
+        r.instructorId === selectedMemberId // Membre en tant qu'instructeur
+      );
+    } 
+    // Sinon, on applique les filtres normaux basés sur le rôle
+    else if (!hasAnyGroup(currentUser, ['ADMIN'])) {
+      filtered = filtered.filter(r => 
+        r.userId === currentUser?.id || // User is pilot
         r.instructorId === currentUser?.id // User is instructor
       );
     }
@@ -80,22 +98,8 @@ const ReservationList: React.FC = () => {
       return startTime >= now;
     });
 
-    // Sort by start time (most recent first)
-    filtered.sort((a, b) => {
-      const startTimeA = a.startTime;
-      const startTimeB = b.startTime;
-      
-      if (!startTimeA || !startTimeB) {
-        return 0;
-      }
-      
-      const dateA = new Date(startTimeA).getTime();
-      const dateB = new Date(startTimeB).getTime();
-      return dateB - dateA;
-    });
-
     setFilteredReservations(filtered);
-  }, [reservations, currentUser, aircraft, users]);
+  }, [reservations, selectedMemberId, currentUser]);
 
   // Group reservations by date
   const groupReservationsByDate = (reservations: Reservation[]) => {
@@ -206,41 +210,56 @@ const ReservationList: React.FC = () => {
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mes réservations</h1>
-          <p className="text-slate-600">Gérez vos réservations de vol</p>
+          {selectedMemberId ? (
+            <>
+              <h1 className="text-2xl font-bold text-slate-900">
+                Réservations de {users.find(u => u.id === selectedMemberId)?.name || 'membre'}
+              </h1>
+              <p className="text-slate-600">Liste des réservations en tant que pilote ou instructeur</p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-slate-900">Mes réservations</h1>
+              <p className="text-slate-600">Gérez vos réservations de vol</p>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center bg-white rounded-lg border border-slate-200 p-1">
-            <button
-              onClick={() => setViewMode('day')}
-              className={`px-3 py-1.5 text-sm font-medium rounded ${
-                viewMode === 'day'
-                  ? 'bg-sky-100 text-sky-700'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Calendar className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('week')}
-              className={`px-3 py-1.5 text-sm font-medium rounded ${
-                viewMode === 'week'
-                  ? 'bg-sky-100 text-sky-700'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
+          {!selectedMemberId && (
+            <div className="flex items-center bg-white rounded-lg border border-slate-200 p-1">
+              <button
+                onClick={() => setViewMode('day')}
+                className={`px-3 py-1.5 text-sm font-medium rounded ${
+                  viewMode === 'day'
+                    ? 'bg-sky-100 text-sky-700'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Calendar className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('week')}
+                className={`px-3 py-1.5 text-sm font-medium rounded ${
+                  viewMode === 'week'
+                    ? 'bg-sky-100 text-sky-700'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
+          )}
 
-          <button
-            onClick={handleCreateReservation}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nouvelle réservation</span>
-          </button>
+          {(!selectedMemberId || hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR"])) && (
+            <button
+              onClick={handleCreateReservation}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Nouvelle réservation</span>
+            </button>
+          )}
         </div>
       </div>
 
