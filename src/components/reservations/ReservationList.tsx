@@ -207,8 +207,8 @@ const ReservationList: React.FC = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 relative">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-16">
         <div>
           {selectedMemberId ? (
             <>
@@ -252,38 +252,42 @@ const ReservationList: React.FC = () => {
           )}
 
           {(!selectedMemberId || hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR"])) && (
-            <button
-              onClick={handleCreateReservation}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Nouvelle réservation</span>
-            </button>
+            <div className="hidden sm:block">
+              <button
+                onClick={handleCreateReservation}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Nouvelle réservation</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
 
-      <div className="flex items-center justify-between bg-white rounded-lg border border-slate-200 p-4">
+      <div className="flex items-center justify-between bg-white rounded-lg border border-slate-200 p-4 sticky top-0 z-10">
         <button
           onClick={navigatePrevious}
-          className="p-2 text-slate-600 hover:text-slate-900"
+          className="p-2 text-slate-600 hover:text-slate-900 active:scale-95 transition-transform"
         >
+          <span className="sr-only">Précédent</span>
           ←
         </button>
-        <h2 className="text-lg font-medium text-slate-900">
+        <h2 className="text-lg font-medium text-slate-900 text-center">
           {viewMode === 'week'
             ? `Semaine du ${format(startOfWeek(selectedDate, { locale: fr }), 'dd MMMM', { locale: fr })}`
             : format(selectedDate, 'EEEE dd MMMM yyyy', { locale: fr })}
         </h2>
         <button
           onClick={navigateNext}
-          className="p-2 text-slate-600 hover:text-slate-900"
+          className="p-2 text-slate-600 hover:text-slate-900 active:scale-95 transition-transform"
         >
+          <span className="sr-only">Suivant</span>
           →
         </button>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-8 pb-24">
         {Array.from(groupReservationsByDate(filteredReservations)).map(([date, dayReservations]) => (
           <div key={date} className="space-y-4">
             <h3 className="font-medium text-slate-900">
@@ -312,6 +316,18 @@ const ReservationList: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {(!selectedMemberId || hasAnyGroup(currentUser, ["ADMIN", "INSTRUCTOR"])) && (
+        <div className="fixed bottom-4 right-4 sm:hidden z-50">
+          <button
+            onClick={handleCreateReservation}
+            className="flex items-center justify-center w-14 h-14 rounded-full bg-sky-600 hover:bg-sky-700 text-white shadow-lg transition-all active:scale-95"
+            aria-label="Créer une nouvelle réservation"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+        </div>
+      )}
 
       {showReservationModal && (
         <ReservationModal

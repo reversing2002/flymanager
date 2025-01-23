@@ -255,7 +255,7 @@ const AccountList = () => {
 
     return (
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 space-y-4 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 space-y-4 sm:space-y-0 relative pb-16">
           <h1 className="text-xl sm:text-2xl font-bold">Gestion des comptes</h1>
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <select
@@ -416,21 +416,25 @@ const AccountList = () => {
               <span>Exporter</span>
             </button>
             {isAdmin ? (
-              <button
-                onClick={() => setIsCreating(true)}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors w-full sm:w-auto justify-center"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Nouvelle opération</span>
-              </button>
+              <div className="hidden sm:block">
+                <button
+                  onClick={() => setIsCreating(true)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors w-full sm:w-auto justify-center"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Nouvelle opération</span>
+                </button>
+              </div>
             ) : user && (
-              <button
-                onClick={() => setShowCreditModal(true)}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors w-full sm:w-auto justify-center"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Créditer mon compte</span>
-              </button>
+              <div className="hidden sm:block">
+                <button
+                  onClick={() => setShowCreditModal(true)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors w-full sm:w-auto justify-center"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Créditer mon compte</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -462,7 +466,66 @@ const AccountList = () => {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+        <div className="bg-white rounded-lg shadow-sm overflow-x-auto sm:hidden">
+          {filteredEntries.map((entry) => {
+            const assignedUser = users.find(u => u.id === entry.assigned_to_id);
+            return (
+              <div key={entry.id} className="p-4 border-b last:border-b-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium text-slate-900">
+                      {entry.account_entry_types?.name || "-"}
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      {assignedUser ? `${assignedUser.first_name} ${assignedUser.last_name}` : "-"}
+                    </p>
+                  </div>
+                  <span className={`text-sm font-medium ${
+                    entry.account_entry_types?.is_credit ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {formatAmount(entry.amount)}
+                  </span>
+                </div>
+                <div className="mt-2 text-sm text-slate-600">
+                  <p>{entry.description || "-"}</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {new Date(entry.date).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="mt-2 flex items-center justify-end space-x-2">
+                  {entry.is_validated ? (
+                    <button
+                      onClick={() => setSelectedEntry(entry)}
+                      className="text-slate-400 hover:text-slate-600"
+                      title="Voir les détails"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleEdit(entry)}
+                        className="text-blue-400 hover:text-blue-600"
+                        title="Modifier"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(entry.id)}
+                        className="text-red-400 hover:text-red-600"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm overflow-x-auto hidden sm:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
@@ -623,9 +686,10 @@ const AccountList = () => {
     return user ? `${user.last_name} ${user.first_name}` : "-";
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     // Préparer les données filtrées pour l'export
-    const dataToExport = entries.filter((entry) => {
+    const entriesData = await getAccountEntries(1, totalEntries, filters);
+    const dataToExport = entriesData.data.filter((entry: AccountEntry) => {
       // Filtre par date de début
       if (filters.startDate && new Date(entry.date) < new Date(filters.startDate))
         return false;
@@ -683,7 +747,7 @@ const AccountList = () => {
     const url = URL.createObjectURL(blob);
     
     link.setAttribute("href", url);
-    link.setAttribute("download", `export_comptes_${dateUtils.formatDate(new Date())}.csv`);
+    link.setAttribute("download", `export_comptes_${dateUtils.formatDate(new Date().toISOString())}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -695,11 +759,34 @@ const AccountList = () => {
   return (
     <>
       {renderTable()}
+
+      {/* Bouton flottant pour mobile */}
+      {isAdmin ? (
+        <div className="fixed bottom-4 right-4 sm:hidden z-50">
+          <button
+            onClick={() => setIsCreating(true)}
+            className="flex items-center justify-center w-14 h-14 rounded-full bg-sky-600 hover:bg-sky-700 text-white shadow-lg transition-all active:scale-95"
+            aria-label="Créer une nouvelle opération"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+        </div>
+      ) : user && (
+        <div className="fixed bottom-4 right-4 sm:hidden z-50">
+          <button
+            onClick={() => setShowCreditModal(true)}
+            className="flex items-center justify-center w-14 h-14 rounded-full bg-sky-600 hover:bg-sky-700 text-white shadow-lg transition-all active:scale-95"
+            aria-label="Créditer mon compte"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+        </div>
+      )}
       
       {/* Modales */}
-      {(selectedEntry || (isCreating && isAdmin)) && !showEditModal && (
+      {(selectedEntry || (isCreating && isAdmin)) && !showEditModal && selectedEntry && (
         <AccountEntryModal
-          entry={selectedEntry}
+          entry={selectedEntry || undefined}
           onClose={() => {
             setSelectedEntry(null);
             setIsCreating(false);
@@ -739,19 +826,13 @@ const AccountList = () => {
         )
       )}
 
-      {showCreditModal && user && (isAdmin ? (
-        <CreditAccountModal
-          userId={user.id}
-          onClose={() => setShowCreditModal(false)}
-          onSuccess={refetchEntries}
-        />
-      ) : (
+      {showCreditModal && user && (
         <SimpleCreditModal
           userId={user.id}
           onClose={() => setShowCreditModal(false)}
           onSuccess={refetchEntries}
         />
-      ))}
+      )}
     </>
   );
 };
