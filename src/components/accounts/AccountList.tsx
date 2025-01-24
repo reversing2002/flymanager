@@ -10,6 +10,7 @@ import {
   Pencil,
   Trash2,
   Check,
+  FileText
 } from "lucide-react";
 import type { AccountEntry, User } from "../../types/database";
 import { 
@@ -35,7 +36,7 @@ const AccountList = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [selectedEntry, setSelectedEntry] = useState<AccountEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<AccountEntry | undefined>(undefined);
   const [showFilters, setShowFilters] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -183,9 +184,11 @@ const AccountList = () => {
         return "Assurance";
       case "DEPOSIT":
         return "Dépôt";
-      case "WITHDRAWAL":
+    case "WITHDRAWAL":
         return "Retrait";
-      default:
+    case "REFUND":
+        return "Remboursement";
+    default:
         return type;
     }
   };
@@ -222,6 +225,14 @@ const AccountList = () => {
     } catch (error) {
       console.error("Error validating entry:", error);
       toast.error("Erreur lors de la validation de l'entrée");
+    }
+  };
+
+  const handleViewAttachment = (entry: AccountEntry) => {
+    if (entry.attachment_url) {
+      window.open(entry.attachment_url, '_blank');
+    } else {
+      toast.error("Aucun justificatif disponible");
     }
   };
 
@@ -386,6 +397,7 @@ const AccountList = () => {
                       <option value="INSURANCE">Assurance</option>
                       <option value="FFA">FFA</option>
                       <option value="ACCOUNT_FUNDING">Approvisionnement compte</option>
+                      <option value="REFUND">Remboursement</option>
                       <option value="OTHER">Autre</option>
                     </select>
                   </div>
@@ -466,6 +478,25 @@ const AccountList = () => {
           </div>
         )}
 
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 space-y-4 sm:space-y-0 relative pb-16">
+          <div className="flex space-x-2">
+
+            {!isAdmin && (
+              <button
+                onClick={() => {
+                  setSelectedEntry(undefined);
+                  setIsCreating(true);
+                }}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                <span>Nouvelle dépense club</span>
+              </button>
+            )}
+          </div>
+          
+        </div>
+
         <div className="bg-white rounded-lg shadow-sm overflow-x-auto sm:hidden">
           {filteredEntries.map((entry) => {
             const assignedUser = users.find(u => u.id === entry.assigned_to_id);
@@ -493,6 +524,15 @@ const AccountList = () => {
                   </p>
                 </div>
                 <div className="mt-2 flex items-center justify-end space-x-2">
+                  {entry.attachment_url && (
+                    <button
+                      onClick={() => handleViewAttachment(entry)}
+                      className="text-blue-600 hover:text-blue-800"
+                      title="Voir le justificatif"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </button>
+                  )}
                   {entry.is_validated ? (
                     <button
                       onClick={() => setSelectedEntry(entry)}
@@ -594,6 +634,15 @@ const AccountList = () => {
                     </td>
                     <td className="p-4 text-center">
                       <div className="flex items-center justify-center space-x-2">
+                        {entry.attachment_url && (
+                          <button
+                            onClick={() => handleViewAttachment(entry)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Voir le justificatif"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </button>
+                        )}
                         {entry.is_validated ? (
                           <button
                             onClick={() => setSelectedEntry(entry)}
@@ -686,10 +735,9 @@ const AccountList = () => {
     return user ? `${user.last_name} ${user.first_name}` : "-";
   };
 
-  const handleExport = async () => {
+  const handleExport = () => {
     // Préparer les données filtrées pour l'export
-    const entriesData = await getAccountEntries(1, totalEntries, filters);
-    const dataToExport = entriesData.data.filter((entry: AccountEntry) => {
+    const dataToExport = entries.filter((entry) => {
       // Filtre par date de début
       if (filters.startDate && new Date(entry.date) < new Date(filters.startDate))
         return false;
@@ -771,12 +819,12 @@ const AccountList = () => {
             <Plus className="h-6 w-6" />
           </button>
         </div>
-      ) : user && (
+      ) : (
         <div className="fixed bottom-4 right-4 sm:hidden z-50">
           <button
-            onClick={() => setShowCreditModal(true)}
+            onClick={() => setIsCreating(true)}
             className="flex items-center justify-center w-14 h-14 rounded-full bg-sky-600 hover:bg-sky-700 text-white shadow-lg transition-all active:scale-95"
-            aria-label="Créditer mon compte"
+            aria-label="Nouvelle dépense club"
           >
             <Plus className="h-6 w-6" />
           </button>
@@ -784,11 +832,11 @@ const AccountList = () => {
       )}
       
       {/* Modales */}
-      {(selectedEntry || (isCreating && isAdmin)) && !showEditModal && selectedEntry && (
+      {(selectedEntry || isCreating) && !showEditModal && (
         <AccountEntryModal
-          entry={selectedEntry || undefined}
+          entry={selectedEntry}
           onClose={() => {
-            setSelectedEntry(null);
+            setSelectedEntry(undefined);
             setIsCreating(false);
           }}
           onUpdate={refetchEntries}
@@ -826,13 +874,19 @@ const AccountList = () => {
         )
       )}
 
-      {showCreditModal && user && (
+      {showCreditModal && user && (isAdmin ? (
+        <CreditAccountModal
+          userId={user.id}
+          onClose={() => setShowCreditModal(false)}
+          onSuccess={refetchEntries}
+        />
+      ) : (
         <SimpleCreditModal
           userId={user.id}
           onClose={() => setShowCreditModal(false)}
           onSuccess={refetchEntries}
         />
-      )}
+      ))}
     </>
   );
 };

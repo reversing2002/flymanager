@@ -158,15 +158,17 @@ export interface AccountEntry {
   id: string;
   user_id: string;
   assigned_to_id: string;
-  date: string;
   entry_type_id: string;
   account_entry_types?: AccountEntryType;
   amount: number;
   payment_method: PaymentMethod;
   description?: string;
+  date: string;
   is_validated: boolean;
   is_club_paid: boolean;
   flight_id?: string;
+  attachment_url?: string;
+  attachment_type?: 'image' | 'pdf' | null;
   created_at: string;
   updated_at: string;
 }
