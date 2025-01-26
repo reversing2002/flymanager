@@ -131,21 +131,6 @@ interface AccountTableProps {
   type: string;
 }
 
-interface SupplierFormData {
-  name: string;
-  code: string;
-  siret?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  default_expense_account_id?: string;
-}
-
-interface TreasuryFormData {
-  name: string;
-  code: string;
-}
-
 const supplierFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   code: z.string().min(1, "Le code est requis"),
@@ -1816,14 +1801,11 @@ const SimpleAccountingView = () => {
   );
 };
 
-interface TreasuryFormData {
-  name: string;
-  code: string;
-}
-
 const treasuryFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   code: z.string().min(1, "Le code est requis"),
 });
+
+type TreasuryFormData = z.infer<typeof treasuryFormSchema>;
 
 export default SimpleAccountingView;

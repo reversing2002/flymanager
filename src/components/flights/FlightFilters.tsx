@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Filter, Calendar, Plane, Clock, User } from 'lucide-react';
+import { Filter, Calendar, Plane, Clock, User as UserIcon } from 'lucide-react';
 import { fr } from 'date-fns/locale';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import type { Aircraft, FlightType, User } from '../../types/database';
@@ -173,7 +173,7 @@ const FlightFilters: React.FC<FlightFiltersProps> = ({
           <div className="space-y-4">
             <label className="block text-sm font-medium text-slate-700 mb-2">
               <div className="flex items-center gap-2 mb-2">
-                <User className="h-4 w-4" />
+                <UserIcon className="h-4 w-4" />
                 <span>Rechercher un membre</span>
               </div>
             </label>

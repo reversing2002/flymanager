@@ -58,6 +58,7 @@ export interface Aircraft {
   aircraft_order?: Array<{ position: number }>;
   last_hour_meter?: number;  // Last recorded hour meter reading
   hour_format?: "DECIMAL" | "CLASSIC";  // Format d'affichage des heures
+  description?: string;  // Description de l'appareil
 }
 
 export interface AircraftRemark {

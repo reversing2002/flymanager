@@ -7,6 +7,7 @@ import StripeAccountSettings from './StripeAccountSettings';
 import WeatherSettings from './WeatherSettings';
 import { toast } from 'react-hot-toast';
 import { useWeatherStations } from '../../hooks/useWeatherStations';
+import { ClubWebsiteSettings } from './ClubWebsiteSettings';
 
 interface ClubData {
   id: string;
@@ -45,6 +46,7 @@ const ClubManagement = () => {
     { id: 'general', label: 'Général' },
     { id: 'discovery', label: 'Vols découverte' },
     { id: 'meteo', label: 'Météo' },
+    { id: 'website', label: 'Site Web' },
     ...(isSystemAdmin ? [{ id: 'stripe', label: 'Configuration Stripe' }] : []),
   ];
 
@@ -353,6 +355,8 @@ const ClubManagement = () => {
           </div>
         </form>
       )}
+      
+      {activeTab === 'website' && <ClubWebsiteSettings clubId={user?.club?.id} />}
       
       {activeTab === 'stripe' && isSystemAdmin && <StripeAccountSettings />}
     </div>

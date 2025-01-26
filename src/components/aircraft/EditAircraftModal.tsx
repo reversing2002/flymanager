@@ -33,6 +33,7 @@ const EditAircraftModal: React.FC<EditAircraftModalProps> = ({
     imageUrl: aircraft?.imageUrl || "",
     last_hour_meter: aircraft?.last_hour_meter || 0,
     hour_format: aircraft?.hour_format || "CLASSIC",
+    description: aircraft?.description || "",
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -331,6 +332,21 @@ const EditAircraftModal: React.FC<EditAircraftModalProps> = ({
                     <option value="DECIMAL">Décimal (1.5h)</option>
                     <option value="CLASSIC">Classique (1h30)</option>
                   </select>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+                    rows={4}
+                    placeholder="Description de l'appareil..."
+                  />
                 </div>
 
                 <div className="col-span-2">
