@@ -1,12 +1,15 @@
 import React from 'react';
 import { Routes, Route, useParams } from 'react-router-dom';
 import ClubPublicHome from './ClubPublicHome';
+import OurFleet from './pages/OurFleet';
+import ClubLayout from './layout/ClubLayout';
 
 const ClubRouter: React.FC = () => {
   const { clubCode } = useParams<{ clubCode: string }>();
   
   console.log('ClubRouter - URL params:', useParams());
   console.log('ClubRouter - Club Code:', clubCode);
+  console.log('ClubRouter - Current Path:', window.location.pathname);
 
   if (!clubCode) {
     return (
@@ -20,9 +23,13 @@ const ClubRouter: React.FC = () => {
   }
 
   return (
-    <Routes>
-      <Route path="*" element={<ClubPublicHome clubCode={clubCode} />} />
-    </Routes>
+    <ClubLayout>
+      <Routes>
+        <Route index element={<ClubPublicHome clubCode={clubCode} />} />
+        <Route path="avions" element={<OurFleet />} />
+        <Route path="*" element={<ClubPublicHome clubCode={clubCode} />} />
+      </Routes>
+    </ClubLayout>
   );
 };
 
