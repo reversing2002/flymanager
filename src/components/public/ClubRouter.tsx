@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, useParams } from 'react-router-dom';
 import ClubPublicHome from './ClubPublicHome';
 import OurFleet from './pages/OurFleet';
+import Training from './pages/Training';
 import ClubLayout from './layout/ClubLayout';
 
 const ClubRouter: React.FC = () => {
@@ -27,6 +28,7 @@ const ClubRouter: React.FC = () => {
       <Routes>
         <Route index element={<ClubPublicHome clubCode={clubCode} />} />
         <Route path="avions" element={<OurFleet />} />
+        <Route path="formation" element={<Training />} />
         <Route path="*" element={<ClubPublicHome clubCode={clubCode} />} />
       </Routes>
     </ClubLayout>

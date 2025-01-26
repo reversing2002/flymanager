@@ -366,7 +366,7 @@ const ClubPublicHome: React.FC = () => {
                   </div>
                   <div className="text-center mt-8">
                     <Link
-                      to={`/club/${clubCode}/fleet`}
+                      to={`/club/${clubCode}/avions`}
                       className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
                     >
                       Découvrir toute notre flotte

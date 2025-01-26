@@ -34,6 +34,17 @@ const websiteSettingsSchema = z.object({
       description: z.string().nullable(),
     })
   ),
+  cached_instructors: z.array(
+    z.object({
+      id: z.string(),
+      first_name: z.string(),
+      last_name: z.string(),
+      bio: z.string().nullable(),
+      photo_url: z.string().nullable(),
+      qualifications: z.array(z.string()),
+      specialties: z.array(z.string())
+    })
+  ),
 });
 
 type WebsiteSettings = z.infer<typeof websiteSettingsSchema>;
@@ -71,6 +82,7 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
           hero_subtitle: null,
           cta_text: 'Nous rejoindre',
           cached_fleet: [],
+          cached_instructors: []
         }
       );
     },
@@ -176,8 +188,36 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
           hourly_rate
         `)
         .eq('club_id', clubId)
-        .eq('status', 'AVAILABLE')
-        ;
+        .eq('status', 'AVAILABLE');
+
+      // Récupérer la liste des instructeurs via les groupes
+      const { data: instructorUsers } = await supabase
+        .from('user_group_memberships')
+        .select(`
+          user:user_id (
+            id,
+            first_name,
+            last_name,
+            image_url
+          ),
+          group:user_groups!inner (
+            code
+          )
+        `)
+        .eq('user_groups.code', 'INSTRUCTOR');
+
+      // Transformer les données pour le cache en filtrant les utilisateurs null
+      const instructors = instructorUsers
+        ?.filter(item => item.user !== null)
+        ?.map(item => ({
+          id: item.user.id,
+          first_name: item.user.first_name,
+          last_name: item.user.last_name,
+          bio: null,
+          photo_url: item.user.image_url,
+          qualifications: [],
+          specialties: []
+        })) || [];
 
       const cachedFleet = aircraft?.map(aircraft => ({
         id: aircraft.id,
@@ -189,18 +229,31 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
         description: aircraft.description
       })) || [];
 
+      const cachedInstructors = instructors?.map(instructor => ({
+        id: instructor.id,
+        first_name: instructor.first_name,
+        last_name: instructor.last_name,
+        bio: instructor.bio,
+        photo_url: instructor.photo_url,
+        qualifications: instructor.qualifications || [],
+        specialties: instructor.specialties || []
+      })) || [];
+
       // Mettre à jour le cache dans les paramètres
       const { error: updateError } = await supabase
         .from('club_website_settings')
-        .update({ cached_fleet: cachedFleet })
+        .update({ 
+          cached_fleet: cachedFleet,
+          cached_instructors: cachedInstructors 
+        })
         .eq('club_id', clubId);
 
       if (updateError) throw updateError;
 
-      toast.success('Cache de la flotte mis à jour');
+      toast.success('Cache mis à jour avec succès');
       queryClient.invalidateQueries(['clubWebsiteSettings']);
     } catch (error) {
-      console.error('Error updating fleet cache:', error);
+      console.error('Error updating cache:', error);
       toast.error('Erreur lors de la mise à jour du cache');
     } finally {
       setIsUpdatingCache(false);
