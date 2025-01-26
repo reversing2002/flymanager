@@ -39,7 +39,6 @@ type ClubData = {
     longitude: number | null;
   };
   logo_url: string | null;
-  pages: Array<{ title: string; slug: string; }>;
 };
 
 export const Contact: React.FC = () => {
@@ -75,14 +74,6 @@ export const Contact: React.FC = () => {
 
       if (error) throw error;
 
-      // Get club pages
-      const { data: pages, error: pagesError } = await supabase
-        .from('club_pages')
-        .select('title, slug')
-        .eq('club_id', clubData.id);
-
-      if (pagesError) throw pagesError;
-
       // Get website settings
       const { data: settings, error: settingsError } = await supabase
         .from('club_website_settings')
@@ -102,7 +93,6 @@ export const Contact: React.FC = () => {
           latitude: clubData.latitude || null,
           longitude: clubData.longitude || null,
         },
-        pages: pages || []
       };
     },
     enabled: !!clubCode,
@@ -237,12 +227,11 @@ export const Contact: React.FC = () => {
 
   return (
     <PageLayout
-      clubCode={club.code}
-      clubName={club.name}
-      logoUrl={club.logo_url}
-      pages={club.pages}
+      clubCode={clubCode || ''}
+      clubName={club?.name}
+      logoUrl={club?.logo_url}
       title="Contact"
-      description="Contactez-nous pour toute question concernant notre aéroclub"
+      description="Contactez-nous pour toute question ou information supplémentaire."
     >
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

@@ -34,6 +34,7 @@ interface Instructor {
   last_name: string;
   image_url: string | null;
   instructor_rate: number | null;
+  qualifications: string[];
 }
 
 interface WebsiteSettings {
@@ -47,7 +48,7 @@ interface WebsiteSettings {
 const Pricing: React.FC = () => {
   const { clubCode } = useParams<{ clubCode: string }>();
 
-  // Récupérer les informations du club
+  // Récupérer l'ID du club à partir de son code
   const { data: club } = useQuery({
     queryKey: ['club', clubCode],
     queryFn: async () => {
@@ -63,7 +64,7 @@ const Pricing: React.FC = () => {
     enabled: !!clubCode,
   });
 
-  // Récupérer les paramètres du site
+  // Récupérer les paramètres du site avec les tarifs en cache
   const { data: settings, isLoading } = useQuery<WebsiteSettings>({
     queryKey: ['clubWebsiteSettings', club?.id],
     queryFn: async () => {
@@ -85,22 +86,6 @@ const Pricing: React.FC = () => {
     enabled: !!club?.id,
   });
 
-  // Récupérer les pages du club
-  const { data: pages } = useQuery({
-    queryKey: ['clubPages', club?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('club_pages')
-        .select('title, slug')
-        .eq('club_id', club?.id)
-        .order('title');
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!club?.id,
-  });
-
   if (isLoading || !settings) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -113,11 +98,10 @@ const Pricing: React.FC = () => {
     <PageLayout
       clubCode={clubCode || ''}
       clubName={club?.name}
-      logoUrl={settings.logo_url}
-      pages={pages || []}
+      logoUrl={settings?.logo_url}
       title="Tarifs"
-      description="Découvrez nos tarifs pour les vols découverte, les heures de vol et l'instruction."
-      backgroundImage={settings.carousel_images?.[0]}
+      description="Découvrez nos tarifs pour la formation, la location d'avions et l'adhésion au club."
+      backgroundImage={settings?.carousel_images?.[0]}
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Vols découverte */}
@@ -125,7 +109,7 @@ const Pricing: React.FC = () => {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-12"
+            className="mb-16"
           >
             <h2 className="text-3xl font-bold mb-6 text-gray-900">Vols découverte</h2>
             <div className="grid gap-6 md:grid-cols-2">
@@ -170,8 +154,7 @@ const Pricing: React.FC = () => {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-12"
+            className="mb-16"
           >
             <h2 className="text-3xl font-bold mb-6 text-gray-900">Heures de vol</h2>
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -180,19 +163,19 @@ const Pricing: React.FC = () => {
                   <motion.div
                     key={aircraft.id}
                     whileHover={{ backgroundColor: 'rgba(249, 250, 251, 0.5)' }}
-                    className="flex flex-col md:flex-row md:justify-between md:items-center p-6 hover:bg-gray-50 transition-colors duration-200"
+                    className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between"
                   >
-                    <div className="mb-4 md:mb-0">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{aircraft.name}</h3>
-                      {aircraft.registration && (
-                        <p className="text-gray-600 text-sm">{aircraft.registration}</p>
-                      )}
-                      {aircraft.description && (
-                        <p className="text-gray-600 mt-2">{aircraft.description}</p>
-                      )}
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {aircraft.registration} - {aircraft.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">{aircraft.type}</p>
                     </div>
-                    <div className="text-2xl font-bold text-blue-600 md:ml-8">
-                      {aircraft.hourly_rate} €<span className="text-sm text-gray-500 font-normal">/heure</span>
+                    <div className="mt-4 md:mt-0">
+                      <div className="flex items-baseline">
+                        <span className="text-2xl font-bold text-blue-600">{aircraft.hourly_rate}€</span>
+                        <span className="ml-1 text-gray-500">/heure</span>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -206,58 +189,36 @@ const Pricing: React.FC = () => {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mb-12"
+            className="mb-16"
           >
             <h2 className="text-3xl font-bold mb-6 text-gray-900">Instruction</h2>
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
               <div className="divide-y divide-gray-100">
-                {Object.entries(
-                  (settings.cached_instructors || [])
-                    .filter(instructor => instructor.instructor_rate && instructor.instructor_rate > 0)
-                    .reduce((acc, instructor) => {
-                      const rate = instructor.instructor_rate!;
-                      if (!acc[rate]) {
-                        acc[rate] = [];
-                      }
-                      acc[rate].push(instructor);
-                      return acc;
-                    }, {} as Record<number, Instructor[]>)
-                )
-                  .sort(([rateA], [rateB]) => Number(rateA) - Number(rateB))
-                  .map(([rate, instructors]) => (
+                {settings.cached_instructors
+                  .filter(instructor => instructor.instructor_rate && instructor.instructor_rate > 0)
+                  .map((instructor) => (
                     <motion.div
-                      key={rate}
+                      key={instructor.id}
                       whileHover={{ backgroundColor: 'rgba(249, 250, 251, 0.5)' }}
-                      className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 hover:bg-gray-50 transition-colors duration-200"
+                      className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between"
                     >
-                      <div className="flex flex-wrap gap-4 items-center mb-4 md:mb-0">
-                        {instructors.map((instructor) => (
-                          <div key={instructor.id} className="flex items-center">
-                            {instructor.image_url ? (
-                              <img
-                                src={instructor.image_url}
-                                alt={`${instructor.first_name} ${instructor.last_name}`}
-                                className="w-16 h-16 rounded-full object-cover mr-4 border-2 border-gray-200"
-                              />
-                            ) : (
-                              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mr-4 border-2 border-gray-200">
-                                <span className="text-blue-600 text-xl font-semibold">
-                                  {instructor.first_name[0]}
-                                  {instructor.last_name[0]}
-                                </span>
-                              </div>
-                            )}
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900">
-                                {instructor.first_name} {instructor.last_name}
-                              </h3>
-                            </div>
-                          </div>
-                        ))}
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {instructor.first_name} {instructor.last_name}
+                        </h3>
+                        {instructor.qualifications && instructor.qualifications.length > 0 && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {instructor.qualifications.join(', ')}
+                          </p>
+                        )}
                       </div>
-                      <div className="text-2xl font-bold text-blue-600 md:ml-8 whitespace-nowrap">
-                        + {Number(rate).toFixed(2)} €<span className="text-sm text-gray-500 font-normal">/heure</span>
+                      <div className="mt-4 md:mt-0">
+                        <div className="flex items-baseline">
+                          <span className="text-2xl font-bold text-blue-600">
+                            {instructor.instructor_rate}€
+                          </span>
+                          <span className="ml-1 text-gray-500">/heure</span>
+                        </div>
                       </div>
                     </motion.div>
                   ))}
@@ -265,6 +226,18 @@ const Pricing: React.FC = () => {
             </div>
           </motion.section>
         )}
+
+        {/* Note importante */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="bg-blue-50 rounded-xl p-6 mt-8"
+        >
+          <p className="text-sm text-blue-800">
+            * Les tarifs indiqués sont susceptibles d'être modifiés. Contactez-nous pour obtenir les tarifs les plus à jour.
+          </p>
+        </motion.div>
       </div>
     </PageLayout>
   );

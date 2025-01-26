@@ -3,6 +3,9 @@ import { Routes, Route, useParams } from 'react-router-dom';
 import ClubPublicHome from './ClubPublicHome';
 import OurFleet from './pages/OurFleet';
 import Training from './pages/Training';
+import Events from './pages/Events';
+import Pricing from './pages/Pricing';
+import Contact from './pages/Contact';
 import ClubLayout from './layout/ClubLayout';
 
 const ClubRouter: React.FC = () => {
@@ -29,6 +32,9 @@ const ClubRouter: React.FC = () => {
         <Route index element={<ClubPublicHome clubCode={clubCode} />} />
         <Route path="avions" element={<OurFleet />} />
         <Route path="formation" element={<Training />} />
+        <Route path="events" element={<Events />} />
+        <Route path="tarifs" element={<Pricing />} />
+        <Route path="contact" element={<Contact />} />
         <Route path="*" element={<ClubPublicHome clubCode={clubCode} />} />
       </Routes>
     </ClubLayout>

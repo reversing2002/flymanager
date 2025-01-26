@@ -63,6 +63,19 @@ const websiteSettingsSchema = z.object({
         })
       )
     })
+  ),
+  cached_events: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      description: z.string().nullable(),
+      start_time: z.string(),
+      end_time: z.string(),
+      type: z.string(),
+      visibility: z.string(),
+      location: z.string().nullable(),
+      image_url: z.string().nullable()
+    })
   )
 });
 
@@ -158,7 +171,8 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
             },
             cached_fleet: [],
             cached_instructors: [],
-            cached_discovery_flights: []
+            cached_discovery_flights: [],
+            cached_events: []
           })
           .select()
           .single();
@@ -257,21 +271,19 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
   };
 
   const updateFleetCache = async () => {
+    setIsUpdatingCache(true);
     try {
-      setIsUpdatingCache(true);
+      // Récupérer les informations du club
+      const { data: clubInfo } = await supabase
+        .from('clubs')
+        .select('*')
+        .eq('id', clubId)
+        .single();
 
-      // Récupérer la liste des avions pour le cache
-      const { data: aircraft } = await supabase
+      // Récupérer la flotte
+      const { data: fleet } = await supabase
         .from('aircraft')
-        .select(`
-          id,
-          name,
-          registration,
-          type,
-          description,
-          image_url,
-          hourly_rate
-        `)
+        .select('*')
         .eq('club_id', clubId)
         .eq('status', 'AVAILABLE');
 
@@ -296,7 +308,7 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
         instructor_rate: instructor.instructor_rate
       }));
 
-      const cachedFleet = aircraft?.map(aircraft => ({
+      const cachedFleet = fleet?.map(aircraft => ({
         id: aircraft.id,
         name: aircraft.name,
         type: aircraft.type,
@@ -345,6 +357,16 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
         };
       }));
 
+      // Récupérer les événements publics
+      const { data: events } = await supabase
+        .from('club_events')
+        .select('*')
+        .eq('club_id', clubId)
+        .eq('visibility', 'PUBLIC')
+        .gte('end_time', new Date().toISOString())
+        .order('start_time', { ascending: true })
+        .limit(10);
+
       // Mettre à jour le cache
       const { error: updateError } = await supabase
         .from('club_website_settings')
@@ -355,15 +377,16 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
           hero_subtitle: settings.hero_subtitle,
           cta_text: settings.cta_text,
           cached_club_info: {
-            address: club?.address || '',
-            phone: club?.phone || '',
-            email: club?.email || '',
-            latitude: club?.latitude || null,
-            longitude: club?.longitude || null,
+            address: clubInfo?.address || '',
+            phone: clubInfo?.phone || '',
+            email: clubInfo?.email || '',
+            latitude: clubInfo?.latitude,
+            longitude: clubInfo?.longitude,
           },
           cached_fleet: cachedFleet,
-          cached_instructors: instructors,
-          cached_discovery_flights: discoveryFlightsWithFeatures || []
+          cached_instructors: cachedInstructors,
+          cached_discovery_flights: discoveryFlightsWithFeatures || [],
+          cached_events: events || []
         })
         .eq('club_id', clubId);
 
@@ -464,7 +487,7 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
             ) : (
               <>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Mettre à jour la flotte
+                Mettre à jour le site Web public
               </>
             )}
           </Button>
@@ -660,7 +683,7 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
                       Mise à jour en cours...
                     </>
                   ) : (
-                    'Mettre à jour le site'
+                    'Enregistrer les modifications'
                   )}
                 </Button>
               </form>

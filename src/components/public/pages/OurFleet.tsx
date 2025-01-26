@@ -49,32 +49,12 @@ const OurFleet: React.FC = () => {
         .single();
 
       if (error) throw error;
-      return data || {
-        cached_fleet: [],
-        logo_url: null,
-        carousel_images: []
-      };
+      return data;
     },
     enabled: !!club?.id,
   });
 
-  // Récupérer les pages du club
-  const { data: pages } = useQuery({
-    queryKey: ['clubPages', club?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('club_pages')
-        .select('title, slug')
-        .eq('club_id', club?.id)
-        .order('title');
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!club?.id,
-  });
-
-  if (isLoading) {
+  if (isLoading || !settings?.cached_fleet) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -87,9 +67,8 @@ const OurFleet: React.FC = () => {
       clubCode={clubCode || ''}
       clubName={club?.name}
       logoUrl={settings?.logo_url}
-      pages={pages}
       title="Notre Flotte"
-      description="Découvrez notre flotte d'aéronefs, soigneusement entretenue et régulièrement mise à jour pour assurer votre sécurité et votre confort lors de vos vols."
+      description="Découvrez notre flotte d'avions disponibles pour la formation et la location."
       backgroundImage={settings?.carousel_images?.[0]}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

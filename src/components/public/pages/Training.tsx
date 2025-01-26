@@ -62,22 +62,6 @@ const Training: React.FC = () => {
     enabled: !!club?.id,
   });
 
-  // Récupérer les pages du club
-  const { data: pages } = useQuery({
-    queryKey: ['clubPages', club?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('club_pages')
-        .select('title, slug')
-        .eq('club_id', club?.id)
-        .order('title');
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!club?.id,
-  });
-
   if (isLoading || !settings) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -91,7 +75,6 @@ const Training: React.FC = () => {
       clubCode={clubCode || ''}
       clubName={club?.name}
       logoUrl={settings?.logo_url}
-      pages={pages}
       title="Formation"
       description="Découvrez nos formations et rencontrez nos instructeurs qualifiés qui vous accompagneront dans votre apprentissage du pilotage."
       backgroundImage={settings?.carousel_images?.[0]}

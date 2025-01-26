@@ -23,6 +23,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
     { label: 'Accueil', href: `/club/${clubCode}` },
     { label: 'Formation', href: `/club/${clubCode}/training` },
     { label: 'Avions', href: `/club/${clubCode}/fleet` },
+    { label: 'Événements', href: `/club/${clubCode}/events` },
     { label: 'Tarifs', href: `/club/${clubCode}/tarifs` },
     { label: 'Contact', href: `/club/${clubCode}/contact` },
     ...pages.map(page => ({
