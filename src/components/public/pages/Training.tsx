@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { UserCircle } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { PageLayout } from '../layout/PageLayout';
 
@@ -146,18 +147,17 @@ const Training: React.FC = () => {
               >
                 <div className="aspect-w-1 aspect-h-1 bg-gray-50">
                   {instructor.photo_url ? (
-                    <img
-                      src={instructor.photo_url}
-                      alt={`${instructor.first_name} ${instructor.last_name}`}
-                      className="w-full h-full object-cover"
-                    />
+                    <div className="w-full h-full">
+                      <img
+                        src={instructor.photo_url}
+                        alt={`${instructor.first_name} ${instructor.last_name}`}
+                        className="w-full h-full object-cover object-center"
+                        style={{ aspectRatio: '1/1' }}
+                      />
+                    </div>
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-50">
-                      <div className="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center">
-                        <span className="text-3xl font-medium text-blue-600">
-                          {instructor.first_name[0]}{instructor.last_name[0]}
-                        </span>
-                      </div>
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100" style={{ aspectRatio: '1/1' }}>
+                      <UserCircle className="w-24 h-24 text-gray-300" strokeWidth={1.5} />
                     </div>
                   )}
                 </div>
