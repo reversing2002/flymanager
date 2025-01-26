@@ -1075,22 +1075,9 @@ app.post("/api/send-email", async (req, res) => {
       });
     }
 
-    const { data: settings } = await supabase
-      .from('notification_settings')
-      .select('*')
-      .eq('id', 1)
-      .single();
-
-    if (!settings) {
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Configuration Mailjet manquante' 
-      });
-    }
-
     const mailjetClient = Mailjet.apiConnect(
-      settings.mailjet_api_key,
-      settings.mailjet_api_secret
+      process.env.MAILJET_API_KEY,
+      process.env.MAILJET_API_SECRET
     );
 
     const result = await mailjetClient
@@ -1099,8 +1086,8 @@ app.post("/api/send-email", async (req, res) => {
         Messages: [
           {
             From: {
-              Email: settings.sender_email,
-              Name: settings.sender_name,
+              Email: process.env.MAILJET_FROM_EMAIL || "noreply@4fly.io",
+              Name: process.env.MAILJET_FROM_NAME || "4fly.io"
             },
             To: [
               {
@@ -1211,6 +1198,7 @@ app.post("/api/create-discovery-session", async (req, res) => {
       mode: "payment",
       success_url: successUrl,
       cancel_url: cancelUrl,
+      customer_email: customerEmail,
       metadata: {
         flightId,
         type: 'discovery_flight'
@@ -2109,57 +2097,4 @@ app.listen(PORT, async () => {
   // Synchronisation immédiate des calendriers au démarrage
   console.log('🗓️ Lancement de la synchronisation initiale des calendriers...');
   await syncInstructorCalendars();
-});
-
-// Route pour envoyer un email
-app.post("/api/send-email", async (req, res) => {
-  try {
-    const { from, to, subject, html } = req.body;
-
-    if (!from || !to || !subject || !html) {
-      return res.status(400).json({
-        success: false,
-        message: 'Les champs from, to, subject et html sont requis'
-      });
-    }
-
-    const mailjetClient = Mailjet.apiConnect(
-      process.env.MAILJET_API_KEY,
-      process.env.MAILJET_API_SECRET
-    );
-
-    const emailData = {
-      Messages: [
-        {
-          From: {
-            Email: "noreply@4fly.io",
-            Name: "4fly.io"
-          },
-          ReplyTo: {
-            Email: from
-          },
-          To: [
-            {
-              Email: to
-            }
-          ],
-          Subject: subject,
-          HTMLPart: html
-        }
-      ]
-    };
-
-    await sendEmailWithRetry(mailjetClient, emailData);
-
-    res.json({
-      success: true,
-      message: 'Email envoyé avec succès'
-    });
-  } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'email:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de l\'envoi de l\'email'
-    });
-  }
 });

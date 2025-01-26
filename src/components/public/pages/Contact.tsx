@@ -48,6 +48,7 @@ export const Contact: React.FC = () => {
   const map = useRef<maptilersdk.Map | null>(null);
   const marker = useRef<maptilersdk.Marker | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactFormData>();
 
@@ -104,38 +105,38 @@ export const Contact: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: data.email,
-          to: club?.cached_club_info?.email,
+          email: club?.cached_club_info?.email,
           subject: `[Contact ${club?.name}] ${data.subject}`,
-          html: `
+          content: `
             <h2>Nouveau message de contact - ${club?.name}</h2>
             <p><strong>De :</strong> ${data.name} (${data.email})</p>
             <p><strong>Sujet :</strong> ${data.subject}</p>
             <p><strong>Message :</strong></p>
-            <p style="white-space: pre-wrap;">${data.message}</p>
-            <hr>
-            <p style="color: #666; font-size: 12px;">
-              Ce message a été envoyé via le formulaire de contact de votre site web 4fly.
-            </p>
+            <p>${data.message.replace(/\n/g, '<br/>')}</p>
           `
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Erreur lors de l\'envoi du message');
+        throw new Error(error.error || 'Une erreur est survenue lors de l\'envoi du message');
       }
+
+      return response.json();
     },
     onSuccess: () => {
-      toast.success('Message envoyé avec succès !');
+      toast.success('Votre message a bien été envoyé !');
       reset();
+      setIsSubmitting(false);
     },
-    onError: () => {
-      toast.error('Erreur lors de l\'envoi du message. Veuillez réessayer.');
+    onError: (error) => {
+      toast.error(error.message);
+      setIsSubmitting(false);
     }
   });
 
   const onSubmit = (data: ContactFormData) => {
+    setIsSubmitting(true);
     sendEmailMutation.mutate(data);
   };
 
@@ -250,9 +251,9 @@ export const Contact: React.FC = () => {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={sendEmailMutation.isLoading}
+                disabled={sendEmailMutation.isLoading || isSubmitting}
               >
-                {sendEmailMutation.isLoading ? 'Envoi en cours...' : 'Envoyer le message'}
+                {sendEmailMutation.isLoading || isSubmitting ? 'Envoi en cours...' : 'Envoyer le message'}
               </Button>
             </form>
           </div>
