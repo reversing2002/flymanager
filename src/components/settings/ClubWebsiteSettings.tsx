@@ -23,6 +23,13 @@ const websiteSettingsSchema = z.object({
   hero_title: z.string().min(1, 'Le titre est requis'),
   hero_subtitle: z.string().nullable(),
   cta_text: z.string().min(1, 'Le texte du bouton est requis'),
+  cached_club_info: z.object({
+    address: z.string(),
+    phone: z.string(),
+    email: z.string(),
+    latitude: z.number().nullable(),
+    longitude: z.number().nullable(),
+  }),
   cached_fleet: z.array(
     z.object({
       id: z.string(),
@@ -75,6 +82,53 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
   const [isSaving, setIsSaving] = React.useState(false);
   const [isUpdatingCache, setIsUpdatingCache] = React.useState(false);
 
+  // Récupérer les données du club
+  const { data: club } = useQuery({
+    queryKey: ['club', clubId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clubs')
+        .select('id, name, code, address, phone, email, latitude, longitude')
+        .eq('id', clubId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!clubId
+  });
+
+  // Récupérer les pages du club
+  const { data: pages } = useQuery({
+    queryKey: ['club-pages', clubId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('club_pages')
+        .select('title, slug')
+        .eq('club_id', clubId);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!clubId
+  });
+
+  // Récupérer les paramètres existants
+  const { data: existingSettings } = useQuery({
+    queryKey: ['club-website-settings', clubId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('club_website_settings')
+        .select('*')
+        .eq('club_id', clubId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!clubId
+  });
+
   const { data: settings, isLoading } = useQuery<WebsiteSettings>({
     queryKey: ['clubWebsiteSettings', clubId],
     queryFn: async () => {
@@ -84,21 +138,39 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
         .eq('club_id', clubId)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code === 'PGRST116') {
+        // Si les paramètres n'existent pas, créer avec les valeurs par défaut
+        const { data: newSettings, error: createError } = await supabase
+          .from('club_website_settings')
+          .insert({
+            club_id: clubId,
+            logo_url: null,
+            carousel_images: [],
+            hero_title: 'Bienvenue à l\'aéroclub',
+            hero_subtitle: null,
+            cta_text: 'Nous rejoindre',
+            cached_club_info: {
+              address: '',
+              phone: '',
+              email: '',
+              latitude: null,
+              longitude: null,
+            },
+            cached_fleet: [],
+            cached_instructors: [],
+            cached_discovery_flights: []
+          })
+          .select()
+          .single();
 
-      return (
-        data || {
-          logo_url: null,
-          carousel_images: [],
-          hero_title: 'Bienvenue à l\'aéroclub',
-          hero_subtitle: null,
-          cta_text: 'Nous rejoindre',
-          cached_fleet: [],
-          cached_instructors: [],
-          cached_discovery_flights: []
-        }
-      );
+        if (createError) throw createError;
+        return newSettings;
+      }
+
+      if (error) throw error;
+      return data;
     },
+    enabled: !!clubId
   });
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<WebsiteSettings>({
@@ -282,6 +354,13 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
           hero_title: settings.hero_title,
           hero_subtitle: settings.hero_subtitle,
           cta_text: settings.cta_text,
+          cached_club_info: {
+            address: club?.address || '',
+            phone: club?.phone || '',
+            email: club?.email || '',
+            latitude: club?.latitude || null,
+            longitude: club?.longitude || null,
+          },
           cached_fleet: cachedFleet,
           cached_instructors: instructors,
           cached_discovery_flights: discoveryFlightsWithFeatures || []
@@ -337,6 +416,13 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
           hero_title: settings.hero_title,
           hero_subtitle: settings.hero_subtitle,
           cta_text: settings.cta_text,
+          cached_club_info: {
+            address: club?.address || '',
+            phone: club?.phone || '',
+            email: club?.email || '',
+            latitude: club?.latitude || null,
+            longitude: club?.longitude || null,
+          },
           cached_fleet: cachedFleet
         });
 
@@ -473,6 +559,52 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
                         {...register('cta_text')}
                         className="mt-1"
                         error={errors.cta_text?.message}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
+                  <h3 className="text-lg font-semibold">Informations du club</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Adresse</label>
+                      <Input
+                        {...register('cached_club_info.address')}
+                        className="mt-1"
+                        error={errors.cached_club_info?.address?.message}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Téléphone</label>
+                      <Input
+                        {...register('cached_club_info.phone')}
+                        className="mt-1"
+                        error={errors.cached_club_info?.phone?.message}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Email</label>
+                      <Input
+                        {...register('cached_club_info.email')}
+                        className="mt-1"
+                        error={errors.cached_club_info?.email?.message}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Latitude</label>
+                      <Input
+                        {...register('cached_club_info.latitude')}
+                        className="mt-1"
+                        error={errors.cached_club_info?.latitude?.message}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Longitude</label>
+                      <Input
+                        {...register('cached_club_info.longitude')}
+                        className="mt-1"
+                        error={errors.cached_club_info?.longitude?.message}
                       />
                     </div>
                   </div>

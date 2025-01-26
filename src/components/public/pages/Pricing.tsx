@@ -63,8 +63,8 @@ const Pricing: React.FC = () => {
     enabled: !!clubCode,
   });
 
-  // Récupérer les paramètres du site et la flotte
-  const { data: settings } = useQuery<WebsiteSettings>({
+  // Récupérer les paramètres du site
+  const { data: settings, isLoading } = useQuery<WebsiteSettings>({
     queryKey: ['clubWebsiteSettings', club?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -101,7 +101,7 @@ const Pricing: React.FC = () => {
     enabled: !!club?.id,
   });
 
-  if (!settings) {
+  if (isLoading || !settings) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -113,15 +113,15 @@ const Pricing: React.FC = () => {
     <PageLayout
       clubCode={clubCode || ''}
       clubName={club?.name}
-      logoUrl={settings?.logo_url}
-      pages={pages}
+      logoUrl={settings.logo_url}
+      pages={pages || []}
       title="Tarifs"
       description="Découvrez nos tarifs pour les vols découverte, les heures de vol et l'instruction."
-      backgroundImage={settings?.carousel_images?.[0]}
+      backgroundImage={settings.carousel_images?.[0]}
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Vols découverte */}
-        {settings.cached_discovery_flights && settings.cached_discovery_flights.length > 0 && (
+        {settings.cached_discovery_flights?.length > 0 && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -166,41 +166,43 @@ const Pricing: React.FC = () => {
         )}
 
         {/* Heures de vol */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-12"
-        >
-          <h2 className="text-3xl font-bold mb-6 text-gray-900">Heures de vol</h2>
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="divide-y divide-gray-100">
-              {settings.cached_fleet.map((aircraft) => (
-                <motion.div
-                  key={aircraft.id}
-                  whileHover={{ backgroundColor: 'rgba(249, 250, 251, 0.5)' }}
-                  className="flex flex-col md:flex-row md:justify-between md:items-center p-6 hover:bg-gray-50 transition-colors duration-200"
-                >
-                  <div className="mb-4 md:mb-0">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{aircraft.name}</h3>
-                    {aircraft.registration && (
-                      <p className="text-gray-600 text-sm">{aircraft.registration}</p>
-                    )}
-                    {aircraft.description && (
-                      <p className="text-gray-600 mt-2">{aircraft.description}</p>
-                    )}
-                  </div>
-                  <div className="text-2xl font-bold text-blue-600 md:ml-8">
-                    {aircraft.hourly_rate} €<span className="text-sm text-gray-500 font-normal">/heure</span>
-                  </div>
-                </motion.div>
-              ))}
+        {settings.cached_fleet?.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-12"
+          >
+            <h2 className="text-3xl font-bold mb-6 text-gray-900">Heures de vol</h2>
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div className="divide-y divide-gray-100">
+                {settings.cached_fleet.map((aircraft) => (
+                  <motion.div
+                    key={aircraft.id}
+                    whileHover={{ backgroundColor: 'rgba(249, 250, 251, 0.5)' }}
+                    className="flex flex-col md:flex-row md:justify-between md:items-center p-6 hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <div className="mb-4 md:mb-0">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{aircraft.name}</h3>
+                      {aircraft.registration && (
+                        <p className="text-gray-600 text-sm">{aircraft.registration}</p>
+                      )}
+                      {aircraft.description && (
+                        <p className="text-gray-600 mt-2">{aircraft.description}</p>
+                      )}
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600 md:ml-8">
+                      {aircraft.hourly_rate} €<span className="text-sm text-gray-500 font-normal">/heure</span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
-          </div>
-        </motion.section>
+          </motion.section>
+        )}
 
         {/* Instruction */}
-        {settings.cached_instructors && settings.cached_instructors.length > 0 && (
+        {settings.cached_instructors?.length > 0 && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -211,7 +213,7 @@ const Pricing: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
               <div className="divide-y divide-gray-100">
                 {Object.entries(
-                  settings.cached_instructors
+                  (settings.cached_instructors || [])
                     .filter(instructor => instructor.instructor_rate && instructor.instructor_rate > 0)
                     .reduce((acc, instructor) => {
                       const rate = instructor.instructor_rate!;

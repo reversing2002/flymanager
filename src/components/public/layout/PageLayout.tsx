@@ -1,6 +1,7 @@
 import React from 'react';
 import { PublicHeader } from './PublicHeader';
 import { PageHeader } from './PageHeader';
+import { ClubFooter } from './ClubFooter';
 
 interface PageLayoutProps {
   clubCode: string;
@@ -24,7 +25,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
   children
 }) => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Navigation Header */}
       <PublicHeader
         clubCode={clubCode}
@@ -33,7 +34,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
         pages={pages}
       />
 
-      <div className="pt-16">
+      <div className="pt-16 flex-grow">
         {/* Page Header */}
         <PageHeader
           title={title}
@@ -46,6 +47,8 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
           {children}
         </div>
       </div>
+
+      <ClubFooter />
     </div>
   );
 };

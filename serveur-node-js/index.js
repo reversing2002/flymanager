@@ -2110,3 +2110,56 @@ app.listen(PORT, async () => {
   console.log('🗓️ Lancement de la synchronisation initiale des calendriers...');
   await syncInstructorCalendars();
 });
+
+// Route pour envoyer un email
+app.post("/api/send-email", async (req, res) => {
+  try {
+    const { from, to, subject, html } = req.body;
+
+    if (!from || !to || !subject || !html) {
+      return res.status(400).json({
+        success: false,
+        message: 'Les champs from, to, subject et html sont requis'
+      });
+    }
+
+    const mailjetClient = Mailjet.apiConnect(
+      process.env.MAILJET_API_KEY,
+      process.env.MAILJET_API_SECRET
+    );
+
+    const emailData = {
+      Messages: [
+        {
+          From: {
+            Email: "noreply@4fly.io",
+            Name: "4fly.io"
+          },
+          ReplyTo: {
+            Email: from
+          },
+          To: [
+            {
+              Email: to
+            }
+          ],
+          Subject: subject,
+          HTMLPart: html
+        }
+      ]
+    };
+
+    await sendEmailWithRetry(mailjetClient, emailData);
+
+    res.json({
+      success: true,
+      message: 'Email envoyé avec succès'
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi de l\'email:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de l\'envoi de l\'email'
+    });
+  }
+});
