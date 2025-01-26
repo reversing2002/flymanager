@@ -27,6 +27,7 @@ import {
   ArrowRightLeft,
   CreditCard,
   MessageSquare,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
@@ -58,6 +59,7 @@ import NotificationList from "./NotificationList";
 import WeatherSettings from "./WeatherSettings";
 import AdminTestPage from "../../pages/settings/AdminTestPage";
 import ClubList from "./ClubList";
+import EmailMembersPage from "./EmailMembersPage";
 
 type TabType =
   | "club"
@@ -83,7 +85,8 @@ type TabType =
   | "smile"
   | "adminTest"
   | "contactMessages"
-  | "clubs";
+  | "clubs"
+  | "emailMembers";
 
 const SettingsPage = () => {
   const { user } = useAuth();
@@ -121,6 +124,7 @@ const SettingsPage = () => {
     { id: "permissions", label: "Permissions", icon: Lock },
     // Autres
     { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "emailMembers", label: "Email aux membres", icon: Mail },
     // Admin système uniquement
     { id: "accountingMigration", label: "Migration comptable", icon: ArrowRightLeft },
     { id: "backups", label: "Sauvegardes", icon: DatabaseBackup },
@@ -367,6 +371,7 @@ const SettingsPage = () => {
           {activeTab === "clubs" && hasAnyGroup(user, ["SYSTEM_ADMIN"]) && (
             <ClubList />
           )}
+          {activeTab === "emailMembers" && <EmailMembersPage />}
         </div>
       </div>
     </div>
