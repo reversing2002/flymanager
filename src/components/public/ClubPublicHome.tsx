@@ -8,6 +8,7 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import { RichTextContent } from '../ui/rich-text-editor';
 import { PublicHeader } from './layout/PublicHeader';
 import { ClubFooter } from './layout/ClubFooter';
+import { GraduationCap, Plane, Calendar, Receipt, Gift, MessageCircle, ArrowRight } from 'lucide-react';
 
 type ClubData = {
   id: string;
@@ -325,92 +326,161 @@ const ClubPublicHome: React.FC = () => {
                 </div>
               </section>
 
-              {/* Section Notre Flotte */}
-              <section className="bg-gray-50 py-16">
+              {/* Section Pages */}
+              <section className="py-16">
                 <div className="container mx-auto px-4">
-                  <h2 className="text-3xl font-bold text-center mb-12">Notre Flotte</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {websiteSettings?.cached_fleet?.slice(0, 3).map((aircraft) => (
-                      <div key={aircraft.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                        <div className="aspect-w-16 aspect-h-9">
-                          {aircraft.image_url ? (
-                            <img 
-                              src={aircraft.image_url} 
-                              alt={aircraft.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                              <span className="text-gray-400">Photo non disponible</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-6">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-xl font-semibold">{aircraft.name}</h3>
-                            <span className="text-sm font-medium text-gray-500">{aircraft.registration}</span>
-                          </div>
-                          <p className="text-gray-600 text-sm mb-4">{aircraft.type}</p>
-                          <div className="mt-4 flex items-center justify-between">
-                            <span className="text-lg font-semibold text-blue-600">
-                              {(aircraft.hourly_rate || 0).toLocaleString('fr-FR')} € / heure
-                            </span>
-                          </div>
-                          {aircraft.description && (
-                            <p className="text-gray-600 mt-4">
-                              {aircraft.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-center mt-8">
-                    <Link
-                      to={`/club/${clubCode}/avions`}
-                      className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+                    {/* Formation */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 0.1 }}
+                      className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
                     >
-                      Découvrir toute notre flotte
-                    </Link>
-                  </div>
-                </div>
-              </section>
-
-              {/* Section Actualités */}
-              <section className="container mx-auto px-4">
-                <div className="max-w-4xl mx-auto">
-                  <h2 className="text-3xl font-bold text-center mb-12">Dernières Actualités</h2>
-                  <div className="space-y-8">
-                    {pages?.slice(0, 3).map((page, index) => (
-                      <div key={index} className="flex flex-col md:flex-row gap-6 items-start">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-semibold mb-2">
-                            <Link to={`/club/${clubCode}/page/${page.slug}`} className="hover:text-blue-600">
-                              {page.title}
-                            </Link>
-                          </h3>
-                          <div className="text-gray-600 line-clamp-3">
-                            <RichTextContent content={page.content} />
+                      <Link to={`/club/${clubCode}/formation`} className="block">
+                        <div className="p-6">
+                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                            <GraduationCap className="w-6 h-6 text-blue-600" />
                           </div>
-                          <Link 
-                            to={`/club/${clubCode}/page/${page.slug}`}
-                            className="inline-block mt-4 text-blue-600 hover:text-blue-800"
-                          >
-                            Lire la suite →
-                          </Link>
+                          <h3 className="text-xl font-semibold mb-2 group-hover:text-blue-600 transition-colors">Formation</h3>
+                          <p className="text-gray-600">Découvrez nos programmes de formation pour devenir pilote privé ou professionnel.</p>
                         </div>
-                      </div>
-                    ))}
+                      </Link>
+                    </motion.div>
+
+                    {/* Notre Flotte */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                      className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    >
+                      <Link to={`/club/${clubCode}/avions`} className="block">
+                        <div className="p-6">
+                          <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-colors">
+                            <Plane className="w-6 h-6 text-orange-600" />
+                          </div>
+                          <h3 className="text-xl font-semibold mb-2 group-hover:text-orange-600 transition-colors">Notre Flotte</h3>
+                          <p className="text-gray-600">Explorez notre flotte d'avions disponibles pour la formation et la location.</p>
+                        </div>
+                      </Link>
+                    </motion.div>
+
+                    {/* Événements */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                      className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    >
+                      <Link to={`/club/${clubCode}/evenements`} className="block">
+                        <div className="p-6">
+                          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
+                            <Calendar className="w-6 h-6 text-green-600" />
+                          </div>
+                          <h3 className="text-xl font-semibold mb-2 group-hover:text-green-600 transition-colors">Événements</h3>
+                          <p className="text-gray-600">Participez à nos événements, journées portes ouvertes et rassemblements aéronautiques.</p>
+                        </div>
+                      </Link>
+                    </motion.div>
+
+                    {/* Tarifs */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 0.4 }}
+                      className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    >
+                      <Link to={`/club/${clubCode}/tarifs`} className="block">
+                        <div className="p-6">
+                          <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
+                            <Receipt className="w-6 h-6 text-purple-600" />
+                          </div>
+                          <h3 className="text-xl font-semibold mb-2 group-hover:text-purple-600 transition-colors">Tarifs</h3>
+                          <p className="text-gray-600">Consultez nos tarifs pour la formation, la location d'avions et l'adhésion au club.</p>
+                        </div>
+                      </Link>
+                    </motion.div>
+
+                    {/* Vol découverte */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 0.5 }}
+                      className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    >
+                      <Link to={`/club/${clubCode}/vol-decouverte`} className="block">
+                        <div className="p-6">
+                          <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-red-200 transition-colors">
+                            <Gift className="w-6 h-6 text-red-600" />
+                          </div>
+                          <h3 className="text-xl font-semibold mb-2 group-hover:text-red-600 transition-colors">Vol Découverte</h3>
+                          <p className="text-gray-600">Offrez ou vivez l'expérience unique d'un premier vol aux commandes d'un avion.</p>
+                        </div>
+                      </Link>
+                    </motion.div>
+
+                    {/* Contact */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 0.6 }}
+                      className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    >
+                      <Link to={`/club/${clubCode}/contact`} className="block">
+                        <div className="p-6">
+                          <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-teal-200 transition-colors">
+                            <MessageCircle className="w-6 h-6 text-teal-600" />
+                          </div>
+                          <h3 className="text-xl font-semibold mb-2 group-hover:text-teal-600 transition-colors">Contact</h3>
+                          <p className="text-gray-600">Contactez-nous pour plus d'informations ou pour planifier votre visite au club.</p>
+                        </div>
+                      </Link>
+                    </motion.div>
                   </div>
                 </div>
               </section>
 
-             
-            </div>
-
-            {/* Contenu supplémentaire... */}
-            <div className="max-w-7xl mx-auto px-4 py-12">
-              {/* Vous pouvez ajouter plus de sections ici */}
+              {/* Section Pages Personnalisées */}
+              {pages && pages.length > 0 && (
+                <section className="bg-gray-50 py-16">
+                  <div className="container mx-auto px-4">
+                    <h2 className="text-3xl font-bold text-center mb-12">Actualités et Informations</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {pages.map((page, index) => (
+                        <motion.div
+                          key={page.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                          className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
+                        >
+                          <Link to={`/club/${clubCode}/page/${page.slug}`} className="block p-6">
+                            <h3 className="text-xl font-semibold mb-4 group-hover:text-blue-600 transition-colors">
+                              {page.title}
+                            </h3>
+                            <div className="text-gray-600 line-clamp-3">
+                              <RichTextContent content={page.content} />
+                            </div>
+                            <div className="mt-4 text-blue-600 hover:text-blue-800 inline-flex items-center">
+                              Lire la suite
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </div>
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
+              
             </div>
           </>
         )}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Editor, useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
 import { Button } from './button';
 import {
   Bold,
@@ -10,7 +11,7 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-  Link,
+  Link as LinkIcon,
   Heading,
   Image,
 } from 'lucide-react';
@@ -27,7 +28,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   className = '',
 }) => {
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-primary hover:underline',
+        },
+      }),
+    ],
     content,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
@@ -106,7 +115,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             }
           }}
           active={editor.isActive('link')}
-          icon={Link}
+          icon={LinkIcon}
           title="Ajouter un lien"
         />
         <MenuButton

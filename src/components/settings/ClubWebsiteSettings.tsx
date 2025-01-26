@@ -406,6 +406,13 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
     try {
       setIsSaving(true);
 
+      // Récupérer la configuration existante
+      const { data: existingSettings } = await supabase
+        .from('club_website_settings')
+        .select('id')
+        .eq('club_id', clubId)
+        .single();
+
       // Récupérer la liste des avions pour le cache
       const { data: aircraft } = await supabase
         .from('aircraft')
@@ -418,7 +425,8 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
           image_url,
           hourly_rate
         `)
-        .eq('club_id', clubId);
+        .eq('club_id', clubId)
+        .eq('status', 'AVAILABLE');
 
       const cachedFleet = aircraft?.map(aircraft => ({
         id: aircraft.id,
@@ -430,23 +438,33 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
         description: aircraft.description
       })) || [];
 
+      // Préparer les données à sauvegarder
+      const settingsData = {
+        club_id: clubId,
+        logo_url: settings.logo_url,
+        carousel_images: settings.carousel_images,
+        hero_title: settings.hero_title,
+        hero_subtitle: settings.hero_subtitle,
+        cta_text: settings.cta_text,
+        cached_club_info: {
+          address: club?.address || '',
+          phone: club?.phone || '',
+          email: club?.email || '',
+          latitude: club?.latitude || null,
+          longitude: club?.longitude || null,
+        },
+        cached_fleet: cachedFleet
+      };
+
+      // Si une configuration existe, inclure son ID
+      if (existingSettings?.id) {
+        settingsData.id = existingSettings.id;
+      }
+
       const { error } = await supabase
         .from('club_website_settings')
-        .upsert({
-          club_id: clubId,
-          logo_url: settings.logo_url,
-          carousel_images: settings.carousel_images,
-          hero_title: settings.hero_title,
-          hero_subtitle: settings.hero_subtitle,
-          cta_text: settings.cta_text,
-          cached_club_info: {
-            address: club?.address || '',
-            phone: club?.phone || '',
-            email: club?.email || '',
-            latitude: club?.latitude || null,
-            longitude: club?.longitude || null,
-          },
-          cached_fleet: cachedFleet
+        .upsert(settingsData, {
+          onConflict: 'id'
         });
 
       if (error) throw error;
