@@ -50,6 +50,17 @@ export const Contact: React.FC = () => {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const createCustomMarkerElement = () => {
+    const el = document.createElement('div');
+    const img = document.createElement('img');
+    img.src = 'https://docs.maptiler.com/sdk-js/examples/geojson-point/icon-plane-512.png';
+    img.style.width = '40px';
+    img.style.height = '40px';
+    img.style.transform = 'rotate(-45deg)';
+    el.appendChild(img);
+    return el;
+  };
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactFormData>();
 
   const { data: club } = useQuery<ClubData>({
@@ -142,28 +153,85 @@ export const Contact: React.FC = () => {
 
   // Initialisation de la carte
   useEffect(() => {
-    if (!mapContainer.current || !club?.cached_club_info?.latitude || !club?.cached_club_info?.longitude || mapLoaded) return;
+    if (!mapContainer.current || !club?.cached_club_info?.latitude || !club?.cached_club_info?.longitude) return;
 
-    map.current = new maptilersdk.Map({
-      container: mapContainer.current,
-      style: maptilersdk.MapStyle.STREETS,
-      center: [club.cached_club_info.longitude, club.cached_club_info.latitude],
-      zoom: 13
-    });
+    // Nettoyer la carte précédente si elle existe
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+      marker.current = null;
+      setMapLoaded(false);
+    }
 
-    marker.current = new maptilersdk.Marker({ color: '#0ea5e9' })
-      .setLngLat([club.cached_club_info.longitude, club.cached_club_info.latitude])
-      .addTo(map.current);
+    try {
+      // Créer une nouvelle instance de la carte
+      map.current = new maptilersdk.Map({
+        container: mapContainer.current,
+        style: maptilersdk.MapStyle.STREETS,
+        center: [club.cached_club_info.longitude, club.cached_club_info.latitude],
+        zoom: 13,
+        preserveDrawingBuffer: true
+      });
 
-    setMapLoaded(true);
+      // Gérer les événements de la carte
+      map.current.on('load', () => {
+        setMapLoaded(true);
+        
+        // Ajouter le marqueur une fois que la carte est chargée
+        if (map.current) {
+          const el = createCustomMarkerElement();
+          marker.current = new maptilersdk.Marker({ 
+            element: el,
+            anchor: 'bottom',
+            scale: 1.2
+          })
+            .setLngLat([club.cached_club_info.longitude, club.cached_club_info.latitude])
+            .addTo(map.current);
+        }
+      });
+
+      map.current.on('error', (e) => {
+        console.error('Map error:', e);
+        // Tentative de récupération du contexte
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
+          marker.current = null;
+          setMapLoaded(false);
+        }
+      });
+
+      map.current.on('webglcontextlost', (e) => {
+        e.preventDefault();
+        console.warn('WebGL context lost. Attempting to restore...');
+        // La carte sera recréée au prochain rendu
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
+          marker.current = null;
+          setMapLoaded(false);
+        }
+      });
+
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+        marker.current = null;
+        setMapLoaded(false);
+      }
+    }
 
     return () => {
       if (map.current) {
         map.current.remove();
         map.current = null;
+        marker.current = null;
+        setMapLoaded(false);
       }
     };
-  }, [club, mapLoaded]);
+  }, [club?.cached_club_info?.latitude, club?.cached_club_info?.longitude]);
 
   if (!club) return null;
 
