@@ -83,6 +83,8 @@ import { GoogleTagManager } from "./components/GoogleTagManager";
 import ClubRouter from "./components/public/ClubRouter";
 import ClubPublicHome from "./components/public/ClubPublicHome";
 import OurFleet from "./components/public/pages/OurFleet";
+import Training from "./components/public/pages/Training";
+import Pricing from "./components/public/pages/Pricing";
 
 // Initialiser dayjs avec la locale francaise
 dayjs.locale('fr');
@@ -124,7 +126,7 @@ const App = () => {
                     <Route index element={<RootPage />} />
                     <Route path="/about" element={<AboutUsPage />} />
                     <Route path="/features" element={<FeaturesPage />} />
-                    <Route path="/pricing" element={<PricingPage />} />
+                    <Route path="/tarifs" element={<PricingPage />} />
                     <Route path="/faq" element={<FAQPage />} />
                     <Route path="/cgv" element={<CGVPage />} />
                     <Route path="/rgpd" element={<RGPDPage />} />
@@ -254,6 +256,8 @@ const App = () => {
                   <Route path="/club/:clubCode" element={<ClubPublicHome />} />
                   <Route path="/club/:clubCode/page/:slug" element={<ClubPublicHome />} />
                   <Route path="/club/:clubCode/fleet" element={<OurFleet />} />
+                  <Route path="/club/:clubCode/training" element={<Training />} />
+                  <Route path="/club/:clubCode/tarifs" element={<Pricing />} />
                 </Routes>
               </AuthProvider>
             )}

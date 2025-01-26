@@ -49,7 +49,7 @@ export const router = createBrowserRouter([
         element: <CGVPage />,
       },
       {
-        path: '/pricing',
+        path: '/tarifs',
         element: <PricingPage />,
       },
       // Ajoutez ici les autres routes publiques

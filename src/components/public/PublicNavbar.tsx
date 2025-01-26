@@ -11,6 +11,7 @@ import HelpIcon from '@mui/icons-material/Help';
 import ContactIcon from '@mui/icons-material/Mail';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import PeopleIcon from '@mui/icons-material/People';
+import InformationCircleIcon from '@mui/icons-material/Info';
 
 const PublicNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,9 +19,9 @@ const PublicNavbar = () => {
 
   const navItems = [
     { label: 'Accueil', path: '/', icon: <HomeIcon className="h-5 w-5" /> },
-    { label: 'Qui sommes-nous', path: '/about', icon: <PeopleIcon className="h-5 w-5" /> },
+    { label: 'À propos', path: '/about', icon: <InformationCircleIcon className="h-5 w-5" /> },
     { label: 'Fonctionnalités', path: '/features', icon: <FeaturesIcon className="h-5 w-5" /> },
-    { label: 'Tarifs', path: '/pricing', icon: <CreditCardIcon className="h-5 w-5" /> },
+    { label: 'Tarifs', path: '/tarifs', icon: <CreditCardIcon className="h-5 w-5" /> },
     { label: 'FAQ', path: '/faq', icon: <HelpIcon className="h-5 w-5" /> },
     { label: 'Contact', path: '/contact', icon: <ContactIcon className="h-5 w-5" /> },
   ];

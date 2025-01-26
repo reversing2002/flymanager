@@ -11,7 +11,7 @@ interface Instructor {
   first_name: string;
   last_name: string;
   bio: string | null;
-  photo_url: string | null;
+  image_url: string | null;
   qualifications: string[];
   specialties: string[];
 }
@@ -146,18 +146,18 @@ const Training: React.FC = () => {
                 className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
               >
                 <div className="aspect-w-1 aspect-h-1 bg-gray-50">
-                  {instructor.photo_url ? (
-                    <div className="w-full h-full">
-                      <img
-                        src={instructor.photo_url}
-                        alt={`${instructor.first_name} ${instructor.last_name}`}
-                        className="w-full h-full object-cover object-center"
-                        style={{ aspectRatio: '1/1' }}
-                      />
-                    </div>
+                  {instructor.image_url ? (
+                    <img
+                      src={instructor.image_url}
+                      alt={`${instructor.first_name} ${instructor.last_name}`}
+                      className="w-32 h-32 rounded-full object-cover mx-auto mb-4"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100" style={{ aspectRatio: '1/1' }}>
-                      <UserCircle className="w-24 h-24 text-gray-300" strokeWidth={1.5} />
+                    <div className="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                      <span className="text-blue-600 text-3xl font-semibold">
+                        {instructor.first_name[0]}
+                        {instructor.last_name[0]}
+                      </span>
                     </div>
                   )}
                 </div>

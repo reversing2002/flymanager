@@ -39,12 +39,24 @@ const websiteSettingsSchema = z.object({
       id: z.string(),
       first_name: z.string(),
       last_name: z.string(),
-      bio: z.string().nullable(),
-      photo_url: z.string().nullable(),
-      qualifications: z.array(z.string()),
-      specialties: z.array(z.string())
+      image_url: z.string().nullable(),
+      instructor_rate: z.number().nullable()
     })
   ),
+  cached_discovery_flights: z.array(
+    z.object({
+      id: z.string(),
+      price: z.number(),
+      duration: z.number(),
+      features: z.array(
+        z.object({
+          id: z.string(),
+          description: z.string(),
+          display_order: z.number()
+        })
+      )
+    })
+  )
 });
 
 type WebsiteSettings = z.infer<typeof websiteSettingsSchema>;
@@ -82,7 +94,8 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
           hero_subtitle: null,
           cta_text: 'Nous rejoindre',
           cached_fleet: [],
-          cached_instructors: []
+          cached_instructors: [],
+          cached_discovery_flights: []
         }
       );
     },
@@ -190,34 +203,26 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
         .eq('club_id', clubId)
         .eq('status', 'AVAILABLE');
 
-      // Récupérer la liste des instructeurs via les groupes
-      const { data: instructorUsers } = await supabase
-        .from('user_group_memberships')
+      // Récupérer les instructeurs
+      const { data: instructorsData } = await supabase
+        .from('users')
         .select(`
-          user:user_id (
-            id,
-            first_name,
-            last_name,
-            image_url
-          ),
-          group:user_groups!inner (
-            code
-          )
+          id,
+          first_name,
+          last_name,
+          image_url,
+          instructor_rate
         `)
-        .eq('user_groups.code', 'INSTRUCTOR');
+        .gt('instructor_rate', 0)
+        .order('last_name');
 
-      // Transformer les données pour le cache en filtrant les utilisateurs null
-      const instructors = instructorUsers
-        ?.filter(item => item.user !== null)
-        ?.map(item => ({
-          id: item.user.id,
-          first_name: item.user.first_name,
-          last_name: item.user.last_name,
-          bio: null,
-          photo_url: item.user.image_url,
-          qualifications: [],
-          specialties: []
-        })) || [];
+      const instructors = (instructorsData || []).map(instructor => ({
+        id: instructor.id,
+        first_name: instructor.first_name,
+        last_name: instructor.last_name,
+        image_url: instructor.image_url,
+        instructor_rate: instructor.instructor_rate
+      }));
 
       const cachedFleet = aircraft?.map(aircraft => ({
         id: aircraft.id,
@@ -233,18 +238,53 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
         id: instructor.id,
         first_name: instructor.first_name,
         last_name: instructor.last_name,
-        bio: instructor.bio,
-        photo_url: instructor.photo_url,
-        qualifications: instructor.qualifications || [],
-        specialties: instructor.specialties || []
+        image_url: instructor.image_url,
+        instructor_rate: instructor.instructor_rate
       })) || [];
 
-      // Mettre à jour le cache dans les paramètres
+      // Récupérer la liste des vols découverte
+      const { data: discoveryFlights } = await supabase
+        .from('discovery_flight_prices')
+        .select(`
+          id,
+          price,
+          duration
+        `)
+        .eq('club_id', clubId)
+        .order('price');
+
+      // Récupérer les caractéristiques pour chaque vol découverte
+      const discoveryFlightsWithFeatures = await Promise.all((discoveryFlights || []).map(async (price) => {
+        const { data: featureData } = await supabase
+          .from('discovery_flight_price_features')
+          .select(`
+            discovery_flight_features (
+              id,
+              description,
+              display_order
+            )
+          `)
+          .eq('price_id', price.id)
+          .order('discovery_flight_features (display_order)');
+
+        return {
+          ...price,
+          features: featureData?.map(item => item.discovery_flight_features) || []
+        };
+      }));
+
+      // Mettre à jour le cache
       const { error: updateError } = await supabase
         .from('club_website_settings')
-        .update({ 
+        .update({
+          logo_url: settings.logo_url,
+          carousel_images: settings.carousel_images,
+          hero_title: settings.hero_title,
+          hero_subtitle: settings.hero_subtitle,
+          cta_text: settings.cta_text,
           cached_fleet: cachedFleet,
-          cached_instructors: cachedInstructors 
+          cached_instructors: instructors,
+          cached_discovery_flights: discoveryFlightsWithFeatures || []
         })
         .eq('club_id', clubId);
 
@@ -480,12 +520,16 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={updateSettings.isLoading}
+                  disabled={isLoading}
                 >
-                  {updateSettings.isLoading && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Mise à jour en cours...
+                    </>
+                  ) : (
+                    'Mettre à jour le site'
                   )}
-                  Enregistrer les modifications
                 </Button>
               </form>
             </TabsContent>
