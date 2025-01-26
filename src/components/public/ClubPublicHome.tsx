@@ -6,6 +6,7 @@ import { Button } from '../ui/button';
 import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { RichTextContent } from '../ui/rich-text-editor';
+import { PublicHeader } from './layout/PublicHeader';
 
 type ClubData = {
   id: string;
@@ -183,106 +184,19 @@ const ClubPublicHome: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-white border-b z-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo and club name */}
-            <Link to={`/club/${clubCode}`} className="flex items-center gap-2">
-              {websiteSettings?.logo_url && (
-                <img
-                  src={websiteSettings.logo_url}
-                  alt={club?.name}
-                  className="h-8 w-auto"
-                />
-              )}
-              <span className="font-semibold text-lg">{club?.name}</span>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-4">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </Button>
-          </div>
-
-          {/* Mobile Menu */}
-          <AnimatePresence>
-            {isMobileMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="md:hidden bg-white border-t"
-              >
-                <nav className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-2">
-                  {menuItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors py-2"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </header>
+      <PublicHeader
+        clubCode={clubCode}
+        clubName={club?.name}
+        logoUrl={websiteSettings?.logo_url}
+        pages={pages}
+      />
 
       {/* Main Content */}
-      <main className="pt-16">
+      <div className="pt-16">
         {currentPage ? (
-          <div className="relative">
-            {/* Hero Section avec titre */}
-            <div className="relative h-[400px] bg-gray-900">
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 to-gray-900/60" />
-              <div className="absolute inset-0">
-                {websiteSettings?.carousel_images?.[0] && (
-                  <img
-                    src={websiteSettings.carousel_images[0]}
-                    alt="Background"
-                    className="w-full h-full object-cover opacity-50"
-                  />
-                )}
-              </div>
-              <div className="relative h-full flex flex-col items-center justify-center text-center text-white p-4">
-                <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-wider">
-                  {currentPage.title}
-                </h1>
-              </div>
-            </div>
-
-            {/* Contenu de la page */}
-            <div className="relative -mt-32 max-w-4xl mx-auto px-4">
-              <div className="bg-white rounded-lg shadow-lg p-8">
-                <RichTextContent content={currentPage.content} />
-              </div>
-            </div>
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-8">{currentPage.title}</h1>
+            <RichTextContent content={currentPage.content} />
           </div>
         ) : (
           <>
@@ -565,7 +479,7 @@ const ClubPublicHome: React.FC = () => {
             </footer>
           </>
         )}
-      </main>
+      </div>
     </div>
   );
 };

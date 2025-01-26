@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../lib/supabase';
+import { PublicHeader } from '../layout/PublicHeader';
 
 interface WebsiteSettings {
   cached_fleet: {
@@ -12,8 +13,9 @@ interface WebsiteSettings {
     type: string;
     description: string | null;
     image_url: string | null;
-    hour_rate: number;
+    hourly_rate: number;
   }[];
+  logo_url?: string | null;
 }
 
 const OurFleet: React.FC = () => {
@@ -25,7 +27,7 @@ const OurFleet: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clubs')
-        .select('id')
+        .select('id, name')
         .ilike('code', clubCode || '')
         .single();
 
@@ -41,14 +43,31 @@ const OurFleet: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('club_website_settings')
-        .select('cached_fleet')
+        .select('cached_fleet, logo_url')
         .eq('club_id', club?.id)
         .single();
 
       if (error) throw error;
       return data || {
-        cached_fleet: []
+        cached_fleet: [],
+        logo_url: null
       };
+    },
+    enabled: !!club?.id,
+  });
+
+  // Récupérer les pages du club
+  const { data: pages } = useQuery({
+    queryKey: ['clubPages', club?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('club_pages')
+        .select('title, slug')
+        .eq('club_id', club?.id)
+        .order('title');
+
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!club?.id,
   });
@@ -62,64 +81,81 @@ const OurFleet: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6">Notre Flotte</h1>
-        <p className="text-lg text-gray-600">
-          Découvrez notre flotte d'aéronefs, soigneusement entretenue et régulièrement mise à jour 
-          pour assurer votre sécurité et votre confort lors de vos vols.
-        </p>
-      </div>
+    <div className="min-h-screen bg-white">
+      <PublicHeader
+        clubCode={clubCode || ''}
+        clubName={club?.name}
+        logoUrl={settings?.logo_url}
+        pages={pages}
+      />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {settings?.cached_fleet.map((plane, index) => (
-          <motion.div
-            key={plane.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="bg-white rounded-lg shadow-lg overflow-hidden"
-          >
-            {plane.image_url && (
-              <div className="relative h-48 bg-gray-200">
-                <img
-                  src={plane.image_url}
-                  alt={`${plane.registration}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-            
-            <div className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {plane.name}
-              </h3>
-              <p className="text-gray-500 text-sm mb-2">{plane.registration}</p>
-              <p className="text-gray-600 mb-4">{plane.type}</p>
-              
-              {plane.description && (
-                <p className="text-gray-700 text-sm mt-4">
-                  {plane.description}
-                </p>
-              )}
-              
-              {typeof plane.hour_rate === 'number' && (
-                <div className="mt-4 inline-block px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
-                  {plane.hour_rate.toLocaleString('fr-FR')} € / heure
-                </div>
-              )}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-      
-      {(!settings?.cached_fleet || settings.cached_fleet.length === 0) && (
-        <div className="text-center py-12">
-          <p className="text-gray-600 text-lg">
-            Aucun avion n'est actuellement disponible dans la flotte.
+      <div className="container mx-auto px-4 py-8 pt-24">
+        <div className="max-w-4xl mx-auto mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-6">Notre Flotte</h1>
+          <p className="text-lg text-gray-600">
+            Découvrez notre flotte d'aéronefs, soigneusement entretenue et régulièrement mise à jour 
+            pour assurer votre sécurité et votre confort lors de vos vols.
           </p>
         </div>
-      )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {(settings?.cached_fleet || []).map((plane, index) => (
+            <motion.div
+              key={plane.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+              className="bg-white rounded-lg shadow-lg overflow-hidden"
+            >
+              <div className="aspect-w-16 aspect-h-9">
+                {plane.image_url ? (
+                  <img
+                    src={plane.image_url}
+                    alt={`${plane.registration}`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-400">Photo non disponible</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {plane.name}
+                  </h3>
+                  <span className="text-sm font-medium text-gray-500">
+                    {plane.registration}
+                  </span>
+                </div>
+                <p className="text-gray-600 text-sm mb-4">{plane.type}</p>
+                
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-lg font-semibold text-blue-600">
+                    {(plane.hourly_rate || 0).toLocaleString('fr-FR')} € / heure
+                  </span>
+                </div>
+                
+                {plane.description && (
+                  <p className="text-gray-700 text-sm mt-4">
+                    {plane.description}
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        
+        {(!settings?.cached_fleet || settings.cached_fleet.length === 0) && (
+          <div className="text-center py-12">
+            <p className="text-gray-600 text-lg">
+              Aucun avion n'est actuellement disponible dans la flotte.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
