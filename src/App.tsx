@@ -86,6 +86,8 @@ import OurFleet from "./components/public/pages/OurFleet";
 import Training from "./components/public/pages/Training";
 import Pricing from "./components/public/pages/Pricing";
 import { Contact } from './components/public/pages/Contact';
+import NewsPage from "./components/public/pages/NewsPage";
+import NewsDetail from "./components/public/pages/NewsDetail";
 
 // Initialiser dayjs avec la locale francaise
 dayjs.locale('fr');
@@ -260,6 +262,8 @@ const App = () => {
                   <Route path="/club/:clubCode/training" element={<Training />} />
                   <Route path="/club/:clubCode/tarifs" element={<Pricing />} />
                   <Route path="/club/:clubCode/contact" element={<Contact />} />
+                  <Route path="/club/:clubCode/actualites" element={<NewsPage />} />
+                  <Route path="/club/:clubCode/actualites/:newsId/:slug" element={<NewsDetail />} />
                   
                 </Routes>
               </AuthProvider>

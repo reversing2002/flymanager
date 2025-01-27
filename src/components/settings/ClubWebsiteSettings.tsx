@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ import { ClubPagesSettings } from './ClubPagesSettings';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { RefreshCw } from 'lucide-react';
+import { ClubNewsManager } from './ClubNewsManager';
 
 const websiteSettingsSchema = z.object({
   logo_url: z.string().url().nullable(),
@@ -23,6 +24,14 @@ const websiteSettingsSchema = z.object({
   hero_title: z.string().min(1, 'Le titre est requis'),
   hero_subtitle: z.string().nullable(),
   cta_text: z.string().min(1, 'Le texte du bouton est requis'),
+  cached_news: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    excerpt: z.string().nullable(),
+    content: z.string().nullable(),
+    published_at: z.string(),
+    image_url: z.string().url().nullable(),
+  })).nullable(),
   cached_club_info: z.object({
     address: z.string(),
     phone: z.string(),
@@ -162,6 +171,7 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
             hero_title: 'Bienvenue à l\'aéroclub',
             hero_subtitle: null,
             cta_text: 'Nous rejoindre',
+            cached_news: null,
             cached_club_info: {
               address: '',
               phone: '',
@@ -187,7 +197,7 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
     enabled: !!clubId
   });
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<WebsiteSettings>({
+  const { register, handleSubmit, formState: { errors }, reset, control } = useForm<WebsiteSettings>({
     resolver: zodResolver(websiteSettingsSchema),
     defaultValues: settings,
   });
@@ -376,6 +386,7 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
           hero_title: settings.hero_title,
           hero_subtitle: settings.hero_subtitle,
           cta_text: settings.cta_text,
+          cached_news: settings.cached_news,
           cached_club_info: {
             address: clubInfo?.address || '',
             phone: clubInfo?.phone || '',
@@ -446,6 +457,7 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
         hero_title: settings.hero_title,
         hero_subtitle: settings.hero_subtitle,
         cta_text: settings.cta_text,
+        cached_news: settings.cached_news,
         cached_club_info: {
           address: club?.address || '',
           phone: club?.phone || '',
@@ -528,6 +540,8 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-8">
           <TabsTrigger value="general">Général</TabsTrigger>
+          <TabsTrigger value="carousel">Carousel</TabsTrigger>
+          <TabsTrigger value="news">Actualités</TabsTrigger>
           <TabsTrigger value="pages">Pages</TabsTrigger>
         </TabsList>
 
@@ -705,6 +719,10 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
                   )}
                 </Button>
               </form>
+            </TabsContent>
+
+            <TabsContent value="news">
+              <ClubNewsManager clubId={clubId} />
             </TabsContent>
 
             <TabsContent value="pages">

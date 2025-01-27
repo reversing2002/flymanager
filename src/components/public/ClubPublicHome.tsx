@@ -9,6 +9,8 @@ import { RichTextContent } from '../ui/rich-text-editor';
 import { PublicHeader } from './layout/PublicHeader';
 import { ClubFooter } from './layout/ClubFooter';
 import { GraduationCap, Plane, Calendar, Receipt, Gift, MessageCircle, ArrowRight } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 type ClubData = {
   id: string;
@@ -27,15 +29,13 @@ type WebsiteSettings = {
   hero_title: string;
   hero_subtitle: string | null;
   cta_text: string;
-  cached_fleet: {
+  cached_news: {
     id: string;
-    name: string;
-    registration: string;
-    type: string;
-    description: string | null;
+    title: string;
+    excerpt: string | null;
+    published_at: string;
     image_url: string | null;
-    hourly_rate: number;
-  }[];
+  }[] | null;
 };
 
 type ClubPage = {
@@ -92,7 +92,7 @@ const ClubPublicHome: React.FC = () => {
         hero_title: 'Bienvenue à l\'aéroclub',
         hero_subtitle: null,
         cta_text: 'Nous rejoindre',
-        cached_fleet: []
+        cached_news: null,
       };
     },
     enabled: !!club?.id,
@@ -326,6 +326,51 @@ const ClubPublicHome: React.FC = () => {
                 </div>
               </section>
 
+              {/* Section Actualités */}
+              {websiteSettings?.cached_news && websiteSettings.cached_news.length > 0 && (
+                <section className="py-12 bg-white">
+                  <div className="container mx-auto px-4">
+                    <h2 className="text-3xl font-bold text-center mb-8">Actualités du club</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {websiteSettings.cached_news.map((news) => (
+                        <motion.div
+                          key={news.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="bg-white rounded-lg shadow-lg overflow-hidden"
+                        >
+                          {news.image_url && (
+                            <div className="relative h-48">
+                              <img
+                                src={news.image_url}
+                                alt={news.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="p-6">
+                            <h3 className="text-xl font-semibold mb-2">{news.title}</h3>
+                            <p className="text-sm text-gray-500 mb-3">
+                              {format(new Date(news.published_at), 'PPP', { locale: fr })}
+                            </p>
+                            {news.excerpt && (
+                              <p className="text-gray-600 mb-4">{news.excerpt}</p>
+                            )}
+                            <Link
+                              to={`/club/${clubCode}/actualites/${news.id}`}
+                              className="inline-flex items-center text-primary hover:text-primary/80"
+                            >
+                              Lire la suite
+                              <ArrowRight className="w-4 h-4 ml-1" />
+                            </Link>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
               {/* Section Pages */}
               <section className="py-16">
                 <div className="container mx-auto px-4">

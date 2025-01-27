@@ -21,6 +21,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
 
   const menuItems = [
     { label: 'Accueil', href: `/club/${clubCode}` },
+    { label: 'Actualités', href: `/club/${clubCode}/actualites` },
     { label: 'Formation', href: `/club/${clubCode}/training` },
     { label: 'Avions', href: `/club/${clubCode}/fleet` },
     { label: 'Événements', href: `/club/${clubCode}/events` },
