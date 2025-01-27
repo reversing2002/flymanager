@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { RefreshCw } from 'lucide-react';
 import { ClubNewsManager } from './ClubNewsManager';
+import { ClubCarouselSettings } from './ClubCarouselSettings';
 
 const websiteSettingsSchema = z.object({
   logo_url: z.string().url().nullable(),
@@ -209,26 +210,46 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
   }, [settings, reset]);
 
   const updateSettings = useMutation({
-    mutationFn: async (newSettings: Partial<WebsiteSettings>) => {
-      const { data, error } = await supabase
+    mutationFn: async (newSettings: Partial<typeof settings>) => {
+      const { data: existingSettings } = await supabase
         .from('club_website_settings')
-        .upsert({
-          club_id: clubId,
-          ...newSettings,
-        })
-        .select()
+        .select('id')
+        .eq('club_id', clubId)
         .single();
 
-      if (error) throw error;
-      return data;
+      const settingsData = {
+        club_id: clubId,
+        ...newSettings,
+      };
+
+      if (existingSettings?.id) {
+        const { data, error } = await supabase
+          .from('club_website_settings')
+          .update(settingsData)
+          .eq('id', existingSettings.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase
+          .from('club_website_settings')
+          .insert([settingsData])
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['clubWebsiteSettings', clubId]);
-      toast.success('Paramètres mis à jour avec succès');
+      queryClient.invalidateQueries(['clubWebsiteSettings']);
+      toast.success('Paramètres sauvegardés');
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour des paramètres');
       console.error('Error updating settings:', error);
+      toast.error('Erreur lors de la sauvegarde des paramètres');
     },
   });
 
@@ -417,13 +438,6 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
     try {
       setIsSaving(true);
 
-      // Récupérer la configuration existante
-      const { data: existingSettings } = await supabase
-        .from('club_website_settings')
-        .select('id')
-        .eq('club_id', clubId)
-        .single();
-
       // Récupérer la liste des avions pour le cache
       const { data: aircraft } = await supabase
         .from('aircraft')
@@ -449,15 +463,13 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
         description: aircraft.description
       })) || [];
 
-      // Préparer les données à sauvegarder
-      const settingsData = {
-        club_id: clubId,
+      await updateSettings.mutateAsync({
         logo_url: settings.logo_url,
-        carousel_images: settings.carousel_images,
-        hero_title: settings.hero_title,
-        hero_subtitle: settings.hero_subtitle,
-        cta_text: settings.cta_text,
-        cached_news: settings.cached_news,
+        carousel_images: settings.carousel_images || [],
+        hero_title: settings.hero_title || '',
+        hero_subtitle: settings.hero_subtitle || '',
+        cta_text: settings.cta_text || '',
+        cached_news: settings.cached_news || [],
         cached_club_info: {
           address: club?.address || '',
           phone: club?.phone || '',
@@ -465,27 +477,8 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
           latitude: club?.latitude || null,
           longitude: club?.longitude || null,
         },
-        cached_fleet: cachedFleet
-      };
-
-      // Si une configuration existe, inclure son ID
-      if (existingSettings?.id) {
-        settingsData.id = existingSettings.id;
-      }
-
-      const { error } = await supabase
-        .from('club_website_settings')
-        .upsert(settingsData, {
-          onConflict: 'id'
-        });
-
-      if (error) throw error;
-
-      toast.success('Paramètres sauvegardés');
-      queryClient.invalidateQueries(['clubWebsiteSettings']);
-    } catch (error) {
-      console.error('Error saving website settings:', error);
-      toast.error('Erreur lors de la sauvegarde des paramètres');
+        cached_fleet: cachedFleet || []
+      });
     } finally {
       setIsSaving(false);
     }
@@ -545,191 +538,182 @@ export const ClubWebsiteSettings: React.FC<ClubWebsiteSettingsProps> = ({
           <TabsTrigger value="pages">Pages</TabsTrigger>
         </TabsList>
 
-        <AnimatePresence mode="wait">
+        <TabsContent value="general" className="space-y-8">
           <MotionDiv
-            key={activeTab}
+            key="general"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2 }}
           >
-            <TabsContent value="general" className="space-y-8">
-              <div className="rounded-lg border bg-card p-6 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">Logo du club</h3>
-                <div className="space-y-4">
-                  {settings?.logo_url && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex items-center gap-4"
+            <div className="rounded-lg border bg-card p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">Logo du club</h3>
+              <div className="space-y-4">
+                {settings?.logo_url && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-4"
+                  >
+                    <img
+                      src={settings.logo_url}
+                      alt="Logo du club"
+                      className="h-16 w-auto object-contain"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateSettings.mutate({ logo_url: null })}
                     >
-                      <img
-                        src={settings.logo_url}
-                        alt="Logo du club"
-                        className="h-16 w-auto object-contain"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateSettings.mutate({ logo_url: null })}
-                      >
-                        Supprimer
-                      </Button>
-                    </motion.div>
-                  )}
-                  <ImageUpload
-                    onUpload={handleLogoUpload}
-                    className="w-32 h-32"
-                    accept="image/*"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Format recommandé : PNG ou SVG, fond transparent
-                  </p>
+                      Supprimer
+                    </Button>
+                  </motion.div>
+                )}
+                <ImageUpload
+                  onUpload={handleLogoUpload}
+                  className="w-32 h-32"
+                  accept="image/*"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Format recommandé : PNG ou SVG, fond transparent
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit((data) => updateSettings.mutate(data))} className="space-y-8">
+              <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
+                <h3 className="text-lg font-semibold">Textes de la page d'accueil</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Titre principal</label>
+                    <Input
+                      {...register('hero_title')}
+                      className="mt-1"
+                      error={errors.hero_title?.message}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Sous-titre</label>
+                    <Textarea
+                      {...register('hero_subtitle')}
+                      className="mt-1"
+                      error={errors.hero_subtitle?.message}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Texte du bouton d'action</label>
+                    <Input
+                      {...register('cta_text')}
+                      className="mt-1"
+                      error={errors.cta_text?.message}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit((data) => updateSettings.mutate(data))} className="space-y-8">
-                <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
-                  <h3 className="text-lg font-semibold">Textes de la page d'accueil</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Titre principal</label>
-                      <Input
-                        {...register('hero_title')}
-                        className="mt-1"
-                        error={errors.hero_title?.message}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Sous-titre</label>
-                      <Textarea
-                        {...register('hero_subtitle')}
-                        className="mt-1"
-                        error={errors.hero_subtitle?.message}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Texte du bouton d'action</label>
-                      <Input
-                        {...register('cta_text')}
-                        className="mt-1"
-                        error={errors.cta_text?.message}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
-                  <h3 className="text-lg font-semibold">Informations du club</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Adresse</label>
-                      <Input
-                        {...register('cached_club_info.address')}
-                        className="mt-1"
-                        error={errors.cached_club_info?.address?.message}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Téléphone</label>
-                      <Input
-                        {...register('cached_club_info.phone')}
-                        className="mt-1"
-                        error={errors.cached_club_info?.phone?.message}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Email</label>
-                      <Input
-                        {...register('cached_club_info.email')}
-                        className="mt-1"
-                        error={errors.cached_club_info?.email?.message}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Latitude</label>
-                      <Input
-                        {...register('cached_club_info.latitude')}
-                        className="mt-1"
-                        error={errors.cached_club_info?.latitude?.message}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Longitude</label>
-                      <Input
-                        {...register('cached_club_info.longitude')}
-                        className="mt-1"
-                        error={errors.cached_club_info?.longitude?.message}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
-                  <h3 className="text-lg font-semibold">Images du carrousel</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <AnimatePresence>
-                      {settings?.carousel_images.map((image, index) => (
-                        <motion.div
-                          key={image}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="relative group"
-                        >
-                          <img
-                            src={image}
-                            alt={`Carousel ${index + 1}`}
-                            className="w-full h-48 object-cover rounded-lg"
-                          />
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => removeCarouselImage(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                    <ImageUpload
-                      onUpload={handleCarouselUpload}
-                      className="w-full h-48"
-                      accept="image/*"
+              <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
+                <h3 className="text-lg font-semibold">Informations du club</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Adresse</label>
+                    <Input
+                      {...register('cached_club_info.address')}
+                      className="mt-1"
+                      error={errors.cached_club_info?.address?.message}
                     />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Format recommandé : 1920x1080px, ratio 16:9
-                  </p>
+                  <div>
+                    <label className="text-sm font-medium">Téléphone</label>
+                    <Input
+                      {...register('cached_club_info.phone')}
+                      className="mt-1"
+                      error={errors.cached_club_info?.phone?.message}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Email</label>
+                    <Input
+                      {...register('cached_club_info.email')}
+                      className="mt-1"
+                      error={errors.cached_club_info?.email?.message}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Latitude</label>
+                    <Input
+                      {...register('cached_club_info.latitude')}
+                      className="mt-1"
+                      error={errors.cached_club_info?.latitude?.message}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Longitude</label>
+                    <Input
+                      {...register('cached_club_info.longitude')}
+                      className="mt-1"
+                      error={errors.cached_club_info?.longitude?.message}
+                    />
+                  </div>
                 </div>
+              </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Mise à jour en cours...
-                    </>
-                  ) : (
-                    'Enregistrer les modifications'
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="news">
-              <ClubNewsManager clubId={clubId} />
-            </TabsContent>
-
-            <TabsContent value="pages">
-              <ClubPagesSettings clubId={clubId} />
-            </TabsContent>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Mise à jour en cours...
+                  </>
+                ) : (
+                  'Enregistrer les modifications'
+                )}
+              </Button>
+            </form>
           </MotionDiv>
-        </AnimatePresence>
+        </TabsContent>
+
+        <TabsContent value="carousel">
+          <MotionDiv
+            key="carousel"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ClubCarouselSettings
+              settings={settings}
+              onUpdate={updateSettings.mutate}
+              isLoading={isLoading}
+            />
+          </MotionDiv>
+        </TabsContent>
+
+        <TabsContent value="news">
+          <MotionDiv
+            key="news"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ClubNewsManager clubId={clubId} />
+          </MotionDiv>
+        </TabsContent>
+
+        <TabsContent value="pages">
+          <MotionDiv
+            key="pages"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ClubPagesSettings clubId={clubId} />
+          </MotionDiv>
+        </TabsContent>
       </Tabs>
     </div>
   );

@@ -15,6 +15,7 @@ import { ImageUpload } from '../ui/image-upload';
 import { toast } from 'react-hot-toast';
 import type { ClubNews } from '../../types/news';
 import { useAuth } from '../../contexts/AuthContext';
+import { motion } from 'framer-motion';
 
 const newsSchema = z.object({
   title: z.string().min(1, 'Le titre est requis'),
@@ -196,14 +197,6 @@ export const ClubNewsManager: React.FC<ClubNewsManagerProps> = ({ clubId }) => {
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Actualités</h2>
             <div className="flex gap-2">
-              <Button 
-                variant="outline"
-                onClick={handleRefreshCache}
-                disabled={refreshNewsCacheMutation.isLoading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${refreshNewsCacheMutation.isLoading ? 'animate-spin' : ''}`} />
-                Rafraîchir le cache
-              </Button>
               <Button onClick={() => setShowForm(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Nouvelle actualité
@@ -281,7 +274,7 @@ export const ClubNewsManager: React.FC<ClubNewsManagerProps> = ({ clubId }) => {
                 control={control}
                 render={({ field }) => (
                   <Editor
-                    apiKey="no-api-key"
+                    apiKey="a2n3jmwpjgutthe8gc0w2odt7jqkh537sv261emnc52ffdgh"
                     init={{
                       height: 400,
                       menubar: false,
@@ -318,14 +311,35 @@ export const ClubNewsManager: React.FC<ClubNewsManagerProps> = ({ clubId }) => {
                 name="image_url"
                 control={control}
                 render={({ field }) => (
-                  <ImageUpload
-                    value={field.value}
-                    onChange={field.onChange}
-                    onRemove={() => field.onChange(null)}
-                    maxSize={2}
-                    clubId={clubId}
-                    bucket="club-news"
-                  />
+                  <div className="space-y-4">
+                    {field.value && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="relative group w-full h-48"
+                      >
+                        <img
+                          src={field.value}
+                          alt="Image de l'actualité"
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => field.onChange(null)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </motion.div>
+                    )}
+                    <ImageUpload
+                      onImageUpload={(url) => field.onChange(url)}
+                      className="w-full h-48"
+                      accept="image/*"
+                      bucketName="club-website"
+                    />
+                  </div>
                 )}
               />
             </div>
