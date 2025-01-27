@@ -96,9 +96,11 @@ const App = () => {
   const queryClient = new QueryClient();
   const hostname = window.location.hostname;
   const isClubSubdomain = hostname.includes('.4fly.io') && !hostname.startsWith('www');
+  const clubCode = isClubSubdomain ? hostname.split('.')[0] : null;
 
   console.log('App - Hostname:', hostname);
   console.log('App - Current Path:', window.location.pathname);
+  console.log('App - Club Code:', clubCode);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -106,7 +108,7 @@ const App = () => {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Router>
             {isClubSubdomain ? (
-              <ClubRouter />
+              <ClubRouter clubCode={clubCode} />
             ) : (
               <AuthProvider>
                 <GoogleTagManager />

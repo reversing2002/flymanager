@@ -1,17 +1,22 @@
 import React from 'react';
 import { Routes, Route, useParams } from 'react-router-dom';
+import ClubLayout from './layout/ClubLayout';
 import ClubPublicHome from './ClubPublicHome';
 import OurFleet from './pages/OurFleet';
 import Training from './pages/Training';
 import Events from './pages/Events';
-import Pricing from './pages/Pricing';
 import Contact from './pages/Contact';
-import ClubLayout from './layout/ClubLayout';
+import NewsPage from './pages/NewsPage';
+import NewsDetail from './pages/NewsDetail';
 
-const ClubRouter: React.FC = () => {
-  const { clubCode } = useParams<{ clubCode: string }>();
+interface ClubRouterProps {
+  clubCode: string | null;
+}
+
+const ClubRouter: React.FC<ClubRouterProps> = ({ clubCode }) => {
+  const params = useParams();
   
-  console.log('ClubRouter - URL params:', useParams());
+  console.log('ClubRouter - URL params:', params);
   console.log('ClubRouter - Club Code:', clubCode);
   console.log('ClubRouter - Current Path:', window.location.pathname);
 
@@ -30,12 +35,12 @@ const ClubRouter: React.FC = () => {
     <ClubLayout>
       <Routes>
         <Route index element={<ClubPublicHome clubCode={clubCode} />} />
-        <Route path="avions" element={<OurFleet />} />
-        <Route path="formation" element={<Training />} />
+        <Route path="fleet" element={<OurFleet />} />
+        <Route path="training" element={<Training />} />
         <Route path="events" element={<Events />} />
-        <Route path="tarifs" element={<Pricing />} />
         <Route path="contact" element={<Contact />} />
-        <Route path="*" element={<ClubPublicHome clubCode={clubCode} />} />
+        <Route path="news" element={<NewsPage />} />
+        <Route path="news/:newsId" element={<NewsDetail />} />
       </Routes>
     </ClubLayout>
   );
