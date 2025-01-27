@@ -99,7 +99,7 @@ const EventCard: React.FC<{ event: any }> = ({ event }) => {
   );
 };
 
-const Events = () => {
+const Events: React.FC = () => {
   const { clubCode } = useParams<{ clubCode: string }>();
 
   // Récupérer l'ID du club à partir de son code

@@ -22,8 +22,8 @@ const NewsDetail: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clubs')
-        .select('id, name, logo_url')
-        .ilike('code', clubCode || '')
+        .select('id, name')
+        .eq('code', clubCode?.toUpperCase() || '')
         .single();
 
       if (error) throw error;

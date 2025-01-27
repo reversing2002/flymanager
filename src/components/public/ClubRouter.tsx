@@ -4,23 +4,27 @@ import ClubLayout from './layout/ClubLayout';
 import ClubPublicHome from './ClubPublicHome';
 import OurFleet from './pages/OurFleet';
 import Training from './pages/Training';
-import Events from './pages/Events';
+import Events from './pages/Events'; // Removed unnecessary destructuring
 import Contact from './pages/Contact';
 import NewsPage from './pages/NewsPage';
 import NewsDetail from './pages/NewsDetail';
 
 interface ClubRouterProps {
-  clubCode: string | null;
+  clubCode?: string | null;
 }
 
-const ClubRouter: React.FC<ClubRouterProps> = ({ clubCode }) => {
+const ClubRouter: React.FC<ClubRouterProps> = ({ clubCode: propClubCode }) => {
   const params = useParams();
+  const urlClubCode = params.clubCode;
+  const effectiveClubCode = propClubCode || urlClubCode;
   
   console.log('ClubRouter - URL params:', params);
-  console.log('ClubRouter - Club Code:', clubCode);
+  console.log('ClubRouter - Prop Club Code:', propClubCode);
+  console.log('ClubRouter - URL Club Code:', urlClubCode);
+  console.log('ClubRouter - Effective Club Code:', effectiveClubCode);
   console.log('ClubRouter - Current Path:', window.location.pathname);
 
-  if (!clubCode) {
+  if (!effectiveClubCode) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -34,7 +38,7 @@ const ClubRouter: React.FC<ClubRouterProps> = ({ clubCode }) => {
   return (
     <ClubLayout>
       <Routes>
-        <Route index element={<ClubPublicHome clubCode={clubCode} />} />
+        <Route index element={<ClubPublicHome clubCode={effectiveClubCode} />} />
         <Route path="fleet" element={<OurFleet />} />
         <Route path="training" element={<Training />} />
         <Route path="events" element={<Events />} />

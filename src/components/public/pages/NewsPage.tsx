@@ -30,10 +30,11 @@ const NewsPage: React.FC = () => {
   const { data: club } = useQuery({
     queryKey: ['club', clubCode],
     queryFn: async () => {
+      if (!clubCode) throw new Error('Club code is required');
       const { data, error } = await supabase
         .from('clubs')
-        .select('id, name, logo_url')
-        .ilike('code', clubCode || '')
+        .select('id, name')
+        .eq('code', clubCode.toUpperCase())
         .single();
 
       if (error) throw error;
@@ -44,12 +45,13 @@ const NewsPage: React.FC = () => {
 
   // Récupérer les paramètres du site avec les actualités en cache
   const { data: settings } = useQuery<WebsiteSettings>({
-    queryKey: ['clubWebsiteSettings', club?.id],
+    queryKey: ['website-settings', club?.id],
     queryFn: async () => {
+      if (!club?.id) throw new Error('Club ID is required');
       const { data, error } = await supabase
         .from('club_website_settings')
         .select('cached_news, logo_url, carousel_images')
-        .eq('club_id', club?.id)
+        .eq('club_id', club.id)
         .single();
 
       if (error) throw error;
