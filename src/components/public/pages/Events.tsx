@@ -23,6 +23,10 @@ type WebsiteSettings = {
   carousel_images: string[];
 };
 
+interface EventsProps {
+  clubCode?: string;
+}
+
 const getEventTypeLabel = (type: string) => {
   const types: { [key: string]: string } = {
     'SOCIAL': 'Événement social',
@@ -99,23 +103,29 @@ const EventCard: React.FC<{ event: any }> = ({ event }) => {
   );
 };
 
-const Events: React.FC = () => {
-  const { clubCode } = useParams<{ clubCode: string }>();
+const Events: React.FC<EventsProps> = ({ clubCode: propClubCode }) => {
+  const { clubCode: urlClubCode } = useParams<{ clubCode: string }>();
+  const effectiveClubCode = propClubCode || urlClubCode;
+  
+  console.log('Events - Prop Club Code:', propClubCode);
+  console.log('Events - URL Club Code:', urlClubCode);
+  console.log('Events - Effective Club Code:', effectiveClubCode);
 
   // Récupérer l'ID du club à partir de son code
   const { data: club } = useQuery({
-    queryKey: ['club', clubCode],
+    queryKey: ['club', effectiveClubCode],
     queryFn: async () => {
+      if (!effectiveClubCode) throw new Error('Club code is required');
       const { data, error } = await supabase
         .from('clubs')
         .select('id, name')
-        .ilike('code', clubCode || '')
+        .eq('code', effectiveClubCode.toUpperCase())
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!clubCode,
+    enabled: !!effectiveClubCode,
   });
 
   // Récupérer les paramètres du site avec les événements en cache
@@ -138,7 +148,7 @@ const Events: React.FC = () => {
 
   return (
     <PageLayout
-      clubCode={clubCode || ''}
+      clubCode={effectiveClubCode || ''}
       clubName={club?.name}
       logoUrl={settings?.logo_url}
       title="Événements à venir"

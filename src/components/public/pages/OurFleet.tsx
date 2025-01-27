@@ -19,33 +19,44 @@ interface WebsiteSettings {
   carousel_images?: string[];
 }
 
-const OurFleet: React.FC = () => {
-  const { clubCode } = useParams<{ clubCode: string }>();
+interface OurFleetProps {
+  clubCode?: string;
+}
+
+const OurFleet: React.FC<OurFleetProps> = ({ clubCode: propClubCode }) => {
+  const { clubCode: urlClubCode } = useParams<{ clubCode: string }>();
+  const effectiveClubCode = propClubCode || urlClubCode;
+
+  console.log('OurFleet - Prop Club Code:', propClubCode);
+  console.log('OurFleet - URL Club Code:', urlClubCode);
+  console.log('OurFleet - Effective Club Code:', effectiveClubCode);
 
   // Récupérer l'ID du club à partir de son code
   const { data: club } = useQuery({
-    queryKey: ['club', clubCode],
+    queryKey: ['club', effectiveClubCode],
     queryFn: async () => {
+      if (!effectiveClubCode) throw new Error('Club code is required');
       const { data, error } = await supabase
         .from('clubs')
         .select('id, name')
-        .ilike('code', clubCode || '')
+        .eq('code', effectiveClubCode.toUpperCase())
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!clubCode,
+    enabled: !!effectiveClubCode,
   });
 
   // Récupérer les paramètres du site avec la flotte en cache
   const { data: settings, isLoading } = useQuery<WebsiteSettings>({
     queryKey: ['clubWebsiteSettings', club?.id],
     queryFn: async () => {
+      if (!club?.id) throw new Error('Club ID is required');
       const { data, error } = await supabase
         .from('club_website_settings')
         .select('cached_fleet, logo_url, carousel_images')
-        .eq('club_id', club?.id)
+        .eq('club_id', club.id)
         .single();
 
       if (error) throw error;
@@ -64,11 +75,11 @@ const OurFleet: React.FC = () => {
 
   return (
     <PageLayout
-      clubCode={clubCode || ''}
+      clubCode={effectiveClubCode || ''}
       clubName={club?.name}
       logoUrl={settings?.logo_url}
       title="Notre Flotte"
-      description="Découvrez notre flotte d'avions disponibles pour la formation et la location."
+      description="Découvrez nos avions disponibles pour la formation et les vols"
       backgroundImage={settings?.carousel_images?.[0]}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

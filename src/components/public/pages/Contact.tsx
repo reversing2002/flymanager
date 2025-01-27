@@ -41,8 +41,18 @@ type ClubData = {
   logo_url: string | null;
 };
 
-export const Contact: React.FC = () => {
-  const { clubCode } = useParams<{ clubCode: string }>();
+interface ContactProps {
+  clubCode?: string;
+}
+
+export const Contact: React.FC<ContactProps> = ({ clubCode: propClubCode }) => {
+  const { clubCode: urlClubCode } = useParams<{ clubCode: string }>();
+  const effectiveClubCode = propClubCode || urlClubCode;
+
+  console.log('Contact - Prop Club Code:', propClubCode);
+  console.log('Contact - URL Club Code:', urlClubCode);
+  console.log('Contact - Effective Club Code:', effectiveClubCode);
+
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maptilersdk.Map | null>(null);
   const marker = useRef<maptilersdk.Marker | null>(null);
@@ -63,13 +73,13 @@ export const Contact: React.FC = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactFormData>();
 
   const { data: club } = useQuery<ClubData>({
-    queryKey: ['club-settings', clubCode],
+    queryKey: ['club-settings', effectiveClubCode],
     queryFn: async () => {
       // Get club basic info
       const { data: clubData, error } = await supabase
         .from('clubs')
         .select('id, name, code, address, phone, email, latitude, longitude')
-        .ilike('code', clubCode || '')
+        .ilike('code', effectiveClubCode || '')
         .single();
 
       if (error) throw error;
@@ -95,7 +105,7 @@ export const Contact: React.FC = () => {
         },
       };
     },
-    enabled: !!clubCode,
+    enabled: !!effectiveClubCode,
   });
 
   const sendEmailMutation = useMutation({
@@ -227,7 +237,7 @@ export const Contact: React.FC = () => {
 
   return (
     <PageLayout
-      clubCode={clubCode || ''}
+      clubCode={effectiveClubCode || ''}
       clubName={club?.name}
       logoUrl={club?.logo_url}
       title="Contact"

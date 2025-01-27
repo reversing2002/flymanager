@@ -21,26 +21,36 @@ interface WebsiteSettings {
   carousel_images: string[];
 }
 
-const NewsPage: React.FC = () => {
-  const { clubCode } = useParams<{ clubCode: string }>();
+interface NewsPageProps {
+  clubCode?: string;
+}
+
+const NewsPage: React.FC<NewsPageProps> = ({ clubCode: propClubCode }) => {
+  const { clubCode: urlClubCode } = useParams<{ clubCode: string }>();
+  const effectiveClubCode = propClubCode || urlClubCode;
+
+  console.log('NewsPage - Prop Club Code:', propClubCode);
+  console.log('NewsPage - URL Club Code:', urlClubCode);
+  console.log('NewsPage - Effective Club Code:', effectiveClubCode);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
   // Récupérer l'ID du club à partir de son code
   const { data: club } = useQuery({
-    queryKey: ['club', clubCode],
+    queryKey: ['club', effectiveClubCode],
     queryFn: async () => {
-      if (!clubCode) throw new Error('Club code is required');
+      if (!effectiveClubCode) throw new Error('Club code is required');
       const { data, error } = await supabase
         .from('clubs')
         .select('id, name')
-        .eq('code', clubCode.toUpperCase())
+        .eq('code', effectiveClubCode.toUpperCase())
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!clubCode,
+    enabled: !!effectiveClubCode,
   });
 
   // Récupérer les paramètres du site avec les actualités en cache
@@ -95,7 +105,7 @@ const NewsPage: React.FC = () => {
 
   return (
     <PageLayout
-      clubCode={clubCode || ''}
+      clubCode={effectiveClubCode || ''}
       title="Actualités"
       description="Restez informé des dernières nouvelles de votre aéroclub"
       backgroundImage={settings?.carousel_images?.[0]}
@@ -177,7 +187,7 @@ const NewsPage: React.FC = () => {
                       </p>
                     )}
                     <Link
-                      to={`/club/${clubCode}/actualites/${shortenUuid(news.id)}/${generateSlug(news.title)}`}
+                      to={`/club/${effectiveClubCode}/actualites/${shortenUuid(news.id)}/${generateSlug(news.title)}`}
                       className="inline-flex items-center text-primary hover:text-primary/80"
                     >
                       Lire la suite

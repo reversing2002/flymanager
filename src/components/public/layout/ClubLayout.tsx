@@ -7,6 +7,7 @@ import { Button } from '../../ui/button';
 
 interface ClubLayoutProps {
   children: React.ReactNode;
+  clubCode?: string;
 }
 
 interface ClubData {
@@ -25,16 +26,18 @@ interface ClubPage {
   title: string;
 }
 
-const ClubLayout: React.FC<ClubLayoutProps> = ({ children }) => {
-  const { clubCode } = useParams<{ clubCode: string }>();
+const ClubLayout: React.FC<ClubLayoutProps> = ({ children, clubCode: propClubCode }) => {
+  const { clubCode: urlClubCode } = useParams<{ clubCode: string }>();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const effectiveClubCode = propClubCode || urlClubCode;
 
   // Fetch club data
   const { data: club } = useQuery<ClubData>({
-    queryKey: ['publicClub', clubCode],
+    queryKey: ['publicClub', effectiveClubCode],
     queryFn: async () => {
-      if (!clubCode) return null;
-      const upperClubCode = clubCode.toUpperCase();
+      if (!effectiveClubCode) return null;
+      const upperClubCode = effectiveClubCode.toUpperCase();
       const { data, error } = await supabase
         .from('clubs')
         .select('id, name, code')
@@ -44,7 +47,7 @@ const ClubLayout: React.FC<ClubLayoutProps> = ({ children }) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!clubCode,
+    enabled: !!effectiveClubCode,
   });
 
   // Fetch club website settings
@@ -80,18 +83,18 @@ const ClubLayout: React.FC<ClubLayoutProps> = ({ children }) => {
   });
 
   const menuItems = [
-    { label: 'Accueil', href: `/club/${clubCode}` },
-    { label: 'Formation', href: `/club/${clubCode}/formation` },
-    { label: 'Avions', href: `/club/${clubCode}/avions` },
-    { label: 'Tarifs', href: `/club/${clubCode}/tarifs` },
-    { label: 'Contact', href: `/club/${clubCode}/contact` },
+    { label: 'Accueil', href: `/club/${effectiveClubCode}` },
+    { label: 'Formation', href: `/club/${effectiveClubCode}/formation` },
+    { label: 'Avions', href: `/club/${effectiveClubCode}/avions` },
+    { label: 'Tarifs', href: `/club/${effectiveClubCode}/tarifs` },
+    { label: 'Contact', href: `/club/${effectiveClubCode}/contact` },
     ...(pages?.map(page => ({
       label: page.title,
-      href: `/club/${clubCode}/page/${page.slug}`
+      href: `/club/${effectiveClubCode}/page/${page.slug}`
     })) || [])
   ];
 
-  if (!clubCode || !club) {
+  if (!effectiveClubCode || !club) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -109,7 +112,7 @@ const ClubLayout: React.FC<ClubLayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo and club name */}
-            <Link to={`/club/${clubCode}`} className="flex items-center gap-2">
+            <Link to={`/club/${effectiveClubCode}`} className="flex items-center gap-2">
               {websiteSettings?.logo_url && (
                 <img
                   src={websiteSettings.logo_url}
@@ -132,7 +135,7 @@ const ClubLayout: React.FC<ClubLayoutProps> = ({ children }) => {
                 </Link>
               ))}
               <Button asChild variant="default">
-                <Link to={`/club/${clubCode}/rejoindre`}>
+                <Link to={`/club/${effectiveClubCode}/rejoindre`}>
                   Nous rejoindre
                 </Link>
               </Button>
@@ -170,7 +173,7 @@ const ClubLayout: React.FC<ClubLayoutProps> = ({ children }) => {
                 ))}
                 <Button asChild variant="default" className="mt-2">
                   <Link 
-                    to={`/club/${clubCode}/rejoindre`}
+                    to={`/club/${effectiveClubCode}/rejoindre`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Nous rejoindre

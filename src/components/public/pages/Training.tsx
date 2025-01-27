@@ -23,33 +23,44 @@ interface WebsiteSettings {
   cached_instructors: Instructor[];
 }
 
-const Training: React.FC = () => {
-  const { clubCode } = useParams<{ clubCode: string }>();
+interface TrainingProps {
+  clubCode?: string;
+}
 
-  // Récupérer les informations du club
+const Training: React.FC<TrainingProps> = ({ clubCode: propClubCode }) => {
+  const { clubCode: urlClubCode } = useParams<{ clubCode: string }>();
+  const effectiveClubCode = propClubCode || urlClubCode;
+
+  console.log('Training - Prop Club Code:', propClubCode);
+  console.log('Training - URL Club Code:', urlClubCode);
+  console.log('Training - Effective Club Code:', effectiveClubCode);
+
+  // Récupérer l'ID du club à partir de son code
   const { data: club } = useQuery({
-    queryKey: ['club', clubCode],
+    queryKey: ['club', effectiveClubCode],
     queryFn: async () => {
+      if (!effectiveClubCode) throw new Error('Club code is required');
       const { data, error } = await supabase
         .from('clubs')
         .select('id, name')
-        .ilike('code', clubCode || '')
+        .eq('code', effectiveClubCode.toUpperCase())
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!clubCode,
+    enabled: !!effectiveClubCode,
   });
 
-  // Récupérer les paramètres du site
+  // Récupérer les paramètres du site avec la formation en cache
   const { data: settings, isLoading } = useQuery<WebsiteSettings>({
     queryKey: ['clubWebsiteSettings', club?.id],
     queryFn: async () => {
+      if (!club?.id) throw new Error('Club ID is required');
       const { data, error } = await supabase
         .from('club_website_settings')
         .select('logo_url, carousel_images, cached_instructors')
-        .eq('club_id', club?.id)
+        .eq('club_id', club.id)
         .single();
 
       if (error) throw error;
@@ -72,7 +83,7 @@ const Training: React.FC = () => {
 
   return (
     <PageLayout
-      clubCode={clubCode || ''}
+      clubCode={effectiveClubCode || ''}
       clubName={club?.name}
       logoUrl={settings?.logo_url}
       title="Formation"

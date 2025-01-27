@@ -36,15 +36,15 @@ const ClubRouter: React.FC<ClubRouterProps> = ({ clubCode: propClubCode }) => {
   }
 
   return (
-    <ClubLayout>
+    <ClubLayout clubCode={effectiveClubCode}>
       <Routes>
         <Route index element={<ClubPublicHome clubCode={effectiveClubCode} />} />
-        <Route path="fleet" element={<OurFleet />} />
-        <Route path="training" element={<Training />} />
-        <Route path="events" element={<Events />} />
-        <Route path="contact" element={<Contact />} />
-        <Route path="news" element={<NewsPage />} />
-        <Route path="news/:newsId" element={<NewsDetail />} />
+        <Route path="fleet" element={<OurFleet clubCode={effectiveClubCode} />} />
+        <Route path="training" element={<Training clubCode={effectiveClubCode} />} />
+        <Route path="events" element={<Events clubCode={effectiveClubCode} />} />
+        <Route path="contact" element={<Contact clubCode={effectiveClubCode} />} />
+        <Route path="news" element={<NewsPage clubCode={effectiveClubCode} />} />
+        <Route path="news/:newsId" element={<NewsDetail clubCode={effectiveClubCode} />} />
       </Routes>
     </ClubLayout>
   );

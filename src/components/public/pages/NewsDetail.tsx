@@ -12,24 +12,34 @@ import { Button } from '../../ui/button';
 import type { ClubNews } from '../../../types/news';
 import { generateSlug, shortenUuid } from '../../../utils/slug';
 
-const NewsDetail: React.FC = () => {
-  const { clubCode, newsId, slug } = useParams<{ clubCode: string; newsId: string; slug: string }>();
+interface NewsDetailProps {
+  clubCode?: string;
+}
+
+const NewsDetail: React.FC<NewsDetailProps> = ({ clubCode: propClubCode }) => {
+  const { clubCode: urlClubCode, newsId, slug } = useParams<{ clubCode: string; newsId: string; slug: string }>();
+  const effectiveClubCode = propClubCode || urlClubCode;
   const navigate = useNavigate();
+
+  console.log('NewsDetail - Prop Club Code:', propClubCode);
+  console.log('NewsDetail - URL Club Code:', urlClubCode);
+  console.log('NewsDetail - Effective Club Code:', effectiveClubCode);
+  console.log('NewsDetail - News ID:', newsId);
 
   // Récupérer l'ID du club à partir de son code
   const { data: club } = useQuery({
-    queryKey: ['club', clubCode],
+    queryKey: ['club', effectiveClubCode],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clubs')
         .select('id, name')
-        .eq('code', clubCode?.toUpperCase() || '')
+        .eq('code', effectiveClubCode?.toUpperCase() || '')
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!clubCode,
+    enabled: !!effectiveClubCode,
   });
 
   // Récupérer les paramètres du site avec les actualités en cache
@@ -72,9 +82,9 @@ const NewsDetail: React.FC = () => {
   // Redirection vers l'URL avec le slug correct si nécessaire
   useEffect(() => {
     if (currentNews && slug !== generateSlug(currentNews.title)) {
-      navigate(`/club/${clubCode}/actualites/${shortenUuid(currentNews.id)}/${generateSlug(currentNews.title)}`, { replace: true });
+      navigate(`/club/${effectiveClubCode}/actualites/${shortenUuid(currentNews.id)}/${generateSlug(currentNews.title)}`, { replace: true });
     }
-  }, [currentNews, slug, clubCode, newsId, navigate]);
+  }, [currentNews, slug, effectiveClubCode, newsId, navigate]);
 
   const handleShare = async () => {
     if (!currentNews) return;
@@ -97,7 +107,7 @@ const NewsDetail: React.FC = () => {
 
   // Si l'actualité n'existe ni dans le cache ni dans la base, on redirige vers la liste
   if (!news && !fullNews && !isLoading) {
-    navigate(`/club/${clubCode}/actualites`);
+    navigate(`/club/${effectiveClubCode}/actualites`);
     return null;
   }
 
@@ -105,7 +115,7 @@ const NewsDetail: React.FC = () => {
 
   return (
     <PageLayout
-      clubCode={clubCode || ''}
+      clubCode={effectiveClubCode || ''}
       title={currentNews.title}
       description={currentNews.excerpt || "Actualité de l'aéroclub"}
       backgroundImage={currentNews.image_url}
@@ -122,7 +132,7 @@ const NewsDetail: React.FC = () => {
       >
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <Link
-            to={`/club/${clubCode}/actualites`}
+            to={`/club/${effectiveClubCode}/actualites`}
             className="inline-flex items-center text-primary hover:text-primary/80"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
