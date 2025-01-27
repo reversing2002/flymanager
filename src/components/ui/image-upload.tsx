@@ -243,12 +243,14 @@ export function ImageUpload({
                     setIsDialogOpen(false);
                     setSelectedImage(null);
                   }}
+                  className="text-gray-100"
                 >
                   Annuler
                 </Button>
                 <Button
                   onClick={handleComplete}
                   disabled={isUploading}
+                  className="text-gray-100"
                 >
                   {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Valider
