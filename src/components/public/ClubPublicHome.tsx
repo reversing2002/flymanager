@@ -383,7 +383,7 @@ const ClubPublicHome: React.FC = () => {
                       transition={{ duration: 0.5, delay: 0.1 }}
                       className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
                     >
-                      <Link to={`/club/${clubCode}/formation`} className="block">
+                      <Link to={`/club/${clubCode}/training`} className="block">
                         <div className="p-6">
                           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
                             <GraduationCap className="w-6 h-6 text-blue-600" />
@@ -402,7 +402,7 @@ const ClubPublicHome: React.FC = () => {
                       transition={{ duration: 0.5, delay: 0.2 }}
                       className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
                     >
-                      <Link to={`/club/${clubCode}/avions`} className="block">
+                      <Link to={`/club/${clubCode}/fleet`} className="block">
                         <div className="p-6">
                           <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-colors">
                             <Plane className="w-6 h-6 text-orange-600" />
@@ -421,7 +421,7 @@ const ClubPublicHome: React.FC = () => {
                       transition={{ duration: 0.5, delay: 0.3 }}
                       className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
                     >
-                      <Link to={`/club/${clubCode}/evenements`} className="block">
+                      <Link to={`/club/${clubCode}/events`} className="block">
                         <div className="p-6">
                           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
                             <Calendar className="w-6 h-6 text-green-600" />
@@ -492,39 +492,7 @@ const ClubPublicHome: React.FC = () => {
                 </div>
               </section>
 
-              {/* Section Pages Personnalisées */}
-              {pages && pages.length > 0 && (
-                <section className="bg-gray-50 py-16">
-                  <div className="container mx-auto px-4">
-                    <h2 className="text-3xl font-bold text-center mb-12">Actualités et Informations</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      {pages.map((page, index) => (
-                        <motion.div
-                          key={page.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: index * 0.1 }}
-                          className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
-                        >
-                          <Link to={`/club/${clubCode}/page/${page.slug}`} className="block p-6">
-                            <h3 className="text-xl font-semibold mb-4 group-hover:text-blue-600 transition-colors">
-                              {page.title}
-                            </h3>
-                            <div className="text-gray-600 line-clamp-3">
-                              <RichTextContent content={page.content} />
-                            </div>
-                            <div className="mt-4 text-blue-600 hover:text-blue-800 inline-flex items-center">
-                              Lire la suite
-                              <ArrowRight className="w-4 h-4 ml-2" />
-                            </div>
-                          </Link>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-              )}
+
               
             </div>
           </>

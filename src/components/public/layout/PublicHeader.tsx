@@ -21,16 +21,13 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
 
   const menuItems = [
     { label: 'Accueil', href: `/club/${clubCode}` },
-    { label: 'Actualités', href: `/club/${clubCode}/actualites` },
+    { label: 'Actualités', href: `/club/${clubCode}/news` },
     { label: 'Formation', href: `/club/${clubCode}/training` },
     { label: 'Avions', href: `/club/${clubCode}/fleet` },
     { label: 'Événements', href: `/club/${clubCode}/events` },
     { label: 'Tarifs', href: `/club/${clubCode}/tarifs` },
     { label: 'Contact', href: `/club/${clubCode}/contact` },
-    ...pages.map(page => ({
-      label: page.title,
-      href: `/club/${clubCode}/page/${page.slug}`
-    }))
+    { label: 'Espace membre', href: `/login` }
   ];
 
   return (

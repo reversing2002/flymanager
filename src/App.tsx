@@ -92,46 +92,22 @@ import NewsDetail from "./components/public/pages/NewsDetail";
 // Initialiser dayjs avec la locale francaise
 dayjs.locale('fr');
 
-import { useState, useEffect } from 'react';
-
 const App = () => {
   const queryClient = new QueryClient();
-  const [clubCode, setClubCode] = useState<string | null>(null);
+  const hostname = window.location.hostname;
+  const isClubSubdomain = hostname.includes('.4fly.io') && !hostname.startsWith('www');
+  const clubCode = isClubSubdomain ? hostname.split('.')[0] : null;
 
-  useEffect(() => {
-    const getClubCodeFromSubdomain = () => {
-      const hostname = window.location.hostname;
-      console.log('Current hostname:', hostname);
-      
-      // Gérer localhost pour le développement
-      if (hostname === 'localhost') return null;
-      
-      // Format attendu: {clubcode}.4fly.io
-      const subdomain = hostname.split('.')[0];
-      console.log('Detected subdomain:', subdomain);
-      
-      if (subdomain && hostname.includes('4fly.io')) {
-        const code = subdomain.toUpperCase();
-        console.log('Extracted club code:', code);
-        return code;
-      }
-      
-      return null;
-    };
-
-    const code = getClubCodeFromSubdomain();
-    console.log('Setting club code to:', code);
-    setClubCode(code);
-  }, []);
-
-  console.log('App - Club Code State:', clubCode);
+  console.log('App - Hostname:', hostname);
+  console.log('App - Current Path:', window.location.pathname);
+  console.log('App - Club Code:', clubCode);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Router>
-            {clubCode ? (
+            {isClubSubdomain ? (
               <ClubRouter clubCode={clubCode} />
             ) : (
               <AuthProvider>
