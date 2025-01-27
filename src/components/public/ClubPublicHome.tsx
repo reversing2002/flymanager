@@ -11,6 +11,7 @@ import { ClubFooter } from './layout/ClubFooter';
 import { GraduationCap, Plane, Calendar, Receipt, Gift, MessageCircle, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { generateSlug, shortenUuid } from '../../utils/slug';
 
 type ClubData = {
   id: string;
@@ -358,7 +359,7 @@ const ClubPublicHome: React.FC = () => {
                               <p className="text-gray-600 mb-4">{news.excerpt}</p>
                             )}
                             <Link
-                              to={`/club/${clubCode}/actualites/${news.id}`}
+                              to={`/club/${clubCode}/actualites/${shortenUuid(news.id)}/${generateSlug(news.title)}`}
                               className="inline-flex items-center text-primary hover:text-primary/80"
                             >
                               Lire la suite

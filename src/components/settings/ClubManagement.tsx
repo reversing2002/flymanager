@@ -132,6 +132,26 @@ const ClubManagement = () => {
           .eq('id', user.club.id);
 
         if (error) throw error;
+
+        // Mettre à jour la table de cache
+        const { error: cacheError } = await supabase
+          .from('club_website_settings')
+          .update({
+            cached_club_info: {
+              address: values.address,
+              phone: values.phone,
+              email: values.email,
+              latitude: values.latitude,
+              longitude: values.longitude,
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('club_id', user.club.id);
+
+        if (cacheError) {
+          console.error('Erreur lors de la mise à jour du cache:', cacheError);
+          toast.error('Les informations ont été mises à jour mais le cache n\'a pas pu être actualisé');
+        }
       }
 
       setSuccess('Informations du club mises à jour');

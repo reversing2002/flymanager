@@ -6,16 +6,18 @@ import { z } from 'zod';
 import { Editor } from '@tinymce/tinymce-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, Pencil, Trash2, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, RefreshCw, CalendarIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card } from '../ui/card';
 import { ImageUpload } from '../ui/image-upload';
+import { Switch } from '../ui/switch';
 import { toast } from 'react-hot-toast';
 import type { ClubNews } from '../../types/news';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
+import { cn } from '../../lib/utils';
 
 const newsSchema = z.object({
   title: z.string().min(1, 'Le titre est requis'),
@@ -39,7 +41,7 @@ export const ClubNewsManager: React.FC<ClubNewsManagerProps> = ({ clubId }) => {
   const [showForm, setShowForm] = useState(false);
   const [isRefreshingCache, setIsRefreshingCache] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, reset, control, setValue } = useForm<NewsFormData>({
+  const { register, handleSubmit, formState: { errors }, reset, control, setValue, getValues } = useForm<NewsFormData>({
     resolver: zodResolver(newsSchema),
     defaultValues: {
       title: '',
@@ -186,6 +188,31 @@ export const ClubNewsManager: React.FC<ClubNewsManagerProps> = ({ clubId }) => {
     }
   };
 
+  const togglePublishStatus = useMutation({
+    mutationFn: async (news: ClubNews) => {
+      const { error } = await supabase
+        .from('club_news')
+        .update({
+          is_published: !news.is_published,
+          published_at: !news.is_published ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', news.id);
+      
+      if (error) throw error;
+      
+      // Rafraîchir le cache après la modification
+      await refreshNewsCacheMutation.mutateAsync();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['clubNews', clubId]);
+      toast.success('État de publication mis à jour');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la mise à jour');
+    },
+  });
+
   const handleRefreshCache = () => {
     refreshNewsCacheMutation.mutate();
   };
@@ -211,11 +238,17 @@ export const ClubNewsManager: React.FC<ClubNewsManagerProps> = ({ clubId }) => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold">{item.title}</h3>
-                      {item.is_published ? (
-                        <Eye className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <EyeOff className="w-4 h-4 text-gray-500" />
-                      )}
+                      <button
+                        onClick={() => togglePublishStatus.mutate(item)}
+                        className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                        title={item.is_published ? 'Cliquez pour dépublier' : 'Cliquez pour publier'}
+                      >
+                        {item.is_published ? (
+                          <Eye className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <EyeOff className="w-4 h-4 text-gray-500" />
+                        )}
+                      </button>
                     </div>
                     <p className="text-sm text-gray-500">
                       {format(new Date(item.published_at || item.created_at), 'PPP', { locale: fr })}
@@ -266,6 +299,62 @@ export const ClubNewsManager: React.FC<ClubNewsManagerProps> = ({ clubId }) => {
               {errors.title && (
                 <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
               )}
+            </div>
+
+            <div className="flex items-center space-x-2 py-4">
+              <Controller
+                name="is_published"
+                control={control}
+                render={({ field }) => (
+                  <>
+                    <Switch
+                      id="is_published"
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (checked && !getValues('published_at')) {
+                          setValue('published_at', new Date().toISOString());
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="is_published"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {field.value ? 'Article publié' : 'Article non publié'}
+                    </label>
+                  </>
+                )}
+              />
+            </div>
+
+            <div>
+              <Controller
+                name="published_at"
+                control={control}
+                render={({ field }) => (
+                  <div className="flex flex-col space-y-2">
+                    <label className="text-sm font-medium">
+                      Date de publication
+                    </label>
+                    <Input
+                      type="date"
+                      disabled={!getValues('is_published')}
+                      value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        const date = e.target.value ? new Date(e.target.value) : null;
+                        field.onChange(date?.toISOString() || null);
+                      }}
+                      className="w-full"
+                    />
+                    {field.value && (
+                      <p className="text-sm text-gray-500">
+                        {format(new Date(field.value), 'dd MMMM yyyy', { locale: fr })}
+                      </p>
+                    )}
+                  </div>
+                )}
+              />
             </div>
 
             <div>
