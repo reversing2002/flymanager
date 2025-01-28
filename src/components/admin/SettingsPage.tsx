@@ -28,6 +28,7 @@ import {
   CreditCard,
   MessageSquare,
   Mail,
+  ShoppingBag,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasAnyGroup } from "../../lib/permissions";
@@ -48,6 +49,7 @@ import SmileSettings from "../settings/SmileSettings";
 import AccountingMigrationSettings from "../settings/AccountingMigrationSettings";
 import StripeAccountSettings from "../settings/StripeAccountSettings";
 import ContactMessagesSettings from "../settings/ContactMessagesSettings";
+import ShopSettings from "../settings/ShopSettings";
 import type { Announcement } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -86,7 +88,8 @@ type TabType =
   | "adminTest"
   | "contactMessages"
   | "clubs"
-  | "emailMembers";
+  | "emailMembers"
+  | "shop";
 
 const SettingsPage = () => {
   const { user } = useAuth();
@@ -101,6 +104,7 @@ const SettingsPage = () => {
     // Gestion du club
     { id: "club", label: "Club", icon: Building },
     { id: "announcements", label: "Annonces", icon: Megaphone },
+    { id: "shop", label: "Boutique", icon: ShoppingBag },
     // Gestion globale
     { id: "clubs", label: "Gestion des clubs", icon: Building2, systemAdmin: true },
     // Imports
@@ -372,6 +376,7 @@ const SettingsPage = () => {
             <ClubList />
           )}
           {activeTab === "emailMembers" && <EmailMembersPage />}
+          {activeTab === "shop" && <ShopSettings />}
         </div>
       </div>
     </div>

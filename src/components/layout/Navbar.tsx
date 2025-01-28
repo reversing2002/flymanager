@@ -21,6 +21,7 @@ import {
   CloudSun,
   Mail,
   Shield,
+  HelpCircle,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { signOut } from "../../lib/supabase";
@@ -30,6 +31,7 @@ import { getRoleLabel, getRoleBadgeClass } from "../../lib/utils/roleUtils";
 import { getInitials } from "../../lib/utils/avatarUtils";
 import type { Role } from "../../types/roles";
 import { Logo } from '../common/Logo';
+import { SupportDialog } from './SupportDialog';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -38,6 +40,7 @@ const Navbar = () => {
   const permissions = usePermissions(currentUser);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [supportDialogOpen, setSupportDialogOpen] = useState(false);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -99,7 +102,11 @@ const Navbar = () => {
             className="lg:hidden px-2"
             aria-label="Menu"
           >
-            <Menu className="w-5 h-5 text-gray-400" />
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6 text-gray-300" />
+            ) : (
+              <Menu className="h-6 w-6 text-gray-300" />
+            )}
           </button>
         </div>
 
@@ -128,8 +135,15 @@ const Navbar = () => {
             className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
             title="Météo"
           >
-            <CloudSun className="h-4 w-4" />
+            <CloudSun className="h-6 w-6 lg:h-4 lg:w-4" />
           </Link>
+          <button
+            onClick={() => setSupportDialogOpen(true)}
+            className="lg:bg-blue-600 lg:hover:bg-blue-700 text-blue-500 lg:text-white px-3 lg:px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-2 lg:transition-colors lg:duration-200 lg:shadow-md lg:hover:shadow-lg hover:text-blue-400"
+          >
+            <HelpCircle className="h-6 w-6 lg:h-5 lg:w-5" />
+            <span className="hidden lg:inline">Support</span>
+          </button>
         </div>
       </div>
 
@@ -400,6 +414,11 @@ const Navbar = () => {
           </button>
         </div>
       </nav>
+      {/* Support Dialog */}
+      <SupportDialog
+        open={supportDialogOpen}
+        onClose={() => setSupportDialogOpen(false)}
+      />
     </>
   );
 };
