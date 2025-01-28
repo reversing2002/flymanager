@@ -1,7 +1,9 @@
 import { supabase } from '../supabase';
 
 // Service pour les opérations administratives
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api';
+// ajoute "/api apres l'adresse du serveur"
+
 
 interface AdminService {
   deleteUser: (userId: string) => Promise<void>;
