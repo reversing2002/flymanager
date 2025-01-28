@@ -4,6 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Logo } from "../common/Logo";
 import { supabase } from "../../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
+import { gtagReportConversion } from "../../lib/analytics";
 import {
   Stepper,
   Step,
@@ -119,6 +120,9 @@ const CreateClubPage = () => {
       });
 
       if (signInError) throw signInError;
+
+      // Envoi de l'événement de conversion Google Ads
+      gtagReportConversion();
 
       // La redirection sera gérée automatiquement par le hook useAuth
       toast.success("Votre club a été créé avec succès !");
