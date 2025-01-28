@@ -177,6 +177,18 @@ export async function createFlight(data: Partial<Flight>): Promise<Flight> {
     throw studentError;
   }
 
+  // Récupérer l'immatriculation de l'avion
+  const { data: aircraft, error: aircraftError } = await supabase
+    .from("aircraft")
+    .select("registration")
+    .eq("id", data.aircraftId)
+    .single();
+
+  if (aircraftError) {
+    console.error("Erreur lors de la récupération de l'avion", aircraftError);
+    throw aircraftError;
+  }
+
   // Récupérer les types d'entrées comptables
   const { data: entryTypes, error: entryTypesError } = await supabase
     .from("account_entry_types")
@@ -226,7 +238,7 @@ export async function createFlight(data: Partial<Flight>): Promise<Flight> {
       payment_method: data.paymentMethod,
       description: data.instructorId 
         ? `Vol instruction ${student.first_name} ${student.last_name} - ${data.duration}min`
-        : `Vol ${data.aircraftId} - ${data.duration}min`,
+        : `Vol ${aircraft.registration} - ${data.duration}min`,
       is_validated: false,
       is_club_paid: isClubPaid,
     });
@@ -395,7 +407,7 @@ export async function updateFlight(
       date: formattedDate,
       amount: isClubPaid ? 0 : -Math.abs(data.cost || 0),
       payment_method: data.paymentMethod,
-      description: `Vol ${aircraft.registration} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+      description: `Vol ${aircraft.registration} - ${data.duration}min`,
       flight_id: id,
       assigned_to_id: data.userId,
       is_validated: false,
@@ -423,7 +435,7 @@ export async function updateFlight(
         date: formattedDate,
         amount: -Math.abs(data.instructor_cost),
         payment_method: data.paymentMethod,
-        description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+        description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${data.duration}min`,
         flight_id: id,
         assigned_to_id: data.userId,
         is_validated: false,
@@ -449,7 +461,7 @@ export async function updateFlight(
           date: formattedDate,
           amount: Math.abs(data.instructor_fee),
           payment_method: data.paymentMethod,
-          description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${((data.duration || 0) / 60).toFixed(1)}h`,
+          description: `Instruction vol du ${new Date(formattedDate).toLocaleDateString()} - ${data.duration}min`,
           flight_id: id,
           assigned_to_id: data.instructorId,
           is_validated: false,
@@ -671,7 +683,7 @@ export async function createFlightAccountEntry(
     entry_type_id: flightTypeId,
     amount: -(flightData.cost || flightData.hourly_rate * (flightData.duration / 60)),
     payment_method: flightData.paymentMethod || flightData.payment_method,
-    description: `Vol ${flightData.aircraftId || flightData.aircraft_id} - ${flightData.duration}`,
+    description: `Vol ${flightData.aircraftId || flightData.aircraft_id} - ${flightData.duration}min`,
     is_validated: false,
   });
 

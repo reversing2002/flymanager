@@ -200,7 +200,7 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
         // Conserver l'utilisateur original en édition, utiliser l'utilisateur connecté en création
         user_id: entry ? formData.user_id : user?.id,
         assigned_to_id: entry ? formData.assigned_to_id : user?.id,
-        amount: Math.abs(formData.amount || 0),
+        amount: (formData.amount || 0),
         attachment_url: attachmentUrl || formData.attachment_url,
         attachment_type: file ? getFileType(file.type) : formData.attachment_type,
         payment_method: formData.payment_method || "ACCOUNT",
@@ -245,43 +245,6 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
     }
   };
 
-  const createFlightEntries = async (flight: Flight) => {
-    // Get the account entry types first
-    const { data: entryTypes, error: entryTypesError } = await getAccountEntryTypes();
-    if (entryTypesError) {
-      console.error("Erreur lors de la récupération des types d'entrées", entryTypesError);
-      throw entryTypesError;
-    }
-
-    const flightTypeId = entryTypes.find(t => t.code === "FLIGHT")?.id;
-    const instructionTypeId = entryTypes.find(t => t.code === "INSTRUCTION")?.id;
-
-    if (!flightTypeId || !instructionTypeId) {
-      throw new Error("Types d'entrées comptables non trouvés");
-    }
-
-    // Ligne pour le coût de l'avion
-    await createAccountEntry({
-      user_id: flight.pilotId,
-      amount: -flight.cost,
-      entry_type_id: flightTypeId,
-      flight_id: flight.id,
-      description: `Vol du ${new Date(flight.startTime).toLocaleDateString()} - ${flight.duration}h`,
-      is_validated: false
-    });
-
-    // Ligne pour le coût d'instruction si applicable
-    if (flight.instructorId && flight.instructor_cost) {
-      await createAccountEntry({
-        user_id: flight.pilotId,
-        amount: -flight.instructor_cost,
-        entry_type_id: instructionTypeId,
-        flight_id: flight.id,
-        description: `Instruction vol du ${new Date(flight.startTime).toLocaleDateString()} - ${flight.duration}h`,
-        is_validated: false
-      });
-    }
-  };
 
   // Vérifie si l'utilisateur peut modifier cette transaction
   const canEdit = isAdmin || (
