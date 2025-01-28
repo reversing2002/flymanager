@@ -1,90 +1,37 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-  CreditCard as CreditCardIcon, 
-  CheckCircle as CheckCircleIcon, 
-  AccountBalance as BankNoteIcon,
   Rocket as RocketIcon,
-  Star as StarIcon,
-  Diamond as DiamondIcon
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-interface Plan {
-  name: string;
-  icon: React.ElementType;
-  price: string;
-  description: string;
-  features: string[];
-  highlighted?: boolean;
-  commission?: string;
-  support?: string;
+interface Feature {
+  text: string;
+  highlight?: boolean;
 }
 
 const PricingPage: React.FC = () => {
   const navigate = useNavigate();
-  const plans: Plan[] = [
-    {
-      name: 'Découverte',
-      icon: RocketIcon,
-      price: '0€',
-      description: 'Parfait pour démarrer',
-      commission: '3% de frais sur les paiements CB',
-      support: 'Support par email',
-      features: [
-        'Gestion des réservations et plannings',
-        'Gestion des membres',
-        'Suivi de la flotte et des potentiels',
-        'Suivi des cotisations, qualifications et licences',
-        'Statistiques membres et heures de vols',
-        'Tableau de bords personnalisés',
-        'Gestion de la documentation du club',
-        'Messagerie interne',
-        'Alertes e-mails et mailing groupé',
-        'Accepter la CB, contrat VAD inclus',
-        'Gestions des comptes pilotes',
-        'Météo aéronautique et balises de vent locales'
-      ],
-    },
-    {
-      name: 'Pro',
-      icon: StarIcon,
-      price: '49€',
-      description: 'Pour les clubs en croissance',
-      highlighted: true,
-      commission: '2% sur les paiements CB',
-      support: 'Support prioritaire',
-      features: [
-        'Toutes les fonctionnalités du pack Découverte +',
-        'Personnalisation des fiches membres, infos des vols et aéronefs',
-        'Suivi des formations des élèves et aquisition de compétences',
-        'QCM d\'entrainements en ligne suivi par les instructeurs',
-        'Paiement en ligne et gestion des vols découvertes avec conversations SMS', 
-        'Accès API',
-        'Sauvegardes automatiques'
-      ],
-    },
-    {
-      name: 'Enterprise',
-      icon: DiamondIcon,
-      price: 'Sur mesure',
-      description: 'Pour les + grands clubs',
-      commission: '2% sur les paiements CB',
-      support: 'Support VIP 24/7',
-      features: [
-        'Toutes les fonctionnalités Pro',
-        'Hébergement sur mesure',
-        'Formation sur site',
-        'Support technique prioritaire',
-        'Account manager dédié',
-      ],
-    },
+  
+  const features: Feature[] = [
+    { text: 'Gestion des réservations et plannings', highlight: true },
+    { text: 'Gestion des membres', highlight: true },
+    { text: 'Suivi de la flotte et des potentiels', highlight: true },
+    { text: 'Suivi des cotisations, qualifications et licences', highlight: true },
+    { text: 'Statistiques membres et heures de vols', highlight: true },
+    { text: 'Tableau de bords personnalisés', highlight: true },
+    { text: 'Gestion de la documentation du club', highlight: true },
+    { text: 'Messagerie interne', highlight: true },
+    { text: 'Alertes e-mails et mailing groupé', highlight: true },
+    { text: 'Acceptez les paiements par CB (3% de commission)', highlight: true },
+    { text: 'Gestions des comptes pilotes', highlight: true },
+    { text: 'Météo aéronautique et balises de vent locales', highlight: true }
   ];
 
   return (
-    <div className="min-h-screen bg-[#1a1d21] py-16 px-4 sm:px-6 lg:px-8">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden pb-4">
+    <div className="min-h-screen bg-gradient-to-b from-[#1a1d21] to-[#2d3139] py-16 px-4 sm:px-6 lg:px-8">
+      <div className="relative overflow-hidden">
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
             <motion.h1 
@@ -93,102 +40,76 @@ const PricingPage: React.FC = () => {
               transition={{ duration: 0.5 }}
               className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl"
             >
-              Choisissez votre formule
+              Commencez gratuitement
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="mx-auto mt-3 max-w-md text-base text-gray-400 sm:text-lg md:mt-5 md:max-w-3xl md:text-xl"
+              className="mt-3 text-xl text-gray-300 sm:mt-5 sm:max-w-xl sm:mx-auto md:mt-5"
             >
-              Une tarification adaptée à tous les clubs
+              Gérez votre club aérien avec tous les outils essentiels, sans engagement
             </motion.p>
           </div>
-        </div>
-      </div>
 
-      {/* Pricing Plans */}
-      <div className="mx-auto max-w-7xl py-12">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {plans.map((plan, index) => {
-            const Icon = plan.icon;
-            return (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`relative rounded-lg p-8 ${
-                  plan.highlighted 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-[#212529] text-gray-300 hover:bg-[#2a2f35]'
-                } transition-colors duration-300`}
-              >
-                <div className="flex items-center gap-4 mb-6">
-                  <div className={`rounded-full p-2 ${
-                    plan.highlighted ? 'bg-blue-400' : 'bg-blue-500/10'
-                  }`}>
-                    <Icon className={`h-8 w-8 ${
-                      plan.highlighted ? 'text-white' : 'text-blue-500'
-                    }`} />
-                  </div>
-                  <div>
-                    <h3 className={`text-2xl font-bold ${
-                      plan.highlighted ? 'text-white' : 'text-white'
-                    }`}>
-                      {plan.name}
-                    </h3>
-                    <p className={
-                      plan.highlighted ? 'text-blue-100' : 'text-gray-400'
-                    }>
-                      {plan.description}
-                    </p>
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="mt-16 mx-auto max-w-3xl rounded-2xl bg-white/10 backdrop-blur-lg p-8 sm:p-10 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 -mt-4 -mr-4 h-[140px] w-[140px] bg-gradient-to-br from-blue-500 to-purple-600 blur-3xl opacity-30 rounded-full"></div>
+            
+            <div className="flex items-center justify-between flex-col sm:flex-row">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="flex items-center justify-center h-16 w-16 rounded-full bg-blue-500 bg-opacity-10">
+                    <RocketIcon className="h-8 w-8 text-blue-400" />
                   </div>
                 </div>
-
-                <div className="mb-6">
-                  <div className={`text-3xl font-bold ${
-                    plan.highlighted ? 'text-white' : 'text-white'
-                  }`}>
-                    {plan.price}
-                    {plan.price !== 'Sur mesure' && <span className="text-lg font-normal">/mois</span>}
-                  </div>
-                  <div className={
-                    plan.highlighted ? 'text-blue-100' : 'text-gray-400'
-                  }>
-                    {plan.commission}
-                  </div>
-                  <div className={
-                    plan.highlighted ? 'text-blue-100' : 'text-gray-400'
-                  }>
-                    {plan.support}
-                  </div>
+                <div className="ml-5">
+                  <h3 className="text-2xl font-bold text-white">Pack Découverte</h3>
+                  <p className="text-gray-300 mt-1">Parfait pour démarrer</p>
                 </div>
+              </div>
+              <div className="mt-4 sm:mt-0">
+                <div className="text-5xl font-bold text-white">0€</div>
+                <p className="text-sm text-gray-400 mt-1">Sans engagement</p>
+              </div>
+            </div>
 
-                <ul className="space-y-4 mb-8">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3">
-                      <CheckCircleIcon className={`h-5 w-5 flex-shrink-0 ${
-                        plan.highlighted ? 'text-white' : 'text-blue-500'
-                      }`} />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => navigate(plan.price === 'Sur mesure' ? '/contact' : '/create-club')}
-                  className={`w-full rounded-lg py-3 px-6 font-medium transition-colors duration-300 ${
-                    plan.highlighted
-                      ? 'bg-white text-blue-500 hover:bg-blue-50'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  }`}
+            <div className="mt-10 grid gap-4">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className={`flex items-center ${feature.highlight ? 'text-white' : 'text-gray-300'}`}
                 >
-                  {plan.price === 'Sur mesure' ? 'Contactez-nous' : 'Commencer'}
-                </button>
-              </motion.div>
-            );
-          })}
+                  <CheckCircleIcon className={`h-5 w-5 mr-3 ${feature.highlight ? 'text-blue-400' : 'text-gray-500'}`} />
+                  <span>{feature.text}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+              className="mt-10"
+            >
+              <button
+                onClick={() => navigate('/signup')}
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 shadow-lg"
+              >
+                Commencer gratuitement
+              </button>
+              <p className="text-sm text-gray-400 text-center mt-4">
+                Pas de carte bancaire requise
+              </p>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </div>
