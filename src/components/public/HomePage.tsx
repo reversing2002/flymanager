@@ -109,13 +109,13 @@ const HomePage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6">
-                Commencez à gérer{' '}
-                <span className="text-blue-500">gratuitement</span>{' '}
-                votre aéroclub
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-8 drop-shadow-2xl">
+              Gérez votre aéroclub{' '}
+              <span className="text-blue-400 bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent">simplement</span>
               </h1>
-              <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                Réservations en ligne, gestion des membres, suivi de la flotte - Tout ce dont vous avez besoin pour démarrer
+            <p className="text-xl text-gray-100 mb-12 max-w-3xl mx-auto drop-shadow-xl font-medium">
+              4fly est un outil simple et gratuit pour gérer votre club aéronautique, que vous ayez 2 ou 200 membres. 
+              Fini les tableurs complexes et la paperasse !
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Link
