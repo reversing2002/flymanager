@@ -32,6 +32,10 @@
     "register": "Sign Up"
   },
   "home": {
+    "meta": {
+      "title": "4fly - Flying Club Management Software | Complete Free Solution",
+      "description": "4fly is the complete solution to manage your flying club. Flight management, bookings, maintenance, training and more. Try it for free!"
+    },
     "title": "Manage your flying club simply",
     "description": "4fly is a simple and free tool to manage your aviation club, whether you have 2 or 200 members. No more complex spreadsheets and paperwork!",
     "createClub": "Create my club",

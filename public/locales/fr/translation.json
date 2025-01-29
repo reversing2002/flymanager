@@ -32,6 +32,10 @@
     "register": "S'inscrire"
   },
   "home": {
+    "meta": {
+      "title": "4fly - Logiciel de Gestion d'Aéroclub | Solution Complète et Gratuite",
+      "description": "4fly est la solution complète pour gérer votre aéroclub. Gestion des vols, réservations, maintenance, formation et plus encore. Essayez gratuitement !"
+    },
     "title": "Gérez votre aéroclub simplement",
     "description": "4fly est un outil simple et gratuit pour gérer votre club aéronautique, que vous ayez 2 ou 200 membres. Fini les tableurs complexes et la paperasse !",
     "createClub": "Créer mon club",

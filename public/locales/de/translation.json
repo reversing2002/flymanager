@@ -32,7 +32,11 @@
     "register": "Registrieren"
   },
   "home": {
-    "title": "Verwalten Sie Ihren Flugclub einfach",
+    "meta": {
+      "title": "4fly - Flugverein-Management-Software | Komplette Gratis-Lösung",
+      "description": "4fly ist die komplette Lösung für die Verwaltung Ihres Flugvereins. Flugmanagement, Buchungen, Wartung, Ausbildung und mehr. Kostenlos testen!"
+    },
+    "title": "Verwalten Sie Ihren Flugverein einfach",
     "description": "4fly ist ein einfaches und kostenloses Tool zur Verwaltung Ihres Luftfahrtvereins, egal ob Sie 2 oder 200 Mitglieder haben. Schluss mit komplexen Tabellen und Papierkram!",
     "createClub": "Meinen Club erstellen",
     "configurationTime": "2-Minuten-Einrichtung",

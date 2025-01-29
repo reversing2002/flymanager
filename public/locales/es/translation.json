@@ -32,6 +32,10 @@
     "register": "Registrarse"
   },
   "home": {
+    "meta": {
+      "title": "4fly - Software de Gestión de Clubes de Vuelo | Solución Completa Gratuita",
+      "description": "4fly es la solución completa para gestionar tu club de vuelo. Gestión de vuelos, reservas, mantenimiento, formación y más. ¡Pruébalo gratis!"
+    },
     "title": "Gestiona tu club de vuelo fácilmente",
     "description": "4fly es una herramienta simple y gratuita para gestionar tu club de aviación, ya sea que tengas 2 o 200 miembros. ¡Adiós a las hojas de cálculo complejas y al papeleo!",
     "createClub": "Crear mi club",
