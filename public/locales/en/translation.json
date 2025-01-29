@@ -1,0 +1,620 @@
+{
+  "features": {
+    "flightManagement": {
+      "title": "Flight Management",
+      "description": "Real-time flight planning and tracking"
+    },
+    "reservations": {
+      "title": "Reservations",
+      "description": "24/7 online booking system"
+    },
+    "maintenance": {
+      "title": "Maintenance",
+      "description": "Maintenance tracking and automatic alerts"
+    },
+    "training": {
+      "title": "Training",
+      "description": "Complete student training management"
+    },
+    "payments": {
+      "title": "Payments",
+      "description": "Simplified payment and invoice management"
+    },
+    "memberManagement": {
+      "title": "Member Management",
+      "description": "Efficient club member administration"
+    }
+  },
+  "common": {
+    "learnMore": "Learn More",
+    "getStarted": "Get Started",
+    "login": "Log In",
+    "register": "Sign Up"
+  },
+  "home": {
+    "title": "Manage your flying club simply",
+    "description": "4fly is a simple and free tool to manage your aviation club, whether you have 2 or 200 members. No more complex spreadsheets and paperwork!",
+    "createClub": "Create my club",
+    "configurationTime": "2-minute setup",
+    "startTitle": "Start growing your club",
+    "startDescription": "2-minute setup",
+    "startButton": "Start for free"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "features": "Features",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "contact": "Contact"
+  },
+  "pricing": {
+    "title": "Grow with 4fly",
+    "subtitle": "A solution that adapts to your club's growth",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Start your journey with 4fly for free and discover all the tools to make your club take off",
+        "hours": "Up to 1000h/year",
+        "price": "Free"
+      },
+      "growth": {
+        "name": "Growth",
+        "description": "Is your club growing? 4fly evolves with you to support your growth",
+        "hours": "1000h to 3000h/year",
+        "price": "€0.50/flight hour"
+      },
+      "performance": {
+        "name": "Performance",
+        "description": "Get personalized support to optimize your activity management",
+        "hours": "3000h+/year",
+        "price": "Custom"
+      }
+    },
+    "startFree": "Start for free",
+    "footer": "All features are available from the start: reservations, schedules, maintenance, training, billing... The more you fly, the more your club grows, the more 4fly supports you!"
+  },
+  "about": {
+    "hero": {
+      "title": "The 4fly Team",
+      "description": "4fly is developed by a passionate team committed to providing ongoing support to our users."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "description": "Our team works closely with flying clubs to develop a solution that precisely meets the sector's needs. We are committed to maintaining a secure, performant, and constantly evolving platform.",
+      "approach": "A field approach close to clubs"
+    },
+    "engagement": {
+      "title": "Our Commitment",
+      "items": {
+        "training": {
+          "title": "Free Training",
+          "description": "Personalized and free training for all user clubs",
+          "subtitle": "On-site training adapted to your needs"
+        },
+        "setup": {
+          "title": "Initial Setup",
+          "description": "Custom setup and support in digitizing your historical data",
+          "subtitle": "From binder to computer, we handle everything"
+        },
+        "support": {
+          "title": "Technical Support",
+          "description": "A team at your service to assist you daily in using the platform",
+          "subtitle": "Personalized and responsive assistance"
+        },
+        "accompaniment": {
+          "title": "Accompaniment",
+          "description": "Personalized follow-up for all club members, from IT novices to experts",
+          "subtitle": "Listening to all users"
+        }
+      }
+    },
+    "support": {
+      "title": "Support and Assistance",
+      "items": [
+        "Daily backups of your data",
+        "24/7 platform monitoring",
+        "Regular updates with new features",
+        "Assistance for all your technical questions"
+      ]
+    },
+    "images": {
+      "team": "The 4fly Team",
+      "vision": "Collaboration with flying clubs",
+      "support": "Support and assistance"
+    }
+  },
+  "featuresPage": {
+    "hero": {
+      "title": "Our Features",
+      "subtitle": "Discover all the tools that make our platform the ideal solution for your flying club"
+    },
+    "items": {
+      "flights": {
+        "title": "Flight Management",
+        "description": "Complete flight tracking, digital logbooks, and detailed statistics for each pilot and aircraft.",
+        "details": [
+          "Simplified flight logging",
+          "Digital logbooks",
+          "Flight time tracking",
+          "Detailed statistics"
+        ]
+      },
+      "reservations": {
+        "title": "Reservations",
+        "description": "24/7 online booking system with real-time conflict management and availability tracking.",
+        "details": [
+          "24/7 online booking",
+          "Interactive calendar",
+          "Conflict management",
+          "Automatic notifications"
+        ]
+      },
+      "maintenance": {
+        "title": "Maintenance",
+        "description": "Detailed maintenance tracking with automatic alerts and potential management.",
+        "details": [
+          "Potential tracking",
+          "Automatic alerts",
+          "Digital maintenance log",
+          "Complete history"
+        ]
+      },
+      "training": {
+        "title": "Training",
+        "description": "Complete training management with pedagogical tracking and student progression.",
+        "details": [
+          "Digital progress book",
+          "Training schedule",
+          "Pedagogical tracking",
+          "Online resources"
+        ]
+      },
+      "finance": {
+        "title": "Financial Management",
+        "description": "Automatic billing, member account tracking, and online payment integration.",
+        "details": [
+          "Automatic invoicing",
+          "Online payments",
+          "Account tracking",
+          "Accounting exports"
+        ]
+      },
+      "members": {
+        "title": "Member Management",
+        "description": "Complete member administration with license and qualification management.",
+        "details": [
+          "Detailed profiles",
+          "License tracking",
+          "Qualification management",
+          "Member directory"
+        ]
+      },
+      "communication": {
+        "title": "Communication",
+        "description": "Integrated communication tools to facilitate exchanges within the club.",
+        "details": [
+          "Instant messaging",
+          "Club announcements",
+          "Notifications",
+          "Document sharing"
+        ]
+      },
+      "statistics": {
+        "title": "Statistics and Reports",
+        "description": "Dashboards and detailed reports to track club activity.",
+        "details": [
+          "Dashboards",
+          "Custom reports",
+          "Activity analysis",
+          "Data exports"
+        ]
+      },
+      "events": {
+        "title": "Events",
+        "description": "Organization and management of club events with online registration.",
+        "details": [
+          "Event calendar",
+          "Online registration",
+          "Participant management",
+          "Automatic reminders"
+        ]
+      },
+      "security": {
+        "title": "Security and Compliance",
+        "description": "Tools to ensure security and regulatory compliance.",
+        "details": [
+          "Safety reports management",
+          "Document tracking",
+          "GDPR compliance",
+          "Automatic backups"
+        ]
+      }
+    }
+  },
+  "faqPage": {
+    "hero": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Find answers to the most commonly asked questions about 4fly"
+    },
+    "categories": {
+      "about": {
+        "title": "About 4fly",
+        "questions": [
+          {
+            "question": "What is 4fly and who is it for?",
+            "answer": "4fly is a comprehensive software solution designed to simplify and optimize flying club management. It caters to flying clubs of all sizes, whether affiliated with aviation authorities or not, seeking to automate and centralize their daily operations. Our goal is to support your club's growth."
+          },
+          {
+            "question": "How does the pricing model work?",
+            "answer": "Our model is simple: free up to 1000 flight hours per year, then €0.50 per flight hour on total hours. For large clubs exceeding 3000 annual hours, we offer custom plans. All features are included from the start."
+          },
+          {
+            "question": "Are there any hidden fees?",
+            "answer": "No, our flight hour-based pricing is completely transparent. All essential features are included in this rate. Some additional services, such as credit card payment, are offered as options based on your needs."
+          },
+          {
+            "question": "What features are included?",
+            "answer": "All essential features are included in the base offer: reservation management, maintenance, training, accounting... Additional services like credit card payment are available as options for clubs that want them."
+          },
+          {
+            "question": "What support is available?",
+            "answer": "We offer comprehensive technical support via email and phone, included for all clubs regardless of size. Our team is available to help with initial setup and answer your daily questions."
+          }
+        ]
+      },
+      "reservations": {
+        "title": "Reservations and Flights",
+        "questions": [
+          {
+            "question": "How does the reservation system work?",
+            "answer": "The booking system is available 24/7 online. Members can reserve an aircraft, view real-time availability, and manage their bookings from their smartphone or computer."
+          },
+          {
+            "question": "Can you book multiple slots in advance?",
+            "answer": "Yes, you can make multiple reservations according to your club's rules. The system automatically checks for conflicts and required qualifications."
+          },
+          {
+            "question": "How are instruction flights managed?",
+            "answer": "Instruction flights can be scheduled with available instructors. The system automatically checks instructor and aircraft availability."
+          },
+          {
+            "question": "What happens in case of cancellation?",
+            "answer": "Cancellations are managed according to your club's rules. The system can send automatic notifications to concerned parties and free up the slot for other reservations."
+          }
+        ]
+      },
+      "maintenance": {
+        "title": "Maintenance",
+        "questions": [
+          {
+            "question": "How is aircraft maintenance tracked?",
+            "answer": "4fly includes a complete maintenance tracking system that monitors flight hours, cycles, and calendar deadlines. Automatic alerts are sent for upcoming maintenance."
+          },
+          {
+            "question": "Who can declare maintenance?",
+            "answer": "Mechanics and authorized personnel can record maintenance operations. Each intervention is documented and archived in the aircraft's history."
+          },
+          {
+            "question": "How are maintenance alerts managed?",
+            "answer": "The system sends automatic notifications to managers when maintenance is approaching. Pilots are also informed of aircraft limitations or unavailability."
+          },
+          {
+            "question": "Can maintenance types be customized?",
+            "answer": "Yes, you can define custom maintenance types according to your needs, with intervals based on flight hours, cycles, or calendar."
+          }
+        ]
+      },
+      "training": {
+        "title": "Training",
+        "questions": [
+          {
+            "question": "How are students tracked?",
+            "answer": "Each student has a digital progress book. Instructors can track their progress, note completed exercises, and plan upcoming lessons."
+          },
+          {
+            "question": "Can the training program be customized?",
+            "answer": "Yes, training programs are fully customizable according to your needs. You can create different curricula for PPL, LAPL, or other qualifications."
+          },
+          {
+            "question": "How are theoretical exams managed?",
+            "answer": "The platform includes a quiz and theoretical exam module. Instructors can create tests, track results, and identify areas for improvement."
+          },
+          {
+            "question": "Can students track their progress?",
+            "answer": "Yes, each student has access to their personal space where they can track their progress, review courses, and prepare for exams."
+          }
+        ]
+      },
+      "members": {
+        "title": "Member Management",
+        "questions": [
+          {
+            "question": "How are memberships managed?",
+            "answer": "4fly allows you to manage memberships, dues, and licenses. Automatic reminders are sent for renewals."
+          },
+          {
+            "question": "Can different member types be defined?",
+            "answer": "Yes, you can create different profiles (student, pilot, instructor, mechanic, etc.) with specific access rights."
+          },
+          {
+            "question": "How are member documents managed?",
+            "answer": "All documents (licenses, medical certificates, qualifications) are stored digitally, and the system automatically alerts of upcoming expirations."
+          }
+        ]
+      },
+      "payments": {
+        "title": "Payments and Accounting",
+        "questions": [
+          {
+            "question": "How do online payments work?",
+            "answer": "4fly integrates a secure credit card payment system. Members can top up their account and pay for flights directly from the platform."
+          },
+          {
+            "question": "What financial reports are available?",
+            "answer": "The platform generates detailed reports on flights, payments, and accounting. You can export this data for your accounting."
+          },
+          {
+            "question": "How are invoices managed?",
+            "answer": "Invoices are automatically generated after each flight or payment. They are digitally archived and can be sent by email."
+          }
+        ]
+      },
+      "security": {
+        "title": "Security and Data",
+        "questions": [
+          {
+            "question": "How is data protected?",
+            "answer": "All data is stored securely and encrypted. We comply with GDPR standards and ensure regular backups."
+          },
+          {
+            "question": "Who has access to club data?",
+            "answer": "Data access is strictly controlled through a permissions system. Only authorized persons can access sensitive information."
+          },
+          {
+            "question": "Can we export our data?",
+            "answer": "Yes, you can export your data at any time in standard formats (CSV, Excel). We also facilitate migration from other systems."
+          },
+          {
+            "question": "How is service continuity ensured?",
+            "answer": "Our infrastructure is hosted on redundant servers with high availability. We perform daily backups of all data."
+          }
+        ]
+      }
+    }
+  },
+  "contactPage": {
+    "hero": {
+      "title": "Contact Us",
+      "subtitle": "We're here to help",
+      "needHelp": "Need help?",
+      "supportMessage": "Our team is here to support you in managing your flying club."
+    },
+    "form": {
+      "name": {
+        "label": "Name",
+        "error": "Please enter your name"
+      },
+      "email": {
+        "label": "Email",
+        "error": "Invalid email format",
+        "placeholder": "your@email.com",
+        "valid": "Valid email format"
+      },
+      "phone": {
+        "label": "Phone",
+        "error": "Invalid phone format",
+        "placeholder": "06 12 34 56 78",
+        "valid": "Valid phone format"
+      },
+      "contactReason": {
+        "label": "Contact Reason",
+        "options": {
+          "general": "General Information Request",
+          "login": "Login Issue",
+          "payment": "Payment Issue",
+          "bug": "Technical Bug",
+          "partnership": "Partnership Request",
+          "training": "Training Question",
+          "reservations": "Reservation Question",
+          "improvement": "Improvement Suggestion",
+          "other": "Other"
+        }
+      },
+      "customSubject": {
+        "label": "Specify your subject",
+        "error": "Please enter a subject"
+      },
+      "message": {
+        "label": "Message",
+        "error": "Your message is a bit short"
+      },
+      "submit": "Send",
+      "success": "Message sent successfully!",
+      "error": "Error sending message",
+      "contactRequired": "Please provide at least one contact method",
+      "contactRequiredError": "Please provide at least one contact method (email or phone)"
+    }
+  },
+  "createClub": {
+    "hero": {
+      "title": "Create Your Flying Club",
+      "subtitle": "Get started in just a few minutes"
+    },
+    "form": {
+      "clubInfo": {
+        "title": "Club Information",
+        "name": {
+          "label": "Club Name",
+          "placeholder": "Flying Club of...",
+          "error": "Club name is required"
+        },
+        "icao": {
+          "label": "ICAO Code",
+          "placeholder": "LFXX",
+          "error": "ICAO code must be 4 characters",
+          "valid": "Valid format"
+        },
+        "address": {
+          "label": "Address",
+          "placeholder": "Club address",
+          "error": "Address is required"
+        },
+        "phone": {
+          "label": "Phone",
+          "placeholder": "06 12 34 56 78",
+          "error": "Invalid phone format",
+          "valid": "Valid format"
+        }
+      },
+      "adminInfo": {
+        "title": "Administrator Information",
+        "firstName": {
+          "label": "First Name",
+          "placeholder": "Your first name",
+          "error": "First name is required"
+        },
+        "lastName": {
+          "label": "Last Name",
+          "placeholder": "Your last name",
+          "error": "Last name is required"
+        },
+        "email": {
+          "label": "Email",
+          "placeholder": "your@email.com",
+          "error": "Invalid email format",
+          "valid": "Valid format"
+        },
+        "password": {
+          "label": "Password",
+          "placeholder": "Minimum 8 characters",
+          "error": "Password must be at least 8 characters",
+          "requirements": {
+            "length": "Minimum 8 characters",
+            "uppercase": "One uppercase letter",
+            "lowercase": "One lowercase letter",
+            "number": "One number",
+            "special": "One special character"
+          }
+        },
+        "confirmPassword": {
+          "label": "Confirm Password",
+          "error": "Passwords do not match"
+        }
+      },
+      "submit": "Create my club",
+      "success": "Club created successfully!",
+      "error": "Error creating club",
+      "termsAndConditions": {
+        "text": "I accept the",
+        "link": "terms and conditions",
+        "error": "You must accept the terms and conditions"
+      }
+    }
+  },
+  "login": {
+    "hero": {
+      "title": "Welcome to 4fly",
+      "subtitle": "Sign in to access your dashboard"
+    },
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email address",
+        "error": "Email is required"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Enter your password",
+        "error": "Password is required",
+        "toggle": "Show/hide password"
+      },
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign in",
+      "createClub": "Create a new club"
+    },
+    "success": "Successfully logged in!",
+    "error": "Invalid credentials",
+    "error": {
+      "unexpected": "An unexpected error occurred"
+    }
+  },
+  "quotes": {
+    "saint-exupery-1": {
+      "text": "The airplane is not an end in itself, it is a means. One does not risk their life for a plane: just as a farmer does not plow for his plow. But through the airplane, one leaves the cities and their accountants, and discovers a peasant truth.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Aviator and Writer"
+    },
+    "saint-exupery-2": {
+      "text": "The earth teaches us more about ourselves than all the books. Because it resists us. Man discovers himself when he measures himself against the obstacle.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Aviator and Writer"
+    },
+    "guillaumet-1": {
+      "text": "What saves us is taking one step. Then another. It is always the same step, but you have to take it.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale Pilot"
+    },
+    "dassault-1": {
+      "text": "A beautiful airplane is one that flies well.",
+      "author": "Marcel Dassault",
+      "role": "Aircraft Manufacturer"
+    },
+    "saint-exupery-3": {
+      "text": "In the air, nothing holds the bird up except its own will not to fall.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Aviator and Writer"
+    },
+    "mermoz-1": {
+      "text": "I saw the face of God. It was in the clouds, in the wind, in the stars. I saw it in the sky.",
+      "author": "Jean Mermoz",
+      "role": "Aéropostale Pioneer"
+    },
+    "guillaumet-2": {
+      "text": "The most beautiful of all journeys is the one we haven't taken yet.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale Pilot"
+    },
+    "dassault-2": {
+      "text": "The airplane is perhaps the most beautiful machine man has ever created. It's the closest to living beings.",
+      "author": "Marcel Dassault",
+      "role": "Aircraft Manufacturer"
+    },
+    "garros-1": {
+      "text": "Air is a thick fluid in which we can sculpt solid shapes.",
+      "author": "Roland Garros",
+      "role": "Aviation Pioneer"
+    },
+    "daurat-1": {
+      "text": "When you fly above the clouds, you understand why birds sing.",
+      "author": "Didier Daurat",
+      "role": "Aéropostale Director"
+    },
+    "bleriot-1": {
+      "text": "Flight is a perpetual victory that we win over gravity.",
+      "author": "Louis Blériot",
+      "role": "Aviation Pioneer"
+    },
+    "lindbergh-1": {
+      "text": "Aviation is a demanding mistress. She doesn't forgive mistakes, but she rewards passion.",
+      "author": "Charles Lindbergh",
+      "role": "Aviator"
+    },
+    "mermoz-2": {
+      "text": "In the sky, there are no roads. There are only stars and dreams.",
+      "author": "Jean Mermoz",
+      "role": "Aéropostale Pioneer"
+    },
+    "boucher-1": {
+      "text": "Flying might be getting a little closer to the angels.",
+      "author": "Hélène Boucher",
+      "role": "Pioneer Aviatrix"
+    },
+    "guillaumet-3": {
+      "text": "The pilot who isn't afraid is a dead pilot. Courage is about mastering your fear.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale Pilot"
+    }
+  }
+}

@@ -8,8 +8,10 @@ import { TextField, Button, Checkbox, FormControlLabel, IconButton, InputAdornme
 import { Visibility, VisibilityOff, Email, Lock, FormatQuote } from "@mui/icons-material";
 import toast from "react-hot-toast";
 import { aviationQuotes } from "../../data/aviation-quotes";
+import { useTranslation } from 'react-i18next';
 
 const LoginPage = () => {
+  const { t } = useTranslation();
   const { user, signIn, loading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,13 +53,13 @@ const LoginPage = () => {
     try {
       await signIn(email, password, rememberMe);
       if (!error) {
-        toast.success("Connexion réussie !");
+        toast.success(t('login.success'));
       } else {
-        toast.error(error);
+        toast.error(t('login.error'));
       }
     } catch (err) {
       console.error("Erreur lors de la connexion:", err);
-      toast.error("Une erreur inattendue est survenue");
+      toast.error(t('login.error.unexpected'));
     }
   };
 
@@ -81,9 +83,9 @@ const LoginPage = () => {
             transition={{ delay: 0.2 }}
             className="text-center mb-8"
           >
-            <h1 className="text-4xl font-bold text-white mb-3">Bienvenue sur 4fly</h1>
+            <h1 className="text-4xl font-bold text-white mb-3">{t('login.hero.title')}</h1>
             <p className="text-gray-400 text-lg">
-              Connectez-vous pour accéder à votre espace
+              {t('login.hero.subtitle')}
             </p>
           </motion.div>
 
@@ -96,12 +98,13 @@ const LoginPage = () => {
           >
             <TextField
               fullWidth
-              label="Email"
+              label={t('login.form.email.label')}
               variant="outlined"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              placeholder={t('login.form.email.placeholder')}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -123,12 +126,13 @@ const LoginPage = () => {
 
             <TextField
               fullWidth
-              label="Mot de passe"
+              label={t('login.form.password.label')}
               variant="outlined"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              placeholder={t('login.form.password.placeholder')}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -138,7 +142,7 @@ const LoginPage = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label="toggle password visibility"
+                      aria-label={t('login.form.password.toggle')}
                       onClick={handleTogglePassword}
                       edge="end"
                       className="text-gray-400"
@@ -172,14 +176,14 @@ const LoginPage = () => {
                     }}
                   />
                 }
-                label="Se souvenir de moi"
+                label={t('login.form.rememberMe')}
                 sx={{ color: 'rgba(255,255,255,0.7)' }}
               />
               <Link
                 to="/reset-password"
                 className="text-sm text-blue-500 hover:text-blue-400 transition-colors"
               >
-                Mot de passe oublié ?
+                {t('login.form.forgotPassword')}
               </Link>
             </div>
 
@@ -194,9 +198,18 @@ const LoginPage = () => {
               {loading ? (
                 <CircularProgress size={24} className="text-white" />
               ) : (
-                "Se connecter"
+                t('login.form.submit')
               )}
             </Button>
+
+            <div className="text-center mt-4">
+              <Link
+                to="/create-club"
+                className="text-sm text-blue-500 hover:text-blue-400 transition-colors"
+              >
+                {t('login.form.createClub')}
+              </Link>
+            </div>
           </motion.form>
         </div>
       </motion.div>
@@ -208,15 +221,12 @@ const LoginPage = () => {
         transition={{ duration: 0.5 }}
         className="hidden lg:block lg:w-1/2 relative overflow-hidden"
       >
-        {/* Overlay gradient plus foncé et plus opaque */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30 backdrop-blur-[2px] z-10" />
         <AviationImage
           imageName={randomImage}
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Container du texte avec un fond semi-transparent supplémentaire */}
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-12">
-          {/* Citation */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -231,7 +241,7 @@ const LoginPage = () => {
               sx={{ fontSize: '6rem' }} 
             />
             <blockquote className="font-serif italic text-2xl md:text-3xl lg:text-4xl text-white leading-relaxed mb-8 tracking-wide">
-              "{randomQuote.text}"
+              "{t(`quotes.${randomQuote.id}.text`)}"
             </blockquote>
             <div className="flex flex-col items-center">
               <motion.cite 
@@ -240,7 +250,7 @@ const LoginPage = () => {
                 transition={{ delay: 0.5 }}
                 className="not-italic font-medium text-xl md:text-2xl text-white/90 mb-2"
               >
-                {randomQuote.author}
+                {t(`quotes.${randomQuote.id}.author`)}
               </motion.cite>
               {randomQuote.role && (
                 <motion.span 
@@ -249,7 +259,7 @@ const LoginPage = () => {
                   transition={{ delay: 0.7 }}
                   className="text-base md:text-lg text-white/70"
                 >
-                  {randomQuote.role}
+                  {t(`quotes.${randomQuote.id}.role`)}
                 </motion.span>
               )}
             </div>

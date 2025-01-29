@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { 
   Rocket as RocketIcon,
   TrendingUp as TrendingUpIcon,
@@ -8,39 +9,28 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 interface Feature {
-  text: string;
+  key: string;
   icon?: React.ReactNode;
   highlight?: boolean;
-  description?: string;
-  hours?: string;
-  price?: string;
 }
 
 const PricingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const features: Feature[] = [
     {
-      text: 'Démarrage',
+      key: 'starter',
       icon: <RocketIcon className="h-8 w-8 text-green-400" />,
-      highlight: true,
-      description: 'Commencez votre aventure avec 4fly gratuitement et découvrez tous les outils pour faire décoller votre club',
-      hours: 'Jusqu\'à 1000h/an',
-      price: 'Gratuit'
+      highlight: true
     },
     {
-      text: 'Croissance',
-      icon: <TrendingUpIcon className="h-8 w-8 text-blue-400" />,
-      description: 'Votre club se développe ? 4fly évolue avec vous pour soutenir votre croissance',
-      hours: '1000h à 3000h/an',
-      price: '0,50€/h de vol'
+      key: 'growth',
+      icon: <TrendingUpIcon className="h-8 w-8 text-blue-400" />
     },
     {
-      text: 'Performance',
-      icon: <SpeedIcon className="h-8 w-8 text-purple-400" />,
-      description: 'Profitez d\'un accompagnement personnalisé pour optimiser la gestion de votre activité',
-      hours: '3000h+/an',
-      price: 'Sur mesure'
+      key: 'performance',
+      icon: <SpeedIcon className="h-8 w-8 text-purple-400" />
     }
   ];
 
@@ -55,7 +45,7 @@ const PricingPage: React.FC = () => {
               transition={{ duration: 0.5 }}
               className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl"
             >
-              Évoluez avec 4fly
+              {t('pricing.title')}
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -63,7 +53,7 @@ const PricingPage: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="mt-3 text-xl text-gray-300 sm:mt-5 sm:mx-auto md:mt-5"
             >
-              Une solution qui s'adapte à la croissance de votre club
+              {t('pricing.subtitle')}
             </motion.p>
           </div>
 
@@ -91,12 +81,16 @@ const PricingPage: React.FC = () => {
                   
                   <div className="mt-8 text-center">
                     <h3 className={`text-2xl font-bold ${feature.highlight ? 'text-green-400' : 'text-white'}`}>
-                      {feature.text}
+                      {t(`pricing.plans.${feature.key}.name`)}
                     </h3>
-                    <div className="mt-2 text-gray-400 text-sm">{feature.hours}</div>
-                    <div className="mt-1 text-xl font-bold text-white">{feature.price}</div>
+                    <div className="mt-2 text-gray-400 text-sm">
+                      {t(`pricing.plans.${feature.key}.hours`)}
+                    </div>
+                    <div className="mt-1 text-xl font-bold text-white">
+                      {t(`pricing.plans.${feature.key}.price`)}
+                    </div>
                     <p className="mt-4 text-gray-300 text-sm">
-                      {feature.description}
+                      {t(`pricing.plans.${feature.key}.description`)}
                     </p>
                   </div>
 
@@ -108,7 +102,7 @@ const PricingPage: React.FC = () => {
                       onClick={() => navigate('/create-club')}
                       className="mt-6 w-full bg-green-500 hover:bg-green-600 text-white py-3 px-6 rounded-lg font-semibold"
                     >
-                      Commencer gratuitement
+                      {t('pricing.startFree')}
                     </motion.button>
                   )}
                 </motion.div>
@@ -117,9 +111,7 @@ const PricingPage: React.FC = () => {
 
             <div className="mt-12 text-center">
               <p className="text-gray-400 mb-8">
-                Toutes les fonctionnalités sont disponibles dès le début : réservations, 
-                plannings, maintenance, formations, facturation... <br/>
-                Plus vous volez, plus votre club grandit, plus 4fly vous accompagne !
+                {t('pricing.footer')}
               </p>
             </div>
           </motion.div>

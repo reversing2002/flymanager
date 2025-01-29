@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { 
   People as PeopleIcon,
   School as SchoolIcon,
@@ -8,11 +9,36 @@ import {
 } from '@mui/icons-material';
 
 const AboutUsPage = () => {
+  const { t } = useTranslation();
+  
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.6 }
   };
+
+  const engagementItems = [
+    {
+      key: 'training',
+      icon: SchoolIcon,
+      image: "/images/about/formation-club.jpg"
+    },
+    {
+      key: 'setup',
+      icon: SettingsIcon,
+      image: "/images/about/migration-donnees.jpg"
+    },
+    {
+      key: 'support',
+      icon: PhoneIcon,
+      image: "/images/about/support-club.jpg"
+    },
+    {
+      key: 'accompaniment',
+      icon: PeopleIcon,
+      image: "/images/about/accompagnement-club.jpg"
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
@@ -26,17 +52,17 @@ const AboutUsPage = () => {
         <div className="absolute inset-0 overflow-hidden">
           <img 
             src="/images/about/team-hero.jpg" 
-            alt="L'équipe 4fly" 
+            alt={t('about.images.team')}
             className="w-full h-full object-cover opacity-20"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-800/80" />
         </div>
         <div className="relative">
           <h1 className="text-4xl md:text-5xl font-bold text-center mb-8">
-            L'équipe 4fly
+            {t('about.hero.title')}
           </h1>
           <p className="text-xl text-gray-300 text-center max-w-3xl mx-auto">
-            4fly est développé par une équipe passionnée qui s'engage à fournir un support permanent à nos utilisateurs.
+            {t('about.hero.description')}
           </p>
         </div>
       </motion.section>
@@ -51,19 +77,19 @@ const AboutUsPage = () => {
         <div className="bg-gray-800/50 rounded-2xl p-8 backdrop-blur-sm overflow-hidden">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-6">Notre Vision</h2>
+              <h2 className="text-3xl font-bold mb-6">{t('about.vision.title')}</h2>
               <p className="text-gray-300 text-lg leading-relaxed">
-                Notre équipe travaille en étroite collaboration avec les aéro-clubs pour développer une solution qui répond précisément aux besoins du secteur. Nous nous engageons à maintenir une plateforme sécurisée, performante et en constante évolution.
+                {t('about.vision.description')}
               </p>
               <div className="mt-6 flex items-center text-blue-400">
                 <PeopleIcon className="h-6 w-6 mr-2" />
-                <span className="text-sm">Une approche terrain au plus près des clubs</span>
+                <span className="text-sm">{t('about.vision.approach')}</span>
               </div>
             </div>
             <div className="relative h-64 md:h-full rounded-xl overflow-hidden">
               <img 
                 src="/images/about/vision-terrain.jpg" 
-                alt="Collaboration avec les aéro-clubs" 
+                alt={t('about.images.vision')}
                 className="rounded-xl w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent" />
@@ -79,38 +105,9 @@ const AboutUsPage = () => {
         animate="animate"
         variants={fadeIn}
       >
-        <h2 className="text-3xl font-bold mb-12 text-center">Notre Engagement</h2>
+        <h2 className="text-3xl font-bold mb-12 text-center">{t('about.engagement.title')}</h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[
-            {
-              icon: SchoolIcon,
-              title: "Formation Gratuite",
-              description: "Formation personnalisée et gratuite pour tous les clubs utilisateurs",
-              image: "/images/about/formation-club.jpg",
-              subtitle: "Formation sur site adaptée à vos besoins"
-            },
-            {
-              icon: SettingsIcon,
-              title: "Paramétrage Initial",
-              description: "Paramétrage sur mesure et accompagnement dans la numérisation de vos données historiques",
-              image: "/images/about/migration-donnees.jpg",
-              subtitle: "Du classeur à l'ordinateur, on s'occupe de tout"
-            },
-            {
-              icon: PhoneIcon,
-              title: "Support Technique",
-              description: "Une équipe à votre écoute pour vous accompagner au quotidien dans l'utilisation de la plateforme",
-              image: "/images/about/support-club.jpg",
-              subtitle: "Assistance personnalisée et réactive"
-            },
-            {
-              icon: PeopleIcon,
-              title: "Accompagnement",
-              description: "Un suivi personnalisé pour tous les membres du club, des plus novices aux plus expérimentés en informatique",
-              image: "/images/about/accompagnement-club.jpg",
-              subtitle: "À l'écoute de tous les utilisateurs"
-            }
-          ].map((item, index) => (
+          {engagementItems.map((item, index) => (
             <motion.div
               key={index}
               className="bg-gray-800/30 rounded-xl overflow-hidden hover:bg-gray-700/30 transition-colors"
@@ -120,18 +117,22 @@ const AboutUsPage = () => {
               <div className="h-48 relative">
                 <img 
                   src={item.image} 
-                  alt={item.title} 
+                  alt={t(`about.engagement.items.${item.key}.title`)}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
               </div>
               <div className="p-6">
                 <item.icon className="h-12 w-12 mx-auto mb-4 text-blue-400" />
-                <h3 className="text-xl font-semibold mb-2 text-center">{item.title}</h3>
-                {item.subtitle && (
-                  <p className="text-sm text-blue-400 mb-3 text-center">{item.subtitle}</p>
-                )}
-                <p className="text-gray-300 text-center">{item.description}</p>
+                <h3 className="text-xl font-semibold mb-2 text-center">
+                  {t(`about.engagement.items.${item.key}.title`)}
+                </h3>
+                <p className="text-sm text-blue-400 mb-3 text-center">
+                  {t(`about.engagement.items.${item.key}.subtitle`)}
+                </p>
+                <p className="text-gray-300 text-center">
+                  {t(`about.engagement.items.${item.key}.description`)}
+                </p>
               </div>
             </motion.div>
           ))}
@@ -150,19 +151,14 @@ const AboutUsPage = () => {
             <div className="relative h-64 md:h-full">
               <img 
                 src="/images/about/accompagnement.jpg" 
-                alt="Support et assistance" 
+                alt={t('about.images.support')}
                 className="rounded-xl w-full h-full object-cover"
               />
             </div>
             <div>
-              <h2 className="text-3xl font-bold mb-8">Support et Assistance</h2>
+              <h2 className="text-3xl font-bold mb-8">{t('about.support.title')}</h2>
               <div className="space-y-4">
-                {[
-                  "Des sauvegardes quotidiennes de vos données",
-                  "Un monitoring 24/7 de la plateforme",
-                  "Des mises à jour régulières avec de nouvelles fonctionnalités",
-                  "Une assistance pour toutes vos questions techniques"
-                ].map((item, index) => (
+                {t('about.support.items', { returnObjects: true }).map((item: string, index: number) => (
                   <div key={index} className="flex items-center space-x-3">
                     <div className="flex-shrink-0 h-2 w-2 bg-blue-400 rounded-full" />
                     <p className="text-lg text-gray-300">{item}</p>

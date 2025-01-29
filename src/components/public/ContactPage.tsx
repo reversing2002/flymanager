@@ -12,48 +12,48 @@ import { TextField, Button, CircularProgress } from "@mui/material";
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import AviationImage from '../common/AviationImage';
-
-const CONTACT_REASONS = [
-  "Demande d'informations générales",
-  "Problème de connexion",
-  "Problème de paiement",
-  "Bug technique",
-  "Demande de partenariat",
-  "Question sur la formation",
-  "Question sur les réservations",
-  "Suggestion d'amélioration",
-  "Autre"
-] as const;
-
-const contactSchema = z.object({
-  name: z.string().min(2, 'Veuillez entrer votre nom'),
-  email: z.string()
-    .transform(e => e === "" ? undefined : e)
-    .pipe(
-      z.string()
-        .email('Format d\'email invalide')
-        .optional()
-    ),
-  phone: z.string()
-    .transform(p => p === "" ? undefined : p)
-    .pipe(
-      z.string()
-        .regex(/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/, 'Format de téléphone invalide')
-        .optional()
-    ),
-  contactReason: z.enum(CONTACT_REASONS),
-  customSubject: z.string().min(3, 'Veuillez entrer un sujet').optional(),
-  message: z.string().min(10, 'Votre message est un peu court'),
-}).refine((data) => data.email || data.phone, {
-  message: "Veuillez renseigner au moins un moyen de contact (email ou téléphone)",
-  path: ["email"]
-});
-
-type ContactFormData = z.infer<typeof contactSchema>;
+import { useTranslation } from 'react-i18next';
 
 const ContactPage = () => {
+  const { t } = useTranslation();
   const [showCustomSubject, setShowCustomSubject] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const CONTACT_REASONS = [
+    t('contactPage.form.contactReason.options.general'),
+    t('contactPage.form.contactReason.options.login'),
+    t('contactPage.form.contactReason.options.payment'),
+    t('contactPage.form.contactReason.options.bug'),
+    t('contactPage.form.contactReason.options.partnership'),
+    t('contactPage.form.contactReason.options.training'),
+    t('contactPage.form.contactReason.options.reservations'),
+    t('contactPage.form.contactReason.options.improvement'),
+    t('contactPage.form.contactReason.options.other')
+  ] as const;
+
+  const contactSchema = z.object({
+    name: z.string().min(2, t('contactPage.form.name.error')),
+    email: z.string()
+      .transform(e => e === "" ? undefined : e)
+      .pipe(
+        z.string()
+          .email(t('contactPage.form.email.error'))
+          .optional()
+      ),
+    phone: z.string()
+      .transform(p => p === "" ? undefined : p)
+      .pipe(
+        z.string()
+          .regex(/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/, t('contactPage.form.phone.error'))
+          .optional()
+      ),
+    contactReason: z.enum(CONTACT_REASONS),
+    customSubject: z.string().min(3, t('contactPage.form.customSubject.error')).optional(),
+    message: z.string().min(10, t('contactPage.form.message.error')),
+  }).refine((data) => data.email || data.phone, {
+    message: t('contactPage.form.contactRequiredError'),
+    path: ["email"]
+  });
 
   const backgroundImages = [
     'contact-1.png',
@@ -77,11 +77,11 @@ const ContactPage = () => {
     reset,
     watch,
     formState: { errors, isValid, dirtyFields },
-  } = useForm<ContactFormData>({
+  } = useForm({
     resolver: zodResolver(contactSchema),
     mode: "onChange",
     defaultValues: {
-      contactReason: "Demande d'informations générales"
+      contactReason: t('contactPage.form.contactReason.options.general')
     }
   });
 
@@ -90,10 +90,10 @@ const ContactPage = () => {
   const watchPhone = watch("phone");
 
   React.useEffect(() => {
-    setShowCustomSubject(selectedReason === 'Autre');
+    setShowCustomSubject(selectedReason === t('contactPage.form.contactReason.options.other'));
   }, [selectedReason]);
 
-  const onSubmit = async (data: ContactFormData) => {
+  const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase
@@ -103,18 +103,18 @@ const ContactPage = () => {
             name: data.name,
             email: data.email || null,
             phone: data.phone || null,
-            subject: data.contactReason === 'Autre' ? data.customSubject : data.contactReason,
+            subject: data.contactReason === t('contactPage.form.contactReason.options.other') ? data.customSubject : data.contactReason,
             message: data.message,
           },
         ]);
 
       if (error) throw error;
 
-      toast.success('Message envoyé avec succès !');
+      toast.success(t('contactPage.form.success'));
       reset();
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Erreur lors de l\'envoi du message');
+      toast.error(t('contactPage.form.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -136,9 +136,9 @@ const ContactPage = () => {
             transition={{ delay: 0.2 }}
             className="text-center mb-8"
           >
-            <h1 className="text-4xl font-bold text-white mb-3">Contactez-nous</h1>
+            <h1 className="text-4xl font-bold text-white mb-3">{t('contactPage.hero.title')}</h1>
             <p className="text-gray-400 text-lg">
-              Nous sommes là pour vous aider
+              {t('contactPage.hero.subtitle')}
             </p>
           </motion.div>
 
@@ -151,7 +151,7 @@ const ContactPage = () => {
           >
             <TextField
               fullWidth
-              label="Nom"
+              label={t('contactPage.form.name.label')}
               variant="outlined"
               {...register('name')}
               error={!!errors.name}
@@ -181,7 +181,7 @@ const ContactPage = () => {
               <div className="contact-field-wrapper">
                 <TextField
                   fullWidth
-                  label="Email"
+                  label={t('contactPage.form.email.label')}
                   variant="outlined"
                   {...register("email")}
                   error={!!errors.email}
@@ -189,7 +189,7 @@ const ContactPage = () => {
                   InputProps={{
                     startAdornment: <EmailIcon className="text-gray-400 mr-2" />,
                   }}
-                  placeholder="votre@email.com"
+                  placeholder={t('contactPage.form.email.placeholder')}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
@@ -208,7 +208,7 @@ const ContactPage = () => {
                     animate={{ scale: 1 }}
                     className="text-green-500 text-sm mt-1"
                   >
-                    ✓ Format d'email valide
+                    {t('contactPage.form.email.valid')}
                   </motion.div>
                 )}
               </div>
@@ -216,7 +216,7 @@ const ContactPage = () => {
               <div className="contact-field-wrapper">
                 <TextField
                   fullWidth
-                  label="Téléphone"
+                  label={t('contactPage.form.phone.label')}
                   variant="outlined"
                   {...register("phone")}
                   error={!!errors.phone}
@@ -224,7 +224,7 @@ const ContactPage = () => {
                   InputProps={{
                     startAdornment: <PhoneIcon className="text-gray-400 mr-2" />,
                   }}
-                  placeholder="06 12 34 56 78"
+                  placeholder={t('contactPage.form.phone.placeholder')}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
@@ -243,7 +243,7 @@ const ContactPage = () => {
                     animate={{ scale: 1 }}
                     className="text-green-500 text-sm mt-1"
                   >
-                    ✓ Format de téléphone valide
+                    {t('contactPage.form.phone.valid')}
                   </motion.div>
                 )}
               </div>
@@ -255,14 +255,14 @@ const ContactPage = () => {
                 animate={{ opacity: 1 }}
                 className="text-amber-500 text-sm text-center mt-2"
               >
-                Renseignez au moins un moyen de contact
+                {t('contactPage.form.contactRequired')}
               </motion.div>
             )}
 
             <TextField
               select
               fullWidth
-              label="Raison du contact"
+              label={t('contactPage.form.contactReason.label')}
               variant="outlined"
               {...register('contactReason')}
               error={!!errors.contactReason}
@@ -301,7 +301,7 @@ const ContactPage = () => {
               >
                 <TextField
                   fullWidth
-                  label="Précisez votre sujet"
+                  label={t('contactPage.form.customSubject.label')}
                   variant="outlined"
                   {...register('customSubject')}
                   error={!!errors.customSubject}
@@ -326,7 +326,7 @@ const ContactPage = () => {
 
             <TextField
               fullWidth
-              label="Message"
+              label={t('contactPage.form.message.label')}
               variant="outlined"
               multiline
               rows={4}
@@ -365,7 +365,7 @@ const ContactPage = () => {
               {isSubmitting ? (
                 <CircularProgress size={24} className="text-white" />
               ) : (
-                "Envoyer"
+                t('contactPage.form.submit')
               )}
             </Button>
           </motion.form>
@@ -387,10 +387,10 @@ const ContactPage = () => {
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-12">
           <div className="max-w-xl text-center">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Besoin d'aide ?
+              {t('contactPage.hero.needHelp')}
             </h2>
             <p className="text-xl text-gray-300">
-              Notre équipe est là pour vous accompagner dans la gestion de votre aéroclub.
+              {t('contactPage.hero.supportMessage')}
             </p>
           </div>
         </div>

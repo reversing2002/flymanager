@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import BuildIcon from '@mui/icons-material/Build';
@@ -13,71 +14,53 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 const features = [
   {
     icon: <FlightTakeoffIcon className="h-6 w-6" />,
-    title: 'Gestion des Vols',
-    description: 'Planification et suivi des vols en temps réel'
+    key: 'flightManagement'
   },
   {
     icon: <ScheduleIcon className="h-6 w-6" />,
-    title: 'Réservations',
-    description: 'Système de réservation en ligne 24/7'
+    key: 'reservations'
   },
   {
     icon: <BuildIcon className="h-6 w-6" />,
-    title: 'Maintenance',
-    description: 'Suivi de maintenance et alertes automatiques'
+    key: 'maintenance'
   },
   {
     icon: <SchoolIcon className="h-6 w-6" />,
-    title: 'Formation',
-    description: 'Gestion complète de la formation des élèves'
+    key: 'training'
   },
   {
     icon: <PaymentsIcon className="h-6 w-6" />,
-    title: 'Paiements',
-    description: 'Gestion simplifiée des paiements et factures'
+    key: 'payments'
   },
   {
     icon: <GroupIcon className="h-6 w-6" />,
-    title: 'Gestion des Membres',
-    description: 'Administration efficace des membres du club'
+    key: 'memberManagement'
   }
 ];
 
 const HomePage = () => {
+  const { t } = useTranslation();
   const backgroundImages = [
     'login-1.png',
     'login-2.png',
     'login-3.png',
     'login-4.png',
-    'login-5.png',
-    'login-6.png',
-    'login-7.png',
-    'login-8.png',
-    'login-9.png',
-    'login-10.png',
-    'login-11.png',
   ];
 
-  const [currentImageIndex, setCurrentImageIndex] = useState(() => 
-    Math.floor(Math.random() * backgroundImages.length)
-  );
-
-  const getRandomIndex = (currentIndex: number) => {
-    const newIndex = Math.floor(Math.random() * (backgroundImages.length - 1));
-    // Éviter de répéter la même image
-    return newIndex >= currentIndex ? newIndex + 1 : newIndex;
-  };
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentImageIndex(prevIndex => getRandomIndex(prevIndex));
-    }, 8000);
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) =>
+        prevIndex === backgroundImages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000);
 
-    return () => clearInterval(timer);
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <>
+    <div className="min-h-screen">
       {/* Background Image */}
       <div className="fixed inset-0 -z-10">
         <AnimatePresence mode="wait">
@@ -100,7 +83,7 @@ const HomePage = () => {
       </div>
 
       {/* Content */}
-      <div className="relative min-h-screen">
+      <main className="relative">
         <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
           {/* Hero Section avec CTA principal */}
           <div className="text-center mb-16">
@@ -109,30 +92,28 @@ const HomePage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-8 drop-shadow-2xl">
-              Gérez votre aéroclub{' '}
-              <span className="text-blue-400 bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent">simplement</span>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-8 drop-shadow-2xl">
+                {t('home.title')}
               </h1>
-            <p className="text-xl text-gray-100 mb-12 max-w-3xl mx-auto drop-shadow-xl font-medium">
-              4fly est un outil simple et gratuit pour gérer votre club aéronautique, que vous ayez 2 ou 200 membres. 
-              Fini les tableurs complexes et la paperasse !
+              <p className="text-xl text-gray-100 mb-12 max-w-3xl mx-auto drop-shadow-xl font-medium">
+                {t('home.description')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Link
                   to="/create-club"
                   className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 transform hover:scale-105"
                 >
-                  Créer mon club
+                  {t('home.createClub')}
                 </Link>
                 <Link
                   to="/login"
                   className="px-8 py-4 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors duration-200"
                 >
-                  Se connecter
+                  {t('common.login')}
                 </Link>
               </div>
               <p className="text-gray-400 mt-4 text-sm">
-                Configuration en 2 minutes
+                {t('home.configurationTime')}
               </p>
             </motion.div>
           </div>
@@ -141,15 +122,19 @@ const HomePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
             {features.map((feature, index) => (
               <motion.div
-                key={feature.title}
+                key={feature.key}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl hover:bg-gray-800/60 transition-all duration-200"
               >
                 <div className="text-blue-500 mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
-                <p className="text-gray-300">{feature.description}</p>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {t(`features.${feature.key}.title`)}
+                </h3>
+                <p className="text-gray-300">
+                  {t(`features.${feature.key}.description`)}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -162,22 +147,22 @@ const HomePage = () => {
             className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 mb-16 text-center"
           >
             <h2 className="text-3xl font-bold text-white mb-4">
-              Commencez à faire grandir votre club
+              {t('home.startTitle')}
             </h2>
             <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-              Configuration en 2 minutes
+              {t('home.startDescription')}
             </p>
             <Link
               to="/create-club"
               className="inline-flex items-center px-8 py-4 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200 transform hover:scale-105"
             >
-              Commencer gratuitement
+              {t('home.startButton')}
               <ArrowForwardIcon className="ml-2" />
             </Link>
           </motion.div>
         </div>
-      </div>
-    </>
+      </main>
+    </div>
   );
 };
 

@@ -2,11 +2,11 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import PublicNavbar from './PublicNavbar';
 
-const PublicLayout = () => {
+const PublicLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <PublicNavbar />
-      <main className="flex-grow">
+      <main className="flex-grow pt-16">
         <Outlet />
       </main>
     </div>

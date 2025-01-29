@@ -5,6 +5,7 @@ import { Logo } from "../common/Logo";
 import { supabase } from "../../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import { gtagReportConversion } from "../../lib/analytics";
+import { useTranslation } from 'react-i18next';
 import {
   Stepper,
   Step,
@@ -33,24 +34,6 @@ interface CreateClubFormData {
   adminLogin: string;
 }
 
-const steps = [
-  {
-    icon: <AirplanemodeActiveIcon />,
-    title: "Information du club",
-    description: "Identité de votre aéroclub",
-  },
-  {
-    icon: <PersonIcon />,
-    title: "Compte administrateur",
-    description: "Vos informations personnelles",
-  },
-  {
-    icon: <VpnKeyIcon />,
-    title: "Identifiants",
-    description: "Créez vos accès",
-  },
-];
-
 const generateLogin = (firstName: string, lastName: string): string => {
   // Retire les accents et caractères spéciaux
   const normalizeString = (str: string) => {
@@ -69,6 +52,7 @@ const generateLogin = (firstName: string, lastName: string): string => {
 };
 
 const CreateClubPage = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<CreateClubFormData>({
@@ -80,6 +64,25 @@ const CreateClubPage = () => {
     adminLastName: "",
     adminLogin: "",
   });
+
+  const steps = [
+    {
+      icon: <AirplanemodeActiveIcon />,
+      title: t('createClub.form.clubInfo.title'),
+      description: t('createClub.hero.subtitle'),
+    },
+    {
+      icon: <PersonIcon />,
+      title: t('createClub.form.adminInfo.title'),
+      description: t('createClub.form.adminInfo.title'),
+    },
+    {
+      icon: <VpnKeyIcon />,
+      title: t('createClub.form.adminInfo.password.label'),
+      description: t('createClub.form.adminInfo.password.placeholder'),
+    },
+  ];
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -113,7 +116,6 @@ const CreateClubPage = () => {
 
       if (clubError) throw clubError;
       
-      // Connexion automatique après la création du club
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.adminEmail,
         password: formData.adminPassword,
@@ -121,14 +123,12 @@ const CreateClubPage = () => {
 
       if (signInError) throw signInError;
 
-      // Envoi de l'événement de conversion Google Ads
       gtagReportConversion();
 
-      // La redirection sera gérée automatiquement par le hook useAuth
-      toast.success("Votre club a été créé avec succès !");
+      toast.success(t('createClub.form.success'));
     } catch (error: any) {
       setError(error.message);
-      toast.error("Une erreur est survenue lors de la création du club");
+      toast.error(t('createClub.form.error'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +139,6 @@ const CreateClubPage = () => {
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
       
-      // Génère automatiquement le login quand le prénom ou le nom change
       if (name === 'adminFirstName' || name === 'adminLastName') {
         const firstName = name === 'adminFirstName' ? value : prev.adminFirstName;
         const lastName = name === 'adminLastName' ? value : prev.adminLastName;
@@ -200,26 +199,30 @@ const CreateClubPage = () => {
             exit={{ opacity: 0, x: -20 }}
           >
             <TextField
-              label="Nom du club"
+              label={t('createClub.form.clubInfo.name.label')}
               name="clubName"
               value={formData.clubName}
               onChange={handleChange}
               required
+              placeholder={t('createClub.form.clubInfo.name.placeholder')}
+              error={!formData.clubName}
+              helperText={!formData.clubName ? t('createClub.form.clubInfo.name.error') : ''}
               {...commonTextFieldProps}
             />
             <TextField
-              label="Code OACI ou identifiant de l'aérodrome"
+              label={t('createClub.form.clubInfo.icao.label')}
               name="clubCode"
               value={formData.clubCode}
               onChange={handleChange}
               required
-              placeholder="ex: LFHL, LF4226"
+              placeholder={t('createClub.form.clubInfo.icao.placeholder')}
+              error={!formData.clubCode}
+              helperText={!formData.clubCode ? t('createClub.form.clubInfo.icao.error') : t('createClub.form.clubInfo.icao.valid')}
               inputProps={{
                 maxLength: 10,
                 pattern: "[A-Za-z0-9]{3,10}",
                 style: { textTransform: "uppercase" },
               }}
-              helperText="Le code doit contenir entre 3 et 10 caractères alphanumériques"
               {...commonTextFieldProps}
             />
           </motion.div>
@@ -232,19 +235,25 @@ const CreateClubPage = () => {
             exit={{ opacity: 0, x: -20 }}
           >
             <TextField
-              label="Prénom"
+              label={t('createClub.form.adminInfo.firstName.label')}
               name="adminFirstName"
               value={formData.adminFirstName}
               onChange={handleChange}
               required
+              placeholder={t('createClub.form.adminInfo.firstName.placeholder')}
+              error={!formData.adminFirstName}
+              helperText={!formData.adminFirstName ? t('createClub.form.adminInfo.firstName.error') : ''}
               {...commonTextFieldProps}
             />
             <TextField
-              label="Nom"
+              label={t('createClub.form.adminInfo.lastName.label')}
               name="adminLastName"
               value={formData.adminLastName}
               onChange={handleChange}
               required
+              placeholder={t('createClub.form.adminInfo.lastName.placeholder')}
+              error={!formData.adminLastName}
+              helperText={!formData.adminLastName ? t('createClub.form.adminInfo.lastName.error') : ''}
               {...commonTextFieldProps}
             />
           </motion.div>
@@ -257,21 +266,35 @@ const CreateClubPage = () => {
             exit={{ opacity: 0, x: -20 }}
           >
             <TextField
-              label="Email"
+              label={t('createClub.form.adminInfo.email.label')}
               name="adminEmail"
               type="email"
               value={formData.adminEmail}
               onChange={handleChange}
               required
+              placeholder={t('createClub.form.adminInfo.email.placeholder')}
+              error={!formData.adminEmail}
+              helperText={!formData.adminEmail ? t('createClub.form.adminInfo.email.error') : t('createClub.form.adminInfo.email.valid')}
               {...commonTextFieldProps}
             />
             <TextField
-              label="Mot de passe"
+              label={t('createClub.form.adminInfo.password.label')}
               name="adminPassword"
               type="password"
               value={formData.adminPassword}
               onChange={handleChange}
               required
+              placeholder={t('createClub.form.adminInfo.password.placeholder')}
+              error={!formData.adminPassword}
+              helperText={
+                !formData.adminPassword 
+                  ? t('createClub.form.adminInfo.password.error')
+                  : `${t('createClub.form.adminInfo.password.requirements.length')}, 
+                     ${t('createClub.form.adminInfo.password.requirements.uppercase')}, 
+                     ${t('createClub.form.adminInfo.password.requirements.lowercase')}, 
+                     ${t('createClub.form.adminInfo.password.requirements.number')}, 
+                     ${t('createClub.form.adminInfo.password.requirements.special')}`
+              }
               {...commonTextFieldProps}
             />
           </motion.div>
@@ -295,7 +318,7 @@ const CreateClubPage = () => {
         <Box className="flex flex-col items-center mb-8">
           <Logo className="mb-2" />
           <Typography variant="subtitle1" sx={{ color: "gray.400" }}>
-            Créez votre aéroclub
+            {t('createClub.hero.title')}
           </Typography>
         </Box>
 
@@ -383,7 +406,7 @@ const CreateClubPage = () => {
                 },
               }}
             >
-              PRÉCÉDENT
+              {t('common.back')}
             </Button>
             <Button
               endIcon={activeStep === steps.length - 1 ? undefined : <ArrowForwardIcon />}
@@ -397,7 +420,7 @@ const CreateClubPage = () => {
                 },
               }}
             >
-              {activeStep === steps.length - 1 ? "CRÉER LE CLUB" : "SUIVANT"}
+              {activeStep === steps.length - 1 ? t('createClub.form.submit') : t('common.next')}
             </Button>
           </Box>
         </form>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Logo } from '../common/Logo';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
@@ -10,20 +11,21 @@ import FeaturesIcon from '@mui/icons-material/Stars';
 import HelpIcon from '@mui/icons-material/Help';
 import ContactIcon from '@mui/icons-material/Mail';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
-import PeopleIcon from '@mui/icons-material/People';
 import InformationCircleIcon from '@mui/icons-material/Info';
+import LanguageSelector from '../common/LanguageSelector';
 
 const PublicNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { t } = useTranslation();
 
   const navItems = [
-    { label: 'Accueil', path: '/', icon: <HomeIcon className="h-5 w-5" /> },
-    { label: 'À propos', path: '/about', icon: <InformationCircleIcon className="h-5 w-5" /> },
-    { label: 'Fonctionnalités', path: '/features', icon: <FeaturesIcon className="h-5 w-5" /> },
-    { label: 'Tarifs', path: '/tarifs', icon: <CreditCardIcon className="h-5 w-5" /> },
-    { label: 'FAQ', path: '/faq', icon: <HelpIcon className="h-5 w-5" /> },
-    { label: 'Contact', path: '/contact', icon: <ContactIcon className="h-5 w-5" /> },
+    { label: t('nav.home'), path: '/', icon: <HomeIcon className="h-5 w-5" /> },
+    { label: t('nav.about'), path: '/about', icon: <InformationCircleIcon className="h-5 w-5" /> },
+    { label: t('nav.features'), path: '/features', icon: <FeaturesIcon className="h-5 w-5" /> },
+    { label: t('nav.pricing'), path: '/tarifs', icon: <CreditCardIcon className="h-5 w-5" /> },
+    { label: t('nav.faq'), path: '/faq', icon: <HelpIcon className="h-5 w-5" /> },
+    { label: t('nav.contact'), path: '/contact', icon: <ContactIcon className="h-5 w-5" /> },
   ];
 
   return (
@@ -45,62 +47,62 @@ const PublicNavbar = () => {
                   key={item.path}
                   to={item.path}
                   className={`text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
-                    location.pathname === item.path ? 'bg-gray-900' : ''
+                    location.pathname === item.path ? 'bg-gray-900 text-white' : ''
                   }`}
                 >
                   {item.icon}
                   {item.label}
                 </Link>
               ))}
+              <div className="border-l border-gray-700 h-6 mx-2" />
+              <div className="text-white">
+                <LanguageSelector />
+              </div>
               <Link
                 to="/login"
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg flex items-center gap-2"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
               >
                 <LoginIcon className="h-5 w-5" />
-                Se connecter
+                <span>{t('common.login')}</span>
               </Link>
             </div>
 
-            {/* Mobile Actions */}
-            <div className="flex md:hidden items-center space-x-3">
-              <Link
-                to="/login"
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg"
-              >
-                <LoginIcon className="h-5 w-5" />
-                <span>Connexion</span>
-              </Link>
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center space-x-4">
+              <div className="text-white">
+                <LanguageSelector />
+              </div>
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="text-gray-400 hover:text-white p-2 rounded-md hover:bg-gray-700 transition-colors"
-                aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+                className="text-gray-300 hover:text-white p-2"
               >
-                {isOpen ? <CloseIcon /> : <MenuIcon />}
+                {isOpen ? (
+                  <CloseIcon className="h-6 w-6" />
+                ) : (
+                  <MenuIcon className="h-6 w-6" />
+                )}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Spacer to prevent content from hiding under fixed navbar */}
-      <div className="h-16" />
-
       {/* Mobile menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="fixed top-16 left-0 right-0 md:hidden z-40"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="fixed inset-0 top-16 bg-[#1a1d21] z-40 md:hidden"
           >
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-[#1a1d21] border-t border-gray-700 shadow-lg">
+            <div className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`text-gray-300 hover:text-white flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition-colors ${
-                    location.pathname === item.path ? 'bg-gray-900' : ''
+                  className={`text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2 ${
+                    location.pathname === item.path ? 'bg-gray-900 text-white' : ''
                   }`}
                   onClick={() => setIsOpen(false)}
                 >
@@ -108,6 +110,14 @@ const PublicNavbar = () => {
                   {item.label}
                 </Link>
               ))}
+              <Link
+                to="/login"
+                className="bg-blue-600 text-white block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2 hover:bg-blue-700"
+                onClick={() => setIsOpen(false)}
+              >
+                <LoginIcon className="h-5 w-5" />
+                <span>{t('common.login')}</span>
+              </Link>
             </div>
           </motion.div>
         )}

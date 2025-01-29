@@ -1,0 +1,620 @@
+{
+  "features": {
+    "flightManagement": {
+      "title": "Flugverwaltung",
+      "description": "Echtzeit-Flugplanung und -verfolgung"
+    },
+    "reservations": {
+      "title": "Reservierungen",
+      "description": "24/7 Online-Buchungssystem"
+    },
+    "maintenance": {
+      "title": "Wartung",
+      "description": "Wartungsverfolgung und automatische Warnungen"
+    },
+    "training": {
+      "title": "Ausbildung",
+      "description": "Komplette Verwaltung der Flugschülerausbildung"
+    },
+    "payments": {
+      "title": "Zahlungen",
+      "description": "Vereinfachte Zahlungs- und Rechnungsverwaltung"
+    },
+    "memberManagement": {
+      "title": "Mitgliederverwaltung",
+      "description": "Effiziente Verwaltung der Clubmitglieder"
+    }
+  },
+  "common": {
+    "learnMore": "Mehr erfahren",
+    "getStarted": "Loslegen",
+    "login": "Anmelden",
+    "register": "Registrieren"
+  },
+  "home": {
+    "title": "Verwalten Sie Ihren Flugclub einfach",
+    "description": "4fly ist ein einfaches und kostenloses Tool zur Verwaltung Ihres Luftfahrtvereins, egal ob Sie 2 oder 200 Mitglieder haben. Schluss mit komplexen Tabellen und Papierkram!",
+    "createClub": "Meinen Club erstellen",
+    "configurationTime": "2-Minuten-Einrichtung",
+    "startTitle": "Beginnen Sie, Ihren Club wachsen zu lassen",
+    "startDescription": "2-Minuten-Einrichtung",
+    "startButton": "Kostenlos starten"
+  },
+  "nav": {
+    "home": "Startseite",
+    "about": "Über uns",
+    "features": "Funktionen",
+    "pricing": "Preise",
+    "faq": "FAQ",
+    "contact": "Kontakt"
+  },
+  "pricing": {
+    "title": "Wachsen Sie mit 4fly",
+    "subtitle": "Eine Lösung, die sich an das Wachstum Ihres Clubs anpasst",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Starten Sie Ihre Reise mit 4fly kostenlos und entdecken Sie alle Tools, um Ihren Club abheben zu lassen",
+        "hours": "Bis zu 1000h/Jahr",
+        "price": "Kostenlos"
+      },
+      "growth": {
+        "name": "Wachstum",
+        "description": "Wächst Ihr Club? 4fly entwickelt sich mit Ihnen, um Ihr Wachstum zu unterstützen",
+        "hours": "1000h bis 3000h/Jahr",
+        "price": "0,50€/Flugstunde"
+      },
+      "performance": {
+        "name": "Performance",
+        "description": "Erhalten Sie persönliche Unterstützung zur Optimierung Ihrer Aktivitätsverwaltung",
+        "hours": "3000h+/Jahr",
+        "price": "Individuell"
+      }
+    },
+    "startFree": "Kostenlos starten",
+    "footer": "Alle Funktionen sind von Anfang an verfügbar: Reservierungen, Zeitpläne, Wartung, Ausbildung, Abrechnung... Je mehr Sie fliegen, je mehr Ihr Club wächst, desto mehr unterstützt Sie 4fly!"
+  },
+  "about": {
+    "hero": {
+      "title": "Das 4fly Team",
+      "description": "4fly wird von einem leidenschaftlichen Team entwickelt, das sich der kontinuierlichen Unterstützung unserer Nutzer verschrieben hat."
+    },
+    "vision": {
+      "title": "Unsere Vision",
+      "description": "Unser Team arbeitet eng mit Flugvereinen zusammen, um eine Lösung zu entwickeln, die genau den Bedürfnissen der Branche entspricht. Wir verpflichten uns, eine sichere, leistungsfähige und sich ständig weiterentwickelnde Plattform zu betreiben.",
+      "approach": "Ein praxisnaher Ansatz nah an den Clubs"
+    },
+    "engagement": {
+      "title": "Unser Engagement",
+      "items": {
+        "training": {
+          "title": "Kostenlose Schulung",
+          "description": "Personalisierte und kostenlose Schulung für alle Nutzerclubs",
+          "subtitle": "Vor-Ort-Schulung angepasst an Ihre Bedürfnisse"
+        },
+        "setup": {
+          "title": "Ersteinrichtung",
+          "description": "Maßgeschneiderte Einrichtung und Unterstützung bei der Digitalisierung Ihrer historischen Daten",
+          "subtitle": "Vom Ordner zum Computer, wir kümmern uns um alles"
+        },
+        "support": {
+          "title": "Technischer Support",
+          "description": "Ein Team zu Ihren Diensten, das Sie täglich bei der Nutzung der Plattform unterstützt",
+          "subtitle": "Personalisierte und reaktionsschnelle Unterstützung"
+        },
+        "accompaniment": {
+          "title": "Begleitung",
+          "description": "Individuelle Betreuung für alle Clubmitglieder, von IT-Neulingen bis zu Experten",
+          "subtitle": "Ein offenes Ohr für alle Nutzer"
+        }
+      }
+    },
+    "support": {
+      "title": "Support und Hilfe",
+      "items": [
+        "Tägliche Sicherung Ihrer Daten",
+        "24/7 Plattform-Überwachung",
+        "Regelmäßige Updates mit neuen Funktionen",
+        "Unterstützung bei allen technischen Fragen"
+      ]
+    },
+    "images": {
+      "team": "Das 4fly Team",
+      "vision": "Zusammenarbeit mit Flugvereinen",
+      "support": "Support und Hilfe"
+    }
+  },
+  "featuresPage": {
+    "hero": {
+      "title": "Unsere Funktionen",
+      "subtitle": "Entdecken Sie alle Werkzeuge, die unsere Plattform zur idealen Lösung für Ihren Flugverein machen"
+    },
+    "items": {
+      "flights": {
+        "title": "Flugverwaltung",
+        "description": "Vollständige Flugverfolgung, digitale Logbücher und detaillierte Statistiken für jeden Piloten und jedes Flugzeug.",
+        "details": [
+          "Vereinfachte Flugprotokollierung",
+          "Digitale Logbücher",
+          "Flugzeiterfassung",
+          "Detaillierte Statistiken"
+        ]
+      },
+      "reservations": {
+        "title": "Reservierungen",
+        "description": "24/7 Online-Buchungssystem mit Echtzeit-Konfliktverwaltung und Verfügbarkeitsverfolgung.",
+        "details": [
+          "24/7 Online-Buchung",
+          "Interaktiver Kalender",
+          "Konfliktverwaltung",
+          "Automatische Benachrichtigungen"
+        ]
+      },
+      "maintenance": {
+        "title": "Wartung",
+        "description": "Detaillierte Wartungsverfolgung mit automatischen Warnungen und Potentialverwaltung.",
+        "details": [
+          "Potentialverfolgung",
+          "Automatische Warnungen",
+          "Digitales Wartungsbuch",
+          "Vollständiger Verlauf"
+        ]
+      },
+      "training": {
+        "title": "Ausbildung",
+        "description": "Vollständige Ausbildungsverwaltung mit pädagogischer Verfolgung und Schülerfortschritt.",
+        "details": [
+          "Digitales Fortschrittsbuch",
+          "Ausbildungsplanung",
+          "Pädagogische Verfolgung",
+          "Online-Ressourcen"
+        ]
+      },
+      "finance": {
+        "title": "Finanzverwaltung",
+        "description": "Automatische Rechnungsstellung, Mitgliedskontenverfolgung und Online-Zahlungsintegration.",
+        "details": [
+          "Automatische Rechnungsstellung",
+          "Online-Zahlungen",
+          "Kontenverfolgung",
+          "Buchhaltungsexporte"
+        ]
+      },
+      "members": {
+        "title": "Mitgliederverwaltung",
+        "description": "Vollständige Mitgliederverwaltung mit Lizenz- und Qualifikationsverwaltung.",
+        "details": [
+          "Detaillierte Profile",
+          "Lizenzverfolgung",
+          "Qualifikationsverwaltung",
+          "Mitgliederverzeichnis"
+        ]
+      },
+      "communication": {
+        "title": "Kommunikation",
+        "description": "Integrierte Kommunikationswerkzeuge zur Erleichterung des Austauschs innerhalb des Vereins.",
+        "details": [
+          "Sofortnachrichten",
+          "Vereinsankündigungen",
+          "Benachrichtigungen",
+          "Dokumentenaustausch"
+        ]
+      },
+      "statistics": {
+        "title": "Statistiken und Berichte",
+        "description": "Dashboards und detaillierte Berichte zur Verfolgung der Vereinsaktivitäten.",
+        "details": [
+          "Dashboards",
+          "Benutzerdefinierte Berichte",
+          "Aktivitätsanalyse",
+          "Datenexporte"
+        ]
+      },
+      "events": {
+        "title": "Veranstaltungen",
+        "description": "Organisation und Verwaltung von Vereinsveranstaltungen mit Online-Anmeldung.",
+        "details": [
+          "Veranstaltungskalender",
+          "Online-Anmeldung",
+          "Teilnehmerverwaltung",
+          "Automatische Erinnerungen"
+        ]
+      },
+      "security": {
+        "title": "Sicherheit und Compliance",
+        "description": "Werkzeuge zur Gewährleistung von Sicherheit und regulatorischer Compliance.",
+        "details": [
+          "Sicherheitsberichtsverwaltung",
+          "Dokumentenverfolgung",
+          "DSGVO-Konformität",
+          "Automatische Sicherungen"
+        ]
+      }
+    }
+  },
+  "faqPage": {
+    "hero": {
+      "title": "Häufig gestellte Fragen",
+      "subtitle": "Finden Sie Antworten auf die häufigsten Fragen zu 4fly"
+    },
+    "categories": {
+      "about": {
+        "title": "Über 4fly",
+        "questions": [
+          {
+            "question": "Was ist 4fly und für wen ist es gedacht?",
+            "answer": "4fly ist eine umfassende Softwarelösung zur Vereinfachung und Optimierung der Flugvereinsverwaltung. Sie richtet sich an Flugvereine aller Größen, ob mit oder ohne Verbandszugehörigkeit, die ihre täglichen Abläufe automatisieren und zentralisieren möchten. Unser Ziel ist es, das Wachstum Ihres Vereins zu unterstützen."
+          },
+          {
+            "question": "Wie funktioniert das Preismodell?",
+            "answer": "Unser Modell ist einfach: kostenlos bis 1000 Flugstunden pro Jahr, danach 0,50€ pro Flugstunde auf die Gesamtstunden. Für große Vereine mit über 3000 Jahresstunden bieten wir maßgeschneiderte Angebote. Alle Funktionen sind von Anfang an enthalten."
+          },
+          {
+            "question": "Gibt es versteckte Kosten?",
+            "answer": "Nein, unsere flugstundenbasierte Preisgestaltung ist vollkommen transparent. Alle wesentlichen Funktionen sind in diesem Tarif enthalten. Einige zusätzliche Dienste, wie Kreditkartenzahlung, werden je nach Bedarf als Optionen angeboten."
+          },
+          {
+            "question": "Welche Funktionen sind enthalten?",
+            "answer": "Alle wesentlichen Funktionen sind im Basisangebot enthalten: Reservierungsverwaltung, Wartung, Ausbildung, Buchhaltung... Zusätzliche Dienste wie Kreditkartenzahlung sind als Optionen für interessierte Vereine verfügbar."
+          },
+          {
+            "question": "Welcher Support ist verfügbar?",
+            "answer": "Wir bieten umfassenden technischen Support per E-Mail und Telefon, der für alle Vereine unabhängig von ihrer Größe inbegriffen ist. Unser Team steht Ihnen bei der Ersteinrichtung und für Ihre täglichen Fragen zur Verfügung."
+          }
+        ]
+      },
+      "reservations": {
+        "title": "Reservierungen und Flüge",
+        "questions": [
+          {
+            "question": "Wie funktioniert das Reservierungssystem?",
+            "answer": "Das Buchungssystem ist rund um die Uhr online verfügbar. Mitglieder können ein Flugzeug reservieren, die Verfügbarkeit in Echtzeit einsehen und ihre Buchungen über Smartphone oder Computer verwalten."
+          },
+          {
+            "question": "Kann man mehrere Zeitfenster im Voraus buchen?",
+            "answer": "Ja, Sie können entsprechend den Regeln Ihres Vereins mehrere Reservierungen vornehmen. Das System prüft automatisch auf Konflikte und erforderliche Qualifikationen."
+          },
+          {
+            "question": "Wie werden Schulungsflüge verwaltet?",
+            "answer": "Schulungsflüge können mit verfügbaren Fluglehrern geplant werden. Das System prüft automatisch die Verfügbarkeit von Fluglehrern und Flugzeugen."
+          },
+          {
+            "question": "Was passiert bei einer Stornierung?",
+            "answer": "Stornierungen werden nach den Regeln Ihres Vereins verwaltet. Das System kann automatische Benachrichtigungen an die betroffenen Personen senden und den Zeitslot für andere Reservierungen freigeben."
+          }
+        ]
+      },
+      "maintenance": {
+        "title": "Wartung",
+        "questions": [
+          {
+            "question": "Wie wird die Flugzeugwartung verfolgt?",
+            "answer": "4fly enthält ein komplettes Wartungsverfolgungssystem, das Flugstunden, Zyklen und Kalenderfristen überwacht. Automatische Warnungen werden für anstehende Wartungen versendet."
+          },
+          {
+            "question": "Wer kann Wartungen eintragen?",
+            "answer": "Mechaniker und autorisiertes Personal können Wartungsarbeiten dokumentieren. Jeder Eingriff wird dokumentiert und im Flugzeugverlauf archiviert."
+          },
+          {
+            "question": "Wie werden Wartungswarnungen verwaltet?",
+            "answer": "Das System sendet automatische Benachrichtigungen an die Verantwortlichen, wenn eine Wartung ansteht. Piloten werden ebenfalls über Einschränkungen oder Nichtverfügbarkeit von Flugzeugen informiert."
+          },
+          {
+            "question": "Können Wartungstypen angepasst werden?",
+            "answer": "Ja, Sie können benutzerdefinierte Wartungstypen nach Ihren Bedürfnissen definieren, mit Intervallen basierend auf Flugstunden, Zyklen oder Kalender."
+          }
+        ]
+      },
+      "training": {
+        "title": "Ausbildung",
+        "questions": [
+          {
+            "question": "Wie werden Flugschüler verfolgt?",
+            "answer": "Jeder Flugschüler hat ein digitales Fortschrittsbuch. Fluglehrer können den Fortschritt verfolgen, absolvierte Übungen notieren und die nächsten Lektionen planen."
+          },
+          {
+            "question": "Kann das Ausbildungsprogramm angepasst werden?",
+            "answer": "Ja, die Ausbildungsprogramme sind vollständig nach Ihren Bedürfnissen anpassbar. Sie können verschiedene Lehrpläne für PPL, LAPL oder andere Qualifikationen erstellen."
+          },
+          {
+            "question": "Wie werden theoretische Prüfungen verwaltet?",
+            "answer": "Die Plattform enthält ein Modul für Quiz und theoretische Prüfungen. Fluglehrer können Tests erstellen, Ergebnisse verfolgen und Verbesserungsbereiche identifizieren."
+          },
+          {
+            "question": "Können Flugschüler ihren Fortschritt verfolgen?",
+            "answer": "Ja, jeder Flugschüler hat Zugang zu seinem persönlichen Bereich, wo er seinen Fortschritt verfolgen, Kurse wiederholen und sich auf Prüfungen vorbereiten kann."
+          }
+        ]
+      },
+      "members": {
+        "title": "Mitgliederverwaltung",
+        "questions": [
+          {
+            "question": "Wie werden Mitgliedschaften verwaltet?",
+            "answer": "4fly ermöglicht die Verwaltung von Mitgliedschaften, Beiträgen und Lizenzen. Automatische Erinnerungen werden für Verlängerungen versendet."
+          },
+          {
+            "question": "Können verschiedene Mitgliedertypen definiert werden?",
+            "answer": "Ja, Sie können verschiedene Profile (Flugschüler, Pilot, Fluglehrer, Mechaniker usw.) mit spezifischen Zugriffsrechten erstellen."
+          },
+          {
+            "question": "Wie werden Mitgliederdokumente verwaltet?",
+            "answer": "Alle Dokumente (Lizenzen, medizinische Zeugnisse, Qualifikationen) werden digital gespeichert, und das System warnt automatisch vor bevorstehenden Ablaufterminen."
+          }
+        ]
+      },
+      "payments": {
+        "title": "Zahlungen und Buchhaltung",
+        "questions": [
+          {
+            "question": "Wie funktionieren Online-Zahlungen?",
+            "answer": "4fly integriert ein sicheres Kreditkartenzahlungssystem. Mitglieder können ihr Konto aufladen und Flüge direkt über die Plattform bezahlen."
+          },
+          {
+            "question": "Welche Finanzberichte sind verfügbar?",
+            "answer": "Die Plattform generiert detaillierte Berichte über Flüge, Zahlungen und Buchhaltung. Sie können diese Daten für Ihre Buchhaltung exportieren."
+          },
+          {
+            "question": "Wie werden Rechnungen verwaltet?",
+            "answer": "Rechnungen werden nach jedem Flug oder jeder Zahlung automatisch generiert. Sie werden digital archiviert und können per E-Mail versendet werden."
+          }
+        ]
+      },
+      "security": {
+        "title": "Sicherheit und Daten",
+        "questions": [
+          {
+            "question": "Wie werden die Daten geschützt?",
+            "answer": "Alle Daten werden sicher und verschlüsselt gespeichert. Wir erfüllen die DSGVO-Standards und gewährleisten regelmäßige Sicherungen."
+          },
+          {
+            "question": "Wer hat Zugriff auf die Vereinsdaten?",
+            "answer": "Der Datenzugriff wird streng durch ein Berechtigungssystem kontrolliert. Nur autorisierte Personen können auf sensible Informationen zugreifen."
+          },
+          {
+            "question": "Können wir unsere Daten exportieren?",
+            "answer": "Ja, Sie können Ihre Daten jederzeit in Standardformaten (CSV, Excel) exportieren. Wir erleichtern auch die Migration von anderen Systemen."
+          },
+          {
+            "question": "Wie wird die Servicekontinuität sichergestellt?",
+            "answer": "Unsere Infrastruktur wird auf redundanten Servern mit hoher Verfügbarkeit gehostet. Wir führen tägliche Sicherungen aller Daten durch."
+          }
+        ]
+      }
+    }
+  },
+  "contactPage": {
+    "hero": {
+      "title": "Kontaktieren Sie uns",
+      "subtitle": "Wir sind hier, um zu helfen",
+      "needHelp": "Brauchen Sie Hilfe?",
+      "supportMessage": "Unser Team ist hier, um Sie bei der Verwaltung Ihres Flugvereins zu unterstützen."
+    },
+    "form": {
+      "name": {
+        "label": "Name",
+        "error": "Bitte geben Sie Ihren Namen ein"
+      },
+      "email": {
+        "label": "E-Mail",
+        "error": "Ungültiges E-Mail-Format",
+        "placeholder": "ihre@email.com",
+        "valid": "✓ Gültiges E-Mail-Format"
+      },
+      "phone": {
+        "label": "Telefon",
+        "error": "Ungültiges Telefonformat",
+        "placeholder": "06 12 34 56 78",
+        "valid": "✓ Gültiges Telefonformat"
+      },
+      "contactReason": {
+        "label": "Kontaktgrund",
+        "options": {
+          "general": "Allgemeine Informationsanfrage",
+          "login": "Anmeldeproblem",
+          "payment": "Zahlungsproblem",
+          "bug": "Technischer Fehler",
+          "partnership": "Partnerschaftsanfrage",
+          "training": "Frage zur Ausbildung",
+          "reservations": "Frage zu Reservierungen",
+          "improvement": "Verbesserungsvorschlag",
+          "other": "Sonstiges"
+        }
+      },
+      "customSubject": {
+        "label": "Geben Sie Ihr Anliegen an",
+        "error": "Bitte geben Sie ein Anliegen ein"
+      },
+      "message": {
+        "label": "Nachricht",
+        "error": "Ihre Nachricht ist etwas kurz"
+      },
+      "submit": "Senden",
+      "success": "Nachricht erfolgreich gesendet!",
+      "error": "Fehler beim Senden der Nachricht",
+      "contactRequired": "Bitte geben Sie mindestens eine Kontaktmöglichkeit an",
+      "contactRequiredError": "Bitte geben Sie mindestens eine Kontaktmöglichkeit an (E-Mail oder Telefon)"
+    }
+  },
+  "createClub": {
+    "hero": {
+      "title": "Erstellen Sie Ihren Flugverein",
+      "subtitle": "Starten Sie in nur wenigen Minuten"
+    },
+    "form": {
+      "clubInfo": {
+        "title": "Vereinsinformationen",
+        "name": {
+          "label": "Vereinsname",
+          "placeholder": "Flugverein...",
+          "error": "Vereinsname ist erforderlich"
+        },
+        "icao": {
+          "label": "ICAO-Code",
+          "placeholder": "LFXX",
+          "error": "ICAO-Code muss 4 Zeichen lang sein",
+          "valid": "✓ Gültiges Format"
+        },
+        "address": {
+          "label": "Adresse",
+          "placeholder": "Vereinsadresse",
+          "error": "Adresse ist erforderlich"
+        },
+        "phone": {
+          "label": "Telefon",
+          "placeholder": "06 12 34 56 78",
+          "error": "Ungültiges Telefonformat",
+          "valid": "✓ Gültiges Format"
+        }
+      },
+      "adminInfo": {
+        "title": "Administrator-Informationen",
+        "firstName": {
+          "label": "Vorname",
+          "placeholder": "Ihr Vorname",
+          "error": "Vorname ist erforderlich"
+        },
+        "lastName": {
+          "label": "Nachname",
+          "placeholder": "Ihr Nachname",
+          "error": "Nachname ist erforderlich"
+        },
+        "email": {
+          "label": "E-Mail",
+          "placeholder": "ihre@email.com",
+          "error": "Ungültiges E-Mail-Format",
+          "valid": "✓ Gültiges Format"
+        },
+        "password": {
+          "label": "Passwort",
+          "placeholder": "Mindestens 8 Zeichen",
+          "error": "Passwort muss mindestens 8 Zeichen lang sein",
+          "requirements": {
+            "length": "Mindestens 8 Zeichen",
+            "uppercase": "Ein Großbuchstabe",
+            "lowercase": "Ein Kleinbuchstabe",
+            "number": "Eine Zahl",
+            "special": "Ein Sonderzeichen"
+          }
+        },
+        "confirmPassword": {
+          "label": "Passwort bestätigen",
+          "error": "Passwörter stimmen nicht überein"
+        }
+      },
+      "submit": "Verein erstellen",
+      "success": "Verein erfolgreich erstellt!",
+      "error": "Fehler beim Erstellen des Vereins",
+      "termsAndConditions": {
+        "text": "Ich akzeptiere die",
+        "link": "Nutzungsbedingungen",
+        "error": "Sie müssen die Nutzungsbedingungen akzeptieren"
+      }
+    }
+  },
+  "login": {
+    "hero": {
+      "title": "Willkommen bei 4fly",
+      "subtitle": "Melden Sie sich an, um auf Ihren Bereich zuzugreifen"
+    },
+    "form": {
+      "email": {
+        "label": "E-Mail",
+        "placeholder": "Geben Sie Ihre E-Mail-Adresse ein",
+        "error": "E-Mail ist erforderlich"
+      },
+      "password": {
+        "label": "Passwort",
+        "placeholder": "Geben Sie Ihr Passwort ein",
+        "error": "Passwort ist erforderlich",
+        "toggle": "Passwort ein-/ausblenden"
+      },
+      "rememberMe": "Angemeldet bleiben",
+      "forgotPassword": "Passwort vergessen?",
+      "submit": "Anmelden",
+      "createClub": "Neuen Verein erstellen"
+    },
+    "success": "Erfolgreich angemeldet!",
+    "error": "Ungültige Anmeldedaten",
+    "error": {
+      "unexpected": "Ein unerwarteter Fehler ist aufgetreten"
+    }
+  },
+  "quotes": {
+    "saint-exupery-1": {
+      "text": "Das Flugzeug ist kein Selbstzweck, es ist ein Mittel. Man riskiert sein Leben nicht für ein Flugzeug: So wie der Bauer nicht für seinen Pflug pflügt. Aber durch das Flugzeug verlässt man die Städte und ihre Buchhalter und entdeckt eine bäuerliche Wahrheit.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Flieger und Schriftsteller"
+    },
+    "saint-exupery-2": {
+      "text": "Die Erde lehrt uns mehr über uns selbst als alle Bücher. Weil sie uns Widerstand leistet. Der Mensch entdeckt sich selbst, wenn er sich mit dem Hindernis misst.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Flieger und Schriftsteller"
+    },
+    "guillaumet-1": {
+      "text": "Was rettet, ist einen Schritt zu tun. Noch einen Schritt. Es ist immer der gleiche Schritt, den man wiederholt.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale-Pilot"
+    },
+    "dassault-1": {
+      "text": "Ein schönes Flugzeug ist ein Flugzeug, das gut fliegt.",
+      "author": "Marcel Dassault",
+      "role": "Flugzeughersteller"
+    },
+    "saint-exupery-3": {
+      "text": "In der Luft hält nichts den Vogel, außer seinem eigenen Willen, nicht zu fallen.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Flieger und Schriftsteller"
+    },
+    "mermoz-1": {
+      "text": "Ich sah das Antlitz Gottes. Es war in den Wolken, im Wind, in den Sternen. Ich sah es am Himmel.",
+      "author": "Jean Mermoz",
+      "role": "Aéropostale-Pionier"
+    },
+    "guillaumet-2": {
+      "text": "Die schönste aller Reisen ist die, die wir noch nicht gemacht haben.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale-Pilot"
+    },
+    "dassault-2": {
+      "text": "Das Flugzeug ist vielleicht die schönste Maschine, die der Mensch je erschaffen hat. Es ist dem Lebendigen am nächsten.",
+      "author": "Marcel Dassault",
+      "role": "Flugzeughersteller"
+    },
+    "garros-1": {
+      "text": "Die Luft ist ein dichtes Fluid, in dem wir feste Formen formen können.",
+      "author": "Roland Garros",
+      "role": "Luftfahrtpionier"
+    },
+    "daurat-1": {
+      "text": "Wenn man über den Wolken fliegt, versteht man, warum die Vögel singen.",
+      "author": "Didier Daurat",
+      "role": "Aéropostale-Direktor"
+    },
+    "bleriot-1": {
+      "text": "Der Flug ist ein immerwährender Sieg, den wir über die Schwerkraft erringen.",
+      "author": "Louis Blériot",
+      "role": "Luftfahrtpionier"
+    },
+    "lindbergh-1": {
+      "text": "Die Luftfahrt ist eine anspruchsvolle Geliebte. Sie verzeiht keine Fehler, aber sie belohnt die Leidenschaft.",
+      "author": "Charles Lindbergh",
+      "role": "Flieger"
+    },
+    "mermoz-2": {
+      "text": "Am Himmel gibt es keine Straßen. Es gibt nur Sterne und Träume.",
+      "author": "Jean Mermoz",
+      "role": "Aéropostale-Pionier"
+    },
+    "boucher-1": {
+      "text": "Fliegen könnte bedeuten, den Engeln ein wenig näher zu kommen.",
+      "author": "Hélène Boucher",
+      "role": "Pionierin der Luftfahrt"
+    },
+    "guillaumet-3": {
+      "text": "Der Pilot, der keine Angst hat, ist ein toter Pilot. Mut bedeutet, seine Angst zu beherrschen.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale-Pilot"
+    }
+  }
+}
