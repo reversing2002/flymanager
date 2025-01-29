@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from '@mui/material/styles';
@@ -89,18 +89,26 @@ import Pricing from "./components/public/pages/Pricing";
 import { Contact } from './components/public/pages/Contact';
 import NewsPage from "./components/public/pages/NewsPage";
 import NewsDetail from "./components/public/pages/NewsDetail";
+import useLanguageRedirect from './hooks/useLanguageRedirect';
 
 // Initialiser dayjs avec la locale francaise
 dayjs.locale('fr');
 
+const defaultLanguage = 'fr';
+
+const LanguageRedirectWrapper = () => {
+  useLanguageRedirect();
+  return null;
+};
+
 const App = () => {
   const queryClient = new QueryClient();
   const hostname = window.location.hostname;
-  const isClubSubdomain = hostname.includes('.4fly.io') && !hostname.startsWith('www');
+  const isClubSubdomain = hostname.includes('.linked.fr') && hostname !== 'app.linked.fr';
   const clubCode = isClubSubdomain ? hostname.split('.')[0] : null;
 
   console.log('App - Hostname:', hostname);
-  console.log('App - Current Path:', window.location.pathname);
+  console.log('App - Is Club Subdomain:', isClubSubdomain);
   console.log('App - Club Code:', clubCode);
 
   return (
@@ -109,6 +117,7 @@ const App = () => {
         <ThemeProvider theme={theme}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Router>
+              <LanguageRedirectWrapper />
               {isClubSubdomain ? (
                 <ClubRouter clubCode={clubCode} />
               ) : (
@@ -117,32 +126,43 @@ const App = () => {
                   <Toaster
                     position="top-right"
                     toastOptions={{
-                      duration: 4000,
-                      style: {
-                        background: '#ffffff',
-                        color: '#333333',
-                      },
+                      duration: 3000,
                     }}
                   />
                   <Routes>
                     {/* Route pour les sites de club - disponible dans tous les environnements */}
                     <Route path="/club/:clubCode/*" element={<ClubRouter />} />
 
-                    {/* Pages publiques */}
+                    {/* Pages publiques avec préfixe de langue */}
                     <Route element={<PublicLayout />}>
-                      <Route index element={<RootPage />} />
-                      <Route path="/about" element={<AboutUsPage />} />
-                      <Route path="/features" element={<FeaturesPage />} />
-                      <Route path="/tarifs" element={<PricingPage />} />
-                      <Route path="/faq" element={<FAQPage />} />
-                      <Route path="/cgv" element={<CGVPage />} />
-                      <Route path="/rgpd" element={<RGPDPage />} />
-                      <Route path="/contact" element={<ContactPage />} />
-                      <Route path="/legal" element={<LegalPage />} />
-                      <Route path="/reset-password" element={<ResetPasswordPage />} />
-                      <Route path="/update-password" element={<UpdatePasswordPage />} />
-                      <Route path="/login" element={<LoginPage />} />
-                      <Route path="/create-club" element={<CreateClubPage />} />
+                      <Route path="/" element={<RootPage />} />
+                      <Route path="/:lang" element={<RootPage />} />
+                      <Route path="/:lang/about" element={<AboutUsPage />} />
+                      <Route path="/:lang/features" element={<FeaturesPage />} />
+                      <Route path="/:lang/pricing" element={<PricingPage />} />
+                      <Route path="/:lang/faq" element={<FAQPage />} />
+                      <Route path="/:lang/cgv" element={<CGVPage />} />
+                      <Route path="/:lang/rgpd" element={<RGPDPage />} />
+                      <Route path="/:lang/contact" element={<ContactPage />} />
+                      <Route path="/:lang/legal" element={<LegalPage />} />
+                      <Route path="/:lang/reset-password" element={<ResetPasswordPage />} />
+                      <Route path="/:lang/update-password" element={<UpdatePasswordPage />} />
+                      <Route path="/:lang/login" element={<LoginPage />} />
+                      <Route path="/:lang/create-club" element={<CreateClubPage />} />
+                      
+                      {/* Routes sans préfixe de langue (redirection) */}
+                      <Route path="/about" element={<Navigate to={`/${defaultLanguage}/about`} replace />} />
+                      <Route path="/features" element={<Navigate to={`/${defaultLanguage}/features`} replace />} />
+                      <Route path="/pricing" element={<Navigate to={`/${defaultLanguage}/pricing`} replace />} />
+                      <Route path="/faq" element={<Navigate to={`/${defaultLanguage}/faq`} replace />} />
+                      <Route path="/cgv" element={<Navigate to={`/${defaultLanguage}/cgv`} replace />} />
+                      <Route path="/rgpd" element={<Navigate to={`/${defaultLanguage}/rgpd`} replace />} />
+                      <Route path="/contact" element={<Navigate to={`/${defaultLanguage}/contact`} replace />} />
+                      <Route path="/legal" element={<Navigate to={`/${defaultLanguage}/legal`} replace />} />
+                      <Route path="/reset-password" element={<Navigate to={`/${defaultLanguage}/reset-password`} replace />} />
+                      <Route path="/update-password" element={<Navigate to={`/${defaultLanguage}/update-password`} replace />} />
+                      <Route path="/login" element={<Navigate to={`/${defaultLanguage}/login`} replace />} />
+                      <Route path="/create-club" element={<Navigate to={`/${defaultLanguage}/create-club`} replace />} />
                     </Route>
 
                     {/* Routes de vol découverte */}

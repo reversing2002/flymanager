@@ -23,7 +23,7 @@ const PublicNavbar = () => {
     { label: t('nav.home'), path: '/', icon: <HomeIcon className="h-5 w-5" /> },
     { label: t('nav.about'), path: '/about', icon: <InformationCircleIcon className="h-5 w-5" /> },
     { label: t('nav.features'), path: '/features', icon: <FeaturesIcon className="h-5 w-5" /> },
-    { label: t('nav.pricing'), path: '/tarifs', icon: <CreditCardIcon className="h-5 w-5" /> },
+    { label: t('nav.pricing'), path: '/pricing', icon: <CreditCardIcon className="h-5 w-5" /> },
     { label: t('nav.faq'), path: '/faq', icon: <HelpIcon className="h-5 w-5" /> },
     { label: t('nav.contact'), path: '/contact', icon: <ContactIcon className="h-5 w-5" /> },
   ];

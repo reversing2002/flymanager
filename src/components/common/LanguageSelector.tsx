@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconButton, Menu, MenuItem } from '@mui/material';
+import { IconButton, Menu, MenuItem, alpha } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
 import { motion, AnimatePresence } from 'framer-motion';
+import useLanguageNavigation from '../../hooks/useLanguageNavigation';
 
 const languages = [
   { code: 'fr', name: '🇫🇷 FR' },
@@ -12,7 +13,8 @@ const languages = [
 ];
 
 const LanguageSelector: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { changeLanguage, currentLanguage } = useLanguageNavigation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -23,52 +25,82 @@ const LanguageSelector: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const changeLanguage = (code: string) => {
-    i18n.changeLanguage(code);
+  const handleLanguageChange = (code: string) => {
+    changeLanguage(code);
     handleClose();
   };
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language)?.name || languages[0].name;
+  const currentLanguageName = languages.find(lang => lang.code === currentLanguage)?.name || languages[0].name;
 
   return (
-    <div className="text-gray-300 hover:text-white">
+    <div className="relative">
       <IconButton
         onClick={handleClick}
         size="small"
-        className="text-inherit hover:text-inherit"
-        aria-label="select language"
+        className="transition-all duration-200 ease-in-out hover:bg-gray-700/50"
+        sx={{
+          color: 'text.secondary',
+          '&:hover': {
+            backgroundColor: alpha('#fff', 0.1),
+          },
+        }}
+        aria-label={t('common.selectLanguage')}
       >
         <motion.div
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-1"
+          className="flex items-center gap-2"
         >
-          <LanguageIcon className="h-5 w-5 text-gray-400" />
-          <span className="text-sm font-medium hidden sm:inline text-gray-400">
-            {currentLanguage}
+          <LanguageIcon className="h-5 w-5" />
+          <span className="text-sm font-medium hidden sm:inline">
+            {currentLanguageName}
           </span>
         </motion.div>
       </IconButton>
+
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
-        PaperProps={{
-          className: 'bg-gray-800 mt-2',
-          elevation: 3
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        sx={{
+          '& .MuiPaper-root': {
+            backgroundColor: 'rgb(31, 41, 55)',
+            borderRadius: '0.5rem',
+            border: '1px solid rgb(75, 85, 99)',
+            marginTop: '0.5rem',
+            minWidth: '120px',
+          },
+          '& .MuiMenuItem-root': {
+            fontSize: '0.875rem',
+            padding: '0.5rem 1rem',
+            color: 'rgb(209, 213, 219)',
+            '&:hover': {
+              backgroundColor: 'rgb(55, 65, 81)',
+            },
+            '&.Mui-selected': {
+              backgroundColor: 'rgb(55, 65, 81)',
+              '&:hover': {
+                backgroundColor: 'rgb(75, 85, 99)',
+              },
+            },
+          },
         }}
       >
         <AnimatePresence>
           {languages.map((lang) => (
             <MenuItem
               key={lang.code}
-              onClick={() => changeLanguage(lang.code)}
-              selected={i18n.language === lang.code}
-              className={`
-                text-sm px-4 py-2 
-                ${i18n.language === lang.code ? 'bg-gray-700 text-white' : 'text-gray-300'} 
-                hover:bg-gray-700 hover:text-white
-              `}
+              onClick={() => handleLanguageChange(lang.code)}
+              selected={lang.code === currentLanguage}
+              className="transition-colors duration-200"
             >
               {lang.name}
             </MenuItem>

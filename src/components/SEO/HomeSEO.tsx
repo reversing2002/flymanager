@@ -14,7 +14,7 @@ const HomeSEO: React.FC = () => {
   const getAlternateLanguages = () => {
     return supportedLanguages.map((lang) => ({
       hrefLang: lang,
-      href: `${baseUrl}${lang === 'fr' ? '' : `?lang=${lang}`}`,
+      href: `${baseUrl}/${lang}`,
     }));
   };
 
@@ -29,9 +29,14 @@ const HomeSEO: React.FC = () => {
       <meta property="og:title" content={t('home.meta.title')} />
       <meta property="og:description" content={t('home.meta.description')} />
       <meta property="og:image" content={`${baseUrl}/images/hero-image.jpg`} />
-      <meta property="og:url" content={baseUrl} />
+      <meta property="og:url" content={`${baseUrl}/${currentLanguage}`} />
       <meta property="og:type" content="website" />
       <meta property="og:locale" content={currentLanguage} />
+      {supportedLanguages
+        .filter((lang) => lang !== currentLanguage)
+        .map((lang) => (
+          <meta key={lang} property="og:locale:alternate" content={lang} />
+        ))}
 
       {/* Balises Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
@@ -40,7 +45,7 @@ const HomeSEO: React.FC = () => {
       <meta name="twitter:image" content={`${baseUrl}/images/hero-image.jpg`} />
 
       {/* Liens hreflang pour le SEO multilingue */}
-      <link rel="canonical" href={baseUrl} />
+      <link rel="canonical" href={`${baseUrl}/${currentLanguage}`} />
       {getAlternateLanguages().map(({ hrefLang, href }) => (
         <link
           key={hrefLang}
@@ -49,7 +54,7 @@ const HomeSEO: React.FC = () => {
           href={href}
         />
       ))}
-      <link rel="alternate" hrefLang="x-default" href={baseUrl} />
+      <link rel="alternate" hrefLang="x-default" href={`${baseUrl}/fr`} />
 
       {/* Balises supplémentaires pour l'indexation */}
       <meta name="robots" content="index, follow" />
