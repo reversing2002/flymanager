@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, GripVertical, PlusCircle, Trash2 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import type {
   ProgressionTemplate,
   ProgressionModule,
@@ -31,6 +32,7 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: template?.title || '',
@@ -38,6 +40,18 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
     category: template?.category || '',
     modules: template?.modules || [],
   });
+
+  // Mettre à jour le formulaire quand le template change
+  useEffect(() => {
+    if (template) {
+      setFormData({
+        title: template.title,
+        description: template.description || '',
+        category: template.category,
+        modules: template.modules,
+      });
+    }
+  }, [template]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +62,7 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
 
       // Créer ou mettre à jour le template
       if (template) {
+        // On ne modifie pas is_system et club_id lors de la mise à jour
         await updateProgressionTemplate(template.id, {
           title: formData.title,
           description: formData.description,
@@ -58,6 +73,8 @@ const ProgressionTemplateForm: React.FC<ProgressionTemplateFormProps> = ({
           title: formData.title,
           description: formData.description,
           category: formData.category,
+          is_system: false,
+          club_id: user?.club?.id || null,
         });
         templateId = newTemplate.id;
       }

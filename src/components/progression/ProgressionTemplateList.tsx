@@ -1,8 +1,10 @@
 import React from 'react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2, Shield } from 'lucide-react';
 import type { ProgressionTemplate } from '../../types/progression';
-import { getProgressionTemplates } from '../../lib/queries/progression';
-import { useQuery } from '@tanstack/react-query';
+import { getProgressionTemplates, deleteProgressionTemplate } from '../../lib/queries/progression';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 interface ProgressionTemplateListProps {
   onSelectTemplate: (template: ProgressionTemplate) => void;
@@ -15,10 +17,26 @@ const ProgressionTemplateList: React.FC<ProgressionTemplateListProps> = ({
   onCreateTemplate,
   showCreateButton = false,
 }) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: templates, isLoading, error } = useQuery({
     queryKey: ['progressionTemplates'],
     queryFn: getProgressionTemplates,
   });
+
+  const handleDelete = async (e: React.MouseEvent, template: ProgressionTemplate) => {
+    e.stopPropagation(); // Empêche le clic de sélectionner le template
+    
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce modèle de progression ?')) {
+      try {
+        await deleteProgressionTemplate(template.id);
+        await queryClient.invalidateQueries(['progressionTemplates']);
+        toast.success('Le modèle a été supprimé avec succès');
+      } catch (error) {
+        toast.error('Une erreur est survenue lors de la suppression du modèle');
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -68,16 +86,34 @@ const ProgressionTemplateList: React.FC<ProgressionTemplateListProps> = ({
               <button
                 key={template.id}
                 onClick={() => onSelectTemplate(template)}
-                className="text-left p-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors"
+                className="relative text-left p-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors group"
               >
-                <h4 className="font-medium text-slate-900">
-                  {template.title}
-                </h4>
-                {template.description && (
-                  <p className="mt-1 text-sm text-slate-600 line-clamp-2">
-                    {template.description}
-                  </p>
-                )}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-slate-900">
+                        {template.title}
+                      </h4>
+                      {template.is_system && (
+                        <Shield className="h-4 w-4 text-sky-500" title="Template système" />
+                      )}
+                    </div>
+                    {template.description && (
+                      <p className="mt-1 text-sm text-slate-600 line-clamp-2">
+                        {template.description}
+                      </p>
+                    )}
+                  </div>
+                  {!template.is_system && template.club_id === user?.club_id && (
+                    <button
+                      onClick={(e) => handleDelete(e, template)}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 transition-all"
+                      title="Supprimer le modèle"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </button>
             ))}
           </div>

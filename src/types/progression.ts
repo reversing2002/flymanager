@@ -3,6 +3,8 @@ export interface ProgressionTemplate {
   title: string;
   description: string | null;
   category: string;
+  is_system: boolean;
+  club_id: string | null;
   created_at: string;
   updated_at: string;
 }

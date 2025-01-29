@@ -412,14 +412,25 @@ export default function ProgressionAdminPage() {
       </div>
 
       {showForm && (
-        <ProgressionTemplateForm
-          template={template}
-          onClose={() => {
-            setShowForm(false);
-            setSelectedTemplate(null);
-          }}
-          onSuccess={handleSuccess}
-        />
+        <>
+          {loadingTemplate ? (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto" />
+                <p className="text-slate-600 mt-2">Chargement du template...</p>
+              </div>
+            </div>
+          ) : (
+            <ProgressionTemplateForm
+              template={template}
+              onClose={() => {
+                setShowForm(false);
+                setSelectedTemplate(null);
+              }}
+              onSuccess={handleSuccess}
+            />
+          )}
+        </>
       )}
 
       {showJsonEditor && (
