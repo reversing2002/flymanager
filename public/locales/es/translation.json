@@ -29,25 +29,19 @@
     "learnMore": "Saber más",
     "getStarted": "Empezar",
     "login": "Iniciar sesión",
-    "register": "Registrarse"
-  },
-  "home": {
-    "meta": {
-      "title": "4fly - Software de Gestión de Clubes de Vuelo | Solución Completa Gratuita",
-      "description": "4fly es la solución completa para gestionar tu club de vuelo. Gestión de vuelos, reservas, mantenimiento, formación y más. ¡Pruébalo gratis!"
-    },
-    "title": "Gestiona tu club de vuelo fácilmente",
-    "description": "4fly es una herramienta simple y gratuita para gestionar tu club de aviación, ya sea que tengas 2 o 200 miembros. ¡Adiós a las hojas de cálculo complejas y al papeleo!",
-    "createClub": "Crear mi club",
-    "configurationTime": "Configuración en 2 minutos",
-    "startTitle": "Comienza a hacer crecer tu club",
-    "startDescription": "Configuración en 2 minutos",
-    "startButton": "Empezar gratis"
+    "register": "Registrarse",
+    "legal": "Información legal",
+    "legalMentions": "Aviso legal",
+    "cgv": "Condiciones de venta",
+    "rgpd": "RGPD",
+    "copyright": "MELBA CAPITAL - SASU con capital de 2.700.000€ - RCS Saint-Etienne 840 514 913",
+    "footerDescription": "La solución simple para gestionar tu club de vuelo. Reservas, mantenimiento, facturación... ¡todo está aquí!"
   },
   "nav": {
+    "menu": "Navegación",
     "home": "Inicio",
-    "about": "Nosotros",
-    "features": "Funciones",
+    "about": "Sobre nosotros",
+    "features": "Funcionalidades",
     "pricing": "Precios",
     "faq": "FAQ",
     "contact": "Contacto"
@@ -620,5 +614,18 @@
       "author": "Henri Guillaumet",
       "role": "Piloto de Aéropostale"
     }
+  },
+  "home": {
+    "meta": {
+      "title": "4fly - Software de Gestión de Clubes de Vuelo | Solución Completa Gratuita",
+      "description": "4fly es la solución completa para gestionar tu club de vuelo. Gestión de vuelos, reservas, mantenimiento, formación y más. ¡Pruébalo gratis!"
+    },
+    "title": "Gestiona tu club de vuelo fácilmente",
+    "description": "4fly es una herramienta simple y gratuita para gestionar tu club de aviación, ya sea que tengas 2 o 200 miembros. ¡Adiós a las hojas de cálculo complejas y al papeleo!",
+    "createClub": "Crear mi club",
+    "configurationTime": "Configuración en 2 minutos",
+    "startTitle": "Comienza a hacer crecer tu club",
+    "startDescription": "Configuración en 2 minutos",
+    "startButton": "Empezar gratis"
   }
 }

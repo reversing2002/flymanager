@@ -29,22 +29,16 @@
     "learnMore": "En savoir plus",
     "getStarted": "Commencer",
     "login": "Se connecter",
-    "register": "S'inscrire"
-  },
-  "home": {
-    "meta": {
-      "title": "4fly - Logiciel de Gestion d'Aéroclub | Solution Complète et Gratuite",
-      "description": "4fly est la solution complète pour gérer votre aéroclub. Gestion des vols, réservations, maintenance, formation et plus encore. Essayez gratuitement !"
-    },
-    "title": "Gérez votre aéroclub simplement",
-    "description": "4fly est un outil simple et gratuit pour gérer votre club aéronautique, que vous ayez 2 ou 200 membres. Fini les tableurs complexes et la paperasse !",
-    "createClub": "Créer mon club",
-    "configurationTime": "Configuration en 2 minutes",
-    "startTitle": "Commencez à faire grandir votre club",
-    "startDescription": "Configuration en 2 minutes",
-    "startButton": "Commencer gratuitement"
+    "register": "S'inscrire",
+    "legal": "Informations légales",
+    "legalMentions": "Mentions légales",
+    "cgv": "CGV",
+    "rgpd": "RGPD",
+    "copyright": "MELBA CAPITAL - SASU au capital de 2 700 000€ - RCS Saint-Etienne 840 514 913",
+    "footerDescription": "La solution simple pour gérer votre club aéronautique. Réservations, maintenance, facturation... tout est là !"
   },
   "nav": {
+    "menu": "Navigation",
     "home": "Accueil",
     "about": "À propos",
     "features": "Fonctionnalités",

@@ -29,7 +29,13 @@
     "learnMore": "Mehr erfahren",
     "getStarted": "Loslegen",
     "login": "Anmelden",
-    "register": "Registrieren"
+    "register": "Registrieren",
+    "legal": "Rechtliche Informationen",
+    "legalMentions": "Impressum",
+    "cgv": "AGB",
+    "rgpd": "DSGVO",
+    "copyright": "MELBA CAPITAL - SASU mit einem Kapital von 2.700.000€ - RCS Saint-Etienne 840 514 913",
+    "footerDescription": "Die einfache Lösung zur Verwaltung Ihres Flugclubs. Buchungen, Wartung, Abrechnung... alles ist da!"
   },
   "home": {
     "meta": {
@@ -45,6 +51,7 @@
     "startButton": "Kostenlos starten"
   },
   "nav": {
+    "menu": "Navigation",
     "home": "Startseite",
     "about": "Über uns",
     "features": "Funktionen",
