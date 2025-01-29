@@ -1,4 +1,71 @@
 {
+  "rgpd": {
+    "title": "Data Protection Policy",
+    "introduction": {
+      "title": "Introduction",
+      "content": "4fly is committed to protecting the privacy of users of its flying club management platform. This data protection policy explains how we collect, use and protect your personal information."
+    },
+    "dataCollected": {
+      "title": "Data Collected",
+      "intro": "We collect the following information:",
+      "items": [
+        "Identification information (name, surname, email)",
+        "Aviation license and qualification data",
+        "Flight and booking information",
+        "Training and progression data",
+        "Payment information (processed securely)"
+      ]
+    },
+    "dataUsage": {
+      "title": "Data Usage",
+      "intro": "Your data is used to:",
+      "items": [
+        "Manage bookings and flights",
+        "Track aircraft maintenance",
+        "Manage student training and progression",
+        "Process payments",
+        "Communicate important club information"
+      ]
+    },
+    "dataProtection": {
+      "title": "Data Protection",
+      "intro": "We implement technical and organizational security measures to protect your data:",
+      "items": [
+        "Encryption of sensitive data",
+        "Restricted access to personal data",
+        "Regular and secure backups",
+        "Continuous security monitoring"
+      ]
+    },
+    "rights": {
+      "title": "Your Rights",
+      "intro": "In accordance with GDPR, you have the following rights:",
+      "items": [
+        "Right to access your personal data",
+        "Right to rectify inaccurate data",
+        "Right to erasure of your data",
+        "Right to restrict processing",
+        "Right to data portability",
+        "Right to object to processing"
+      ]
+    },
+    "contact": {
+      "title": "Contact",
+      "content": "For any questions regarding the protection of your data or to exercise your rights, you can contact us at: privacy@4fly.io"
+    },
+    "update": {
+      "title": "Update",
+      "content": "This data protection policy may be updated periodically. Last update: {{date}}."
+    }
+  },
+  "common": {
+    "locale": "en-US",
+    "legal": "Legal Information",
+    "legalMentions": "Legal Notice",
+    "cgv": "Terms of Sale",
+    "copyright": "MELBA CAPITAL - SASU with capital of €2,700,000 - RCS Saint-Etienne 840 514 913",
+    "footerDescription": "The simple solution to manage your flying club. Bookings, maintenance, billing... everything is here!"
+  },
   "features": {
     "flightManagement": {
       "title": "Flight Management",
@@ -24,19 +91,6 @@
       "title": "Member Management",
       "description": "Efficient club member administration"
     }
-  },
-  "common": {
-    "locale": "en-US",
-    "learnMore": "Learn More",
-    "getStarted": "Get Started",
-    "login": "Log In",
-    "register": "Sign Up",
-    "legal": "Legal Information",
-    "legalMentions": "Legal Notice",
-    "cgv": "Terms of Sale",
-    "rgpd": "GDPR",
-    "copyright": "MELBA CAPITAL - SASU with capital of €2,700,000 - RCS Saint-Etienne 840 514 913",
-    "footerDescription": "The simple solution to manage your flying club. Bookings, maintenance, billing... everything is here!"
   },
   "home": {
     "meta": {

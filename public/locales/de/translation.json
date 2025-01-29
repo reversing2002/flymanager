@@ -34,9 +34,67 @@
     "legal": "Rechtliche Hinweise",
     "legalMentions": "Impressum",
     "cgv": "AGB",
-    "rgpd": "DSGVO",
     "copyright": "MELBA CAPITAL - SASU mit einem Kapital von 2.700.000€ - RCS Saint-Etienne 840 514 913",
     "footerDescription": "Die einfache Lösung zur Verwaltung Ihres Flugclubs. Buchungen, Wartung, Abrechnung... alles ist da!"
+  },
+  "rgpd": {
+    "title": "Datenschutzrichtlinie",
+    "introduction": {
+      "title": "Einführung",
+      "content": "4fly verpflichtet sich zum Schutz der Privatsphäre der Nutzer seiner Flugvereinsverwaltungsplattform. Diese Datenschutzrichtlinie erläutert, wie wir Ihre personenbezogenen Daten erheben, verwenden und schützen."
+    },
+    "dataCollected": {
+      "title": "Erhobene Daten",
+      "intro": "Wir erheben folgende Informationen:",
+      "items": [
+        "Identifikationsdaten (Name, Vorname, E-Mail)",
+        "Fluglizenz- und Qualifikationsdaten",
+        "Flug- und Buchungsinformationen",
+        "Ausbildungs- und Fortschrittsdaten",
+        "Zahlungsinformationen (sicher verarbeitet)"
+      ]
+    },
+    "dataUsage": {
+      "title": "Datennutzung",
+      "intro": "Ihre Daten werden verwendet für:",
+      "items": [
+        "Verwaltung von Buchungen und Flügen",
+        "Überwachung der Flugzeugwartung",
+        "Verwaltung der Schülerausbildung und -fortschritte",
+        "Zahlungsabwicklung",
+        "Kommunikation wichtiger Vereinsinformationen"
+      ]
+    },
+    "dataProtection": {
+      "title": "Datenschutz",
+      "intro": "Wir setzen technische und organisatorische Sicherheitsmaßnahmen zum Schutz Ihrer Daten ein:",
+      "items": [
+        "Verschlüsselung sensibler Daten",
+        "Eingeschränkter Zugriff auf personenbezogene Daten",
+        "Regelmäßige und sichere Backups",
+        "Kontinuierliche Sicherheitsüberwachung"
+      ]
+    },
+    "rights": {
+      "title": "Ihre Rechte",
+      "intro": "Gemäß DSGVO haben Sie folgende Rechte:",
+      "items": [
+        "Recht auf Zugang zu Ihren personenbezogenen Daten",
+        "Recht auf Berichtigung ungenauer Daten",
+        "Recht auf Löschung Ihrer Daten",
+        "Recht auf Einschränkung der Verarbeitung",
+        "Recht auf Datenübertragbarkeit",
+        "Recht auf Widerspruch gegen die Verarbeitung"
+      ]
+    },
+    "contact": {
+      "title": "Kontakt",
+      "content": "Bei Fragen zum Schutz Ihrer Daten oder zur Ausübung Ihrer Rechte können Sie uns unter folgender Adresse kontaktieren: privacy@4fly.io"
+    },
+    "update": {
+      "title": "Aktualisierung",
+      "content": "Diese Datenschutzrichtlinie kann regelmäßig aktualisiert werden. Letzte Aktualisierung: {{date}}."
+    }
   },
   "home": {
     "meta": {

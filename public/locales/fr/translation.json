@@ -1,4 +1,63 @@
 {
+  "rgpd": {
+    "title": "Politique de Protection des Données",
+    "introduction": {
+      "title": "Introduction",
+      "content": "4fly s'engage à protéger la vie privée des utilisateurs de sa plateforme de gestion d'aéroclub. Cette politique de protection des données explique comment nous collectons, utilisons et protégeons vos informations personnelles."
+    },
+    "dataCollected": {
+      "title": "Données Collectées",
+      "intro": "Nous collectons les informations suivantes :",
+      "items": [
+        "Informations d'identification (nom, prénom, email)",
+        "Données de licence et qualifications aéronautiques",
+        "Informations de vol et de réservation",
+        "Données de formation et de progression",
+        "Informations de paiement (traitées de manière sécurisée)"
+      ]
+    },
+    "dataUsage": {
+      "title": "Utilisation des Données",
+      "intro": "Vos données sont utilisées pour :",
+      "items": [
+        "Gérer les réservations et les vols",
+        "Assurer le suivi de la maintenance des appareils",
+        "Gérer la formation et la progression des élèves",
+        "Traiter les paiements",
+        "Communiquer des informations importantes relatives au club"
+      ]
+    },
+    "dataProtection": {
+      "title": "Protection des Données",
+      "intro": "Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles pour protéger vos données :",
+      "items": [
+        "Chiffrement des données sensibles",
+        "Accès restreint aux données personnelles",
+        "Sauvegardes régulières et sécurisées",
+        "Surveillance continue de la sécurité"
+      ]
+    },
+    "rights": {
+      "title": "Vos Droits",
+      "intro": "Conformément au RGPD, vous disposez des droits suivants :",
+      "items": [
+        "Droit d'accès à vos données personnelles",
+        "Droit de rectification des données inexactes",
+        "Droit à l'effacement de vos données",
+        "Droit à la limitation du traitement",
+        "Droit à la portabilité de vos données",
+        "Droit d'opposition au traitement"
+      ]
+    },
+    "contact": {
+      "title": "Contact",
+      "content": "Pour toute question concernant la protection de vos données ou pour exercer vos droits, vous pouvez nous contacter à l'adresse : privacy@4fly.io"
+    },
+    "update": {
+      "title": "Mise à Jour",
+      "content": "Cette politique de protection des données peut être mise à jour périodiquement. La dernière mise à jour date du {{date}}."
+    }
+  },
   "features": {
     "flightManagement": {
       "title": "Gestion des Vols",
@@ -6,15 +65,15 @@
     },
     "reservations": {
       "title": "Réservations",
-      "description": "Système de réservation en ligne 24/7"
+      "description": "Système de réservation en ligne 24/7 avec gestion des conflits et des disponibilités en temps réel."
     },
     "maintenance": {
       "title": "Maintenance",
-      "description": "Suivi de maintenance et alertes automatiques"
+      "description": "Suivi détaillé de la maintenance avec alertes automatiques et gestion des potentiels."
     },
     "training": {
       "title": "Formation",
-      "description": "Gestion complète de la formation des élèves"
+      "description": "Gestion complète de la formation avec suivi pédagogique et progression des élèves."
     },
     "payments": {
       "title": "Paiements",
@@ -34,7 +93,6 @@
     "legal": "Informations légales",
     "legalMentions": "Mentions légales",
     "cgv": "CGV",
-    "rgpd": "RGPD",
     "copyright": "MELBA CAPITAL - SASU au capital de 2 700 000€ - RCS Saint-Etienne 840 514 913",
     "footerDescription": "La solution simple pour gérer votre club aéronautique. Réservations, maintenance, facturation... tout est là !"
   },
