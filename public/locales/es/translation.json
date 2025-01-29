@@ -26,13 +26,14 @@
     }
   },
   "common": {
+    "locale": "es-ES",
     "learnMore": "Saber más",
     "getStarted": "Empezar",
     "login": "Iniciar sesión",
     "register": "Registrarse",
     "legal": "Información legal",
     "legalMentions": "Aviso legal",
-    "cgv": "Condiciones de venta",
+    "cgv": "Términos y Condiciones de Venta",
     "rgpd": "RGPD",
     "copyright": "MELBA CAPITAL - SASU con capital de 2.700.000€ - RCS Saint-Etienne 840 514 913",
     "footerDescription": "La solución simple para gestionar tu club de vuelo. Reservas, mantenimiento, facturación... ¡todo está aquí!"
@@ -47,30 +48,29 @@
     "contact": "Contacto"
   },
   "pricing": {
-    "title": "Crece con 4fly",
-    "subtitle": "Una solución que se adapta al crecimiento de tu club",
+    "title": "Elige tu plan",
+    "subtitle": "Todas las funciones están disponibles desde el principio: reservas, horarios, mantenimiento, formación, facturación... ¡Cuanto más vuelas, más crece tu club, más te apoya 4fly!",
     "plans": {
       "starter": {
         "name": "Inicio",
+        "volume": "Hasta 1000h/año",
+        "price": "Gratis",
         "description": "Comienza tu aventura con 4fly gratis y descubre todas las herramientas para hacer despegar tu club",
-        "hours": "Hasta 1000h/año",
-        "price": "Gratis"
+        "cta": "Empezar gratis"
       },
       "growth": {
         "name": "Crecimiento",
-        "description": "¿Tu club está creciendo? 4fly evoluciona contigo para apoyar tu crecimiento",
-        "hours": "1000h a 3000h/año",
-        "price": "0,50€/hora de vuelo"
+        "volume": "1000h a 3000h/año",
+        "price": "0,50€/hora de vuelo + IVA",
+        "description": "¿Tu club está creciendo? 4fly evoluciona contigo para apoyar tu crecimiento"
       },
       "performance": {
         "name": "Rendimiento",
-        "description": "Obtén soporte personalizado para optimizar la gestión de tu actividad",
-        "hours": "3000h+/año",
-        "price": "Personalizado"
+        "volume": "3000h+/año",
+        "price": "Personalizado",
+        "description": "Obtén soporte personalizado para optimizar la gestión de tu actividad"
       }
-    },
-    "startFree": "Empezar gratis",
-    "footer": "Todas las funciones están disponibles desde el inicio: reservas, horarios, mantenimiento, formación, facturación... ¡Cuanto más vueles, más crece tu club, más te apoya 4fly!"
+    }
   },
   "about": {
     "hero": {
@@ -627,5 +627,84 @@
     "startTitle": "Comienza a hacer crecer tu club",
     "startDescription": "Configuración en 2 minutos",
     "startButton": "Empezar gratis"
+  },
+  "legal": {
+    "title": "Aviso Legal",
+    "publisher": {
+      "title": "Editor del sitio",
+      "company": "Empresa",
+      "legalForm": "Forma jurídica",
+      "legalFormValue": "SASU (Sociedad por acciones simplificada unipersonal)",
+      "address": "Domicilio social",
+      "rcs": "Número RCS",
+      "capital": "Capital social",
+      "vat": "Número de IVA"
+    },
+    "hosting": {
+      "title": "Alojamiento",
+      "provider": "Proveedor",
+      "company": "Empresa",
+      "address": "Dirección"
+    },
+    "dataProtection": {
+      "title": "Protección de datos personales",
+      "description": "De conformidad con la Ley francesa de Protección de Datos modificada del 6 de enero de 1978 y el Reglamento General de Protección de Datos (RGPD), usted tiene derecho a acceder, rectificar, eliminar y oponerse a sus datos personales.",
+      "rights": "Para ejercer estos derechos, puede contactarnos:",
+      "email": "Por correo electrónico",
+      "mail": "Por correo postal"
+    },
+    "intellectualProperty": {
+      "title": "Propiedad intelectual",
+      "description": "Todo el contenido de este sitio (estructura, textos, imágenes, logotipos, base de datos...) es propiedad exclusiva de MELBA CAPITAL. Queda prohibida cualquier reproducción, representación, modificación, publicación, transmisión, alteración, total o parcial, del sitio o su contenido, por cualquier procedimiento y en cualquier soporte, sin la autorización previa por escrito de MELBA CAPITAL."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "description": "Este sitio utiliza cookies necesarias para su correcto funcionamiento. Una cookie es un pequeño archivo de texto almacenado en su ordenador. Las cookies que utilizamos no permiten identificarle personalmente. Simplemente nos permiten mejorar su experiencia de usuario y medir el tráfico del sitio.",
+      "consent": "Al utilizar nuestro sitio, acepta el uso de cookies de acuerdo con nuestra política de privacidad."
+    },
+    "links": {
+      "title": "Enlaces",
+      "description": "El sitio 4fly.fr puede contener enlaces a otros sitios. MELBA CAPITAL no es responsable del contenido ni de la política de privacidad de estos sitios."
+    }
+  },
+  "cgv": {
+    "title": "Términos y Condiciones de Venta",
+    "lastUpdate": "Última actualización: {{date}}",
+    "article1": {
+      "title": "Artículo 1 - Objeto",
+      "content": "Estos términos y condiciones de venta rigen el uso de la plataforma 4fly, una solución de gestión para aeroclubes. Estas condiciones se aplican con exclusión de cualquier otra condición."
+    },
+    "article2": {
+      "title": "Artículo 2 - Servicios",
+      "content": "4fly ofrece una plataforma de gestión completa que incluye:\n- Gestión de reservas de aeronaves\n- Seguimiento de mantenimiento\n- Gestión de formación\n- Administración de miembros\n- Facturación y pagos\n- Herramientas de comunicación"
+    },
+    "article3": {
+      "title": "Artículo 3 - Precios",
+      "content": "4fly ofrece tres planes de precios adaptados a tu actividad:\n\n1. Plan Inicio (Gratis):\n- Para clubes hasta 1000 horas de vuelo al año\n- Acceso a todas las funciones\n- Soporte por correo electrónico\n\n2. Plan Crecimiento (0,50€/hora de vuelo + IVA):\n- Para clubes de 1000 a 3000 horas de vuelo al año\n- Todas las funciones incluidas\n- Soporte prioritario\n\n3. Plan Rendimiento (Personalizado):\n- Para clubes de más de 3000 horas de vuelo al año\n- Todas las funciones incluidas\n- Alojamiento personalizado\n- Formación in situ\n- Soporte VIP 24/7\n- Gestor de cuenta dedicado"
+    },
+    "article4": {
+      "title": "Artículo 4 - Obligaciones",
+      "content": "4fly se compromete a:\n- Garantizar la disponibilidad y el mantenimiento de la plataforma\n- Proteger los datos de los usuarios\n- Proporcionar soporte técnico\n\nEl usuario se compromete a:\n- Proporcionar información precisa\n- Cumplir con los términos de uso\n- No hacer un uso indebido de la plataforma"
+    },
+    "article5": {
+      "title": "Artículo 5 - Datos Personales",
+      "content": "4fly recopila y procesa datos personales de acuerdo con el RGPD. Los usuarios tienen derecho a acceder, rectificar y eliminar sus datos."
+    },
+    "article6": {
+      "title": "Artículo 6 - Propiedad Intelectual",
+      "content": "Todos los elementos de la plataforma 4fly (logo, textos, imágenes, etc.) están protegidos por derechos de propiedad intelectual. Cualquier reproducción está prohibida sin autorización previa."
+    },
+    "article7": {
+      "title": "Artículo 7 - Responsabilidad",
+      "content": "4fly no será responsable de los daños indirectos resultantes del uso de la plataforma. La responsabilidad está limitada al monto de los servicios pagados por el usuario."
+    },
+    "article8": {
+      "title": "Artículo 8 - Terminación",
+      "content": "Cada parte puede terminar el uso de los servicios bajo las condiciones previstas. En caso de incumplimiento grave, la terminación puede ser inmediata."
+    },
+    "article9": {
+      "title": "Artículo 9 - Ley Aplicable",
+      "content": "Estos términos y condiciones están sujetos a la ley francesa. Cualquier disputa cae bajo la jurisdicción exclusiva de los tribunales franceses."
+    }
   }
 }

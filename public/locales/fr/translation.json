@@ -26,6 +26,7 @@
     }
   },
   "common": {
+    "locale": "fr-FR",
     "learnMore": "En savoir plus",
     "getStarted": "Commencer",
     "login": "Se connecter",
@@ -47,30 +48,29 @@
     "contact": "Contact"
   },
   "pricing": {
-    "title": "Évoluez avec 4fly",
-    "subtitle": "Une solution qui s'adapte à la croissance de votre club",
+    "title": "Choisissez votre formule",
+    "subtitle": "Toutes les fonctionnalités sont disponibles dès le début : réservations, plannings, maintenance, formations, facturation... Plus vous volez, plus votre club grandit, plus 4fly vous accompagne !",
     "plans": {
       "starter": {
         "name": "Démarrage",
+        "volume": "Jusqu'à 1000h/an",
+        "price": "Gratuit",
         "description": "Commencez votre aventure avec 4fly gratuitement et découvrez tous les outils pour faire décoller votre club",
-        "hours": "Jusqu'à 1000h/an",
-        "price": "Gratuit"
+        "cta": "Commencer gratuitement"
       },
       "growth": {
         "name": "Croissance",
-        "description": "Votre club se développe ? 4fly évolue avec vous pour soutenir votre croissance",
-        "hours": "1000h à 3000h/an",
-        "price": "0,50€/h de vol"
+        "volume": "1000h à 3000h/an",
+        "price": "0,50€ HT/h de vol",
+        "description": "Votre club se développe ? 4fly évolue avec vous pour soutenir votre croissance"
       },
       "performance": {
         "name": "Performance",
-        "description": "Profitez d'un accompagnement personnalisé pour optimiser la gestion de votre activité",
-        "hours": "3000h+/an",
-        "price": "Sur mesure"
+        "volume": "3000h+/an",
+        "price": "Sur mesure",
+        "description": "Profitez d'un accompagnement personnalisé pour optimiser la gestion de votre activité"
       }
-    },
-    "startFree": "Commencer gratuitement",
-    "footer": "Toutes les fonctionnalités sont disponibles dès le début : réservations, plannings, maintenance, formations, facturation... Plus vous volez, plus votre club grandit, plus 4fly vous accompagne !"
+    }
   },
   "about": {
     "hero": {
@@ -245,7 +245,7 @@
           },
           {
             "question": "Comment fonctionne le modèle de tarification ?",
-            "answer": "Notre modèle est simple : gratuit jusqu'à 1000 heures de vol par an, puis 0,50€ par heure de vol sur la totalité des heures. Pour les grands clubs dépassant 3000 heures annuelles, nous proposons des offres sur mesure. Toutes les fonctionnalités sont incluses dès le début."
+            "answer": "Notre modèle est simple : gratuit jusqu'à 1000 heures de vol par an, puis 0,50€ HT par heure de vol sur la totalité des heures. Pour les grands clubs dépassant 3000 heures annuelles, nous proposons des offres sur mesure. Toutes les fonctionnalités sont incluses dès le début."
           },
           {
             "question": "Y a-t-il des frais cachés ?",
@@ -613,6 +613,85 @@
       "text": "Le pilote qui n'a pas peur est un pilote mort. Le courage, c'est de dominer sa peur.",
       "author": "Henri Guillaumet",
       "role": "Pilote de l'Aéropostale"
+    }
+  },
+  "cgv": {
+    "title": "Conditions Générales de Vente",
+    "lastUpdate": "Dernière mise à jour : {{date}}",
+    "article1": {
+      "title": "Article 1 - Objet",
+      "content": "Les présentes conditions générales de vente (CGV) régissent l'utilisation de la plateforme 4fly, solution de gestion pour aéro-clubs. Ces conditions s'appliquent à l'exclusion de toutes autres conditions."
+    },
+    "article2": {
+      "title": "Article 2 - Services",
+      "content": "4fly propose une plateforme de gestion complète incluant :\n- Gestion des réservations d'aéronefs\n- Suivi de la maintenance\n- Gestion des formations\n- Administration des membres\n- Facturation et paiements\n- Outils de communication"
+    },
+    "article3": {
+      "title": "Article 3 - Tarification",
+      "content": "4fly propose trois formules tarifaires adaptées à votre activité :\n\n1. Formule Démarrage (Gratuit) :\n- Pour les clubs jusqu'à 1000 heures de vol par an\n- Accès à toutes les fonctionnalités\n- Support par email\n\n2. Formule Croissance (0,50€ HT/h de vol) :\n- Pour les clubs de 1000 à 3000 heures de vol par an\n- Toutes les fonctionnalités incluses\n- Support prioritaire\n\n3. Formule Performance (Sur mesure) :\n- Pour les clubs de plus de 3000 heures de vol par an\n- Toutes les fonctionnalités incluses\n- Hébergement personnalisé\n- Formation sur site\n- Support VIP 24/7\n- Account manager dédié"
+    },
+    "article4": {
+      "title": "Article 4 - Obligations",
+      "content": "4fly s'engage à :\n- Assurer la disponibilité et la maintenance de la plateforme\n- Sécuriser les données des utilisateurs\n- Fournir un support technique\n\nL'utilisateur s'engage à :\n- Fournir des informations exactes\n- Respecter les conditions d'utilisation\n- Ne pas détourner l'usage de la plateforme"
+    },
+    "article5": {
+      "title": "Article 5 - Données Personnelles",
+      "content": "4fly collecte et traite les données personnelles conformément au RGPD. Les utilisateurs disposent d'un droit d'accès, de rectification et de suppression de leurs données."
+    },
+    "article6": {
+      "title": "Article 6 - Propriété Intellectuelle",
+      "content": "L'ensemble des éléments de la plateforme 4fly (logo, textes, images, etc.) sont protégés par le droit de la propriété intellectuelle. Toute reproduction est interdite sans autorisation préalable."
+    },
+    "article7": {
+      "title": "Article 7 - Responsabilité",
+      "content": "4fly ne pourra être tenue responsable des dommages indirects résultant de l'utilisation de la plateforme. La responsabilité est limitée au montant des services payés par l'utilisateur."
+    },
+    "article8": {
+      "title": "Article 8 - Résiliation",
+      "content": "Chaque partie peut résilier l'utilisation des services dans les conditions prévues. En cas de manquement grave, la résiliation peut être immédiate."
+    },
+    "article9": {
+      "title": "Article 9 - Droit Applicable",
+      "content": "Les présentes CGV sont soumises au droit français. Tout litige relève de la compétence exclusive des tribunaux français."
+    }
+  },
+  "legal": {
+    "title": "Mentions Légales",
+    "publisher": {
+      "title": "Éditeur du site",
+      "company": "Société",
+      "legalForm": "Forme juridique",
+      "legalFormValue": "SASU (Société par actions simplifiée unipersonnelle)",
+      "address": "Siège social",
+      "rcs": "Numéro RCS",
+      "capital": "Capital social",
+      "vat": "Numéro de TVA"
+    },
+    "hosting": {
+      "title": "Hébergement",
+      "provider": "Hébergeur",
+      "company": "Société",
+      "address": "Adresse"
+    },
+    "dataProtection": {
+      "title": "Protection des données personnelles",
+      "description": "Conformément à la loi Informatique et Libertés du 6 janvier 1978 modifiée, et au Règlement Général sur la Protection des Données (RGPD), vous disposez d'un droit d'accès, de rectification, de suppression et d'opposition aux données personnelles vous concernant.",
+      "rights": "Pour exercer ces droits, vous pouvez nous contacter :",
+      "email": "Par email",
+      "mail": "Par courrier"
+    },
+    "intellectualProperty": {
+      "title": "Propriété intellectuelle",
+      "description": "L'ensemble du contenu de ce site (structure, textes, images, logos, base de données...) est la propriété exclusive de MELBA CAPITAL. Toute reproduction, représentation, modification, publication, transmission, dénaturation, totale ou partielle du site ou de son contenu, par quelque procédé que ce soit, et sur quelque support que ce soit est interdite sans l'autorisation écrite préalable de MELBA CAPITAL."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "description": "Ce site utilise des cookies nécessaires à son bon fonctionnement. Un cookie est un petit fichier texte stocké sur votre ordinateur. Les cookies que nous utilisons ne permettent pas de vous identifier personnellement. Ils nous permettent simplement d'améliorer votre expérience utilisateur et de mesurer l'audience du site.",
+      "consent": "En utilisant notre site, vous acceptez l'utilisation des cookies conformément à notre politique de confidentialité."
+    },
+    "links": {
+      "title": "Liens hypertextes",
+      "description": "Le site 4fly.fr peut contenir des liens vers d'autres sites. MELBA CAPITAL n'est pas responsable du contenu ou de la politique de confidentialité de ces sites."
     }
   }
 }

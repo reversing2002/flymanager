@@ -1,57 +1,46 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const CGVPage = () => {
+  const { t } = useTranslation();
+
   const sections = [
     {
-      title: 'Article 1 - Objet',
-      content: `Les présentes conditions générales de vente (CGV) régissent l'utilisation de la plateforme 4fly, solution de gestion pour aéro-clubs. Ces conditions s'appliquent à l'exclusion de toutes autres conditions.`
+      title: t('cgv.article1.title'),
+      content: t('cgv.article1.content')
     },
     {
-      title: 'Article 2 - Services',
-      content: `4fly propose une plateforme de gestion complète incluant :
-      - Gestion des réservations d'aéronefs
-      - Suivi de la maintenance
-      - Gestion des formations
-      - Administration des membres
-      - Facturation et paiements
-      - Outils de communication`
+      title: t('cgv.article2.title'),
+      content: t('cgv.article2.content')
     },
     {
-      title: 'Article 3 - Tarification',
-      content: `L'utilisation de la plateforme 4fly est gratuite. Une commission est uniquement prélevée sur les paiements par carte bancaire effectués via la plateforme. Le taux de commission est clairement indiqué lors de chaque transaction.`
+      title: t('cgv.article3.title'),
+      content: t('cgv.article3.content')
     },
     {
-      title: 'Article 4 - Obligations',
-      content: `4fly s'engage à :
-      - Assurer la disponibilité et la maintenance de la plateforme
-      - Sécuriser les données des utilisateurs
-      - Fournir un support technique
-      
-      L'utilisateur s'engage à :
-      - Fournir des informations exactes
-      - Respecter les conditions d'utilisation
-      - Ne pas détourner l'usage de la plateforme`
+      title: t('cgv.article4.title'),
+      content: t('cgv.article4.content')
     },
     {
-      title: 'Article 5 - Données Personnelles',
-      content: `4fly collecte et traite les données personnelles conformément au RGPD. Les utilisateurs disposent d'un droit d'accès, de rectification et de suppression de leurs données.`
+      title: t('cgv.article5.title'),
+      content: t('cgv.article5.content')
     },
     {
-      title: 'Article 6 - Propriété Intellectuelle',
-      content: `L'ensemble des éléments de la plateforme 4fly (logo, textes, images, etc.) sont protégés par le droit de la propriété intellectuelle. Toute reproduction est interdite sans autorisation préalable.`
+      title: t('cgv.article6.title'),
+      content: t('cgv.article6.content')
     },
     {
-      title: 'Article 7 - Responsabilité',
-      content: `4fly ne pourra être tenue responsable des dommages indirects résultant de l'utilisation de la plateforme. La responsabilité est limitée au montant des services payés par l'utilisateur.`
+      title: t('cgv.article7.title'),
+      content: t('cgv.article7.content')
     },
     {
-      title: 'Article 8 - Résiliation',
-      content: `Chaque partie peut résilier l'utilisation des services dans les conditions prévues. En cas de manquement grave, la résiliation peut être immédiate.`
+      title: t('cgv.article8.title'),
+      content: t('cgv.article8.content')
     },
     {
-      title: 'Article 9 - Droit Applicable',
-      content: `Les présentes CGV sont soumises au droit français. Tout litige relève de la compétence exclusive des tribunaux français.`
+      title: t('cgv.article9.title'),
+      content: t('cgv.article9.content')
     }
   ];
 
@@ -64,10 +53,10 @@ const CGVPage = () => {
           className="text-center mb-12"
         >
           <h1 className="text-4xl font-bold text-white mb-4">
-            Conditions Générales de Vente
+            {t('cgv.title')}
           </h1>
           <p className="text-gray-300">
-            Dernière mise à jour : {new Date().toLocaleDateString('fr-FR')}
+            {t('cgv.lastUpdate', { date: new Date().toLocaleDateString(t('common.locale')) })}
           </p>
         </motion.div>
 

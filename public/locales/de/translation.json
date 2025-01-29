@@ -26,11 +26,12 @@
     }
   },
   "common": {
+    "locale": "de-DE",
     "learnMore": "Mehr erfahren",
     "getStarted": "Loslegen",
     "login": "Anmelden",
     "register": "Registrieren",
-    "legal": "Rechtliche Informationen",
+    "legal": "Rechtliche Hinweise",
     "legalMentions": "Impressum",
     "cgv": "AGB",
     "rgpd": "DSGVO",
@@ -60,30 +61,29 @@
     "contact": "Kontakt"
   },
   "pricing": {
-    "title": "Wachsen Sie mit 4fly",
-    "subtitle": "Eine Lösung, die sich an das Wachstum Ihres Clubs anpasst",
+    "title": "Wählen Sie Ihren Plan",
+    "subtitle": "Alle Funktionen sind von Anfang an verfügbar: Buchungen, Zeitpläne, Wartung, Schulung, Abrechnung... Je mehr Sie fliegen, je mehr Ihr Verein wächst, desto mehr unterstützt Sie 4fly!",
     "plans": {
       "starter": {
-        "name": "Starter",
-        "description": "Starten Sie Ihre Reise mit 4fly kostenlos und entdecken Sie alle Tools, um Ihren Club abheben zu lassen",
-        "hours": "Bis zu 1000h/Jahr",
-        "price": "Kostenlos"
+        "name": "Start",
+        "volume": "Bis zu 1000h/Jahr",
+        "price": "Kostenlos",
+        "description": "Starten Sie Ihr Abenteuer mit 4fly kostenlos und entdecken Sie alle Tools, um Ihren Verein abheben zu lassen",
+        "cta": "Kostenlos starten"
       },
       "growth": {
         "name": "Wachstum",
-        "description": "Wächst Ihr Club? 4fly entwickelt sich mit Ihnen, um Ihr Wachstum zu unterstützen",
-        "hours": "1000h bis 3000h/Jahr",
-        "price": "0,50€/Flugstunde"
+        "volume": "1000h bis 3000h/Jahr",
+        "price": "0,50€/Flugstunde zzgl. MwSt.",
+        "description": "Wächst Ihr Verein? 4fly entwickelt sich mit Ihnen, um Ihr Wachstum zu unterstützen"
       },
       "performance": {
-        "name": "Performance",
-        "description": "Erhalten Sie persönliche Unterstützung zur Optimierung Ihrer Aktivitätsverwaltung",
-        "hours": "3000h+/Jahr",
-        "price": "Individuell"
+        "name": "Leistung",
+        "volume": "3000h+/Jahr",
+        "price": "Individuell",
+        "description": "Profitieren Sie von individueller Unterstützung zur Optimierung Ihrer Aktivitätsverwaltung"
       }
-    },
-    "startFree": "Kostenlos starten",
-    "footer": "Alle Funktionen sind von Anfang an verfügbar: Reservierungen, Zeitpläne, Wartung, Ausbildung, Abrechnung... Je mehr Sie fliegen, je mehr Ihr Club wächst, desto mehr unterstützt Sie 4fly!"
+    }
   },
   "about": {
     "hero": {
@@ -626,6 +626,85 @@
       "text": "Der Pilot, der keine Angst hat, ist ein toter Pilot. Mut bedeutet, seine Angst zu beherrschen.",
       "author": "Henri Guillaumet",
       "role": "Aéropostale-Pilot"
+    }
+  },
+  "legal": {
+    "title": "Rechtliche Hinweise",
+    "publisher": {
+      "title": "Website-Betreiber",
+      "company": "Unternehmen",
+      "legalForm": "Rechtsform",
+      "legalFormValue": "SASU (Vereinfachte Aktiengesellschaft mit Einzelaktionär)",
+      "address": "Geschäftssitz",
+      "rcs": "Handelsregisternummer",
+      "capital": "Stammkapital",
+      "vat": "USt-IdNr."
+    },
+    "hosting": {
+      "title": "Hosting",
+      "provider": "Anbieter",
+      "company": "Unternehmen",
+      "address": "Adresse"
+    },
+    "dataProtection": {
+      "title": "Datenschutz",
+      "description": "Gemäß dem geänderten französischen Datenschutzgesetz vom 6. Januar 1978 und der Datenschutz-Grundverordnung (DSGVO) haben Sie das Recht auf Auskunft, Berichtigung, Löschung und Widerspruch bezüglich Ihrer personenbezogenen Daten.",
+      "rights": "Zur Ausübung dieser Rechte können Sie uns kontaktieren:",
+      "email": "Per E-Mail",
+      "mail": "Per Post"
+    },
+    "intellectualProperty": {
+      "title": "Geistiges Eigentum",
+      "description": "Der gesamte Inhalt dieser Website (Struktur, Texte, Bilder, Logos, Datenbank...) ist ausschließliches Eigentum von MELBA CAPITAL. Jede Reproduktion, Darstellung, Änderung, Veröffentlichung, Übertragung oder Entstellung, ganz oder teilweise, der Website oder ihres Inhalts, durch welches Verfahren und auf welchem Medium auch immer, ist ohne vorherige schriftliche Genehmigung von MELBA CAPITAL untersagt."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "description": "Diese Website verwendet Cookies, die für ihr ordnungsgemäßes Funktionieren erforderlich sind. Ein Cookie ist eine kleine Textdatei, die auf Ihrem Computer gespeichert wird. Die von uns verwendeten Cookies ermöglichen keine persönliche Identifizierung. Sie ermöglichen uns lediglich, Ihre Benutzererfahrung zu verbessern und die Besucherzahlen der Website zu messen.",
+      "consent": "Durch die Nutzung unserer Website akzeptieren Sie die Verwendung von Cookies gemäß unserer Datenschutzrichtlinie."
+    },
+    "links": {
+      "title": "Hyperlinks",
+      "description": "Die Website 4fly.fr kann Links zu anderen Websites enthalten. MELBA CAPITAL ist nicht verantwortlich für den Inhalt oder die Datenschutzrichtlinien dieser Websites."
+    }
+  },
+  "cgv": {
+    "title": "Allgemeine Geschäftsbedingungen",
+    "lastUpdate": "Letzte Aktualisierung: {{date}}",
+    "article1": {
+      "title": "Artikel 1 - Gegenstand",
+      "content": "Diese Allgemeinen Geschäftsbedingungen regeln die Nutzung der 4fly-Plattform, einer Verwaltungslösung für Flugvereine. Diese Bedingungen gelten unter Ausschluss aller anderen Bedingungen."
+    },
+    "article2": {
+      "title": "Artikel 2 - Dienstleistungen",
+      "content": "4fly bietet eine umfassende Verwaltungsplattform, die Folgendes umfasst:\n- Verwaltung von Flugzeugreservierungen\n- Wartungsverfolgung\n- Ausbildungsverwaltung\n- Mitgliederverwaltung\n- Abrechnung und Zahlungen\n- Kommunikationswerkzeuge"
+    },
+    "article3": {
+      "title": "Artikel 3 - Preisgestaltung",
+      "content": "4fly bietet drei Preispläne an, die auf Ihre Aktivität zugeschnitten sind:\n\n1. Start-Plan (Kostenlos):\n- Für Vereine bis zu 1000 Flugstunden pro Jahr\n- Zugang zu allen Funktionen\n- E-Mail-Support\n\n2. Wachstums-Plan (0,50€/Flugstunde zzgl. MwSt.):\n- Für Vereine von 1000 bis 3000 Flugstunden pro Jahr\n- Alle Funktionen inklusive\n- Prioritäts-Support\n\n3. Leistungs-Plan (Individuell):\n- Für Vereine über 3000 Flugstunden pro Jahr\n- Alle Funktionen inklusive\n- Individuelles Hosting\n- Vor-Ort-Schulung\n- 24/7 VIP-Support\n- Persönlicher Account Manager"
+    },
+    "article4": {
+      "title": "Artikel 4 - Verpflichtungen",
+      "content": "4fly verpflichtet sich zu:\n- Gewährleistung der Plattformverfügbarkeit und -wartung\n- Sicherung der Benutzerdaten\n- Bereitstellung technischer Unterstützung\n\nDer Benutzer verpflichtet sich zu:\n- Bereitstellung genauer Informationen\n- Einhaltung der Nutzungsbedingungen\n- Keine missbräuchliche Nutzung der Plattform"
+    },
+    "article5": {
+      "title": "Artikel 5 - Personenbezogene Daten",
+      "content": "4fly erhebt und verarbeitet personenbezogene Daten gemäß DSGVO. Benutzer haben das Recht auf Zugang, Berichtigung und Löschung ihrer Daten."
+    },
+    "article6": {
+      "title": "Artikel 6 - Geistiges Eigentum",
+      "content": "Alle Elemente der 4fly-Plattform (Logo, Texte, Bilder usw.) sind durch Rechte am geistigen Eigentum geschützt. Jede Reproduktion ist ohne vorherige Genehmigung untersagt."
+    },
+    "article7": {
+      "title": "Artikel 7 - Haftung",
+      "content": "4fly haftet nicht für indirekte Schäden, die aus der Nutzung der Plattform entstehen. Die Haftung ist auf den Betrag der vom Benutzer bezahlten Dienstleistungen beschränkt."
+    },
+    "article8": {
+      "title": "Artikel 8 - Kündigung",
+      "content": "Jede Partei kann die Nutzung der Dienste unter den vorgesehenen Bedingungen kündigen. Bei schwerwiegenden Verstößen kann die Kündigung sofort erfolgen."
+    },
+    "article9": {
+      "title": "Artikel 9 - Geltendes Recht",
+      "content": "Diese Allgemeinen Geschäftsbedingungen unterliegen französischem Recht. Alle Streitigkeiten fallen unter die ausschließliche Zuständigkeit französischer Gerichte."
     }
   }
 }

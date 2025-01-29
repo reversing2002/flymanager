@@ -26,6 +26,7 @@
     }
   },
   "common": {
+    "locale": "en-US",
     "learnMore": "Learn More",
     "getStarted": "Get Started",
     "login": "Log In",
@@ -59,26 +60,27 @@
     "contact": "Contact"
   },
   "pricing": {
-    "title": "Grow with 4fly",
-    "subtitle": "A solution that adapts to your club's growth",
+    "title": "Choose your plan",
+    "subtitle": "All features are available from the start: bookings, schedules, maintenance, training, billing... The more you fly, the more your club grows, the more 4fly supports you!",
     "plans": {
       "starter": {
         "name": "Starter",
-        "description": "Start your journey with 4fly for free and discover all the tools to make your club take off",
-        "hours": "Up to 1000h/year",
-        "price": "Free"
+        "volume": "Up to 1000h/year",
+        "price": "Free",
+        "description": "Start your journey with 4fly for free and discover all the tools to get your club off the ground",
+        "cta": "Start for free"
       },
       "growth": {
         "name": "Growth",
-        "description": "Is your club growing? 4fly evolves with you to support your growth",
-        "hours": "1000h to 3000h/year",
-        "price": "€0.50/flight hour"
+        "volume": "1000h to 3000h/year",
+        "price": "€0.50/flight hour excl. VAT",
+        "description": "Is your club growing? 4fly evolves with you to support your growth"
       },
       "performance": {
         "name": "Performance",
-        "description": "Get personalized support to optimize your activity management",
-        "hours": "3000h+/year",
-        "price": "Custom"
+        "volume": "3000h+/year",
+        "price": "Custom",
+        "description": "Get personalized support to optimize your activity management"
       }
     },
     "startFree": "Start for free",
@@ -625,6 +627,85 @@
       "text": "The pilot who isn't afraid is a dead pilot. Courage is about mastering your fear.",
       "author": "Henri Guillaumet",
       "role": "Aéropostale Pilot"
+    }
+  },
+  "legal": {
+    "title": "Legal Notice",
+    "publisher": {
+      "title": "Website Publisher",
+      "company": "Company",
+      "legalForm": "Legal form",
+      "legalFormValue": "SASU (Simplified joint-stock company with sole shareholder)",
+      "address": "Registered office",
+      "rcs": "RCS Number",
+      "capital": "Share capital",
+      "vat": "VAT Number"
+    },
+    "hosting": {
+      "title": "Hosting",
+      "provider": "Provider",
+      "company": "Company",
+      "address": "Address"
+    },
+    "dataProtection": {
+      "title": "Personal Data Protection",
+      "description": "In accordance with the amended French Data Protection Act of January 6, 1978, and the General Data Protection Regulation (GDPR), you have the right to access, rectify, delete and object to your personal data.",
+      "rights": "To exercise these rights, you can contact us:",
+      "email": "By email",
+      "mail": "By mail"
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property",
+      "description": "All content on this site (structure, text, images, logos, database...) is the exclusive property of MELBA CAPITAL. Any reproduction, representation, modification, publication, transmission, alteration, total or partial, of the site or its content, by any process whatsoever, and on any medium whatsoever is prohibited without prior written authorization from MELBA CAPITAL."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "description": "This site uses cookies necessary for its proper functioning. A cookie is a small text file stored on your computer. The cookies we use do not allow us to identify you personally. They simply allow us to improve your user experience and measure site traffic.",
+      "consent": "By using our site, you accept the use of cookies in accordance with our privacy policy."
+    },
+    "links": {
+      "title": "Hyperlinks",
+      "description": "The 4fly.fr website may contain links to other sites. MELBA CAPITAL is not responsible for the content or privacy policy of these sites."
+    }
+  },
+  "cgv": {
+    "title": "Terms and Conditions of Sale",
+    "lastUpdate": "Last update: {{date}}",
+    "article1": {
+      "title": "Article 1 - Purpose",
+      "content": "These terms and conditions of sale govern the use of the 4fly platform, a management solution for flying clubs. These conditions apply to the exclusion of all other conditions."
+    },
+    "article2": {
+      "title": "Article 2 - Services",
+      "content": "4fly offers a comprehensive management platform including:\n- Aircraft booking management\n- Maintenance tracking\n- Training management\n- Member administration\n- Billing and payments\n- Communication tools"
+    },
+    "article3": {
+      "title": "Article 3 - Pricing",
+      "content": "4fly offers three pricing plans adapted to your activity:\n\n1. Starter Plan (Free):\n- For clubs up to 1000 flight hours per year\n- Access to all features\n- Email support\n\n2. Growth Plan (€0.50/flight hour excl. VAT):\n- For clubs from 1000 to 3000 flight hours per year\n- All features included\n- Priority support\n\n3. Performance Plan (Custom):\n- For clubs over 3000 flight hours per year\n- All features included\n- Custom hosting\n- On-site training\n- 24/7 VIP support\n- Dedicated account manager"
+    },
+    "article4": {
+      "title": "Article 4 - Obligations",
+      "content": "4fly commits to:\n- Ensure platform availability and maintenance\n- Secure user data\n- Provide technical support\n\nThe user commits to:\n- Provide accurate information\n- Comply with terms of use\n- Not misuse the platform"
+    },
+    "article5": {
+      "title": "Article 5 - Personal Data",
+      "content": "4fly collects and processes personal data in accordance with GDPR. Users have the right to access, rectify and delete their data."
+    },
+    "article6": {
+      "title": "Article 6 - Intellectual Property",
+      "content": "All elements of the 4fly platform (logo, texts, images, etc.) are protected by intellectual property rights. Any reproduction is prohibited without prior authorization."
+    },
+    "article7": {
+      "title": "Article 7 - Liability",
+      "content": "4fly cannot be held liable for indirect damages resulting from the use of the platform. Liability is limited to the amount of services paid by the user."
+    },
+    "article8": {
+      "title": "Article 8 - Termination",
+      "content": "Each party may terminate the use of services under the conditions provided. In case of serious breach, termination may be immediate."
+    },
+    "article9": {
+      "title": "Article 9 - Applicable Law",
+      "content": "These terms and conditions are subject to French law. Any dispute falls under the exclusive jurisdiction of French courts."
     }
   }
 }
