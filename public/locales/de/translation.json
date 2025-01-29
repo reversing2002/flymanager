@@ -614,6 +614,23 @@
       "unexpected": "Ein unerwarteter Fehler ist aufgetreten"
     }
   },
+  "resetPassword": {
+    "title": "Passwort zurücksetzen",
+    "description": "Geben Sie Ihre E-Mail-Adresse ein, um Anweisungen zum Zurücksetzen Ihres Passworts zu erhalten.",
+    "emailLabel": "E-Mail",
+    "emailError": "Ungültige E-Mail",
+    "submitButton": "Anweisungen senden",
+    "submitting": "Wird gesendet...",
+    "backToLogin": "Zurück zur Anmeldung",
+    "success": {
+      "title": "Anweisungen gesendet!",
+      "description": "Überprüfen Sie Ihren Posteingang und folgen Sie den Anweisungen, um Ihr Passwort zurückzusetzen."
+    },
+    "toast": {
+      "success": "Anweisungen per E-Mail gesendet",
+      "error": "Fehler beim Senden der Anweisungen"
+    }
+  },
   "quotes": {
     "saint-exupery-1": {
       "text": "Das Flugzeug ist kein Selbstzweck, es ist ein Mittel. Man riskiert sein Leben nicht für ein Flugzeug: So wie der Bauer nicht für seinen Pflug pflügt. Aber durch das Flugzeug verlässt man die Städte und ihre Buchhalter und entdeckt eine bäuerliche Wahrheit.",

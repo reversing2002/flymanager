@@ -599,6 +599,23 @@
       "unexpected": "Ha ocurrido un error inesperado"
     }
   },
+  "resetPassword": {
+    "title": "Restablecer Contraseña",
+    "description": "Introduce tu dirección de correo electrónico para recibir las instrucciones de restablecimiento de contraseña.",
+    "emailLabel": "Correo electrónico",
+    "emailError": "Correo electrónico inválido",
+    "submitButton": "Enviar Instrucciones",
+    "submitting": "Enviando...",
+    "backToLogin": "Volver al Inicio de Sesión",
+    "success": {
+      "title": "¡Instrucciones Enviadas!",
+      "description": "Revisa tu bandeja de entrada y sigue las instrucciones para restablecer tu contraseña."
+    },
+    "toast": {
+      "success": "Instrucciones enviadas por correo electrónico",
+      "error": "Error al enviar las instrucciones"
+    }
+  },
   "quotes": {
     "saint-exupery-1": {
       "text": "El avión no es un fin en sí mismo, es un medio. No se arriesga la vida por un avión: así como el campesino no ara por su arado. Pero a través del avión, uno deja las ciudades y sus contables, y descubre una verdad campesina.",

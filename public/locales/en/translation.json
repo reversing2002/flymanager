@@ -610,6 +610,23 @@
       "unexpected": "An unexpected error occurred"
     }
   },
+  "resetPassword": {
+    "title": "Reset Password",
+    "description": "Enter your email address to receive password reset instructions.",
+    "emailLabel": "Email",
+    "emailError": "Invalid email",
+    "submitButton": "Send Instructions",
+    "submitting": "Sending...",
+    "backToLogin": "Back to Login",
+    "success": {
+      "title": "Instructions Sent!",
+      "description": "Check your inbox and follow the instructions to reset your password."
+    },
+    "toast": {
+      "success": "Instructions sent by email",
+      "error": "Error sending instructions"
+    }
+  },
   "quotes": {
     "saint-exupery-1": {
       "text": "The airplane is not an end in itself, it is a means. One does not risk their life for a plane: just as a farmer does not plow for his plow. But through the airplane, one leaves the cities and their accountants, and discovers a peasant truth.",
