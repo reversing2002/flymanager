@@ -93,6 +93,7 @@
     "legal": "Informations légales",
     "legalMentions": "Mentions légales",
     "cgv": "CGV",
+    "rgpd": "RGPD",
     "copyright": "MELBA CAPITAL - SASU au capital de 2 700 000€ - RCS Saint-Etienne 840 514 913",
     "footerDescription": "La solution simple pour gérer votre club aéronautique. Réservations, maintenance, facturation... tout est là !"
   },
@@ -750,6 +751,59 @@
     "links": {
       "title": "Liens hypertextes",
       "description": "Le site 4fly.fr peut contenir des liens vers d'autres sites. MELBA CAPITAL n'est pas responsable du contenu ou de la politique de confidentialité de ces sites."
+    }
+  },
+  "home": {
+    "meta": {
+      "title": "4fly - Logiciel de Gestion d'Aéroclub | Solution Complète Gratuite",
+      "description": "4fly est la solution complète pour gérer votre aéroclub. Gestion des vols, réservations, maintenance, formation et plus encore. Essayez gratuitement !"
+    },
+    "title": "Gérez votre aéroclub simplement",
+    "description": "4fly est un outil simple et gratuit pour gérer votre aéroclub, que vous ayez 2 ou 200 membres. Fini les tableurs complexes et la paperasse !",
+    "createClub": "Créer mon club",
+    "configurationTime": "Configuration en 2 minutes",
+    "startTitle": "Développez votre aéroclub",
+    "startDescription": "Configuration en 2 minutes",
+    "startButton": "Commencer gratuitement",
+    "features": {
+      "title": "Tout ce dont vous avez besoin",
+      "description": "Une solution complète pour gérer votre aéroclub",
+      "items": [
+        {
+          "title": "Réservations en ligne",
+          "description": "Système de réservation en ligne accessible 24/7 avec gestion des conflits en temps réel"
+        },
+        {
+          "title": "Maintenance simplifiée",
+          "description": "Suivi détaillé de la maintenance avec alertes automatiques et gestion des potentiels"
+        },
+        {
+          "title": "Formation intégrée",
+          "description": "Gestion complète de la formation avec suivi pédagogique et progression des élèves"
+        },
+        {
+          "title": "Facturation automatique",
+          "description": "Facturation automatique des vols avec gestion des comptes pilotes et des tarifs"
+        }
+      ]
+    },
+    "stats": {
+      "title": "Ils nous font confiance",
+      "description": "Des aéroclubs de toutes tailles utilisent 4fly au quotidien",
+      "items": [
+        {
+          "value": "150+",
+          "label": "Aéroclubs"
+        },
+        {
+          "value": "10k+",
+          "label": "Pilotes"
+        },
+        {
+          "value": "500k+",
+          "label": "Vols gérés"
+        }
+      ]
     }
   }
 }
