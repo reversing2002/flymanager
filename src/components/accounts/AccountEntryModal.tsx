@@ -81,7 +81,7 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
     date: format(new Date(), 'yyyy-MM-dd'),
     amount: "",
     description: "",
-    payment_method: "CASH",
+    payment_method: "ACCOUNT",
     entry_type_id: "",
     is_validated: false,
     attachment_url: "",
@@ -115,7 +115,7 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
           setFormData(prev => ({
             ...prev,
             entry_type_id: refundType.id,
-            payment_method: "CASH"
+            payment_method: "ACCOUNT"
           }));
         }
         
@@ -197,9 +197,9 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
       // Préparer les données pour l'enregistrement
       const entryData: Partial<AccountEntry> = {
         ...formData,
-        // Conserver l'utilisateur original en édition, utiliser l'utilisateur connecté en création
-        user_id: entry ? formData.user_id : user?.id,
-        assigned_to_id: entry ? formData.assigned_to_id : user?.id,
+        // Conserver l'utilisateur original en édition, utiliser la valeur du formulaire en création
+        user_id: entry ? formData.user_id : formData.user_id,
+        assigned_to_id: formData.assigned_to_id,
         amount: (formData.amount || 0),
         attachment_url: attachmentUrl || formData.attachment_url,
         attachment_type: file ? getFileType(file.type) : formData.attachment_type,
@@ -218,7 +218,12 @@ const AccountEntryModal: React.FC<AccountEntryModalProps> = ({
       toast.success("Opération enregistrée avec succès");
     } catch (error) {
       console.error("Error saving entry:", error);
-      setError(error instanceof Error ? error.message : "Une erreur est survenue");
+      // Vérifier si c'est une erreur Supabase spécifique
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'P0001') {
+        setError(error.message || "Le montant ne correspond pas au type d'opération (crédit/débit)");
+      } else {
+        setError(error instanceof Error ? error.message : "Une erreur est survenue");
+      }
     } finally {
       setLoading(false);
     }
