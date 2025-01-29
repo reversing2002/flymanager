@@ -132,7 +132,7 @@ const HomePage = () => {
                 </Link>
               </div>
               <p className="text-gray-400 mt-4 text-sm">
-                Plan Découverte gratuit • Paiement CB en option (3%) • Configuration en 2 minutes
+                Configuration en 2 minutes
               </p>
             </motion.div>
           </div>
@@ -162,16 +162,16 @@ const HomePage = () => {
             className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 mb-16 text-center"
           >
             <h2 className="text-3xl font-bold text-white mb-4">
-              Démarrez avec le plan Découverte
+              Commencez à faire grandir votre club
             </h2>
             <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-              Gérez vos réservations, membres et aéronefs sans frais. Activez les paiements en ligne uniquement quand vous en avez besoin.
+              Configuration en 2 minutes
             </p>
             <Link
               to="/create-club"
               className="inline-flex items-center px-8 py-4 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200 transform hover:scale-105"
             >
-              Créer mon club gratuitement
+              Commencer gratuitement
               <ArrowForwardIcon className="ml-2" />
             </Link>
           </motion.div>
