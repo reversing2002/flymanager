@@ -131,7 +131,9 @@
         "price": "Sur mesure",
         "description": "Profitez d'un accompagnement personnalisé pour optimiser la gestion de votre activité"
       }
-    }
+    },
+    "startFree": "Commencer gratuitement",
+    "footer": "Toutes les fonctionnalités sont disponibles dès le début : réservations, plannings, maintenance, formations, facturation... Plus vous volez, plus votre club grandit, plus 4fly vous accompagne !"
   },
   "about": {
     "hero": {

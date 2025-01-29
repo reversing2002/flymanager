@@ -33,6 +33,7 @@
     "rgpd": "RGPD",
     "back": "Atrás",
     "next": "Siguiente",
+    "login": "Iniciar sesión",
     "copyright": "MELBA CAPITAL - SASU con capital de 2.700.000€ - RCS Saint-Etienne 840 514 913",
     "footerDescription": "La solución simple para gestionar tu club de vuelo. Reservas, mantenimiento, facturación... ¡todo está aquí!"
   },
@@ -102,7 +103,8 @@
     "features": "Funcionalidades",
     "pricing": "Precios",
     "faq": "FAQ",
-    "contact": "Contacto"
+    "contact": "Contacto",
+    "login": "Iniciar sesión"
   },
   "pricing": {
     "title": "Elige tu plan",
@@ -127,7 +129,9 @@
         "price": "Personalizado",
         "description": "Obtén soporte personalizado para optimizar la gestión de tu actividad"
       }
-    }
+    },
+    "startFree": "Empezar gratis",
+    "footer": "Todas las funciones están disponibles desde el principio: reservas, horarios, mantenimiento, formación, facturación... ¡Cuanto más vuelas, más crece tu club, más te apoya 4fly!"
   },
   "about": {
     "hero": {

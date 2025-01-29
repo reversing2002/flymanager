@@ -65,6 +65,7 @@
     "cgv": "Terms of Sale",
     "back": "Back",
     "next": "Next",
+    "login": "Log in",
     "copyright": "MELBA CAPITAL - SASU with capital of €2,700,000 - RCS Saint-Etienne 840 514 913",
     "footerDescription": "The simple solution to manage your flying club. Bookings, maintenance, billing... everything is here!"
   },
@@ -113,7 +114,8 @@
     "features": "Features",
     "pricing": "Pricing",
     "faq": "FAQ",
-    "contact": "Contact"
+    "contact": "Contact",
+    "login": "Log in"
   },
   "pricing": {
     "title": "Choose your plan",
@@ -140,7 +142,7 @@
       }
     },
     "startFree": "Start for free",
-    "footer": "All features are available from the start: reservations, schedules, maintenance, training, billing... The more you fly, the more your club grows, the more 4fly supports you!"
+    "footer": "All features are available from the start: bookings, schedules, maintenance, training, billing... The more you fly, the more your club grows, the more 4fly supports you!"
   },
   "about": {
     "hero": {

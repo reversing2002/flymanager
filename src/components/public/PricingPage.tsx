@@ -84,7 +84,7 @@ const PricingPage: React.FC = () => {
                       {t(`pricing.plans.${feature.key}.name`)}
                     </h3>
                     <div className="mt-2 text-gray-400 text-sm">
-                      {t(`pricing.plans.${feature.key}.hours`)}
+                      {t(`pricing.plans.${feature.key}.volume`)}
                     </div>
                     <div className="mt-1 text-xl font-bold text-white">
                       {t(`pricing.plans.${feature.key}.price`)}

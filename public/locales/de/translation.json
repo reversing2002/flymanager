@@ -144,7 +144,9 @@
         "price": "Individuell",
         "description": "Profitieren Sie von individueller Unterstützung zur Optimierung Ihrer Aktivitätsverwaltung"
       }
-    }
+    },
+    "startFree": "Kostenlos starten",
+    "footer": "Alle Funktionen sind von Anfang an verfügbar: Buchungen, Zeitpläne, Wartung, Schulung, Abrechnung... Je mehr Sie fliegen, je mehr Ihr Club wächst, desto mehr unterstützt Sie 4fly!"
   },
   "about": {
     "hero": {
