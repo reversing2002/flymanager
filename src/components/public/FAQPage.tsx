@@ -18,19 +18,23 @@ const categories = [
     questions: [
       {
         question: "Qu'est-ce que 4fly et à qui s'adresse-t-il ?",
-        answer: "4fly est une solution logicielle complète conçue pour simplifier et optimiser la gestion des aéro-clubs. Elle s'adresse aux aéro-clubs de toutes tailles, qu'ils soient affiliés ou non à la FFA, et qui cherchent à automatiser et centraliser leurs opérations quotidiennes."
+        answer: "4fly est une solution logicielle complète conçue pour simplifier et optimiser la gestion des aéro-clubs. Elle s'adresse aux aéro-clubs de toutes tailles, qu'ils soient affiliés ou non à la FFA, et qui cherchent à automatiser et centraliser leurs opérations quotidiennes. Notre objectif est d'accompagner votre club dans sa croissance."
       },
       {
         question: "Comment fonctionne le modèle de tarification ?",
-        answer: "4fly propose une solution gratuite. Le modèle économique repose sur une commission unique prélevée uniquement sur les paiements effectués par carte bancaire via la plateforme. Il n'y a pas de frais d'abonnement ou de coûts cachés."
+        answer: "Notre modèle est simple : gratuit jusqu'à 1000 heures de vol par an, puis 0,50€ par heure de vol sur la totalité des heures. Pour les grands clubs dépassant 3000 heures annuelles, nous proposons des offres sur mesure. Toutes les fonctionnalités sont incluses dès le début."
       },
       {
-        question: "Puis-je tester 4fly avant de l'adopter ?",
-        answer: "Oui, vous pouvez essayer 4fly gratuitement. Nous proposons une période d'essai complète qui vous permet de tester toutes les fonctionnalités sans engagement."
+        question: "Y a-t-il des frais cachés ?",
+        answer: "Non, notre tarification basée sur les heures de vol est totalement transparente. Toutes les fonctionnalités essentielles sont incluses dans ce tarif. Certains services additionnels, comme le paiement par carte bancaire, sont proposés en option selon vos besoins."
+      },
+      {
+        question: "Quelles fonctionnalités sont incluses ?",
+        answer: "Toutes les fonctionnalités essentielles sont incluses dans l'offre de base : gestion des réservations, maintenance, formation, comptabilité... Des services additionnels comme le paiement par carte bancaire sont disponibles en option pour les clubs qui le souhaitent."
       },
       {
         question: "Quel support est disponible ?",
-        answer: "Nous offrons un support technique par email et téléphone. Notre équipe est disponible pour vous aider dans la configuration initiale et pour répondre à vos questions au quotidien."
+        answer: "Nous offrons un support technique complet par email et téléphone, inclus pour tous les clubs quelle que soit leur taille. Notre équipe est disponible pour vous aider dans la configuration initiale et pour répondre à vos questions au quotidien."
       }
     ]
   },
