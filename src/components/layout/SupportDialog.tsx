@@ -92,6 +92,12 @@ export const SupportDialog: React.FC<SupportDialogProps> = ({ open, onClose }) =
       maxWidth="sm"
       fullWidth
       className="rounded-lg"
+      PaperProps={{
+        style: {
+          maxHeight: '90vh',
+          margin: '16px'
+        }
+      }}
     >
       <DialogTitle className="flex justify-between items-center">
         <span>Demande de Support Technique</span>
