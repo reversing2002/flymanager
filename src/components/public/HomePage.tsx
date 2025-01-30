@@ -10,7 +10,7 @@ import PaymentsIcon from '@mui/icons-material/Payments';
 import GroupIcon from '@mui/icons-material/Group';
 import AviationImage from '../common/AviationImage';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import HomeSEO from '../SEO/HomeSEO';
+import PageSEO from '../SEO/PageSEO';
 
 const features = [
   {
@@ -62,7 +62,7 @@ const HomePage: React.FC = () => {
 
   return (
     <>
-      <HomeSEO />
+      <PageSEO pageType="home" />
       <div className="min-h-screen">
         {/* Background Image */}
         <div className="fixed inset-0 -z-10">
