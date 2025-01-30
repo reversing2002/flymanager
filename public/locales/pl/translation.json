@@ -539,8 +539,8 @@
   },
   "createClub": {
     "meta": {
-      "title": "4fly - Utwórz Swój Aeroklub",
-      "description": "Rozpocznij w zaledwie kilka minut. Utwórz swój aeroklub i zacznij zarządzać rezerwacjami, lotami, szkoleniami i konserwacją.",
+      "title": "4fly - Stwórz swój aeroklub | Zacznij za darmo",
+      "description": "Stwórz swój aeroklub w kilka minut z 4fly. Szybka i łatwa konfiguracja, bez zobowiązań.",
       "image": "/images/create-club-hero.jpg"
     },
     "hero": {

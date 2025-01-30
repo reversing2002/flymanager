@@ -588,6 +588,11 @@
     }
   },
   "createClub": {
+    "meta": {
+    "title": "4fly - Skapa din flygklubb | Kom igång gratis",
+    "description": "Skapa din flygklubb på några minuter med 4fly. Enkel och snabb konfiguration, utan förpliktelser.",
+    "image": "/images/create-club-hero.jpg"
+  },
     "hero": {
       "title": "Skapa Din Flygklubb",
       "subtitle": "Kom igång på bara några minuter"

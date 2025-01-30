@@ -11,7 +11,8 @@ export type PageType =
   | 'pricing'
   | 'legal'
   | 'cgv'
-  | 'rgpd';
+  | 'rgpd'
+  | 'createClub';
 
 interface PageSEOProps {
   pageType: PageType;
@@ -32,7 +33,8 @@ const PageSEO: React.FC<PageSEOProps> = ({ pageType }) => {
     pricing: '/pricing',
     legal: '/legal',
     cgv: '/cgv',
-    rgpd: '/rgpd'
+    rgpd: '/rgpd',
+    createClub: '/create-club'
   };
 
   // Mapping des priorités SEO pour chaque type de page
@@ -45,7 +47,8 @@ const PageSEO: React.FC<PageSEOProps> = ({ pageType }) => {
     faq: 0.7,
     legal: 0.6,
     cgv: 0.6,
-    rgpd: 0.6
+    rgpd: 0.6,
+    createClub: 0.8
   };
 
   // Liste complète des langues supportées avec leurs codes de pays

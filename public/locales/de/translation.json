@@ -588,6 +588,11 @@
     }
   },
   "createClub": {
+    "meta": {
+    "title": "4fly - Erstellen Sie Ihren Aeroclub | Jetzt kostenlos starten",
+    "description": "Erstellen Sie Ihren Aeroclub in nur wenigen Minuten mit 4fly. Eine einfache und schnelle Konfiguration, ganz ohne Verpflichtungen.",
+    "image": "/images/create-club-hero.jpg"
+  },
     "hero": {
       "title": "Erstellen Sie Ihren Flugverein",
       "subtitle": "Starten Sie in nur wenigen Minuten"

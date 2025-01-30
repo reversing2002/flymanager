@@ -539,6 +539,11 @@
     }
   },
   "createClub": {
+    "meta": {
+      "title": "4fly - Create your flying club | Start for free",
+      "description": "Create your flying club in minutes with 4fly. Quick and easy setup, no commitment required.",
+      "image": "/images/create-club-hero.jpg"
+    },
     "hero": {
       "title": "Create Your Flying Club",
       "subtitle": "Get started in just a few minutes"

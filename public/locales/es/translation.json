@@ -531,6 +531,11 @@
     }
   },
   "createClub": {
+    "meta": {
+      "title": "4fly - Crea tu club de vuelo | Empieza gratis",
+      "description": "Crea tu club de vuelo en minutos con 4fly. Configuración rápida y sencilla, sin compromiso.",
+      "image": "/images/create-club-hero.jpg"
+    },
     "hero": {
       "title": "Crea tu Club de Vuelo",
       "subtitle": "Comienza en solo unos minutos"
@@ -773,7 +778,7 @@
     },
     "intellectualProperty": {
       "title": "Propiedad intelectual",
-      "description": "Todo el contenido de este sitio (estructura, textos, imágenes, logotipos, base de datos...) es propiedad exclusiva de MELBA CAPITAL. Queda prohibida cualquier reproducción, representación, modificación, publicación, transmisión, alteración, total o parcial, del sitio o su contenido, por cualquier procedimiento y en cualquier soporte, sin la autorización previa por escrito de MELBA CAPITAL."
+      "description": "Todo el contenido de este sitio (estructura, textos, imágenes, logotipos, base de datos...) es propiedad exclusiva de MELBA CAPITAL. Queda prohibida cualquier reproducción, representación, modificación, publicación, transmisión, alteración, total o parcial, del sitio o su contenido, sin la autorización previa por escrito de MELBA CAPITAL."
     },
     "cookies": {
       "title": "Cookies",

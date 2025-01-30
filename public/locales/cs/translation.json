@@ -7,7 +7,7 @@
     },
     "dataCollected": {
       "title": "Shromažďovaná data",
-      "intro": "Shromažďujeme následující informace:",
+      "intro": "Shromažďujeme následujících informace:",
       "items": [
         "Identifikační údaje (jméno, příjmení, e-mailová adresa)",
         "Údaje o pilotní licenci a kvalifikacích",
@@ -39,7 +39,7 @@
     },
     "rights": {
       "title": "Vaše práva",
-      "intro": "V souladu s GDPR máte následující práva:",
+      "intro": "V souladu s GDPR máte následujících práva:",
       "items": [
         "Právo na přístup k vašim osobním údajům",
         "Právo na opravu nesprávných údajů",
@@ -105,7 +105,7 @@
     },
     "meta": {
       "title": "4fly - Funkce Správy Aeroklubu | Kompletní Řešení",
-      "description": "Objevte všechny funkce 4fly: správa letů, rezervace, údržba, výcvik... Kompletní řešení pro váš aeroklub.",
+      "description": "Objevte všechna funkce 4fly: správa letů, rezervace, údržba, výcvik... Kompletní řešení pro váš aeroklub.",
       "image": "/images/features-hero.jpg"
     }
   },
@@ -525,7 +525,7 @@
     },
     "meta": {
       "title": "4fly - FAQ | Často Kladené Otázky o Správě Aeroklubu",
-      "description": "Najděte odpovědi na všechny vaše otázky o 4fly: funkce, ceny, technická podpora, výcvik a další.",
+      "description": "Najděte odpovědi na všechna vaše otázky o 4fly: funkce, ceny, technická podpora, výcvik a další.",
       "image": "/images/faq-hero.jpg"
     }
   },
@@ -551,7 +551,7 @@
         "label": "Telefon",
         "error": "Neplatný formát telefonního čísla",
         "placeholder": "06 12 34 56 78",
-        "valid": "Platný formát telefonního čísla"
+        "valid": "Platný formát"
       },
       "contactReason": {
         "label": "Důvod kontaktu",
@@ -588,6 +588,11 @@
     }
   },
   "createClub": {
+    "meta": {
+      "title": "4fly - Vytvořte si svůj aeroklub | Začněte zdarma",
+      "description": "Vytvořte si svůj aeroklub během několika minut s 4fly. Rychlé a snadné nastavení, bez závazků.",
+      "image": "/images/create-club-hero.jpg"
+    },
     "hero": {
       "title": "Vytvořte si aeroklub",
       "subtitle": "Začněte během několika minut"

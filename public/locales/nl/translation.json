@@ -588,6 +588,11 @@
     }
   },
   "createClub": {
+    "meta": {
+      "title": "4fly - Maak je vliegclub | Begin gratis",
+      "description": "Maak je vliegclub in enkele minuten met 4fly. Snelle en eenvoudige configuratie, zonder verplichtingen.",
+      "image": "/images/create-club-hero.jpg"
+    },
     "hero": {
       "title": "Maak uw Vliegclub aan",
       "subtitle": "Begin in slechts een paar minuten"

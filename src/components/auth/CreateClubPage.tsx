@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { Logo } from "../common/Logo";
+import PageSEO from "../SEO/PageSEO";
 import { supabase } from "../../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import { gtagReportConversion } from "../../lib/analytics";
@@ -305,127 +306,130 @@ const CreateClubPage = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ minHeight: "100vh", py: 8 }}>
-      <Paper
-        elevation={3}
-        sx={{
-          backgroundColor: "#1a1d21",
-          p: { xs: 2, sm: 4 },
-          borderRadius: 2,
-          color: "white",
-        }}
-      >
-        <Box className="flex flex-col items-center mb-8">
-          <Logo className="mb-2" />
-          <Typography variant="subtitle1" sx={{ color: "gray.400" }}>
-            {t('createClub.hero.title')}
-          </Typography>
-        </Box>
-
-        <Stepper
-          activeStep={activeStep}
-          alternativeLabel
+    <>
+      <PageSEO pageType="createClub" />
+      <Container maxWidth="sm" sx={{ minHeight: "100vh", py: 8 }}>
+        <Paper
+          elevation={3}
           sx={{
-            mb: 4,
-            '& .MuiStepLabel-label': {
-              color: 'rgba(255, 255, 255, 0.5)',
-              '&.Mui-completed': {
-                color: '#90caf9',
-              },
-              '&.Mui-active': {
-                color: '#fff',
-              },
-            },
-            '& .MuiStepIcon-root': {
-              color: 'rgba(255, 255, 255, 0.3)',
-              '&.Mui-completed': {
-                color: '#90caf9',
-              },
-              '&.Mui-active': {
-                color: '#3f51b5',
-              },
-            },
-            '& .MuiStepConnector-line': {
-              borderColor: 'rgba(255, 255, 255, 0.2)',
-            },
-            '& .MuiStepConnector-root.Mui-completed .MuiStepConnector-line': {
-              borderColor: '#90caf9',
-            },
-            '& .MuiStepLabel-iconContainer': {
-              '& .MuiSvgIcon-root': {
-                fontSize: '2rem',
-              },
-            },
+            backgroundColor: "#1a1d21",
+            p: { xs: 2, sm: 4 },
+            borderRadius: 2,
+            color: "white",
           }}
         >
-          {steps.map((step) => (
-            <Step key={step.title}>
-              <StepLabel
-                icon={step.icon}
-                optional={
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "rgba(255, 255, 255, 0.5)" }}
-                  >
-                    {step.description}
-                  </Typography>
-                }
-              >
-                {step.title}
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-
-        <form onSubmit={handleSubmit}>
-          <Box sx={{ minHeight: "250px" }}>
-            <AnimatePresence mode="wait">
-              {renderStepContent(activeStep)}
-            </AnimatePresence>
-          </Box>
-
-          {error && (
-            <Typography
-              color="error"
-              variant="body2"
-              sx={{ mt: 2, textAlign: "center" }}
-            >
-              {error}
+          <Box className="flex flex-col items-center mb-8">
+            <Logo className="mb-2" />
+            <Typography variant="subtitle1" sx={{ color: "gray.400" }}>
+              {t('createClub.hero.title')}
             </Typography>
-          )}
-
-          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={handleBack}
-              disabled={activeStep === 0}
-              sx={{
-                color: "#fff",
-                "&.Mui-disabled": {
-                  color: "rgba(255, 255, 255, 0.3)",
-                },
-              }}
-            >
-              {t('common.back')}
-            </Button>
-            <Button
-              endIcon={activeStep === steps.length - 1 ? undefined : <ArrowForwardIcon />}
-              variant="contained"
-              onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}
-              sx={{
-                backgroundColor: "#3f51b5",
-                color: "#fff",
-                "&:hover": {
-                  backgroundColor: "#303f9f",
-                },
-              }}
-            >
-              {activeStep === steps.length - 1 ? t('createClub.form.submit') : t('common.next')}
-            </Button>
           </Box>
-        </form>
-      </Paper>
-    </Container>
+
+          <Stepper
+            activeStep={activeStep}
+            alternativeLabel
+            sx={{
+              mb: 4,
+              '& .MuiStepLabel-label': {
+                color: 'rgba(255, 255, 255, 0.5)',
+                '&.Mui-completed': {
+                  color: '#90caf9',
+                },
+                '&.Mui-active': {
+                  color: '#fff',
+                },
+              },
+              '& .MuiStepIcon-root': {
+                color: 'rgba(255, 255, 255, 0.3)',
+                '&.Mui-completed': {
+                  color: '#90caf9',
+                },
+                '&.Mui-active': {
+                  color: '#3f51b5',
+                },
+              },
+              '& .MuiStepConnector-line': {
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+              },
+              '& .MuiStepConnector-root.Mui-completed .MuiStepConnector-line': {
+                borderColor: '#90caf9',
+              },
+              '& .MuiStepLabel-iconContainer': {
+                '& .MuiSvgIcon-root': {
+                  fontSize: '2rem',
+                },
+              },
+            }}
+          >
+            {steps.map((step) => (
+              <Step key={step.title}>
+                <StepLabel
+                  icon={step.icon}
+                  optional={
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "rgba(255, 255, 255, 0.5)" }}
+                    >
+                      {step.description}
+                    </Typography>
+                  }
+                >
+                  {step.title}
+                </StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+
+          <form onSubmit={handleSubmit}>
+            <Box sx={{ minHeight: "250px" }}>
+              <AnimatePresence mode="wait">
+                {renderStepContent(activeStep)}
+              </AnimatePresence>
+            </Box>
+
+            {error && (
+              <Typography
+                color="error"
+                variant="body2"
+                sx={{ mt: 2, textAlign: "center" }}
+              >
+                {error}
+              </Typography>
+            )}
+
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={handleBack}
+                disabled={activeStep === 0}
+                sx={{
+                  color: "#fff",
+                  "&.Mui-disabled": {
+                    color: "rgba(255, 255, 255, 0.3)",
+                  },
+                }}
+              >
+                {t('common.back')}
+              </Button>
+              <Button
+                endIcon={activeStep === steps.length - 1 ? undefined : <ArrowForwardIcon />}
+                variant="contained"
+                onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}
+                sx={{
+                  backgroundColor: "#3f51b5",
+                  color: "#fff",
+                  "&:hover": {
+                    backgroundColor: "#303f9f",
+                  },
+                }}
+              >
+                {activeStep === steps.length - 1 ? t('createClub.form.submit') : t('common.next')}
+              </Button>
+            </Box>
+          </form>
+        </Paper>
+      </Container>
+    </>
   );
 };
 
