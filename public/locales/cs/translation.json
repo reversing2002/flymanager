@@ -56,6 +56,11 @@
     "update": {
       "title": "Aktualizace",
       "content": "Tyto zásady ochrany osobních údajů mohou být pravidelně aktualizovány. Poslední aktualizace: {{date}}."
+    },
+    "meta": {
+      "title": "4fly - Zásady Ochrany Osobních Údajů GDPR",
+      "description": "Zjistěte, jak 4fly chrání vaše osobní údaje v souladu s GDPR. Zásady ochrany soukromí, práva uživatelů a bezpečnostní opatření.",
+      "image": "/images/data-protection.jpg"
     }
   },
   "common": {
@@ -67,7 +72,11 @@
     "next": "Další",
     "login": "Přihlásit se",
     "copyright": "MELBA CAPITAL – SASU se základním kapitálem 2 700 000 € – RCS Saint-Etienne 840 514 913",
-    "footerDescription": "Jednoduché řešení pro správu vašeho aeroklubu. Rezervace, údržba, fakturace... všechno na jednom místě!"
+    "footerDescription": "Jednoduché řešení pro správu vašeho aeroklubu. Rezervace, údržba, fakturace... všechno na jednom místě!",
+    "getStarted": "Commencer",
+    "learnMore": "En savoir plus",
+    "register": "S'inscrire",
+    "rgpd": "RGPD"
   },
   "features": {
     "flightManagement": {
@@ -93,12 +102,18 @@
     "memberManagement": {
       "title": "Správa členů",
       "description": "Efektivní správa členů klubu"
+    },
+    "meta": {
+      "title": "4fly - Funkce Správy Aeroklubu | Kompletní Řešení",
+      "description": "Objevte všechny funkce 4fly: správa letů, rezervace, údržba, výcvik... Kompletní řešení pro váš aeroklub.",
+      "image": "/images/features-hero.jpg"
     }
   },
   "home": {
     "meta": {
-      "title": "4fly – Software pro správu aeroklubů | Kompletní bezplatné řešení",
-      "description": "4fly je kompletní řešení pro správu vašeho aeroklubu. Správa letů, rezervace, údržba, výcvik a další. Vyzkoušejte zdarma!"
+      "title": "4fly - Software pro Správu Aeroklubu | Kompletní Bezplatné Řešení",
+      "description": "4fly je kompletní řešení pro správu vašeho aeroklubu. Správa letů, rezervace, údržba, výcvik a další. Vyzkoušejte zdarma!",
+      "image": "/images/home-hero.jpg"
     },
     "title": "Spravujte svůj aeroklub jednoduše",
     "description": "4fly je jednoduchý a bezplatný nástroj pro správu vašeho leteckého klubu, ať už máte 2 nebo 200 členů. Už žádné složité tabulky a papírování!",
@@ -106,7 +121,47 @@
     "configurationTime": "Konfigurace za 2 minuty",
     "startTitle": "Začněte rozvíjet svůj klub",
     "startDescription": "Konfigurace za 2 minuty",
-    "startButton": "Začít zdarma"
+    "startButton": "Začít zdarma",
+    "features": {
+      "title": "Tout ce dont vous avez besoin",
+      "description": "Une solution complète pour gérer votre aéroclub",
+      "items": [
+        {
+          "title": "Réservations en ligne",
+          "description": "Système de réservation en ligne accessible 24/7 avec gestion des conflits en temps réel"
+        },
+        {
+          "title": "Maintenance simplifiée",
+          "description": "Suivi détaillé de la maintenance avec alertes automatiques et gestion des potentiels"
+        },
+        {
+          "title": "Formation intégrée",
+          "description": "Gestion complète de la formation avec suivi pédagogique et progression des élèves"
+        },
+        {
+          "title": "Facturation automatique",
+          "description": "Facturation automatique des vols avec gestion des comptes pilotes et des tarifs"
+        }
+      ]
+    },
+    "stats": {
+      "title": "Ils nous font confiance",
+      "description": "Des aéroclubs de toutes tailles utilisent 4fly au quotidien",
+      "items": [
+        {
+          "value": "150+",
+          "label": "Aéroclubs"
+        },
+        {
+          "value": "10k+",
+          "label": "Pilotes"
+        },
+        {
+          "value": "500k+",
+          "label": "Vols gérés"
+        }
+      ]
+    }
   },
   "nav": {
     "home": "Domů",
@@ -115,7 +170,8 @@
     "pricing": "Ceník",
     "faq": "FAQ",
     "contact": "Kontakt",
-    "login": "Přihlásit se"
+    "login": "Přihlásit se",
+    "menu": "Navigation"
   },
   "pricing": {
     "title": "Vyberte si svůj plán",
@@ -125,7 +181,7 @@
         "name": "Starter",
         "volume": "Až 1000 h/rok",
         "price": "Zdarma",
-        "description": "Začněte svou cestu s 4fly bez nákladů a objevte všechny nástroje, které pomohou vašemu klubu vzlétnout",
+        "description": "Začněte svou cestu s 4fly bez nákladů a objevte všechna nástroje, které pomohou vašemu klubu vzlétnout",
         "cta": "Začít zdarma"
       },
       "growth": {
@@ -142,7 +198,12 @@
       }
     },
     "startFree": "Začít zdarma",
-    "footer": "Všechny funkce jsou k dispozici hned od začátku: rezervace, harmonogramy, údržba, výcvik, fakturace... Čím více létáte, tím více váš klub roste a tím více vás 4fly podporuje!"
+    "footer": "Všechny funkce jsou k dispozici hned od začátku: rezervace, harmonogramy, údržba, výcvik, fakturace... Čím více létáte, tím více váš klub roste a tím více vás 4fly podporuje!",
+    "meta": {
+      "title": "4fly - Ceník | Bezplatné Řešení pro Správu Aeroklubu",
+      "description": "Objevte naše cenové plány přizpůsobené velikosti vašeho aeroklubu. Začněte zdarma a rozvíjejte se podle potřeb. Všechny funkce v ceně!",
+      "image": "/images/pricing-hero.jpg"
+    }
   },
   "about": {
     "hero": {
@@ -159,7 +220,7 @@
       "items": {
         "training": {
           "title": "Bezplatná školení",
-          "description": "Přizpůsobená a bezplatná školení pro všechny kluby, které platformu používají",
+          "description": "Přizpůsobená a bezplatná školení pro všechna kluby, která platformu používají",
           "subtitle": "Školení na místě, přizpůsobené vašim potřebám"
         },
         "setup": {
@@ -174,7 +235,7 @@
         },
         "accompaniment": {
           "title": "Doprovod",
-          "description": "Individuální dohled pro všechny členy klubu, od začátečníků v IT až po experty",
+          "description": "Individuální dohled pro všechna člena klubu, od začátečníků v IT až po experty",
           "subtitle": "Pozorně nasloucháme všem uživatelům"
         }
       }
@@ -192,12 +253,17 @@
       "team": "Tým 4fly",
       "vision": "Spolupráce s aerokluby",
       "support": "Podpora a pomoc"
+    },
+    "meta": {
+      "title": "4fly - O Nás | Tým za Vaším Leteckým Řešením",
+      "description": "Poznejte tým 4fly, naši vizi a závazek ke zjednodušení správy aeroklubu. Personalizovaná podpora a bezplatné školení v ceně.",
+      "image": "/images/about-team.jpg"
     }
   },
   "featuresPage": {
     "hero": {
       "title": "Naše Funkce",
-      "subtitle": "Objevte všechny nástroje, které z naší platformy dělají ideální řešení pro váš aeroklub"
+      "subtitle": "Objevte všechna nástroje, které z naší platformy dělají ideální řešení pro váš aeroklub"
     },
     "items": {
       "flights": {
@@ -262,7 +328,7 @@
       },
       "communication": {
         "title": "Komunikace",
-        "description": "Integrované komunikační nástroje usnadňující výměnu informací v rámci klubu.",
+        "description": "Integrované komunikační nástroje usnadňujících výměnu informací v rámci klubu.",
         "details": [
           "Okamžité zasílání zpráv",
           "Oznámení klubu",
@@ -300,6 +366,11 @@
           "Automatické zálohy"
         ]
       }
+    },
+    "meta": {
+      "title": "4fly - Fonctionnalités | L'équipe derrière votre solution aéronautique",
+      "description": "Découvrez les outils fournis par 4fly, la solution idéale pour geérer votre aéroclub. Collaboration avec les aéro-clubs, support et assistance personnalisés.",
+      "image": "/images/features-hero.jpg"
     }
   },
   "faqPage": {
@@ -329,7 +400,7 @@
           },
           {
             "question": "Jakou podporu nabízíte?",
-            "answer": "Nabízíme kompletní technickou podporu prostřednictvím e-mailu a telefonu pro všechny kluby, bez ohledu na jejich velikost. Náš tým je k dispozici, aby vám pomohl s počátečním nastavením a odpověděl na vaše každodenní dotazy."
+            "answer": "Nabízíme kompletní technickou podporu prostřednictvím e-mailu a telefonu pro všechna kluby, bez ohledu na jejich velikost. Náš tým je k dispozici, aby vám pomohl s počátečním nastavením a odpověděl na vaše každodenní dotazy."
           }
         ]
       },
@@ -451,6 +522,11 @@
           }
         ]
       }
+    },
+    "meta": {
+      "title": "4fly - FAQ | Často Kladené Otázky o Správě Aeroklubu",
+      "description": "Najděte odpovědi na všechny vaše otázky o 4fly: funkce, ceny, technická podpora, výcvik a další.",
+      "image": "/images/faq-hero.jpg"
     }
   },
   "contactPage": {
@@ -504,6 +580,11 @@
       "error": "Chyba při odesílání zprávy",
       "contactRequired": "Zadejte alespoň jeden kontaktní údaj",
       "contactRequiredError": "Zadejte alespoň jeden kontaktní údaj (e-mail nebo telefon)"
+    },
+    "meta": {
+      "title": "4fly - Kontakt | Podpora a Pomoc",
+      "description": "Potřebujete pomoc? Kontaktujte tým 4fly ohledně našeho řešení pro správu aeroklubu. Rychlá a osobní podpora.",
+      "image": "/images/contact-hero.jpg"
     }
   },
   "createClub": {
@@ -583,6 +664,10 @@
     }
   },
   "login": {
+    "meta": {
+      "title": "4fly - Přihlášení do ovládacího panelu aeroklubu",
+      "description": "Přihlaste se do svého ovládacího panelu 4fly pro správu rezervací, letů, výcviku a údržby letadel."
+    },
     "hero": {
       "title": "Vítejte ve 4fly",
       "subtitle": "Přihlaste se pro přístup k vašemu dashboardu"
@@ -605,7 +690,6 @@
       "createClub": "Vytvořit nový klub"
     },
     "success": "Přihlášení proběhlo úspěšně!",
-    "error": "Neplatné přihlašovací údaje",
     "error": {
       "unexpected": "Došlo k neočekávané chybě"
     }
@@ -634,7 +718,7 @@
       "role": "Letec a spisovatel"
     },
     "saint-exupery-2": {
-      "text": "Země nás učí o nás samotných víc než všechny knihy. Protože klade odpor. Člověk se poznává, když se měří s překážkou.",
+      "text": "Země nás učí o nás samotných víc než všechna knihy. Protože klade odpor. Člověk se poznává, když se měří s překážkou.",
       "author": "Antoine de Saint-Exupéry",
       "role": "Letec a spisovatel"
     },
@@ -731,7 +815,7 @@
     },
     "intellectualProperty": {
       "title": "Duševní vlastnictví",
-      "description": "Veškerý obsah této stránky (struktura, texty, obrázky, loga, databáze...) je výhradním vlastnictvím MELBA CAPITAL. Jakákoli reprodukce, úprava, publikace, přenos, pozměnění, ať už celá či částečná, stránek či jejich obsahu, jakýmkoli způsobem a na jakémkoli médiu, je zakázána bez předchozího písemného souhlasu společnosti MELBA CAPITAL."
+      "description": "Veškerý obsah této stránky (struktura, texty, obrázky, loga, databáze...) je výhradním vlastnictvím MELBA CAPITAL. Jakákoli reprodukce, úprava, publikace, přenos, pozměnění, ať už celá či částečná, stránek či jejich obsahu, je zakázána bez předchozího písemného souhlasu společnosti MELBA CAPITAL."
     },
     "cookies": {
       "title": "Cookies",
@@ -741,6 +825,11 @@
     "links": {
       "title": "Hypertextové odkazy",
       "description": "Web 4fly.io může obsahovat odkazy na jiné stránky. MELBA CAPITAL neodpovídá za obsah ani zásady ochrany osobních údajů těchto stránek."
+    },
+    "meta": {
+      "title": "4fly - Právní Informace",
+      "description": "Právní informace 4fly: informace o vydavateli, hostingu a podmínkách používání naší platformy.",
+      "image": "/images/legal-hero.jpg"
     }
   },
   "cgv": {
@@ -781,6 +870,25 @@
     "article9": {
       "title": "Článek 9 – Rozhodné právo",
       "content": "Tyto obchodní podmínky se řídí francouzským právem. Veškeré spory spadají do výlučné pravomoci francouzských soudů."
+    },
+    "meta": {
+      "title": "4fly - Všeobecné Obchodní Podmínky",
+      "description": "Přečtěte si naše obchodní podmínky: podmínky použití, ceny a smluvní podmínky platformy 4fly.",
+      "image": "/images/cgv-hero.jpg"
+    }
+  },
+  "contact": {
+    "meta": {
+      "title": "4fly - Kontakt | Podpora a pomoc",
+      "description": "Potřebujete pomoc? Kontaktujte tým 4fly ohledně našeho řešení pro správu aeroklubu. Rychlá a osobní podpora.",
+      "image": "/images/contact-hero.jpg"
+    }
+  },
+  "faq": {
+    "meta": {
+      "title": "4fly - FAQ | Často kladené otázky",
+      "description": "Najděte odpovědi na nejčastější otázky týkající se správy aeroklubů. Získejte přehled o požadavcích, které se v praxi nejčastěji objevují.",
+      "image": "/images/faq-hero.jpg"
     }
   }
 }

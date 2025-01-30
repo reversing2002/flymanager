@@ -1,5 +1,10 @@
 {
   "rgpd": {
+    "meta": {
+      "title": "4fly - Politica di Protezione dei Dati GDPR",
+      "description": "Scopri come 4fly protegge i tuoi dati personali in conformità con il GDPR. Politica sulla privacy, diritti degli utenti e misure di sicurezza.",
+      "image": "/images/data-protection.jpg"
+    },
     "title": "Politica di Protezione dei Dati",
     "introduction": {
       "title": "Introduzione",
@@ -67,9 +72,18 @@
     "next": "Avanti",
     "login": "Accedi",
     "copyright": "MELBA CAPITAL - SASU con capitale di €2.700.000 - RCS Saint-Etienne 840 514 913",
-    "footerDescription": "La soluzione semplice per gestire il tuo aeroclub. Prenotazioni, manutenzione, fatturazione... tutto in un'unica piattaforma!"
+    "footerDescription": "La soluzione semplice per gestire il tuo aeroclub. Prenotazioni, manutenzione, fatturazione... tutto in un'unica piattaforma!",
+    "getStarted": "Commencer",
+    "learnMore": "En savoir plus",
+    "register": "S'inscrire",
+    "rgpd": "RGPD"
   },
   "features": {
+    "meta": {
+      "title": "4fly - Funzionalità di Gestione Aeroclub | Soluzione Completa",
+      "description": "Scopri tutte le funzionalità di 4fly: gestione voli, prenotazioni, manutenzione, formazione... Una soluzione completa per il tuo aeroclub.",
+      "image": "/images/features-hero.jpg"
+    },
     "flightManagement": {
       "title": "Gestione Voli",
       "description": "Pianificazione e monitoraggio dei voli in tempo reale"
@@ -97,8 +111,9 @@
   },
   "home": {
     "meta": {
-      "title": "4fly - Software di Gestione Aeroclub | Soluzione Completa e Gratuita",
-      "description": "4fly è la soluzione completa per gestire il tuo aeroclub. Gestione voli, prenotazioni, manutenzione, formazione e altro. Provalo gratis!"
+      "title": "4fly - Software di Gestione Aeroclub | Soluzione Completa Gratuita",
+      "description": "4fly è la soluzione completa per gestire il tuo aeroclub. Gestione voli, prenotazioni, manutenzione, formazione e altro ancora. Provalo gratis!",
+      "image": "/images/home-hero.jpg"
     },
     "title": "Gestisci il tuo aeroclub in modo semplice",
     "description": "4fly è uno strumento semplice e gratuito per gestire il tuo club di volo, che tu abbia 2 o 200 soci. Basta fogli di calcolo complessi e scartoffie!",
@@ -106,7 +121,47 @@
     "configurationTime": "Configurazione in 2 minuti",
     "startTitle": "Inizia a far crescere il tuo club",
     "startDescription": "Configurazione in 2 minuti",
-    "startButton": "Inizia gratis"
+    "startButton": "Inizia gratis",
+    "features": {
+      "title": "Tout ce dont vous avez besoin",
+      "description": "Une solution complète pour gérer votre aéroclub",
+      "items": [
+        {
+          "title": "Réservations en ligne",
+          "description": "Système de réservation en ligne accessible 24/7 avec gestion des conflits en temps réel"
+        },
+        {
+          "title": "Maintenance simplifiée",
+          "description": "Suivi détaillé de la maintenance avec alertes automatiques et gestion des potentiels"
+        },
+        {
+          "title": "Formation intégrée",
+          "description": "Gestion complète de la formation avec suivi pédagogique et progression des élèves"
+        },
+        {
+          "title": "Facturation automatique",
+          "description": "Facturation automatique des vols avec gestion des comptes pilotes et des tarifs"
+        }
+      ]
+    },
+    "stats": {
+      "title": "Ils nous font confiance",
+      "description": "Des aéroclubs de toutes tailles utilisent 4fly au quotidien",
+      "items": [
+        {
+          "value": "150+",
+          "label": "Aéroclubs"
+        },
+        {
+          "value": "10k+",
+          "label": "Pilotes"
+        },
+        {
+          "value": "500k+",
+          "label": "Vols gérés"
+        }
+      ]
+    }
   },
   "nav": {
     "home": "Home",
@@ -115,9 +170,15 @@
     "pricing": "Prezzi",
     "faq": "FAQ",
     "contact": "Contatti",
-    "login": "Accedi"
+    "login": "Accedi",
+    "menu": "Navigation"
   },
   "pricing": {
+    "meta": {
+      "title": "4fly - Prezzi | Soluzione Gratuita di Gestione Aeroclub",
+      "description": "Scopri i nostri piani tariffari adattati alle dimensioni del tuo aeroclub. Inizia gratuitamente ed evolvi secondo le tue necessità.",
+      "image": "/images/pricing-hero.jpg"
+    },
     "title": "Scegli il tuo piano",
     "subtitle": "Tutte le funzionalità sono disponibili fin dall’inizio: prenotazioni, orari, manutenzione, formazione, fatturazione... Più voli, più il tuo club cresce e più 4fly ti supporta!",
     "plans": {
@@ -145,6 +206,11 @@
     "footer": "Tutte le funzionalità sono disponibili fin dall’inizio: prenotazioni, orari, manutenzione, formazione, fatturazione... Più voli, più il tuo club cresce e più 4fly ti supporta!"
   },
   "about": {
+    "meta": {
+      "title": "4fly - Chi Siamo | Il Team Dietro la Tua Soluzione Aeronautica",
+      "description": "Conosci il team 4fly, la nostra visione e il nostro impegno per semplificare la gestione degli aeroclub. Supporto personalizzato incluso.",
+      "image": "/images/about-team.jpg"
+    },
     "hero": {
       "title": "Il Team di 4fly",
       "description": "4fly è sviluppato da un team appassionato, impegnato a fornire supporto continuo ai nostri utenti."
@@ -300,9 +366,19 @@
           "Backup automatici"
         ]
       }
+    },
+    "meta": {
+      "title": "4fly - Fonctionnalités | L'équipe derrière votre solution aéronautique",
+      "description": "Découvrez les outils fournis par 4fly, la solution idéale pour geérer votre aéroclub. Collaboration avec les aéro-clubs, support et assistance personnalisés.",
+      "image": "/images/features-hero.jpg"
     }
   },
   "faqPage": {
+    "meta": {
+      "title": "4fly - FAQ | Domande Frequenti sulla Gestione Aeroclub",
+      "description": "Trova risposte a tutte le tue domande su 4fly: funzionalità, prezzi, supporto tecnico, formazione e altro ancora.",
+      "image": "/images/faq-hero.jpg"
+    },
     "hero": {
       "title": "Domande Frequenti",
       "subtitle": "Trova le risposte alle domande più comuni su 4fly"
@@ -454,6 +530,11 @@
     }
   },
   "contactPage": {
+    "meta": {
+      "title": "4fly - Contatti | Supporto e Assistenza",
+      "description": "Hai bisogno di aiuto? Contatta il team 4fly per qualsiasi domanda sulla nostra soluzione di gestione aeroclub. Supporto reattivo e personalizzato.",
+      "image": "/images/contact-hero.jpg"
+    },
     "hero": {
       "title": "Contattaci",
       "subtitle": "Siamo qui per aiutarti",
@@ -583,6 +664,10 @@
     }
   },
   "login": {
+    "meta": {
+      "title": "4fly - Accedi al tuo pannello di controllo dell'aeroclub",
+      "description": "Accedi al tuo pannello di controllo 4fly per gestire le tue prenotazioni, voli, formazione e manutenzione degli aeromobili."
+    },
     "hero": {
       "title": "Benvenuto su 4fly",
       "subtitle": "Accedi per entrare nella tua dashboard"
@@ -605,7 +690,6 @@
       "createClub": "Crea un nuovo club"
     },
     "success": "Accesso effettuato con successo!",
-    "error": "Credenziali non valide",
     "error": {
       "unexpected": "Si è verificato un errore inaspettato"
     }
@@ -705,6 +789,11 @@
     }
   },
   "legal": {
+    "meta": {
+      "title": "4fly - Note Legali",
+      "description": "Note legali di 4fly: informazioni sull'editore, hosting e condizioni d'uso della nostra piattaforma.",
+      "image": "/images/legal-hero.jpg"
+    },
     "title": "Note Legali",
     "publisher": {
       "title": "Editore del Sito",
@@ -744,6 +833,11 @@
     }
   },
   "cgv": {
+    "meta": {
+      "title": "4fly - Termini e Condizioni di Vendita",
+      "description": "Consulta i nostri termini e condizioni di vendita: modalità d'uso, prezzi e condizioni contrattuali della piattaforma 4fly.",
+      "image": "/images/cgv-hero.jpg"
+    },
     "title": "Condizioni Generali di Vendita",
     "lastUpdate": "Ultimo aggiornamento: {{date}}",
     "article1": {
@@ -781,6 +875,20 @@
     "article9": {
       "title": "Articolo 9 - Legge Applicabile",
       "content": "Le presenti condizioni generali sono soggette al diritto francese. Qualsiasi controversia è di competenza esclusiva dei tribunali francesi."
+    }
+  },
+  "contact": {
+    "meta": {
+      "title": "4fly - Contact | Support et Assistance",
+      "description": "Besoin d'aide ? Contactez l'équipe 4fly pour toute question sur notre solution de gestion d'aéroclub. Support réactif et personnalisé.",
+      "image": "/images/contact-hero.jpg"
+    }
+  },
+  "faq": {
+    "meta": {
+      "title": "4fly - FAQ | Domande Frequenti sulla Gestione Aeroclub",
+      "description": "Cerca le risposte a tutte le tue domande su 4fly: funzionalità, prezzi, support tecnico, formazione e altro ancora.",
+      "image": "/images/faq-hero.jpg"
     }
   }
 }

@@ -1,5 +1,10 @@
 {
   "rgpd": {
+    "meta": {
+      "title": "4fly - GDPR Dataskyddspolicy",
+      "description": "Lär dig hur 4fly skyddar dina personuppgifter enligt GDPR. Integritetspolicy, användarrättigheter och säkerhetsåtgärder.",
+      "image": "/images/data-protection.jpg"
+    },
     "title": "Dataskyddspolicy",
     "introduction": {
       "title": "Introduktion",
@@ -67,9 +72,18 @@
     "next": "Nästa",
     "login": "Logga in",
     "footerDescription": "Den enkla lösningen för att hantera din flygklubb. Bokningar, underhåll, fakturering... allt på ett ställe!",
-    "copyright": "MELBA CAPITAL - SASU med ett aktiekapital på 2 700 000 € - RCS Saint-Etienne 840 514 913"
+    "copyright": "MELBA CAPITAL - SASU med ett aktiekapital på 2 700 000 € - RCS Saint-Etienne 840 514 913",
+    "getStarted": "Commencer",
+    "learnMore": "En savoir plus",
+    "register": "S'inscrire",
+    "rgpd": "RGPD"
   },
   "features": {
+    "meta": {
+      "title": "4fly - Flygklubbshantering Funktioner | Komplett Lösning",
+      "description": "Upptäck alla funktioner i 4fly: flyghantering, bokningar, underhåll, utbildning... En komplett lösning för din flygklubb.",
+      "image": "/images/features-hero.jpg"
+    },
     "flightManagement": {
       "title": "Flygadministration",
       "description": "Planering och övervakning av flyg i realtid"
@@ -97,8 +111,9 @@
   },
   "home": {
     "meta": {
-      "title": "4fly - Flygklubbsadministrationsprogram | Komplett Gratis Lösning",
-      "description": "4fly är en komplett lösning för att administrera din flygklubb. Flygadministration, bokningar, underhåll, utbildning och mer. Prova gratis!"
+      "title": "4fly - Flygklubbshanteringsprogram | Komplett Gratis Lösning",
+      "description": "4fly är en komplett lösning för att hantera din flygklubb. Flyghantering, bokningar, underhåll, utbildning och mer. Prova gratis!",
+      "image": "/images/home-hero.jpg"
     },
     "title": "Hantera din flygklubb enkelt",
     "description": "4fly är ett enkelt och kostnadsfritt verktyg för att hantera din flygklubb, oavsett om du har 2 eller 200 medlemmar. Slipp komplicerade kalkylblad och pappersarbete!",
@@ -106,7 +121,47 @@
     "configurationTime": "Konfiguration på 2 minuter",
     "startTitle": "Börja växa din klubb",
     "startDescription": "Konfiguration på 2 minuter",
-    "startButton": "Kom igång gratis"
+    "startButton": "Kom igång gratis",
+    "features": {
+      "title": "Tout ce dont vous avez besoin",
+      "description": "Une solution complète pour gérer votre aéroclub",
+      "items": [
+        {
+          "title": "Réservations en ligne",
+          "description": "Système de réservation en ligne accessible 24/7 avec gestion des conflits en temps réel"
+        },
+        {
+          "title": "Maintenance simplifiée",
+          "description": "Suivi détaillé de la maintenance avec alertes automatiques et gestion des potentiels"
+        },
+        {
+          "title": "Formation intégrée",
+          "description": "Gestion complète de la formation avec suivi pédagogique et progression des élèves"
+        },
+        {
+          "title": "Facturation automatique",
+          "description": "Facturation automatique des vols avec gestion des comptes pilotes et des tarifs"
+        }
+      ]
+    },
+    "stats": {
+      "title": "Ils nous font confiance",
+      "description": "Des aéroclubs de toutes tailles utilisent 4fly au quotidien",
+      "items": [
+        {
+          "value": "150+",
+          "label": "Aéroclubs"
+        },
+        {
+          "value": "10k+",
+          "label": "Pilotes"
+        },
+        {
+          "value": "500k+",
+          "label": "Vols gérés"
+        }
+      ]
+    }
   },
   "nav": {
     "home": "Start",
@@ -115,9 +170,15 @@
     "pricing": "Priser",
     "faq": "FAQ",
     "contact": "Kontakt",
-    "login": "Logga in"
+    "login": "Logga in",
+    "menu": "Navigation"
   },
   "pricing": {
+    "meta": {
+      "title": "4fly - Priser | Gratis Lösning för Flygklubbshantering",
+      "description": "Upptäck våra prisplaner anpassade efter din flygklubbs storlek. Börja gratis och väx efter behov. Alla funktioner ingår!",
+      "image": "/images/pricing-hero.jpg"
+    },
     "title": "Välj din plan",
     "subtitle": "Alla funktioner är tillgängliga från början: bokningar, scheman, underhåll, utbildning, fakturering... Ju mer du flyger, desto mer växer din klubb och desto mer stödjer 4fly dig!",
     "plans": {
@@ -145,6 +206,11 @@
     "footer": "Alla funktioner är tillgängliga från början: bokningar, scheman, underhåll, utbildning, fakturering... Ju mer du flyger, desto mer växer din klubb och desto mer stödjer 4fly dig!"
   },
   "about": {
+    "meta": {
+      "title": "4fly - Om Oss | Teamet Bakom Din Flyglösning",
+      "description": "Lär känna 4fly-teamet, vår vision och engagemang för att förenkla flygklubbshantering. Personlig support och gratis utbildning ingår.",
+      "image": "/images/about-team.jpg"
+    },
     "hero": {
       "title": "Teamet bakom 4fly",
       "description": "4fly utvecklas av ett passionerat team som åtar sig att erbjuda kontinuerligt stöd till våra användare."
@@ -300,9 +366,19 @@
           "Automatiska säkerhetskopior"
         ]
       }
+    },
+    "meta": {
+      "title": "4fly - Fonctionnalités | L'équipe derrière votre solution aéronautique",
+      "description": "Découvrez les outils fournis par 4fly, la solution idéale pour geérer votre aéroclub. Collaboration avec les aéro-clubs, support et assistance personnalisés.",
+      "image": "/images/features-hero.jpg"
     }
   },
   "faqPage": {
+    "meta": {
+      "title": "4fly - FAQ | Vanliga Frågor om Flygklubbshantering",
+      "description": "Hitta svar på alla frågor om 4fly: funktioner, priser, teknisk support, utbildning och mer.",
+      "image": "/images/faq-hero.jpg"
+    },
     "hero": {
       "title": "Vanliga Frågor",
       "subtitle": "Hitta svar på de vanligaste frågorna om 4fly"
@@ -454,6 +530,11 @@
     }
   },
   "contactPage": {
+    "meta": {
+      "title": "4fly - Kontakt | Support och Hjälp",
+      "description": "Behöver du hjälp? Kontakta 4fly-teamet angående vår flygklubbshanteringslösning. Snabb och personlig support.",
+      "image": "/images/contact-hero.jpg"
+    },
     "hero": {
       "title": "Kontakta Oss",
       "subtitle": "Vi finns här för att hjälpa till",
@@ -583,6 +664,10 @@
     }
   },
   "login": {
+    "meta": {
+      "title": "4fly - Logga in på din flygklubb kontrollpanel",
+      "description": "Logga in på din 4fly flygklubb kontrollpanel för att hantera dina bokningar, flyg, utbildning och flygplansunderhåll."
+    },
     "hero": {
       "title": "Välkommen till 4fly",
       "subtitle": "Logga in för att få tillgång till din panel"
@@ -605,7 +690,6 @@
       "createClub": "Skapa en ny klubb"
     },
     "success": "Inloggningen lyckades!",
-    "error": "Ogiltiga inloggningsuppgifter",
     "error": {
       "unexpected": "Ett oväntat fel uppstod"
     }
@@ -705,6 +789,11 @@
     }
   },
   "legal": {
+    "meta": {
+      "title": "4fly - Juridiskt Meddelande",
+      "description": "Juridisk information för 4fly: information om utgivare, hosting och användarvillkor för vår plattform.",
+      "image": "/images/legal-hero.jpg"
+    },
     "title": "Juridiskt Meddelande",
     "publisher": {
       "title": "Webbplatsens Utgivare",
@@ -744,6 +833,11 @@
     }
   },
   "cgv": {
+    "meta": {
+      "title": "4fly - Allmänna Försäljningsvillkor",
+      "description": "Läs våra försäljningsvillkor: användarvillkor, priser och avtalsvillkor för 4fly-plattformen.",
+      "image": "/images/cgv-hero.jpg"
+    },
     "title": "Försäljningsvillkor",
     "lastUpdate": "Senaste uppdatering: {{date}}",
     "article1": {
@@ -781,6 +875,20 @@
     "article9": {
       "title": "Artikel 9 - Tillämplig Lag",
       "content": "Dessa försäljningsvillkor lyder under fransk lag. Eventuella tvister ska lösas av fransk domstol med exklusiv behörighet."
+    }
+  },
+  "contact": {
+    "meta": {
+      "title": "4fly - Kontakt | Support och hjälp",
+      "description": "Behöver du hjälp? Kontakta 4fly-teamet om du har några frågor om vår lösning för hantering av flygklubbar. Snabb och personlig support.",
+      "image": "/images/contact-hero.jpg"
+    }
+  },
+  "faq": {
+    "meta": {
+      "title": "4fly - Vanliga frågor om hantering av flygklubbar",
+      "description": "Hitta svar på alla dina frågor om 4fly: funktioner, priser, teknisk support, utbildning och mycket mer.",
+      "image": "/images/faq-hero.jpg"
     }
   }
 }

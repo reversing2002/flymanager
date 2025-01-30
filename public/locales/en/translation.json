@@ -1,5 +1,10 @@
 {
   "rgpd": {
+    "meta": {
+      "title": "4fly - GDPR Data Protection Policy",
+      "description": "Discover how 4fly protects your personal data in compliance with GDPR. Privacy policy, user rights, and security measures.",
+      "image": "/images/data-protection.jpg"
+    },
     "title": "Data Protection Policy",
     "introduction": {
       "title": "Introduction",
@@ -70,6 +75,11 @@
     "footerDescription": "The simple solution to manage your flying club. Bookings, maintenance, billing... everything is here!"
   },
   "features": {
+    "meta": {
+      "title": "4fly - Flying Club Management Features | Complete Solution",
+      "description": "Discover all 4fly features: flight management, bookings, maintenance, training... A complete solution for your flying club.",
+      "image": "/images/features-hero.jpg"
+    },
     "flightManagement": {
       "title": "Flight Management",
       "description": "Real-time flight planning and tracking"
@@ -98,7 +108,8 @@
   "home": {
     "meta": {
       "title": "4fly - Flying Club Management Software | Complete Free Solution",
-      "description": "4fly is the complete solution to manage your flying club. Flight management, bookings, maintenance, training and more. Try it for free!"
+      "description": "4fly is the complete solution to manage your flying club. Flight management, bookings, maintenance, training and more. Try it for free!",
+      "image": "/images/home-hero.jpg"
     },
     "title": "Manage your flying club simply",
     "description": "4fly is a simple and free tool to manage your aviation club, whether you have 2 or 200 members. No more complex spreadsheets and paperwork!",
@@ -118,6 +129,11 @@
     "login": "Log in"
   },
   "pricing": {
+    "meta": {
+      "title": "4fly - Pricing | Free Flying Club Management Solution",
+      "description": "Discover our pricing plans adapted to your flying club size. Start for free and evolve according to your needs. All features included!",
+      "image": "/images/pricing-hero.jpg"
+    },
     "title": "Choose your plan",
     "subtitle": "All features are available from the start: bookings, schedules, maintenance, training, billing... The more you fly, the more your club grows, the more 4fly supports you!",
     "plans": {
@@ -145,6 +161,11 @@
     "footer": "All features are available from the start: bookings, schedules, maintenance, training, billing... The more you fly, the more your club grows, the more 4fly supports you!"
   },
   "about": {
+    "meta": {
+      "title": "4fly - About | The Team Behind Your Aviation Solution",
+      "description": "Meet the 4fly team, our vision and commitment to simplifying flying club management. Personalized support and free training included.",
+      "image": "/images/about-team.jpg"
+    },
     "hero": {
       "title": "The 4fly Team",
       "description": "4fly is developed by a passionate team committed to providing ongoing support to our users."
@@ -300,6 +321,17 @@
           "Automatic backups"
         ]
       }
+    }
+  },
+  "faq": {
+    "meta": {
+      "title": "4fly - FAQ | Frequently Asked Questions About Flying Club Management",
+      "description": "Find answers to all your questions about 4fly: features, pricing, technical support, training and more.",
+      "image": "/images/faq-hero.jpg"
+    },
+    "hero": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Find answers to the most commonly asked questions about 4fly"
     }
   },
   "faqPage": {
@@ -583,6 +615,10 @@
     }
   },
   "login": {
+    "meta": {
+      "title": "4fly - Sign in to your flying club dashboard",
+      "description": "Sign in to your 4fly flying club dashboard to manage your bookings, flights, training and aircraft maintenance."
+    },
     "hero": {
       "title": "Welcome to 4fly",
       "subtitle": "Sign in to access your dashboard"
@@ -705,6 +741,11 @@
     }
   },
   "legal": {
+    "meta": {
+      "title": "4fly - Legal Notice",
+      "description": "Legal notice of 4fly: information about the publisher, hosting and terms of use of our platform.",
+      "image": "/images/legal-hero.jpg"
+    },
     "title": "Legal Notice",
     "publisher": {
       "title": "Website Publisher",
@@ -744,6 +785,11 @@
     }
   },
   "cgv": {
+    "meta": {
+      "title": "4fly - Terms of Sale",
+      "description": "Read our terms of sale: terms of use, pricing and contractual conditions of the 4fly platform.",
+      "image": "/images/cgv-hero.jpg"
+    },
     "title": "Terms and Conditions of Sale",
     "lastUpdate": "Last update: {{date}}",
     "article1": {
@@ -756,7 +802,7 @@
     },
     "article3": {
       "title": "Article 3 - Pricing",
-      "content": "4fly offers three pricing plans adapted to your activity:\n\n1. Starter Plan (Free):\n- For clubs up to 1000 flight hours per year\n- Access to all features\n- Email support\n\n2. Growth Plan (€0.50/flight hour excl. VAT):\n- For clubs from 1000 to 3000 flight hours per year\n- All features included\n- Priority support\n\n3. Performance Plan (Custom):\n- For clubs over 3000 flight hours per year\n- All features included\n- Custom hosting\n- On-site training\n- 24/7 VIP support\n- Dedicated account manager"
+      "content": "4fly offers three pricing plans adapted to your flying club size. Start for free and evolve according to your needs. All features included!"
     },
     "article4": {
       "title": "Article 4 - Obligations",
@@ -781,6 +827,13 @@
     "article9": {
       "title": "Article 9 - Applicable Law",
       "content": "These terms and conditions are subject to French law. Any dispute falls under the exclusive jurisdiction of French courts."
+    }
+  },
+  "contact": {
+    "meta": {
+      "title": "4fly - Contact | Support and Assistance",
+      "description": "Need help? Contact our team for any question about our flying club management solution. Fast and personalized support.",
+      "image": "/images/contact-hero.jpg"
     }
   }
 }

@@ -1,5 +1,10 @@
 {
   "rgpd": {
+    "meta": {
+      "title": "4fly - Politique de Protection des Données RGPD",
+      "description": "Découvrez comment 4fly protège vos données personnelles conformément au RGPD. Politique de confidentialité, droits des utilisateurs et mesures de sécurité.",
+      "image": "/images/data-protection.jpg"
+    },
     "title": "Politique de Protection des Données",
     "introduction": {
       "title": "Introduction",
@@ -59,6 +64,11 @@
     }
   },
   "features": {
+    "meta": {
+      "title": "4fly - Fonctionnalités de Gestion d'Aéroclub | Solution Complète",
+      "description": "Découvrez toutes les fonctionnalités de 4fly : gestion des vols, réservations, maintenance, formation... Une solution complète pour votre aéroclub.",
+      "image": "/images/features-hero.jpg"
+    },
     "flightManagement": {
       "title": "Gestion des Vols",
       "description": "Planification et suivi des vols en temps réel"
@@ -86,21 +96,16 @@
   },
   "common": {
     "locale": "fr-FR",
-    "learnMore": "En savoir plus",
-    "getStarted": "Commencer",
-    "login": "Se connecter",
-    "register": "S'inscrire",
+    "login": "Connexion",
     "legal": "Informations légales",
     "legalMentions": "Mentions légales",
     "cgv": "CGV",
-    "rgpd": "RGPD",
     "back": "Retour",
     "next": "Suivant",
     "copyright": "MELBA CAPITAL - SASU au capital de 2 700 000€ - RCS Saint-Etienne 840 514 913",
     "footerDescription": "La solution simple pour gérer votre club aéronautique. Réservations, maintenance, facturation... tout est là !"
   },
   "nav": {
-    "menu": "Navigation",
     "home": "Accueil",
     "about": "À propos",
     "features": "Fonctionnalités",
@@ -109,6 +114,11 @@
     "contact": "Contact"
   },
   "pricing": {
+    "meta": {
+      "title": "4fly - Tarifs | Solution de Gestion d'Aéroclub Gratuite",
+      "description": "Découvrez nos tarifs adaptés à la taille de votre aéroclub. Commencez gratuitement et évoluez selon vos besoins. Toutes les fonctionnalités incluses !",
+      "image": "/images/pricing-hero.jpg"
+    },
     "title": "Choisissez votre formule",
     "subtitle": "Toutes les fonctionnalités sont disponibles dès le début : réservations, plannings, maintenance, formations, facturation... Plus vous volez, plus votre club grandit, plus 4fly vous accompagne !",
     "plans": {
@@ -136,6 +146,11 @@
     "footer": "Toutes les fonctionnalités sont disponibles dès le début : réservations, plannings, maintenance, formations, facturation... Plus vous volez, plus votre club grandit, plus 4fly vous accompagne !"
   },
   "about": {
+    "meta": {
+      "title": "4fly - À Propos | L'équipe derrière votre solution aéronautique",
+      "description": "Découvrez l'équipe 4fly, notre vision et notre engagement pour simplifier la gestion des aéroclubs. Support personnalisé et formation gratuite inclus.",
+      "image": "/images/about-team.jpg"
+    },
     "hero": {
       "title": "L'équipe 4fly",
       "description": "4fly est développé par une équipe passionnée qui s'engage à fournir un support permanent à nos utilisateurs."
@@ -293,6 +308,15 @@
       }
     }
   },
+  "faq": {
+    "meta": {
+      "title": "4fly - FAQ | Questions Fréquentes sur la Gestion d'Aéroclub",
+      "description": "Trouvez les réponses à toutes vos questions sur 4fly : fonctionnalités, tarifs, support technique, formation et plus encore.",
+      "image": "/images/faq-hero.jpg"
+    }
+  },
+    
+
   "faqPage": {
     "hero": {
       "title": "Questions fréquentes",
@@ -444,6 +468,13 @@
       }
     }
   },
+  "contact": {
+    "meta": {
+      "title": "4fly - Contact | Support et Assistance",
+      "description": "Besoin d'aide ? Contactez l'équipe 4fly pour toute question sur notre solution de gestion d'aéroclub. Support réactif et personnalisé.",
+      "image": "/images/contact-hero.jpg"
+    }
+  },
   "contactPage": {
     "hero": {
       "title": "Contactez-nous",
@@ -574,6 +605,10 @@
     }
   },
   "login": {
+    "meta": {
+      "title": "4fly - Connexion à votre espace aéroclub",
+      "description": "Connectez-vous à votre espace aéroclub 4fly pour gérer vos réservations, vols, formations et maintenance aéronautique."
+    },
     "hero": {
       "title": "Bienvenue sur 4fly",
       "subtitle": "Connectez-vous pour accéder à votre espace"
@@ -696,6 +731,11 @@
     }
   },
   "cgv": {
+    "meta": {
+      "title": "4fly - Conditions Générales de Vente",
+      "description": "Consultez nos conditions générales de vente : modalités d'utilisation, tarification et conditions contractuelles de la plateforme 4fly.",
+      "image": "/images/cgv-hero.jpg"
+    },
     "title": "Conditions Générales de Vente",
     "lastUpdate": "Dernière mise à jour : {{date}}",
     "article1": {
@@ -736,6 +776,11 @@
     }
   },
   "legal": {
+    "meta": {
+      "title": "4fly - Mentions Légales",
+      "description": "Mentions légales de 4fly : informations sur l'éditeur, l'hébergement et les conditions d'utilisation de notre plateforme.",
+      "image": "/images/legal-hero.jpg"
+    },
     "title": "Mentions Légales",
     "publisher": {
       "title": "Éditeur du site",
@@ -776,9 +821,9 @@
   },
   "home": {
     "meta": {
-      "title": "4fly - La plateforme de gestion d'aéroclub nouvelle génération",
-      "description": "Simplifiez la gestion de votre aéroclub avec 4fly. Réservations, maintenance, formation, facturation - tout en un seul endroit.",
-      "image": "/images/hero-image.jpg"
+      "title": "4fly - Logiciel de Gestion d'Aéroclub | Solution Complète Gratuite",
+      "description": "4fly est la solution complète pour gérer votre aéroclub. Gestion des vols, réservations, maintenance, formation et plus encore. Essayez gratuitement !",
+      "image": "/images/home-hero.jpg"
     },
     "title": "Gérez votre aéroclub simplement",
     "description": "4fly est un outil simple et gratuit pour gérer votre aéroclub, que vous ayez 2 ou 200 membres. Fini les tableurs complexes et la paperasse !",
@@ -786,46 +831,6 @@
     "configurationTime": "Configuration en 2 minutes",
     "startTitle": "Développez votre aéroclub",
     "startDescription": "Configuration en 2 minutes",
-    "startButton": "Commencer gratuitement",
-    "features": {
-      "title": "Tout ce dont vous avez besoin",
-      "description": "Une solution complète pour gérer votre aéroclub",
-      "items": [
-        {
-          "title": "Réservations en ligne",
-          "description": "Système de réservation en ligne accessible 24/7 avec gestion des conflits en temps réel"
-        },
-        {
-          "title": "Maintenance simplifiée",
-          "description": "Suivi détaillé de la maintenance avec alertes automatiques et gestion des potentiels"
-        },
-        {
-          "title": "Formation intégrée",
-          "description": "Gestion complète de la formation avec suivi pédagogique et progression des élèves"
-        },
-        {
-          "title": "Facturation automatique",
-          "description": "Facturation automatique des vols avec gestion des comptes pilotes et des tarifs"
-        }
-      ]
-    },
-    "stats": {
-      "title": "Ils nous font confiance",
-      "description": "Des aéroclubs de toutes tailles utilisent 4fly au quotidien",
-      "items": [
-        {
-          "value": "150+",
-          "label": "Aéroclubs"
-        },
-        {
-          "value": "10k+",
-          "label": "Pilotes"
-        },
-        {
-          "value": "500k+",
-          "label": "Vols gérés"
-        }
-      ]
-    }
+    "startButton": "Commencer gratuitement"
   }
 }

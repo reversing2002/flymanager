@@ -23,6 +23,11 @@
     "memberManagement": {
       "title": "Gestión de Miembros",
       "description": "Administración eficiente de miembros del club"
+    },
+    "meta": {
+      "title": "4fly - Funcionalidades de Gestión de Aeroclubes | Solución Completa",
+      "description": "Descubre todas las funcionalidades de 4fly: gestión de vuelos, reservas, mantenimiento, formación... Una solución completa para tu aeroclub.",
+      "image": "/images/features-hero.jpg"
     }
   },
   "common": {
@@ -94,6 +99,11 @@
     "update": {
       "title": "Actualización",
       "content": "Esta política de protección de datos puede actualizarse periódicamente. Última actualización: {{date}}."
+    },
+    "meta": {
+      "title": "4fly - Política de Protección de Datos RGPD",
+      "description": "Descubre cómo 4fly protege tus datos personales en cumplimiento con el RGPD. Política de privacidad, derechos de usuario y medidas de seguridad.",
+      "image": "/images/data-protection.jpg"
     }
   },
   "nav": {
@@ -131,7 +141,12 @@
       }
     },
     "startFree": "Empezar gratis",
-    "footer": "Todas las funciones están disponibles desde el principio: reservas, horarios, mantenimiento, formación, facturación... ¡Cuanto más vuelas, más crece tu club, más te apoya 4fly!"
+    "footer": "Todas las funciones están disponibles desde el principio: reservas, horarios, mantenimiento, formación, facturación... ¡Cuanto más vuelas, más crece tu club, más te apoya 4fly!",
+    "meta": {
+      "title": "4fly - Precios | Solución Gratuita de Gestión de Aeroclubes",
+      "description": "Descubre nuestros planes adaptados al tamaño de tu aeroclub. Comienza gratis y evoluciona según tus necesidades. ¡Todas las funcionalidades incluidas!",
+      "image": "/images/pricing-hero.jpg"
+    }
   },
   "about": {
     "hero": {
@@ -181,6 +196,11 @@
       "team": "El Equipo 4fly",
       "vision": "Colaboración con clubes de vuelo",
       "support": "Soporte y asistencia"
+    },
+    "meta": {
+      "title": "4fly - Acerca de | El Equipo Detrás de tu Solución Aeronáutica",
+      "description": "Conoce al equipo 4fly, nuestra visión y compromiso para simplificar la gestión de aeroclubes. Soporte personalizado y formación gratuita incluidos.",
+      "image": "/images/about-team.jpg"
     }
   },
   "featuresPage": {
@@ -291,6 +311,7 @@
       }
     }
   },
+
   "faqPage": {
     "hero": {
       "title": "Preguntas Frecuentes",
@@ -442,6 +463,20 @@
       }
     }
   },
+  "faq": {
+    "meta": {
+      "title": "4fly - FAQ | Preguntas Frecuentes sobre Gestión de Aeroclubes",
+      "description": "Encuentra respuestas a todas tus preguntas sobre 4fly: funcionalidades, precios, soporte técnico, formación y más.",
+      "image": "/images/faq-hero.jpg"
+    }
+  },
+  "contact": {
+    "meta": {
+      "title": "4fly - Contacto | Soporte y Asistencia",
+      "description": "¿Necesitas ayuda? Contacta con el equipo 4fly para cualquier pregunta sobre nuestra solución de gestión de aeroclubes. Soporte rápido y personalizado.",
+      "image": "/images/contact-hero.jpg"
+    }
+  },
   "contactPage": {
     "hero": {
       "title": "Contáctenos",
@@ -572,6 +607,10 @@
     }
   },
   "login": {
+    "meta": {
+      "title": "4fly - Acceso a su panel de control del club de vuelo",
+      "description": "Acceda a su panel de control 4fly para gestionar sus reservas, vuelos, formación y mantenimiento de aeronaves."
+    },
     "hero": {
       "title": "Bienvenido a 4fly",
       "subtitle": "Inicia sesión para acceder a tu espacio"
@@ -696,7 +735,8 @@
   "home": {
     "meta": {
       "title": "4fly - Software de Gestión de Clubes de Vuelo | Solución Completa Gratuita",
-      "description": "4fly es la solución completa para gestionar tu club de vuelo. Gestión de vuelos, reservas, mantenimiento, formación y más. ¡Pruébalo gratis!"
+      "description": "4fly es la solución completa para gestionar tu club de vuelo. Gestión de vuelos, reservas, mantenimiento, formación y más. ¡Pruébalo gratis!",
+      "image": "/images/home-hero.jpg"
     },
     "title": "Gestiona tu club de vuelo fácilmente",
     "description": "4fly es una herramienta simple y gratuita para gestionar tu club de aviación, ya sea que tengas 2 o 200 miembros. ¡Adiós a las hojas de cálculo complejas y al papeleo!",
@@ -743,6 +783,11 @@
     "links": {
       "title": "Enlaces",
       "description": "El sitio 4fly.io puede contener enlaces a otros sitios. MELBA CAPITAL no es responsable del contenido ni de la política de privacidad de estos sitios."
+    },
+    "meta": {
+      "title": "4fly - Aviso Legal",
+      "description": "Aviso legal de 4fly: información sobre el editor, alojamiento y condiciones de uso de nuestra plataforma.",
+      "image": "/images/legal-hero.jpg"
     }
   },
   "cgv": {
@@ -783,6 +828,11 @@
     "article9": {
       "title": "Artículo 9 - Ley Aplicable",
       "content": "Estos términos y condiciones están sujetos a la ley francesa. Cualquier disputa cae bajo la jurisdicción exclusiva de los tribunales franceses."
+    },
+    "meta": {
+      "title": "4fly - Términos y Condiciones de Venta",
+      "description": "Consulta nuestros términos y condiciones de venta: modalidades de uso, precios y condiciones contractuales de la plataforma 4fly.",
+      "image": "/images/cgv-hero.jpg"
     }
   }
 }

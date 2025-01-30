@@ -1,5 +1,10 @@
 {
   "rgpd": {
+    "meta": {
+      "title": "4fly - Polityka Ochrony Danych RODO",
+      "description": "Dowiedz się, jak 4fly chroni Twoje dane osobowe zgodnie z RODO. Polityka prywatności, prawa użytkowników i środki bezpieczeństwa.",
+      "image": "/images/data-protection.jpg"
+    },
     "title": "Polityka Ochrony Danych",
     "introduction": {
       "title": "Wstęp",
@@ -70,6 +75,11 @@
     "footerDescription": "Proste rozwiązanie do zarządzania Twoim aeroklubem. Rezerwacje, konserwacja, fakturowanie... wszystko w jednym miejscu!"
   },
   "features": {
+    "meta": {
+      "title": "4fly - Funkcje Zarządzania Aeroklubem | Kompleksowe Rozwiązanie",
+      "description": "Odkryj wszystkie funkcje 4fly: zarządzanie lotami, rezerwacje, konserwacja, szkolenia... Kompleksowe rozwiązanie dla Twojego aeroklubu.",
+      "image": "/images/features-hero.jpg"
+    },
     "flightManagement": {
       "title": "Zarządzanie Lotami",
       "description": "Planowanie i monitorowanie lotów w czasie rzeczywistym"
@@ -98,7 +108,8 @@
   "home": {
     "meta": {
       "title": "4fly - Oprogramowanie do Zarządzania Aeroklubami | Kompleksowe i Darmowe Rozwiązanie",
-      "description": "4fly to kompleksowe rozwiązanie do zarządzania Twoim aeroklubem. Zarządzanie lotami, rezerwacjami, konserwacją, szkoleniem i wiele więcej. Wypróbuj za darmo!"
+      "description": "4fly to kompleksowe rozwiązanie do zarządzania Twoim aeroklubem. Zarządzanie lotami, rezerwacjami, konserwacją, szkoleniem i wiele więcej. Wypróbuj za darmo!",
+      "image": "/images/home-hero.jpg"
     },
     "title": "Zarządzaj swoim aeroklubem w prosty sposób",
     "description": "4fly to proste i darmowe narzędzie do zarządzania Twoim klubem lotniczym, niezależnie czy masz 2 czy 200 członków. Koniec ze skomplikowanymi arkuszami kalkulacyjnymi i papierologią!",
@@ -120,6 +131,11 @@
   "pricing": {
     "title": "Wybierz swój plan",
     "subtitle": "Wszystkie funkcje są dostępne od samego początku: rezerwacje, harmonogramy, konserwacja, szkolenia, fakturowanie... Im więcej latasz, tym bardziej Twój klub się rozwija, a 4fly Cię wspiera!",
+    "meta": {
+      "title": "4fly - Wybierz swój plan | Kompleksowe i Darmowe Rozwiązanie",
+      "description": "Wybierz swój plan 4fly: bezpłatne lub ostateczne, z opłatą lub bez opłatę, w zależności od potrzeb Twojego klubu.",
+      "image": "/images/pricing-hero.jpg"
+    },
     "plans": {
       "starter": {
         "name": "Starter",
@@ -145,6 +161,11 @@
     "footer": "Wszystkie funkcje są dostępne od samego początku: rezerwacje, harmonogramy, konserwacja, szkolenia, fakturowanie... Im więcej latasz, tym bardziej Twój klub się rozwija, a 4fly Cię wspiera!"
   },
   "about": {
+    "meta": {
+      "title": "4fly - O Nas | Zespół za Twoim Rozwiązaniem Lotniczym",
+      "description": "Poznaj zespół 4fly, naszą wizję i zaangażowanie w uproszczenie zarządzania aeroklubem. Spersonalizowane wsparcie i darmowe szkolenia w cenie.",
+      "image": "/images/about-team.jpg"
+    },
     "hero": {
       "title": "Zespół 4fly",
       "description": "4fly jest rozwijane przez zespół pasjonatów, którzy zobowiązują się do ciągłego wsparcia naszych użytkowników."
@@ -303,6 +324,11 @@
     }
   },
   "faqPage": {
+    "meta": {
+      "title": "4fly - FAQ | Często Zadawane Pytania o Zarządzanie Aeroklubem",
+      "description": "Znajdź odpowiedzi na wszystkie pytania o 4fly: funkcje, ceny, wsparcie techniczne, szkolenia i więcej.",
+      "image": "/images/faq-hero.jpg"
+    },
     "hero": {
       "title": "Najczęściej Zadawane Pytania",
       "subtitle": "Znajdź odpowiedzi na najczęściej zadawane pytania dotyczące 4fly"
@@ -366,7 +392,7 @@
             "answer": "Mechanicy i upoważniony personel mogą rejestrować operacje konserwacyjne. Każda interwencja jest dokumentowana i archiwizowana w historii samolotu."
           },
           {
-            "question": "Jak zarządzane są alerty konserwacyjne?",
+            "question": "Jak zarządza się alerty konserwacyjne?",
             "answer": "System wysyła automatyczne powiadomienia do osób zarządzających, gdy zbliża się termin konserwacji. Piloci również są informowani o ewentualnych ograniczeniach czy niedostępności samolotu."
           },
           {
@@ -454,6 +480,11 @@
     }
   },
   "contactPage": {
+    "meta": {
+      "title": "4fly - Kontakt | Wsparcie i Pomoc",
+      "description": "Potrzebujesz pomocy? Skontaktuj się z zespołem 4fly w sprawie naszego rozwiązania do zarządzania aeroklubem. Szybkie i spersonalizowane wsparcie.",
+      "image": "/images/contact-hero.jpg"
+    },
     "hero": {
       "title": "Skontaktuj się z nami",
       "subtitle": "Jesteśmy tutaj, aby pomóc",
@@ -507,6 +538,11 @@
     }
   },
   "createClub": {
+    "meta": {
+      "title": "4fly - Utwórz Swój Aeroklub",
+      "description": "Rozpocznij w zaledwie kilka minut. Utwórz swój aeroklub i zacznij zarządzać rezerwacjami, lotami, szkoleniami i konserwacją.",
+      "image": "/images/create-club-hero.jpg"
+    },
     "hero": {
       "title": "Utwórz Swój Aeroklub",
       "subtitle": "Rozpocznij w zaledwie kilka minut"
@@ -583,6 +619,11 @@
     }
   },
   "login": {
+    "meta": {
+      "title": "4fly - Zaloguj się do panelu kontrolnego aeroklubu",
+      "description": "Zaloguj się do panelu kontrolnego 4fly, aby zarządzać rezerwacjami, lotami, szkoleniami i konserwacją samolotów.",
+      "image": "/images/login-hero.jpg"
+    },
     "hero": {
       "title": "Witamy w 4fly",
       "subtitle": "Zaloguj się, aby uzyskać dostęp do swojego panelu"
@@ -611,6 +652,11 @@
     }
   },
   "resetPassword": {
+    "meta": {
+      "title": "4fly - Reset Hasła",
+      "description": "Wpisz swój adres e-mail, aby otrzymać instrukcje dotyczące resetowania hasła.",
+      "image": "/images/reset-password-hero.jpg"
+    },
     "title": "Reset Hasła",
     "description": "Wpisz swój adres e-mail, aby otrzymać instrukcje dotyczące resetowania hasła.",
     "emailLabel": "E-mail",
@@ -705,6 +751,11 @@
     }
   },
   "legal": {
+    "meta": {
+      "title": "4fly - Informacje Prawne",
+      "description": "Informacje prawne 4fly: informacje o wydawcy, hostingu i warunkach korzystania z naszej platformy.",
+      "image": "/images/legal-hero.jpg"
+    },
     "title": "Nota Prawna",
     "publisher": {
       "title": "Wydawca Strony",
@@ -731,7 +782,7 @@
     },
     "intellectualProperty": {
       "title": "Własność Intelektualna",
-      "description": "Cała zawartość tej strony (struktura, teksty, obrazy, logotypy, bazy danych...) stanowi wyłączną własność MELBA CAPITAL. Jakakolwiek reprodukcja, przedstawianie, modyfikacja, publikacja, transmisja, przetwarzanie, w całości lub w części, tej strony lub jej zawartości, w jakikolwiek sposób i na jakimkolwiek nośniku, jest zabroniona bez uprzedniej pisemnej zgody MELBA CAPITAL."
+      "description": "Cała zawartość tej strony (struktura, teksty, obrazy, logotypy, bazy danych...) stanowi wyłączną własność MELBA CAPITAL. Jakakolwiek reprodukcja, przedstawianie, modyfikacja, publikacja, transmisja, przetwarzanie, w całości lub w części, tej strony lub jej zawartości, jest zabroniona bez uprzedniej pisemnej zgody MELBA CAPITAL."
     },
     "cookies": {
       "title": "Pliki Cookies",
@@ -744,6 +795,11 @@
     }
   },
   "cgv": {
+    "meta": {
+      "title": "4fly - Ogólne Warunki Sprzedaży",
+      "description": "Zapoznaj się z naszymi warunkami sprzedaży: warunki użytkowania, ceny i warunki umowne platformy 4fly.",
+      "image": "/images/cgv-hero.jpg"
+    },
     "title": "Warunki Sprzedaży",
     "lastUpdate": "Ostatnia aktualizacja: {{date}}",
     "article1": {
@@ -781,6 +837,20 @@
     "article9": {
       "title": "Artykuł 9 - Prawo Właściwe",
       "content": "Niniejsze warunki sprzedaży podlegają prawu francuskiemu. Wszelkie spory rozstrzygane są wyłącznie przez sądy francuskie."
+    }
+  },
+  "contact": {
+    "meta": {
+      "title": "4fly - Kontakt | Wsparcie i Pomoc",
+      "description": "Potrzebujesz pomocy? Skontaktuj się z zespołem 4fly, jeśli masz jakiekolwiek pytania dotyczące naszego rozwiązania do zarządzania aeroklubem. Szybkie i spersonalizowane wsparcie.",
+      "image": "/images/contact-hero.jpg"
+    }
+  },
+  "faq": {
+    "meta": {
+      "title": "4fly - FAQ | Najczęściej zadawane pytania dotyczące zarządzania aeroklubem",
+      "description": "Znajdź odpowiedzi na wszystkie swoje pytania dotyczące 4fly: funkcjonalności, cennika, wsparcia technicznego, szkoleń i wiele więcej.",
+      "image": "/images/faq-hero.jpg"
     }
   }
 }

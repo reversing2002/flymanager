@@ -56,6 +56,11 @@
     "update": {
       "title": "Update",
       "content": "Dit gegevensbeschermingsbeleid kan periodiek worden bijgewerkt. Laatste update: {{date}}."
+    },
+    "meta": {
+      "title": "4fly - AVG Gegevensbeschermingsbeleid",
+      "description": "Ontdek hoe 4fly uw persoonlijke gegevens beschermt volgens de AVG. Privacybeleid, gebruikersrechten en beveiligingsmaatregelen.",
+      "image": "/images/data-protection.jpg"
     }
   },
   "common": {
@@ -67,7 +72,11 @@
     "next": "Volgende",
     "login": "Inloggen",
     "copyright": "MELBA CAPITAL - SASU met een kapitaal van €2.700.000 - RCS Saint-Etienne 840 514 913",
-    "footerDescription": "De eenvoudige oplossing om uw vliegclub te beheren. Boekingen, onderhoud, facturering... alles op één plek!"
+    "footerDescription": "De eenvoudige oplossing om uw vliegclub te beheren. Boekingen, onderhoud, facturering... alles op één plek!",
+    "getStarted": "Commencer",
+    "learnMore": "En savoir plus",
+    "register": "S'inscrire",
+    "rgpd": "RGPD"
   },
   "features": {
     "flightManagement": {
@@ -93,12 +102,18 @@
     "memberManagement": {
       "title": "Ledenbeheer",
       "description": "Efficiënt beheer van clubleden"
+    },
+    "meta": {
+      "title": "4fly - Vliegclub Beheer Functies | Complete Oplossing",
+      "description": "Ontdek alle 4fly functies: vluchtbeheer, boekingen, onderhoud, opleiding... Een complete oplossing voor uw vliegclub.",
+      "image": "/images/features-hero.jpg"
     }
   },
   "home": {
     "meta": {
-      "title": "4fly - Beheersoftware voor Vliegclubs | Complete Gratis Oplossing",
-      "description": "4fly is de complete oplossing voor het beheren van uw vliegclub. Vluchtbeheer, reserveringen, onderhoud, opleiding en meer. Probeer het gratis!"
+      "title": "4fly - Vliegclub Beheer Software | Complete Gratis Oplossing",
+      "description": "4fly is de complete oplossing voor het beheer van uw vliegclub. Vluchtbeheer, boekingen, onderhoud, opleiding en meer. Probeer het gratis!",
+      "image": "/images/home-hero.jpg"
     },
     "title": "Beheer uw vliegclub eenvoudig",
     "description": "4fly is een eenvoudige en gratis tool om uw vliegclub te beheren, of u nu 2 of 200 leden hebt. Geen complexe spreadsheets en papieren rompslomp meer!",
@@ -106,7 +121,47 @@
     "configurationTime": "Configuratie in 2 minuten",
     "startTitle": "Begin met het laten groeien van uw club",
     "startDescription": "Configuratie in 2 minuten",
-    "startButton": "Gratis starten"
+    "startButton": "Gratis starten",
+    "features": {
+      "title": "Tout ce dont vous avez besoin",
+      "description": "Une solution complète pour gérer votre aéroclub",
+      "items": [
+        {
+          "title": "Réservations en ligne",
+          "description": "Système de réservation en ligne accessible 24/7 avec gestion des conflits en temps réel"
+        },
+        {
+          "title": "Maintenance simplifiée",
+          "description": "Suivi détaillé de la maintenance avec alertes automatiques et gestion des potentiels"
+        },
+        {
+          "title": "Formation intégrée",
+          "description": "Gestion complète de la formation avec suivi pédagogique et progression des élèves"
+        },
+        {
+          "title": "Facturation automatique",
+          "description": "Facturation automatique des vols avec gestion des comptes pilotes et des tarifs"
+        }
+      ]
+    },
+    "stats": {
+      "title": "Ils nous font confiance",
+      "description": "Des aéroclubs de toutes tailles utilisent 4fly au quotidien",
+      "items": [
+        {
+          "value": "150+",
+          "label": "Aéroclubs"
+        },
+        {
+          "value": "10k+",
+          "label": "Pilotes"
+        },
+        {
+          "value": "500k+",
+          "label": "Vols gérés"
+        }
+      ]
+    }
   },
   "nav": {
     "home": "Home",
@@ -115,7 +170,8 @@
     "pricing": "Prijzen",
     "faq": "FAQ",
     "contact": "Contact",
-    "login": "Inloggen"
+    "login": "Inloggen",
+    "menu": "Navigation"
   },
   "pricing": {
     "title": "Kies uw plan",
@@ -142,7 +198,12 @@
       }
     },
     "startFree": "Gratis starten",
-    "footer": "Alle functies zijn vanaf het begin beschikbaar: reserveringen, roosters, onderhoud, opleidingen, facturering... Hoe meer u vliegt, hoe meer uw club groeit en hoe meer 4fly u ondersteunt!"
+    "footer": "Alle functies zijn vanaf het begin beschikbaar: reserveringen, roosters, onderhoud, opleidingen, facturering... Hoe meer u vliegt, hoe meer uw club groeit en hoe meer 4fly u ondersteunt!",
+    "meta": {
+      "title": "4fly - Prijzen | Gratis Vliegclub Beheer Oplossing",
+      "description": "Ontdek onze prijsplannen aangepast aan de grootte van uw vliegclub. Begin gratis en groei volgens uw behoeften. Alle functies inbegrepen!",
+      "image": "/images/pricing-hero.jpg"
+    }
   },
   "about": {
     "hero": {
@@ -192,6 +253,11 @@
       "team": "Het 4fly-team",
       "vision": "Samenwerking met vliegclubs",
       "support": "Ondersteuning en hulp"
+    },
+    "meta": {
+      "title": "4fly - Over Ons | Het Team Achter Uw Luchtvaartoplossing",
+      "description": "Maak kennis met het 4fly team, onze visie en toewijding om vliegclub beheer te vereenvoudigen. Persoonlijke ondersteuning inbegrepen.",
+      "image": "/images/about-team.jpg"
     }
   },
   "featuresPage": {
@@ -300,6 +366,11 @@
           "Automatische back-ups"
         ]
       }
+    },
+    "meta": {
+      "title": "4fly - Fonctionnalités | L'équipe derrière votre solution aéronautique",
+      "description": "Découvrez les outils fournis par 4fly, la solution idéale pour geérer votre aéroclub. Collaboration avec les aéro-clubs, support et assistance personnalisés.",
+      "image": "/images/features-hero.jpg"
     }
   },
   "faqPage": {
@@ -451,6 +522,11 @@
           }
         ]
       }
+    },
+    "meta": {
+      "title": "4fly - FAQ | Veelgestelde Vragen over Vliegclub Beheer",
+      "description": "Vind antwoorden op al uw vragen over 4fly: functies, prijzen, technische ondersteuning, opleiding en meer.",
+      "image": "/images/faq-hero.jpg"
     }
   },
   "contactPage": {
@@ -504,6 +580,11 @@
       "error": "Fout bij het verzenden van het bericht",
       "contactRequired": "Geef ten minste één contactmethode op",
       "contactRequiredError": "Geef ten minste één contactmethode op (e-mail of telefoon)"
+    },
+    "meta": {
+      "title": "4fly - Contact | Ondersteuning en Hulp",
+      "description": "Hulp nodig? Neem contact op met het 4fly team voor al uw vragen over onze vliegclub beheer oplossing. Snelle en persoonlijke ondersteuning.",
+      "image": "/images/contact-hero.jpg"
     }
   },
   "createClub": {
@@ -583,6 +664,10 @@
     }
   },
   "login": {
+    "meta": {
+      "title": "4fly - Log in op uw vliegclub dashboard",
+      "description": "Log in op uw 4fly vliegclub dashboard om uw boekingen, vluchten, training en vliegtuigonderhoud te beheren."
+    },
     "hero": {
       "title": "Welkom bij 4fly",
       "subtitle": "Log in om toegang te krijgen tot uw dashboard"
@@ -605,7 +690,6 @@
       "createClub": "Maak een nieuwe club aan"
     },
     "success": "Succesvol ingelogd!",
-    "error": "Ongeldige inloggegevens",
     "error": {
       "unexpected": "Er is een onverwachte fout opgetreden"
     }
@@ -741,6 +825,11 @@
     "links": {
       "title": "Hyperlinks",
       "description": "De website 4fly.io kan links bevatten naar andere sites. MELBA CAPITAL is niet verantwoordelijk voor de inhoud of het privacybeleid van deze sites."
+    },
+    "meta": {
+      "title": "4fly - Juridische Kennisgeving",
+      "description": "Juridische kennisgeving van 4fly: informatie over de uitgever, hosting en gebruiksvoorwaarden van ons platform.",
+      "image": "/images/legal-hero.jpg"
     }
   },
   "cgv": {
@@ -781,6 +870,25 @@
     "article9": {
       "title": "Artikel 9 - Toepasselijk Recht",
       "content": "Deze algemene voorwaarden vallen onder het Franse recht. In geval van een geschil zijn uitsluitend de Franse rechtbanken bevoegd."
+    },
+    "meta": {
+      "title": "4fly - Algemene Verkoopvoorwaarden",
+      "description": "Lees onze algemene voorwaarden: gebruiksvoorwaarden, prijzen en contractuele voorwaarden van het 4fly platform.",
+      "image": "/images/cgv-hero.jpg"
+    }
+  },
+  "contact": {
+    "meta": {
+      "title": "4fly - Contact | Ondersteuning en hulp",
+      "description": "Heeft u hulp nodig? Neem contact op met het 4fly-team voor vragen over onze oplossing voor het beheer van vliegclubs. Snelle en persoonlijke ondersteuning.",
+      "image": "/images/contact-hero.jpg"
+    }
+  },
+  "faq": {
+    "meta": {
+      "title": "4fly - FAQ | Veelgestelde vragen",
+      "description": "Vind antwoorden op de meest voorkomende vragen over het beheren van vliegclubs. Krijg inzicht in de vereisten die in de praktijk het vaakst voorkomen.",
+      "image": "/images/faq-hero.jpg"
     }
   }
 }

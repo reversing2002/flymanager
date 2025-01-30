@@ -23,6 +23,11 @@
     "memberManagement": {
       "title": "Mitgliederverwaltung",
       "description": "Effiziente Verwaltung der Clubmitglieder"
+    },
+    "meta": {
+      "title": "4fly - Flugverein-Management Funktionen | Komplettlösung",
+      "description": "Entdecken Sie alle 4fly-Funktionen: Flugmanagement, Buchungen, Wartung, Ausbildung... Eine komplette Lösung für Ihren Flugverein.",
+      "image": "/images/features-hero.jpg"
     }
   },
   "common": {
@@ -97,12 +102,18 @@
     "update": {
       "title": "Aktualisierung",
       "content": "Diese Datenschutzrichtlinie kann regelmäßig aktualisiert werden. Letzte Aktualisierung: {{date}}."
+    },
+    "meta": {
+      "title": "4fly - DSGVO-Datenschutzrichtlinie",
+      "description": "Erfahren Sie, wie 4fly Ihre personenbezogenen Daten gemäß DSGVO schützt. Datenschutzrichtlinie, Benutzerrechte und Sicherheitsmaßnahmen.",
+      "image": "/images/data-protection.jpg"
     }
   },
   "home": {
     "meta": {
-      "title": "4fly - Flugverein-Management-Software | Komplette Gratis-Lösung",
-      "description": "4fly ist die komplette Lösung für die Verwaltung Ihres Flugvereins. Flugmanagement, Buchungen, Wartung, Ausbildung und mehr. Kostenlos testen!"
+      "title": "4fly - Flugverein-Management Software | Kostenlose Komplettlösung",
+      "description": "4fly ist die komplette Lösung für die Verwaltung Ihres Flugvereins. Flugmanagement, Buchungen, Wartung, Ausbildung und mehr. Kostenlos testen!",
+      "image": "/images/home-hero.jpg"
     },
     "title": "Verwalten Sie Ihren Flugverein einfach",
     "description": "4fly ist ein einfaches und kostenloses Tool zur Verwaltung Ihres Luftfahrtvereins, egal ob Sie 2 oder 200 Mitglieder haben. Schluss mit komplexen Tabellen und Papierkram!",
@@ -110,7 +121,47 @@
     "configurationTime": "2-Minuten-Einrichtung",
     "startTitle": "Beginnen Sie, Ihren Club wachsen zu lassen",
     "startDescription": "2-Minuten-Einrichtung",
-    "startButton": "Kostenlos starten"
+    "startButton": "Kostenlos starten",
+    "features": {
+      "title": "Tout ce dont vous avez besoin",
+      "description": "Une solution complète pour gérer votre aéroclub",
+      "items": [
+        {
+          "title": "Réservations en ligne",
+          "description": "Système de réservation en ligne accessible 24/7 avec gestion des conflits en temps réel"
+        },
+        {
+          "title": "Maintenance simplifiée",
+          "description": "Suivi détaillé de la maintenance avec alertes automatiques et gestion des potentiels"
+        },
+        {
+          "title": "Formation intégrée",
+          "description": "Gestion complète de la formation avec suivi pédagogique et progression des élèves"
+        },
+        {
+          "title": "Facturation automatique",
+          "description": "Facturation automatique des vols avec gestion des comptes pilotes et des tarifs"
+        }
+      ]
+    },
+    "stats": {
+      "title": "Ils nous font confiance",
+      "description": "Des aéroclubs de toutes tailles utilisent 4fly au quotidien",
+      "items": [
+        {
+          "value": "150+",
+          "label": "Aéroclubs"
+        },
+        {
+          "value": "10k+",
+          "label": "Pilotes"
+        },
+        {
+          "value": "500k+",
+          "label": "Vols gérés"
+        }
+      ]
+    }
   },
   "nav": {
     "menu": "Navigation",
@@ -119,9 +170,15 @@
     "features": "Funktionen",
     "pricing": "Preise",
     "faq": "FAQ",
+    "login": "Anmelden",
     "contact": "Kontakt"
   },
   "pricing": {
+    "meta": {
+      "title": "4fly - Preise | Kostenlose Flugverein-Management Lösung",
+      "description": "Entdecken Sie unsere Preispläne, angepasst an die Größe Ihres Flugvereins. Starten Sie kostenlos und entwickeln Sie sich nach Ihren Bedürfnissen.",
+      "image": "/images/pricing-hero.jpg"
+    },
     "title": "Wählen Sie Ihren Plan",
     "subtitle": "Alle Funktionen sind von Anfang an verfügbar: Buchungen, Zeitpläne, Wartung, Schulung, Abrechnung... Je mehr Sie fliegen, je mehr Ihr Verein wächst, desto mehr unterstützt Sie 4fly!",
     "plans": {
@@ -149,6 +206,11 @@
     "footer": "Alle Funktionen sind von Anfang an verfügbar: Buchungen, Zeitpläne, Wartung, Schulung, Abrechnung... Je mehr Sie fliegen, je mehr Ihr Club wächst, desto mehr unterstützt Sie 4fly!"
   },
   "about": {
+    "meta": {
+      "title": "4fly - Über uns | Das Team hinter Ihrer Luftfahrtlösung",
+      "description": "Lernen Sie das 4fly-Team kennen. Unsere Vision und unser Engagement für die Vereinfachung des Flugverein-Managements. Persönlicher Support inklusive.",
+      "image": "/images/about-team.jpg"
+    },
     "hero": {
       "title": "Das 4fly Team",
       "description": "4fly wird von einem leidenschaftlichen Team entwickelt, das sich der kontinuierlichen Unterstützung unserer Nutzer verschrieben hat."
@@ -304,9 +366,19 @@
           "Automatische Sicherungen"
         ]
       }
+    },
+    "meta": {
+      "title": "4fly - Fonctionnalités | L'équipe derrière votre solution aéronautique",
+      "description": "Découvrez les outils fournis par 4fly, la solution idéale pour geérer votre aéroclub. Collaboration avec les aéro-clubs, support et assistance personnalisés.",
+      "image": "/images/features-hero.jpg"
     }
   },
   "faqPage": {
+    "meta": {
+      "title": "4fly - FAQ | Häufig gestellte Fragen zum Flugverein-Management",
+      "description": "Finden Sie Antworten auf alle Ihre Fragen zu 4fly: Funktionen, Preise, technischer Support, Ausbildung und mehr.",
+      "image": "/images/faq-hero.jpg"
+    },
     "hero": {
       "title": "Häufig gestellte Fragen",
       "subtitle": "Finden Sie Antworten auf die häufigsten Fragen zu 4fly"
@@ -458,6 +530,11 @@
     }
   },
   "contactPage": {
+    "meta": {
+      "title": "4fly - Kontakt | Support und Hilfe",
+      "description": "Brauchen Sie Hilfe? Kontaktieren Sie das 4fly-Team für alle Fragen zu unserer Flugverein-Management-Lösung. Reaktiver und persönlicher Support.",
+      "image": "/images/contact-hero.jpg"
+    },
     "hero": {
       "title": "Kontaktieren Sie uns",
       "subtitle": "Wir sind hier, um zu helfen",
@@ -587,6 +664,10 @@
     }
   },
   "login": {
+    "meta": {
+      "title": "4fly - Anmeldung zu Ihrem Flugverein-Dashboard",
+      "description": "Melden Sie sich bei Ihrem 4fly Flugverein-Dashboard an, um Ihre Buchungen, Flüge, Ausbildung und Flugzeugwartung zu verwalten."
+    },
     "hero": {
       "title": "Willkommen bei 4fly",
       "subtitle": "Melden Sie sich an, um auf Ihren Bereich zuzugreifen"
@@ -609,7 +690,6 @@
       "createClub": "Neuen Verein erstellen"
     },
     "success": "Erfolgreich angemeldet!",
-    "error": "Ungültige Anmeldedaten",
     "error": {
       "unexpected": "Ein unerwarteter Fehler ist aufgetreten"
     }
@@ -709,6 +789,11 @@
     }
   },
   "legal": {
+    "meta": {
+      "title": "4fly - Rechtliche Hinweise",
+      "description": "Rechtliche Hinweise von 4fly: Informationen über den Herausgeber, Hosting und Nutzungsbedingungen unserer Plattform.",
+      "image": "/images/legal-hero.jpg"
+    },
     "title": "Rechtliche Hinweise",
     "publisher": {
       "title": "Website-Betreiber",
@@ -748,6 +833,11 @@
     }
   },
   "cgv": {
+    "meta": {
+      "title": "4fly - Allgemeine Geschäftsbedingungen",
+      "description": "Lesen Sie unsere AGB: Nutzungsbedingungen, Preise und Vertragsbedingungen der 4fly-Plattform.",
+      "image": "/images/cgv-hero.jpg"
+    },
     "title": "Allgemeine Geschäftsbedingungen",
     "lastUpdate": "Letzte Aktualisierung: {{date}}",
     "article1": {
@@ -785,6 +875,220 @@
     "article9": {
       "title": "Artikel 9 - Geltendes Recht",
       "content": "Diese Allgemeinen Geschäftsbedingungen unterliegen französischem Recht. Alle Streitigkeiten fallen unter die ausschließliche Zuständigkeit französischer Gerichte."
+    }
+  },
+  "faq": {
+    "meta": {
+      "title": "4fly - FAQ | Häufig gestellte Fragen zum Flugverein-Management",
+      "description": "Finden Sie Antworten auf alle Ihre Fragen zu 4fly: Funktionen, Preise, technischer Support, Ausbildung und mehr.",
+      "image": "/images/faq-hero.jpg"
+    },
+    "hero": {
+      "title": "Häufig gestellte Fragen",
+      "subtitle": "Finden Sie Antworten auf die häufigsten Fragen zu 4fly"
+    },
+    "categories": {
+      "about": {
+        "title": "Über 4fly",
+        "questions": [
+          {
+            "question": "Was ist 4fly und für wen ist es gedacht?",
+            "answer": "4fly ist eine umfassende Softwarelösung zur Vereinfachung und Optimierung der Flugvereinsverwaltung. Sie richtet sich an Flugvereine aller Größen, ob mit oder ohne Verbandszugehörigkeit, die ihre täglichen Abläufe automatisieren und zentralisieren möchten. Unser Ziel ist es, das Wachstum Ihres Vereins zu unterstützen."
+          },
+          {
+            "question": "Wie funktioniert das Preismodell?",
+            "answer": "Unser Modell ist einfach: kostenlos bis 1000 Flugstunden pro Jahr, danach 0,50€ pro Flugstunde auf die Gesamtstunden. Für große Vereine mit über 3000 Jahresstunden bieten wir maßgeschneiderte Angebote. Alle Funktionen sind von Anfang an enthalten."
+          },
+          {
+            "question": "Gibt es versteckte Kosten?",
+            "answer": "Nein, unsere flugstundenbasierte Preisgestaltung ist vollkommen transparent. Alle wesentlichen Funktionen sind in diesem Tarif enthalten. Einige zusätzliche Dienste, wie Kreditkartenzahlung, werden je nach Bedarf als Optionen angeboten."
+          },
+          {
+            "question": "Welche Funktionen sind enthalten?",
+            "answer": "Alle wesentlichen Funktionen sind im Basisangebot enthalten: Reservierungsverwaltung, Wartung, Ausbildung, Buchhaltung... Zusätzliche Dienste wie Kreditkartenzahlung sind als Optionen für interessierte Vereine verfügbar."
+          },
+          {
+            "question": "Welcher Support ist verfügbar?",
+            "answer": "Wir bieten umfassenden technischen Support per E-Mail und Telefon, der für alle Vereine unabhängig von ihrer Größe inbegriffen ist. Unser Team steht Ihnen bei der Ersteinrichtung und für Ihre täglichen Fragen zur Verfügung."
+          }
+        ]
+      },
+      "reservations": {
+        "title": "Reservierungen und Flüge",
+        "questions": [
+          {
+            "question": "Wie funktioniert das Reservierungssystem?",
+            "answer": "Das Buchungssystem ist rund um die Uhr online verfügbar. Mitglieder können ein Flugzeug reservieren, die Verfügbarkeit in Echtzeit einsehen und ihre Buchungen über Smartphone oder Computer verwalten."
+          },
+          {
+            "question": "Kann man mehrere Zeitfenster im Voraus buchen?",
+            "answer": "Ja, Sie können entsprechend den Regeln Ihres Vereins mehrere Reservierungen vornehmen. Das System prüft automatisch auf Konflikte und erforderliche Qualifikationen."
+          },
+          {
+            "question": "Wie werden Schulungsflüge verwaltet?",
+            "answer": "Schulungsflüge können mit verfügbaren Fluglehrern geplant werden. Das System prüft automatisch die Verfügbarkeit von Fluglehrern und Flugzeugen."
+          },
+          {
+            "question": "Was passiert bei einer Stornierung?",
+            "answer": "Stornierungen werden nach den Regeln Ihres Vereins verwaltet. Das System kann automatische Benachrichtigungen an die betroffenen Personen senden und den Zeitslot für andere Reservierungen freigeben."
+          }
+        ]
+      },
+      "maintenance": {
+        "title": "Wartung",
+        "questions": [
+          {
+            "question": "Wie wird die Flugzeugwartung verfolgt?",
+            "answer": "4fly enthält ein komplettes Wartungsverfolgungssystem, das Flugstunden, Zyklen und Kalenderfristen überwacht. Automatische Warnungen werden für anstehende Wartungen versendet."
+          },
+          {
+            "question": "Wer kann Wartungen eintragen?",
+            "answer": "Mechaniker und autorisiertes Personal können Wartungsarbeiten dokumentieren. Jeder Eingriff wird dokumentiert und im Flugzeugverlauf archiviert."
+          },
+          {
+            "question": "Wie werden Wartungswarnungen verwaltet?",
+            "answer": "Das System sendet automatische Benachrichtigungen an die Verantwortlichen, wenn eine Wartung ansteht. Piloten werden ebenfalls über Einschränkungen oder Nichtverfügbarkeit von Flugzeugen informiert."
+          },
+          {
+            "question": "Können Wartungstypen angepasst werden?",
+            "answer": "Ja, Sie können benutzerdefinierte Wartungstypen nach Ihren Bedürfnissen definieren, mit Intervallen basierend auf Flugstunden, Zyklen oder Kalender."
+          }
+        ]
+      },
+      "training": {
+        "title": "Ausbildung",
+        "questions": [
+          {
+            "question": "Wie werden Flugschüler verfolgt?",
+            "answer": "Jeder Flugschüler hat ein digitales Fortschrittsbuch. Fluglehrer können den Fortschritt verfolgen, absolvierte Übungen notieren und die nächsten Lektionen planen."
+          },
+          {
+            "question": "Kann das Ausbildungsprogramm angepasst werden?",
+            "answer": "Ja, die Ausbildungsprogramme sind vollständig nach Ihren Bedürfnissen anpassbar. Sie können verschiedene Lehrpläne für PPL, LAPL oder andere Qualifikationen erstellen."
+          },
+          {
+            "question": "Wie werden theoretische Prüfungen verwaltet?",
+            "answer": "Die Plattform enthält ein Modul für Quiz und theoretische Prüfungen. Fluglehrer können Tests erstellen, Ergebnisse verfolgen und Verbesserungsbereiche identifizieren."
+          },
+          {
+            "question": "Können Flugschüler ihren Fortschritt verfolgen?",
+            "answer": "Ja, jeder Flugschüler hat Zugang zu seinem persönlichen Bereich, wo er seinen Fortschritt verfolgen, Kurse wiederholen und sich auf Prüfungen vorbereiten kann."
+          }
+        ]
+      },
+      "members": {
+        "title": "Mitgliederverwaltung",
+        "questions": [
+          {
+            "question": "Wie werden Mitgliedschaften verwaltet?",
+            "answer": "4fly ermöglicht die Verwaltung von Mitgliedschaften, Beiträgen und Lizenzen. Automatische Erinnerungen werden für Verlängerungen versendet."
+          },
+          {
+            "question": "Können verschiedene Mitgliedertypen definiert werden?",
+            "answer": "Ja, Sie können verschiedene Profile (Flugschüler, Pilot, Fluglehrer, Mechaniker usw.) mit spezifischen Zugriffsrechten erstellen."
+          },
+          {
+            "question": "Wie werden Mitgliederdokumente verwaltet?",
+            "answer": "Alle Dokumente (Lizenzen, medizinische Zeugnisse, Qualifikationen) werden digital gespeichert, und das System warnt automatisch vor bevorstehenden Ablaufterminen."
+          }
+        ]
+      },
+      "payments": {
+        "title": "Zahlungen und Buchhaltung",
+        "questions": [
+          {
+            "question": "Wie funktionieren Online-Zahlungen?",
+            "answer": "4fly integriert ein sicheres Kreditkartenzahlungssystem. Mitglieder können ihr Konto aufladen und Flüge direkt über die Plattform bezahlen."
+          },
+          {
+            "question": "Welche Finanzberichte sind verfügbar?",
+            "answer": "Die Plattform generiert detaillierte Berichte über Flüge, Zahlungen und Buchhaltung. Sie können diese Daten für Ihre Buchhaltung exportieren."
+          },
+          {
+            "question": "Wie werden Rechnungen verwaltet?",
+            "answer": "Rechnungen werden nach jedem Flug oder jeder Zahlung automatisch generiert. Sie werden digital archiviert und können per E-Mail versendet werden."
+          }
+        ]
+      },
+      "security": {
+        "title": "Sicherheit und Daten",
+        "questions": [
+          {
+            "question": "Wie werden die Daten geschützt?",
+            "answer": "Alle Daten werden sicher und verschlüsselt gespeichert. Wir erfüllen die DSGVO-Standards und gewährleisten regelmäßige Sicherungen."
+          },
+          {
+            "question": "Wer hat Zugriff auf die Vereinsdaten?",
+            "answer": "Der Datenzugriff wird streng durch ein Berechtigungssystem kontrolliert. Nur autorisierte Personen können auf sensible Informationen zugreifen."
+          },
+          {
+            "question": "Können wir unsere Daten exportieren?",
+            "answer": "Ja, Sie können Ihre Daten jederzeit in Standardformaten (CSV, Excel) exportieren. Wir erleichtern auch die Migration von anderen Systemen."
+          },
+          {
+            "question": "Wie wird die Servicekontinuität sichergestellt?",
+            "answer": "Unsere Infrastruktur wird auf redundanten Servern mit hoher Verfügbarkeit gehostet. Wir führen tägliche Sicherungen aller Daten durch."
+          }
+        ]
+      }
+    }
+  },
+  "contact": {
+    "meta": {
+      "title": "4fly - Kontakt | Support und Hilfe",
+      "description": "Brauchen Sie Hilfe? Kontaktieren Sie das 4fly-Team für alle Fragen zu unserer Flugverein-Management-Lösung. Reaktiver und persönlicher Support.",
+      "image": "/images/contact-hero.jpg"
+    },
+    "hero": {
+      "title": "Kontaktieren Sie uns",
+      "subtitle": "Wir sind hier, um zu helfen",
+      "needHelp": "Brauchen Sie Hilfe?",
+      "supportMessage": "Unser Team ist hier, um Sie bei der Verwaltung Ihres Flugvereins zu unterstützen."
+    },
+    "form": {
+      "name": {
+        "label": "Name",
+        "error": "Bitte geben Sie Ihren Namen ein"
+      },
+      "email": {
+        "label": "E-Mail",
+        "error": "Ungültiges E-Mail-Format",
+        "placeholder": "ihre@email.com",
+        "valid": "✓ Gültiges E-Mail-Format"
+      },
+      "phone": {
+        "label": "Telefon",
+        "error": "Ungültiges Telefonformat",
+        "placeholder": "06 12 34 56 78",
+        "valid": "✓ Gültiges Telefonformat"
+      },
+      "contactReason": {
+        "label": "Kontaktgrund",
+        "options": {
+          "general": "Allgemeine Informationsanfrage",
+          "login": "Anmeldeproblem",
+          "payment": "Zahlungsproblem",
+          "bug": "Technischer Fehler",
+          "partnership": "Partnerschaftsanfrage",
+          "training": "Frage zur Ausbildung",
+          "reservations": "Frage zu Reservierungen",
+          "improvement": "Verbesserungsvorschlag",
+          "other": "Sonstiges"
+        }
+      },
+      "customSubject": {
+        "label": "Geben Sie Ihr Anliegen an",
+        "error": "Bitte geben Sie ein Anliegen ein"
+      },
+      "message": {
+        "label": "Nachricht",
+        "error": "Ihre Nachricht ist etwas kurz"
+      },
+      "submit": "Senden",
+      "success": "Nachricht erfolgreich gesendet!",
+      "error": "Fehler beim Senden der Nachricht",
+      "contactRequired": "Bitte geben Sie mindestens eine Kontaktmöglichkeit an",
+      "contactRequiredError": "Bitte geben Sie mindestens eine Kontaktmöglichkeit an (E-Mail oder Telefon)"
     }
   }
 }
