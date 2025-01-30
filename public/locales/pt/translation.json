@@ -1,0 +1,787 @@
+{
+    "rgpd": {
+      "title": "Política de Proteção de Dados",
+      "introduction": {
+        "title": "Introdução",
+        "content": "A 4fly está comprometida em proteger a privacidade dos usuários de sua plataforma de gestão de aeroclubes. Esta política de proteção de dados explica como coletamos, usamos e protegemos suas informações pessoais."
+      },
+      "dataCollected": {
+        "title": "Dados Coletados",
+        "intro": "Coletamos as seguintes informações:",
+        "items": [
+          "Informações de identificação (nome, sobrenome, e-mail)",
+          "Dados de licença de voo e qualificações",
+          "Informações de voos e reservas",
+          "Dados de treinamento e progressão",
+          "Informações de pagamento (processadas de forma segura)"
+        ]
+      },
+      "dataUsage": {
+        "title": "Uso dos Dados",
+        "intro": "Seus dados são utilizados para:",
+        "items": [
+          "Gerenciar reservas e voos",
+          "Acompanhar a manutenção das aeronaves",
+          "Gerenciar o treinamento de alunos e sua progressão",
+          "Processar pagamentos",
+          "Comunicar informações importantes do clube"
+        ]
+      },
+      "dataProtection": {
+        "title": "Proteção de Dados",
+        "intro": "Implementamos medidas de segurança técnicas e organizacionais para proteger seus dados:",
+        "items": [
+          "Criptografia de dados sensíveis",
+          "Acesso restrito aos dados pessoais",
+          "Backups regulares e seguros",
+          "Monitoramento contínuo de segurança"
+        ]
+      },
+      "rights": {
+        "title": "Seus Direitos",
+        "intro": "Em conformidade com o RGPD, você possui os seguintes direitos:",
+        "items": [
+          "Direito de acessar seus dados pessoais",
+          "Direito de retificar dados incorretos",
+          "Direito de apagar seus dados",
+          "Direito de restringir o processamento",
+          "Direito à portabilidade dos dados",
+          "Direito de se opor ao processamento"
+        ]
+      },
+      "contact": {
+        "title": "Contato",
+        "content": "Para qualquer dúvida sobre a proteção de seus dados ou para exercer seus direitos, entre em contato em: privacy@4fly.io"
+      },
+      "update": {
+        "title": "Atualização",
+        "content": "Esta política de proteção de dados pode ser atualizada periodicamente. Última atualização: {{date}}."
+      }
+    },
+    "common": {
+      "locale": "pt-PT",
+      "legal": "Informações Legais",
+      "legalMentions": "Aviso Legal",
+      "cgv": "Condições de Venda",
+      "back": "Voltar",
+      "next": "Próximo",
+      "login": "Entrar",
+      "copyright": "MELBA CAPITAL - SASU com capital de €2.700.000 - RCS Saint-Etienne 840 514 913",
+      "footerDescription": "A solução simples para gerenciar o seu aeroclube. Reservas, manutenção, faturamento... tudo em um só lugar!"
+    },
+    "features": {
+      "flightManagement": {
+        "title": "Gestão de Voos",
+        "description": "Planeamento e monitorização de voos em tempo real"
+      },
+      "reservations": {
+        "title": "Reservas",
+        "description": "Sistema de reserva online disponível 24/7"
+      },
+      "maintenance": {
+        "title": "Manutenção",
+        "description": "Acompanhamento de manutenção e alertas automáticos"
+      },
+      "training": {
+        "title": "Formação",
+        "description": "Gestão completa do treinamento de alunos"
+      },
+      "payments": {
+        "title": "Pagamentos",
+        "description": "Gestão simplificada de pagamentos e faturas"
+      },
+      "memberManagement": {
+        "title": "Gestão de Membros",
+        "description": "Administração eficiente dos membros do clube"
+      }
+    },
+    "home": {
+      "meta": {
+        "title": "4fly - Software de Gestão de Aeroclubes | Solução Completa e Gratuita",
+        "description": "4fly é a solução completa para gerenciar o seu aeroclube. Gestão de voos, reservas, manutenção, formação e muito mais. Experimente grátis!"
+      },
+      "title": "Gerencie o seu aeroclube de forma simples",
+      "description": "4fly é uma ferramenta simples e gratuita para gerenciar seu clube de aviação, seja com 2 ou 200 membros. Chega de planilhas complicadas e papelada!",
+      "createClub": "Criar meu clube",
+      "configurationTime": "Configuração em 2 minutos",
+      "startTitle": "Comece a expandir o seu clube",
+      "startDescription": "Configuração em 2 minutos",
+      "startButton": "Começar grátis"
+    },
+    "nav": {
+      "home": "Início",
+      "about": "Sobre",
+      "features": "Funcionalidades",
+      "pricing": "Preços",
+      "faq": "FAQ",
+      "contact": "Contato",
+      "login": "Entrar"
+    },
+    "pricing": {
+      "title": "Escolha o seu plano",
+      "subtitle": "Todas as funcionalidades estão disponíveis desde o início: reservas, horários, manutenção, formação, faturamento... Quanto mais você voa, mais o seu clube cresce e mais a 4fly lhe dá suporte!",
+      "plans": {
+        "starter": {
+          "name": "Starter",
+          "volume": "Até 1000h/ano",
+          "price": "Grátis",
+          "description": "Comece sua jornada com 4fly sem custo e descubra todas as ferramentas para impulsionar o seu clube",
+          "cta": "Começar grátis"
+        },
+        "growth": {
+          "name": "Growth",
+          "volume": "De 1000h a 3000h/ano",
+          "price": "€0,50/h de voo s/ IVA",
+          "description": "Seu clube está crescendo? A 4fly evolui com você para dar suporte ao seu desenvolvimento"
+        },
+        "performance": {
+          "name": "Performance",
+          "volume": "Mais de 3000h/ano",
+          "price": "Personalizado",
+          "description": "Obtenha suporte personalizado para otimizar a gestão da sua atividade"
+        }
+      },
+      "startFree": "Começar grátis",
+      "footer": "Todas as funcionalidades estão disponíveis desde o início: reservas, horários, manutenção, formação, faturamento... Quanto mais você voa, mais o seu clube cresce e mais a 4fly lhe dá suporte!"
+    },
+    "about": {
+      "hero": {
+        "title": "A Equipa 4fly",
+        "description": "A 4fly é desenvolvida por uma equipa apaixonada, comprometida em fornecer suporte contínuo aos nossos utilizadores."
+      },
+      "vision": {
+        "title": "A Nossa Visão",
+        "description": "A nossa equipa trabalha em estreita colaboração com os aeroclubes para desenvolver uma solução que atenda precisamente às necessidades do setor. Comprometemo-nos a manter uma plataforma segura, de alto desempenho e em constante evolução.",
+        "approach": "Uma abordagem de campo próxima dos clubes"
+      },
+      "engagement": {
+        "title": "O Nosso Compromisso",
+        "items": {
+          "training": {
+            "title": "Formação Gratuita",
+            "description": "Formação personalizada e gratuita para todos os clubes utilizadores",
+            "subtitle": "Formação presencial adaptada às suas necessidades"
+          },
+          "setup": {
+            "title": "Configuração Inicial",
+            "description": "Configuração personalizada e suporte na digitalização dos seus dados históricos",
+            "subtitle": "Do arquivo em papel ao computador, tratamos de tudo"
+          },
+          "support": {
+            "title": "Suporte Técnico",
+            "description": "Uma equipa ao seu dispor para ajudá-lo diariamente na utilização da plataforma",
+            "subtitle": "Assistência personalizada e rápida"
+          },
+          "accompaniment": {
+            "title": "Acompanhamento",
+            "description": "Acompanhamento personalizado para todos os membros do clube, desde iniciantes em TI até especialistas",
+            "subtitle": "Atentos a todos os utilizadores"
+          }
+        }
+      },
+      "support": {
+        "title": "Suporte e Assistência",
+        "items": [
+          "Backups diários dos seus dados",
+          "Monitorização da plataforma 24/7",
+          "Atualizações regulares com novas funcionalidades",
+          "Assistência para todas as suas dúvidas técnicas"
+        ]
+      },
+      "images": {
+        "team": "A Equipa 4fly",
+        "vision": "Colaboração com aeroclubes",
+        "support": "Suporte e assistência"
+      }
+    },
+    "featuresPage": {
+      "hero": {
+        "title": "As Nossas Funcionalidades",
+        "subtitle": "Descubra todas as ferramentas que tornam a nossa plataforma a solução ideal para o seu aeroclube"
+      },
+      "items": {
+        "flights": {
+          "title": "Gestão de Voos",
+          "description": "Acompanhamento completo de voos, cadernos de voo digitais e estatísticas detalhadas para cada piloto e aeronave.",
+          "details": [
+            "Registo de voos simplificado",
+            "Cadernos de voo digitais",
+            "Controlo do tempo de voo",
+            "Estatísticas detalhadas"
+          ]
+        },
+        "reservations": {
+          "title": "Reservas",
+          "description": "Sistema de reservas online 24/7 com gestão de conflitos em tempo real e verificação de disponibilidade.",
+          "details": [
+            "Reserva online 24/7",
+            "Calendário interativo",
+            "Gestão de conflitos",
+            "Notificações automáticas"
+          ]
+        },
+        "maintenance": {
+          "title": "Manutenção",
+          "description": "Acompanhamento detalhado da manutenção com alertas automáticos e gestão de potenciais.",
+          "details": [
+            "Controlo de potenciais",
+            "Alertas automáticos",
+            "Registo digital de manutenção",
+            "Histórico completo"
+          ]
+        },
+        "training": {
+          "title": "Formação",
+          "description": "Gestão completa da formação com acompanhamento pedagógico e progressão dos alunos.",
+          "details": [
+            "Caderno de progressão digital",
+            "Calendário de formação",
+            "Acompanhamento pedagógico",
+            "Recursos online"
+          ]
+        },
+        "finance": {
+          "title": "Gestão Financeira",
+          "description": "Faturação automática, controlo das contas dos membros e integração de pagamentos online.",
+          "details": [
+            "Faturação automática",
+            "Pagamentos online",
+            "Controlo de contas",
+            "Exportações para contabilidade"
+          ]
+        },
+        "members": {
+          "title": "Gestão de Membros",
+          "description": "Administração completa de membros com gestão de licenças e qualificações.",
+          "details": [
+            "Perfis detalhados",
+            "Acompanhamento de licenças",
+            "Gestão de qualificações",
+            "Diretório de membros"
+          ]
+        },
+        "communication": {
+          "title": "Comunicação",
+          "description": "Ferramentas de comunicação integradas para facilitar as trocas dentro do clube.",
+          "details": [
+            "Mensagens instantâneas",
+            "Anúncios do clube",
+            "Notificações",
+            "Partilha de documentos"
+          ]
+        },
+        "statistics": {
+          "title": "Estatísticas e Relatórios",
+          "description": "Dashboards e relatórios detalhados para acompanhar a atividade do clube.",
+          "details": [
+            "Dashboards",
+            "Relatórios personalizados",
+            "Análise de atividade",
+            "Exportação de dados"
+          ]
+        },
+        "events": {
+          "title": "Eventos",
+          "description": "Organização e gestão de eventos do clube com inscrição online.",
+          "details": [
+            "Calendário de eventos",
+            "Inscrição online",
+            "Gestão de participantes",
+            "Lembretes automáticos"
+          ]
+        },
+        "security": {
+          "title": "Segurança e Conformidade",
+          "description": "Ferramentas para garantir a segurança e a conformidade regulatória.",
+          "details": [
+            "Gestão de relatórios de segurança",
+            "Acompanhamento de documentos",
+            "Conformidade com o RGPD",
+            "Backups automáticos"
+          ]
+        }
+      }
+    },
+    "faqPage": {
+      "hero": {
+        "title": "Perguntas Frequentes",
+        "subtitle": "Encontre respostas às perguntas mais comuns sobre a 4fly"
+      },
+      "categories": {
+        "about": {
+          "title": "Sobre a 4fly",
+          "questions": [
+            {
+              "question": "O que é a 4fly e para quem é destinada?",
+              "answer": "A 4fly é uma solução de software abrangente concebida para simplificar e otimizar a gestão de aeroclubes. Destina-se a clubes de todos os tamanhos, sejam ou não afiliados às autoridades aeronáuticas, que procuram automatizar e centralizar as operações diárias. O nosso objetivo é apoiar o crescimento do seu clube."
+            },
+            {
+              "question": "Como funciona o modelo de preços?",
+              "answer": "O nosso modelo é simples: grátis até 1000 horas de voo por ano, depois 0,50 € por hora de voo nas horas totais. Para clubes grandes que excedam 3000 horas anuais, oferecemos planos personalizados. Todas as funcionalidades estão incluídas desde o início."
+            },
+            {
+              "question": "Existem taxas ocultas?",
+              "answer": "Não, o nosso preço baseado em horas de voo é totalmente transparente. Todas as funcionalidades essenciais estão incluídas nessa tarifa. Alguns serviços adicionais, como pagamento por cartão de crédito, são oferecidos como opções conforme necessário."
+            },
+            {
+              "question": "Que funcionalidades estão incluídas?",
+              "answer": "Todas as funcionalidades essenciais estão incluídas na oferta base: gestão de reservas, manutenção, formação, contabilidade... Serviços adicionais como pagamento por cartão de crédito estão disponíveis como opções para quem o desejar."
+            },
+            {
+              "question": "Que tipo de suporte está disponível?",
+              "answer": "Oferecemos suporte técnico completo por e-mail e telefone, incluído para todos os clubes, independentemente do seu tamanho. A nossa equipa está disponível para ajudar na configuração inicial e responder às suas perguntas diárias."
+            }
+          ]
+        },
+        "reservations": {
+          "title": "Reservas e Voos",
+          "questions": [
+            {
+              "question": "Como funciona o sistema de reservas?",
+              "answer": "O sistema de reservas está disponível online 24/7. Os membros podem reservar uma aeronave, verificar a disponibilidade em tempo real e gerir as suas reservas no smartphone ou computador."
+            },
+            {
+              "question": "É possível reservar vários slots com antecedência?",
+              "answer": "Sim, pode efetuar várias reservas de acordo com as regras do seu clube. O sistema verifica automaticamente conflitos e qualificações necessárias."
+            },
+            {
+              "question": "Como são geridos os voos de instrução?",
+              "answer": "Voos de instrução podem ser agendados com instrutores disponíveis. O sistema verifica automaticamente a disponibilidade do instrutor e da aeronave."
+            },
+            {
+              "question": "O que acontece em caso de cancelamento?",
+              "answer": "Os cancelamentos são geridos de acordo com as regras do seu clube. O sistema pode enviar notificações automáticas às partes envolvidas e liberar o slot para outras reservas."
+            }
+          ]
+        },
+        "maintenance": {
+          "title": "Manutenção",
+          "questions": [
+            {
+              "question": "Como é acompanhada a manutenção das aeronaves?",
+              "answer": "A 4fly inclui um sistema completo de acompanhamento que monitoriza as horas de voo, ciclos e prazos de calendário. Alertas automáticos são enviados para manutenções próximas."
+            },
+            {
+              "question": "Quem pode declarar intervenções de manutenção?",
+              "answer": "Mecânicos e pessoal autorizado podem registar as operações de manutenção. Cada intervenção é documentada e arquivada no histórico da aeronave."
+            },
+            {
+              "question": "Como são geridos os alertas de manutenção?",
+              "answer": "O sistema envia notificações automáticas aos responsáveis quando a manutenção está próxima. Os pilotos também são informados sobre limitações ou indisponibilidades da aeronave."
+            },
+            {
+              "question": "Posso personalizar os tipos de manutenção?",
+              "answer": "Sim, é possível definir tipos de manutenção personalizados de acordo com as suas necessidades, com intervalos baseados em horas de voo, ciclos ou calendário."
+            }
+          ]
+        },
+        "training": {
+          "title": "Formação",
+          "questions": [
+            {
+              "question": "Como são acompanhados os alunos?",
+              "answer": "Cada aluno tem um caderno de progressão digital. Os instrutores podem monitorizar o progresso, anotar exercícios concluídos e planear as próximas aulas."
+            },
+            {
+              "question": "Posso personalizar o programa de formação?",
+              "answer": "Sim, os programas de formação são totalmente personalizáveis de acordo com as suas necessidades. Pode criar percursos diferentes para PPL, LAPL ou outras qualificações."
+            },
+            {
+              "question": "Como são geridos os exames teóricos?",
+              "answer": "A plataforma inclui um módulo de questionários e exames teóricos. Os instrutores podem criar testes, acompanhar os resultados e identificar áreas de melhoria."
+            },
+            {
+              "question": "Os alunos podem verificar o próprio progresso?",
+              "answer": "Sim, cada aluno tem acesso a um espaço pessoal onde pode verificar o seu progresso, rever aulas e preparar-se para os exames."
+            }
+          ]
+        },
+        "members": {
+          "title": "Gestão de Membros",
+          "questions": [
+            {
+              "question": "Como são geridas as adesões ao clube?",
+              "answer": "A 4fly permite gerir adesões, quotas e licenças. Lembretes automáticos são enviados para renovações."
+            },
+            {
+              "question": "Posso definir diferentes tipos de membro?",
+              "answer": "Sim, é possível criar perfis diferentes (aluno, piloto, instrutor, mecânico, etc.) com níveis de acesso específicos."
+            },
+            {
+              "question": "Como são geridos os documentos dos membros?",
+              "answer": "Todos os documentos (licenças, atestados médicos, qualificações) são armazenados digitalmente, e o sistema envia alertas automáticos para expirações futuras."
+            }
+          ]
+        },
+        "payments": {
+          "title": "Pagamentos e Contabilidade",
+          "questions": [
+            {
+              "question": "Como funcionam os pagamentos online?",
+              "answer": "A 4fly integra um sistema seguro de pagamento por cartão de crédito. Os membros podem carregar a sua conta e pagar pelos voos diretamente na plataforma."
+            },
+            {
+              "question": "Que relatórios financeiros estão disponíveis?",
+              "answer": "A plataforma gera relatórios detalhados sobre voos, pagamentos e contabilidade. Pode exportar esses dados para a sua contabilidade."
+            },
+            {
+              "question": "Como são geridas as faturas?",
+              "answer": "As faturas são geradas automaticamente após cada voo ou pagamento. São arquivadas digitalmente e podem ser enviadas por e-mail."
+            }
+          ]
+        },
+        "security": {
+          "title": "Segurança e Dados",
+          "questions": [
+            {
+              "question": "Como os dados são protegidos?",
+              "answer": "Todos os dados são armazenados de forma segura e encriptada. Cumprimos os padrões do RGPD e efetuamos backups regulares."
+            },
+            {
+              "question": "Quem tem acesso aos dados do clube?",
+              "answer": "O acesso aos dados é estritamente controlado por um sistema de permissões. Apenas pessoas autorizadas podem aceder a informações sensíveis."
+            },
+            {
+              "question": "Posso exportar os meus dados?",
+              "answer": "Sim, pode exportar os seus dados a qualquer momento em formatos padrão (CSV, Excel). Também facilitamos a migração de outros sistemas."
+            },
+            {
+              "question": "Como é garantida a continuidade do serviço?",
+              "answer": "A nossa infraestrutura está hospedada em servidores redundantes com alta disponibilidade. Realizamos backups diários de todos os dados."
+            }
+          ]
+        }
+      }
+    },
+    "contactPage": {
+      "hero": {
+        "title": "Contacte-nos",
+        "subtitle": "Estamos aqui para ajudar",
+        "needHelp": "Precisa de ajuda?",
+        "supportMessage": "A nossa equipa está à disposição para apoiar na gestão do seu aeroclube."
+      },
+      "form": {
+        "name": {
+          "label": "Nome",
+          "error": "Por favor, insira o seu nome"
+        },
+        "email": {
+          "label": "E-mail",
+          "error": "Formato de e-mail inválido",
+          "placeholder": "seu@email.com",
+          "valid": "Formato de e-mail válido"
+        },
+        "phone": {
+          "label": "Telefone",
+          "error": "Formato de telefone inválido",
+          "placeholder": "06 12 34 56 78",
+          "valid": "Formato de telefone válido"
+        },
+        "contactReason": {
+          "label": "Motivo de Contato",
+          "options": {
+            "general": "Pedido de Informações Gerais",
+            "login": "Problema de Login",
+            "payment": "Problema de Pagamento",
+            "bug": "Bug Técnico",
+            "partnership": "Pedido de Parceria",
+            "training": "Questão sobre Formação",
+            "reservations": "Questão sobre Reservas",
+            "improvement": "Sugestão de Melhoria",
+            "other": "Outro"
+          }
+        },
+        "customSubject": {
+          "label": "Especifique o seu assunto",
+          "error": "Por favor, insira um assunto"
+        },
+        "message": {
+          "label": "Mensagem",
+          "error": "A sua mensagem está muito curta"
+        },
+        "submit": "Enviar",
+        "success": "Mensagem enviada com sucesso!",
+        "error": "Erro ao enviar mensagem",
+        "contactRequired": "Por favor, forneça pelo menos um método de contato",
+        "contactRequiredError": "Forneça pelo menos um método de contato (e-mail ou telefone)"
+      }
+    },
+    "createClub": {
+      "hero": {
+        "title": "Crie o Seu Aeroclube",
+        "subtitle": "Comece em apenas alguns minutos"
+      },
+      "form": {
+        "clubInfo": {
+          "title": "Informações do Clube",
+          "name": {
+            "label": "Nome do Clube",
+            "placeholder": "Aeroclube de...",
+            "error": "O nome do clube é obrigatório"
+          },
+          "icao": {
+            "label": "Código ICAO",
+            "placeholder": "LFXX",
+            "error": "O código ICAO deve ter 4 caracteres",
+            "valid": "Formato válido"
+          },
+          "address": {
+            "label": "Endereço",
+            "placeholder": "Endereço do clube",
+            "error": "O endereço é obrigatório"
+          },
+          "phone": {
+            "label": "Telefone",
+            "placeholder": "06 12 34 56 78",
+            "error": "Formato de telefone inválido",
+            "valid": "Formato válido"
+          }
+        },
+        "adminInfo": {
+          "title": "Informações do Administrador",
+          "firstName": {
+            "label": "Nome",
+            "placeholder": "O seu nome",
+            "error": "O nome é obrigatório"
+          },
+          "lastName": {
+            "label": "Sobrenome",
+            "placeholder": "O seu sobrenome",
+            "error": "O sobrenome é obrigatório"
+          },
+          "email": {
+            "label": "E-mail",
+            "placeholder": "seu@email.com",
+            "error": "Formato de e-mail inválido",
+            "valid": "Formato válido"
+          },
+          "password": {
+            "label": "Senha",
+            "placeholder": "Mínimo 8 caracteres",
+            "error": "A senha deve ter pelo menos 8 caracteres",
+            "requirements": {
+              "length": "Mínimo 8 caracteres",
+              "uppercase": "Pelo menos uma letra maiúscula",
+              "lowercase": "Pelo menos uma letra minúscula",
+              "number": "Pelo menos um número",
+              "special": "Pelo menos um caractere especial"
+            }
+          },
+          "confirmPassword": {
+            "label": "Confirmar Senha",
+            "error": "As senhas não correspondem"
+          }
+        },
+        "submit": "Criar meu clube",
+        "success": "Clube criado com sucesso!",
+        "error": "Erro ao criar clube",
+        "termsAndConditions": {
+          "text": "Aceito os",
+          "link": "termos e condições",
+          "error": "É necessário aceitar os termos e condições"
+        }
+      }
+    },
+    "login": {
+      "hero": {
+        "title": "Bem-vindo(a) à 4fly",
+        "subtitle": "Entre para acessar o seu painel"
+      },
+      "form": {
+        "email": {
+          "label": "E-mail",
+          "placeholder": "Digite o seu endereço de e-mail",
+          "error": "E-mail é obrigatório"
+        },
+        "password": {
+          "label": "Senha",
+          "placeholder": "Digite a sua senha",
+          "error": "Senha é obrigatória",
+          "toggle": "Mostrar/ocultar senha"
+        },
+        "rememberMe": "Lembrar-me",
+        "forgotPassword": "Esqueceu a senha?",
+        "submit": "Entrar",
+        "createClub": "Criar um novo clube"
+      },
+      "success": "Login efetuado com sucesso!",
+      "error": "Credenciais inválidas",
+      "error": {
+        "unexpected": "Ocorreu um erro inesperado"
+      }
+    },
+    "resetPassword": {
+      "title": "Redefinir Senha",
+      "description": "Insira o seu endereço de e-mail para receber instruções de redefinição de senha.",
+      "emailLabel": "E-mail",
+      "emailError": "E-mail inválido",
+      "submitButton": "Enviar Instruções",
+      "submitting": "Enviando...",
+      "backToLogin": "Voltar ao Login",
+      "success": {
+        "title": "Instruções Enviadas!",
+        "description": "Verifique a sua caixa de entrada e siga as instruções para redefinir a senha."
+      },
+      "toast": {
+        "success": "Instruções enviadas por e-mail",
+        "error": "Erro ao enviar instruções"
+      }
+    },
+    "quotes": {
+      "saint-exupery-1": {
+        "text": "O avião não é um fim em si mesmo, é um meio. Não se arrisca a vida por um avião: assim como um fazendeiro não ara pelo seu arado. Mas, por meio do avião, saímos das cidades e de seus contadores, e descobrimos uma verdade camponesa.",
+        "author": "Antoine de Saint-Exupéry",
+        "role": "Aviador e Escritor"
+      },
+      "saint-exupery-2": {
+        "text": "A terra nos ensina mais sobre nós mesmos do que todos os livros. Pois ela nos oferece resistência. O homem se descobre ao medir-se com o obstáculo.",
+        "author": "Antoine de Saint-Exupéry",
+        "role": "Aviador e Escritor"
+      },
+      "guillaumet-1": {
+        "text": "O que nos salva é dar um passo. Depois outro. É sempre o mesmo passo, mas é preciso dá-lo.",
+        "author": "Henri Guillaumet",
+        "role": "Piloto da Aéropostale"
+      },
+      "dassault-1": {
+        "text": "Um avião bonito é aquele que voa bem.",
+        "author": "Marcel Dassault",
+        "role": "Fabricante de Aeronaves"
+      },
+      "saint-exupery-3": {
+        "text": "No ar, nada sustenta o pássaro além de sua própria vontade de não cair.",
+        "author": "Antoine de Saint-Exupéry",
+        "role": "Aviador e Escritor"
+      },
+      "mermoz-1": {
+        "text": "Eu vi o rosto de Deus. Ele estava nas nuvens, no vento, nas estrelas. Eu o vi no céu.",
+        "author": "Jean Mermoz",
+        "role": "Pioneiro da Aéropostale"
+      },
+      "guillaumet-2": {
+        "text": "A mais bela de todas as viagens é aquela que ainda não fizemos.",
+        "author": "Henri Guillaumet",
+        "role": "Piloto da Aéropostale"
+      },
+      "dassault-2": {
+        "text": "O avião talvez seja a máquina mais bonita já criada pelo homem. É a mais próxima dos seres vivos.",
+        "author": "Marcel Dassault",
+        "role": "Fabricante de Aeronaves"
+      },
+      "garros-1": {
+        "text": "O ar é um fluido denso no qual podemos esculpir formas sólidas.",
+        "author": "Roland Garros",
+        "role": "Pioneiro da Aviação"
+      },
+      "daurat-1": {
+        "text": "Quando você voa acima das nuvens, entende por que os pássaros cantam.",
+        "author": "Didier Daurat",
+        "role": "Diretor da Aéropostale"
+      },
+      "bleriot-1": {
+        "text": "Voar é uma vitória perpétua que conquistamos sobre a gravidade.",
+        "author": "Louis Blériot",
+        "role": "Pioneiro da Aviação"
+      },
+      "lindbergh-1": {
+        "text": "A aviação é uma amante exigente. Não perdoa erros, mas recompensa a paixão.",
+        "author": "Charles Lindbergh",
+        "role": "Aviador"
+      },
+      "mermoz-2": {
+        "text": "No céu, não há estradas. Há apenas estrelas e sonhos.",
+        "author": "Jean Mermoz",
+        "role": "Pioneiro da Aéropostale"
+      },
+      "boucher-1": {
+        "text": "Voar pode ser aproximar-se um pouco mais dos anjos.",
+        "author": "Hélène Boucher",
+        "role": "Pioneira da Aviação"
+      },
+      "guillaumet-3": {
+        "text": "O piloto que não tem medo é um piloto morto. Coragem é dominar o seu medo.",
+        "author": "Henri Guillaumet",
+        "role": "Piloto da Aéropostale"
+      }
+    },
+    "legal": {
+      "title": "Aviso Legal",
+      "publisher": {
+        "title": "Editor do Site",
+        "company": "Empresa",
+        "legalForm": "Forma Jurídica",
+        "legalFormValue": "SASU (Sociedade por Ações Simplificada de um único acionista)",
+        "address": "Sede",
+        "rcs": "Número RCS",
+        "capital": "Capital Social",
+        "vat": "Número de IVA"
+      },
+      "hosting": {
+        "title": "Alojamento",
+        "provider": "Fornecedor",
+        "company": "Empresa",
+        "address": "Endereço"
+      },
+      "dataProtection": {
+        "title": "Proteção de Dados Pessoais",
+        "description": "De acordo com a Lei Francesa de Proteção de Dados de 6 de janeiro de 1978, alterada, e o Regulamento Geral de Proteção de Dados (RGPD), você tem o direito de acessar, retificar, excluir e se opor ao tratamento de seus dados pessoais.",
+        "rights": "Para exercer esses direitos, você pode entrar em contato:",
+        "email": "Por e-mail",
+        "mail": "Por correio"
+      },
+      "intellectualProperty": {
+        "title": "Propriedade Intelectual",
+        "description": "Todo o conteúdo deste site (estrutura, texto, imagens, logotipos, banco de dados...) é de propriedade exclusiva da MELBA CAPITAL. Qualquer reprodução, representação, modificação, publicação, transmissão, alteração, total ou parcial, do site ou do seu conteúdo, por qualquer meio e em qualquer suporte, é proibida sem a autorização prévia por escrito da MELBA CAPITAL."
+      },
+      "cookies": {
+        "title": "Cookies",
+        "description": "Este site utiliza cookies necessários para o seu correto funcionamento. Um cookie é um pequeno arquivo de texto armazenado em seu computador. Os cookies que usamos não permitem identificá-lo pessoalmente. Eles servem apenas para melhorar a experiência do utilizador e medir o tráfego do site.",
+        "consent": "Ao usar o nosso site, você aceita o uso de cookies de acordo com a nossa política de privacidade."
+      },
+      "links": {
+        "title": "Links de Hipertexto",
+        "description": "O site 4fly.io pode conter links para outros sites. A MELBA CAPITAL não se responsabiliza pelo conteúdo ou pela política de privacidade desses sites."
+      }
+    },
+    "cgv": {
+      "title": "Condições Gerais de Venda",
+      "lastUpdate": "Última atualização: {{date}}",
+      "article1": {
+        "title": "Artigo 1 - Objeto",
+        "content": "Estas condições gerais de venda regem o uso da plataforma 4fly, uma solução de gestão para aeroclubes. Aplicam-se com exclusividade, em substituição de quaisquer outras condições."
+      },
+      "article2": {
+        "title": "Artigo 2 - Serviços",
+        "content": "A 4fly oferece uma plataforma de gestão completa, incluindo:\n- Gestão de reservas de aeronaves\n- Acompanhamento de manutenção\n- Gestão de formação\n- Administração de membros\n- Faturamento e pagamentos\n- Ferramentas de comunicação"
+      },
+      "article3": {
+        "title": "Artigo 3 - Preços",
+        "content": "A 4fly oferece três planos de preços adaptados à sua atividade:\n\n1. Plano Starter (Gratuito):\n- Para clubes até 1000 horas de voo por ano\n- Acesso a todas as funcionalidades\n- Suporte por e-mail\n\n2. Plano Growth (0,50 €/hora de voo s/ IVA):\n- Para clubes de 1000 a 3000 horas de voo por ano\n- Todas as funcionalidades incluídas\n- Suporte prioritário\n\n3. Plano Performance (Personalizado):\n- Para clubes com mais de 3000 horas de voo por ano\n- Todas as funcionalidades incluídas\n- Alojamento personalizado\n- Formação no local\n- Suporte VIP 24/7\n- Gestor de conta dedicado"
+      },
+      "article4": {
+        "title": "Artigo 4 - Obrigações",
+        "content": "A 4fly compromete-se a:\n- Garantir a disponibilidade e manutenção da plataforma\n- Proteger os dados do utilizador\n- Fornecer suporte técnico\n\nO utilizador compromete-se a:\n- Fornecer informações precisas\n- Respeitar os termos de uso\n- Não fazer uso indevido da plataforma"
+      },
+      "article5": {
+        "title": "Artigo 5 - Dados Pessoais",
+        "content": "A 4fly recolhe e processa dados pessoais de acordo com o RGPD. Os utilizadores têm o direito de acessar, retificar e excluir os seus dados."
+      },
+      "article6": {
+        "title": "Artigo 6 - Propriedade Intelectual",
+        "content": "Todos os elementos da plataforma 4fly (logótipo, textos, imagens, etc.) são protegidos por direitos de propriedade intelectual. Qualquer reprodução é proibida sem autorização prévia."
+      },
+      "article7": {
+        "title": "Artigo 7 - Responsabilidade",
+        "content": "A 4fly não pode ser responsabilizada por danos indiretos resultantes do uso da plataforma. A responsabilidade é limitada ao valor dos serviços pagos pelo utilizador."
+      },
+      "article8": {
+        "title": "Artigo 8 - Rescisão",
+        "content": "Cada parte pode rescindir a utilização dos serviços nas condições previstas. Em caso de incumprimento grave, a rescisão pode ser imediata."
+      },
+      "article9": {
+        "title": "Artigo 9 - Lei Aplicável",
+        "content": "Estas condições gerais estão sujeitas ao direito francês. Quaisquer litígios estão sob a jurisdição exclusiva dos tribunais franceses."
+      }
+    }
+  }
+  

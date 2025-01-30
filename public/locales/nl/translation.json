@@ -1,0 +1,786 @@
+{
+  "rgpd": {
+    "title": "Gegevensbeschermingsbeleid",
+    "introduction": {
+      "title": "Inleiding",
+      "content": "4fly zet zich in voor de bescherming van de privacy van de gebruikers van haar beheersplatform voor vliegclubs. Dit gegevensbeschermingsbeleid legt uit hoe we uw persoonlijke informatie verzamelen, gebruiken en beschermen."
+    },
+    "dataCollected": {
+      "title": "Verzamelde Gegevens",
+      "intro": "Wij verzamelen de volgende informatie:",
+      "items": [
+        "Identificatiegegevens (naam, achternaam, e-mailadres)",
+        "Gegevens over vliegbrevet en kwalificaties",
+        "Informatie over vluchten en boekingen",
+        "Opleidings- en voortgangsgegevens",
+        "Betalingsgegevens (veilig verwerkt)"
+      ]
+    },
+    "dataUsage": {
+      "title": "Gebruik van Gegevens",
+      "intro": "Uw gegevens worden gebruikt om:",
+      "items": [
+        "Boekingen en vluchten te beheren",
+        "Onderhoud van luchtvaartuigen te volgen",
+        "Opleiding en voortgang van leerlingen te beheren",
+        "Betalingen te verwerken",
+        "Belangrijke clubinformatie te communiceren"
+      ]
+    },
+    "dataProtection": {
+      "title": "Gegevensbescherming",
+      "intro": "We implementeren technische en organisatorische beveiligingsmaatregelen om uw gegevens te beschermen:",
+      "items": [
+        "Versleuteling van gevoelige gegevens",
+        "Beperkte toegang tot persoonlijke gegevens",
+        "Regelmatige en veilige back-ups",
+        "Voortdurende beveiligingsmonitoring"
+      ]
+    },
+    "rights": {
+      "title": "Uw Rechten",
+      "intro": "In overeenstemming met de AVG hebt u de volgende rechten:",
+      "items": [
+        "Recht op inzage in uw persoonlijke gegevens",
+        "Recht op rectificatie van onjuiste gegevens",
+        "Recht op verwijdering van uw gegevens",
+        "Recht op beperking van de verwerking",
+        "Recht op overdraagbaarheid van gegevens",
+        "Recht om bezwaar te maken tegen verwerking"
+      ]
+    },
+    "contact": {
+      "title": "Contact",
+      "content": "Voor vragen met betrekking tot de bescherming van uw gegevens of om uw rechten uit te oefenen, kunt u contact met ons opnemen via: privacy@4fly.io"
+    },
+    "update": {
+      "title": "Update",
+      "content": "Dit gegevensbeschermingsbeleid kan periodiek worden bijgewerkt. Laatste update: {{date}}."
+    }
+  },
+  "common": {
+    "locale": "nl-NL",
+    "legal": "Juridische Informatie",
+    "legalMentions": "Juridische Vermeldingen",
+    "cgv": "Verkoopvoorwaarden",
+    "back": "Terug",
+    "next": "Volgende",
+    "login": "Inloggen",
+    "copyright": "MELBA CAPITAL - SASU met een kapitaal van €2.700.000 - RCS Saint-Etienne 840 514 913",
+    "footerDescription": "De eenvoudige oplossing om uw vliegclub te beheren. Boekingen, onderhoud, facturering... alles op één plek!"
+  },
+  "features": {
+    "flightManagement": {
+      "title": "Vluchtbeheer",
+      "description": "Realtime planning en monitoring van vluchten"
+    },
+    "reservations": {
+      "title": "Reserveringen",
+      "description": "24/7 online boekingssysteem"
+    },
+    "maintenance": {
+      "title": "Onderhoud",
+      "description": "Onderhoudsopvolging en automatische waarschuwingen"
+    },
+    "training": {
+      "title": "Opleiding",
+      "description": "Volledige leerlingbegeleiding en voortgangsbeheer"
+    },
+    "payments": {
+      "title": "Betalingen",
+      "description": "Eenvoudige betalings- en factuurafhandeling"
+    },
+    "memberManagement": {
+      "title": "Ledenbeheer",
+      "description": "Efficiënt beheer van clubleden"
+    }
+  },
+  "home": {
+    "meta": {
+      "title": "4fly - Beheersoftware voor Vliegclubs | Complete Gratis Oplossing",
+      "description": "4fly is de complete oplossing voor het beheren van uw vliegclub. Vluchtbeheer, reserveringen, onderhoud, opleiding en meer. Probeer het gratis!"
+    },
+    "title": "Beheer uw vliegclub eenvoudig",
+    "description": "4fly is een eenvoudige en gratis tool om uw vliegclub te beheren, of u nu 2 of 200 leden hebt. Geen complexe spreadsheets en papieren rompslomp meer!",
+    "createClub": "Maak mijn club aan",
+    "configurationTime": "Configuratie in 2 minuten",
+    "startTitle": "Begin met het laten groeien van uw club",
+    "startDescription": "Configuratie in 2 minuten",
+    "startButton": "Gratis starten"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "Over ons",
+    "features": "Functies",
+    "pricing": "Prijzen",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "login": "Inloggen"
+  },
+  "pricing": {
+    "title": "Kies uw plan",
+    "subtitle": "Alle functies zijn vanaf het begin beschikbaar: reserveringen, roosters, onderhoud, opleidingen, facturering... Hoe meer u vliegt, hoe meer uw club groeit en hoe meer 4fly u ondersteunt!",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "volume": "Tot 1000u/jaar",
+        "price": "Gratis",
+        "description": "Begin uw reis met 4fly zonder kosten en ontdek alle hulpmiddelen om uw club te laten opstijgen",
+        "cta": "Gratis starten"
+      },
+      "growth": {
+        "name": "Growth",
+        "volume": "Van 1000u tot 3000u/jaar",
+        "price": "€0,50/vlieguur excl. BTW",
+        "description": "Groeit uw club? 4fly groeit met u mee om uw ontwikkeling te ondersteunen"
+      },
+      "performance": {
+        "name": "Performance",
+        "volume": "3000u+/jaar",
+        "price": "Op maat",
+        "description": "Krijg gepersonaliseerde ondersteuning om uw activiteitenbeheer te optimaliseren"
+      }
+    },
+    "startFree": "Gratis starten",
+    "footer": "Alle functies zijn vanaf het begin beschikbaar: reserveringen, roosters, onderhoud, opleidingen, facturering... Hoe meer u vliegt, hoe meer uw club groeit en hoe meer 4fly u ondersteunt!"
+  },
+  "about": {
+    "hero": {
+      "title": "Het 4fly-team",
+      "description": "4fly wordt ontwikkeld door een gepassioneerd team dat zich inzet voor voortdurende ondersteuning van onze gebruikers."
+    },
+    "vision": {
+      "title": "Onze Visie",
+      "description": "Ons team werkt nauw samen met vliegclubs om een oplossing te ontwikkelen die precies aansluit op de behoeften van de sector. Wij zetten ons in voor het onderhouden van een veilig, performant en continu evoluerend platform.",
+      "approach": "Een praktijkgerichte aanpak, dicht bij de clubs"
+    },
+    "engagement": {
+      "title": "Onze Belofte",
+      "items": {
+        "training": {
+          "title": "Gratis Training",
+          "description": "Persoonlijke en gratis training voor alle gebruikersclubs",
+          "subtitle": "Training op locatie, aangepast aan uw behoeften"
+        },
+        "setup": {
+          "title": "Initiële Configuratie",
+          "description": "Persoonlijke instelling en ondersteuning bij het digitaliseren van uw historische gegevens",
+          "subtitle": "Van ordner naar computer, wij regelen alles"
+        },
+        "support": {
+          "title": "Technische Ondersteuning",
+          "description": "Een team tot uw dienst om u dagelijks te helpen bij het gebruik van het platform",
+          "subtitle": "Persoonlijke en snelle ondersteuning"
+        },
+        "accompaniment": {
+          "title": "Begeleiding",
+          "description": "Persoonlijke follow-up voor alle clubleden, van IT-beginners tot experts",
+          "subtitle": "Luisteren naar alle gebruikers"
+        }
+      }
+    },
+    "support": {
+      "title": "Ondersteuning en Hulp",
+      "items": [
+        "Dagelijkse back-ups van uw gegevens",
+        "24/7 monitoring van het platform",
+        "Regelmatige updates met nieuwe functies",
+        "Ondersteuning bij al uw technische vragen"
+      ]
+    },
+    "images": {
+      "team": "Het 4fly-team",
+      "vision": "Samenwerking met vliegclubs",
+      "support": "Ondersteuning en hulp"
+    }
+  },
+  "featuresPage": {
+    "hero": {
+      "title": "Onze Functies",
+      "subtitle": "Ontdek alle tools die ons platform tot de ideale oplossing maken voor uw vliegclub"
+    },
+    "items": {
+      "flights": {
+        "title": "Vluchtbeheer",
+        "description": "Volledige vluchtopvolging, digitale logboeken en gedetailleerde statistieken voor elke piloot en elk vliegtuig.",
+        "details": [
+          "Eenvoudige vluchtregistratie",
+          "Digitale logboeken",
+          "Vliegtijdcontrole",
+          "Gedetailleerde statistieken"
+        ]
+      },
+      "reservations": {
+        "title": "Reserveringen",
+        "description": "24/7 online boekingssysteem met realtime conflictbeheer en beschikbaarheidscontrole.",
+        "details": [
+          "24/7 online reserveren",
+          "Interactieve agenda",
+          "Conflictbeheer",
+          "Automatische meldingen"
+        ]
+      },
+      "maintenance": {
+        "title": "Onderhoud",
+        "description": "Gedetailleerde onderhoudsopvolging met automatische waarschuwingen en potentieelbeheer.",
+        "details": [
+          "Potentieelcontrole",
+          "Automatische waarschuwingen",
+          "Digitaal onderhoudslogboek",
+          "Volledige geschiedenis"
+        ]
+      },
+      "training": {
+        "title": "Opleiding",
+        "description": "Volledige opleidingsbeheer met pedagogische opvolging en voortgang van leerlingen.",
+        "details": [
+          "Digitaal voortgangsboek",
+          "Opleidingsplanning",
+          "Pedagogische opvolging",
+          "Online bronnen"
+        ]
+      },
+      "finance": {
+        "title": "Financieel Beheer",
+        "description": "Automatische facturatie, ledenrekeningbeheer en online betalingsintegratie.",
+        "details": [
+          "Automatische facturering",
+          "Online betalingen",
+          "Rekeningbeheer",
+          "Boekhoudkundige export"
+        ]
+      },
+      "members": {
+        "title": "Ledenbeheer",
+        "description": "Volledig beheer van leden met licentie- en kwalificatiebeheer.",
+        "details": [
+          "Gedetailleerde profielen",
+          "Licentiebewaking",
+          "Kwalificatiebeheer",
+          "Ledenlijst"
+        ]
+      },
+      "communication": {
+        "title": "Communicatie",
+        "description": "Geïntegreerde communicatietools om uitwisseling binnen de club te vergemakkelijken.",
+        "details": [
+          "Instant messaging",
+          "Clubmededelingen",
+          "Meldingen",
+          "Documentdeling"
+        ]
+      },
+      "statistics": {
+        "title": "Statistieken en Rapporten",
+        "description": "Dashboards en gedetailleerde rapporten om de clubactiviteiten te volgen.",
+        "details": [
+          "Dashboards",
+          "Aangepaste rapporten",
+          "Activiteitenanalyse",
+          "Data-export"
+        ]
+      },
+      "events": {
+        "title": "Evenementen",
+        "description": "Organisatie en beheer van clubevenementen met online inschrijving.",
+        "details": [
+          "Evenementenkalender",
+          "Online inschrijving",
+          "Deelnemersbeheer",
+          "Automatische herinneringen"
+        ]
+      },
+      "security": {
+        "title": "Veiligheid en Naleving",
+        "description": "Tools om veiligheid en regelgeving te waarborgen.",
+        "details": [
+          "Beheer van veiligheidsrapporten",
+          "Documentcontrole",
+          "AVG-naleving",
+          "Automatische back-ups"
+        ]
+      }
+    }
+  },
+  "faqPage": {
+    "hero": {
+      "title": "Veelgestelde Vragen",
+      "subtitle": "Vind antwoorden op de meest gestelde vragen over 4fly"
+    },
+    "categories": {
+      "about": {
+        "title": "Over 4fly",
+        "questions": [
+          {
+            "question": "Wat is 4fly en voor wie is het bedoeld?",
+            "answer": "4fly is een uitgebreide softwareoplossing die is ontworpen om het beheer van vliegclubs te vereenvoudigen en te optimaliseren. Het is geschikt voor vliegclubs van elke omvang, al dan niet aangesloten bij luchtvaartautoriteiten, die hun dagelijkse werkzaamheden willen automatiseren en centraliseren. Ons doel is om de groei van uw club te ondersteunen."
+          },
+          {
+            "question": "Hoe werkt het prijsmodel?",
+            "answer": "Ons model is eenvoudig: gratis tot 1000 vlieguren per jaar, daarna €0,50 per vlieguur over het totaal aantal uren. Voor grote clubs met meer dan 3000 uur per jaar bieden we maatwerkpakketten. Alle functies zijn vanaf het begin inbegrepen."
+          },
+          {
+            "question": "Zijn er verborgen kosten?",
+            "answer": "Nee, onze tarieven op basis van vlieguren zijn volledig transparant. Alle essentiële functies zijn inbegrepen in dit tarief. Enkele aanvullende diensten, zoals creditcardbetalingen, worden als optie aangeboden als u daar behoefte aan heeft."
+          },
+          {
+            "question": "Welke functies zijn inbegrepen?",
+            "answer": "Alle essentiële functies zijn opgenomen in het basisaanbod: beheer van reserveringen, onderhoud, opleidingen, boekhouding... Extra diensten zoals creditcardbetalingen zijn beschikbaar als optie voor clubs die dat willen."
+          },
+          {
+            "question": "Welke ondersteuning is beschikbaar?",
+            "answer": "Wij bieden uitgebreide technische ondersteuning via e-mail en telefoon, inbegrepen voor alle clubs, ongeacht hun omvang. Ons team staat klaar om te helpen bij de initiële configuratie en om uw dagelijkse vragen te beantwoorden."
+          }
+        ]
+      },
+      "reservations": {
+        "title": "Reserveringen en Vluchten",
+        "questions": [
+          {
+            "question": "Hoe werkt het reserveringssysteem?",
+            "answer": "Het reserveringssysteem is 24/7 online beschikbaar. Leden kunnen een vliegtuig reserveren, de beschikbaarheid in realtime bekijken en hun reserveringen beheren via smartphone of computer."
+          },
+          {
+            "question": "Kan ik meerdere tijdsloten vooraf boeken?",
+            "answer": "Ja, u kunt meerdere reserveringen maken op basis van de regels van uw club. Het systeem controleert automatisch op conflicten en vereiste kwalificaties."
+          },
+          {
+            "question": "Hoe worden instructievluchten beheerd?",
+            "answer": "Instructievluchten kunnen worden gepland met beschikbare instructeurs. Het systeem controleert automatisch de beschikbaarheid van instructeur en vliegtuig."
+          },
+          {
+            "question": "Wat gebeurt er bij annulering?",
+            "answer": "Annuleringen worden beheerd volgens de regels van uw club. Het systeem kan automatische meldingen sturen naar betrokkenen en het tijdslot vrijgeven voor andere reserveringen."
+          }
+        ]
+      },
+      "maintenance": {
+        "title": "Onderhoud",
+        "questions": [
+          {
+            "question": "Hoe wordt het onderhoud van vliegtuigen bijgehouden?",
+            "answer": "4fly biedt een compleet monitoringsysteem dat vlieguren, cycli en kalenderdeadlines bijhoudt. Automatische meldingen worden verstuurd voor aankomend onderhoud."
+          },
+          {
+            "question": "Wie kan onderhoudstaken registreren?",
+            "answer": "Monteurs en bevoegd personeel kunnen onderhoudstaken registreren. Elke handeling wordt gedocumenteerd en opgeslagen in de geschiedenis van het vliegtuig."
+          },
+          {
+            "question": "Hoe worden onderhoudsmeldingen beheerd?",
+            "answer": "Het systeem stuurt automatische notificaties naar beheerders als onderhoud nadert. Piloten worden ook geïnformeerd over beperkingen of onbeschikbaarheid van het vliegtuig."
+          },
+          {
+            "question": "Kan ik onderhoudstypen aanpassen?",
+            "answer": "Ja, u kunt aangepaste onderhoudstypen definiëren op basis van uw behoeften, met intervallen gebaseerd op vlieguren, cycli of kalender."
+          }
+        ]
+      },
+      "training": {
+        "title": "Opleiding",
+        "questions": [
+          {
+            "question": "Hoe worden leerlingen gevolgd?",
+            "answer": "Elke leerling heeft een digitaal voortgangsboek. Instructeurs kunnen hun voortgang volgen, voltooide oefeningen registreren en toekomstige lessen plannen."
+          },
+          {
+            "question": "Kan ik het opleidingsprogramma aanpassen?",
+            "answer": "Ja, opleidingsprogramma's zijn volledig aan te passen aan uw behoeften. U kunt verschillende trajecten maken voor PPL, LAPL of andere kwalificaties."
+          },
+          {
+            "question": "Hoe worden theoretische examens beheerd?",
+            "answer": "Het platform bevat een module voor quizzen en theoretische examens. Instructeurs kunnen toetsen aanmaken, resultaten volgen en verbeterpunten identificeren."
+          },
+          {
+            "question": "Kunnen leerlingen hun eigen voortgang bekijken?",
+            "answer": "Ja, elke leerling heeft toegang tot een persoonlijke omgeving waar hij/zij de voortgang kan bekijken, lessen kan doornemen en zich kan voorbereiden op examens."
+          }
+        ]
+      },
+      "members": {
+        "title": "Ledenbeheer",
+        "questions": [
+          {
+            "question": "Hoe worden lidmaatschappen beheerd?",
+            "answer": "4fly maakt het mogelijk om lidmaatschappen, contributies en brevetten te beheren. Automatische herinneringen worden verzonden voor verlengingen."
+          },
+          {
+            "question": "Kan ik verschillende ledentypen definiëren?",
+            "answer": "Ja, u kunt verschillende profielen aanmaken (leerling, piloot, instructeur, monteur, etc.) met specifieke toegangsrechten."
+          },
+          {
+            "question": "Hoe worden de documenten van leden beheerd?",
+            "answer": "Alle documenten (licenties, medische certificaten, kwalificaties) worden digitaal opgeslagen. Het systeem stuurt automatische meldingen bij naderende vervaldatums."
+          }
+        ]
+      },
+      "payments": {
+        "title": "Betalingen en Boekhouding",
+        "questions": [
+          {
+            "question": "Hoe werken online betalingen?",
+            "answer": "4fly integreert een veilig betalingssysteem met creditcard. Leden kunnen hun account opwaarderen en direct via het platform hun vluchten betalen."
+          },
+          {
+            "question": "Welke financiële rapporten zijn beschikbaar?",
+            "answer": "Het platform genereert gedetailleerde rapporten over vluchten, betalingen en boekhouding. U kunt deze data exporteren voor uw boekhouding."
+          },
+          {
+            "question": "Hoe worden facturen beheerd?",
+            "answer": "Facturen worden automatisch gegenereerd na elke vlucht of betaling. Ze worden digitaal opgeslagen en kunnen per e-mail worden verzonden."
+          }
+        ]
+      },
+      "security": {
+        "title": "Veiligheid en Gegevens",
+        "questions": [
+          {
+            "question": "Hoe worden gegevens beschermd?",
+            "answer": "Alle gegevens worden veilig en versleuteld opgeslagen. We voldoen aan de AVG-normen en maken regelmatig back-ups."
+          },
+          {
+            "question": "Wie heeft toegang tot clubgegevens?",
+            "answer": "Toegang tot gegevens wordt strikt beheerd via een toestemmingssysteem. Alleen bevoegde personen kunnen gevoelige informatie inzien."
+          },
+          {
+            "question": "Kan ik mijn gegevens exporteren?",
+            "answer": "Ja, u kunt uw gegevens op elk moment exporteren in standaardformaten (CSV, Excel). We helpen ook bij migratie vanuit andere systemen."
+          },
+          {
+            "question": "Hoe wordt de continuïteit van de dienstverlening gegarandeerd?",
+            "answer": "Onze infrastructuur is gehost op redundante servers met hoge beschikbaarheid. We maken dagelijks back-ups van alle gegevens."
+          }
+        ]
+      }
+    }
+  },
+  "contactPage": {
+    "hero": {
+      "title": "Neem Contact met Ons Op",
+      "subtitle": "Wij zijn er om te helpen",
+      "needHelp": "Hulp nodig?",
+      "supportMessage": "Ons team staat klaar om u te ondersteunen bij het beheren van uw vliegclub."
+    },
+    "form": {
+      "name": {
+        "label": "Naam",
+        "error": "Voer uw naam in"
+      },
+      "email": {
+        "label": "E-mail",
+        "error": "Ongeldig e-mailadres",
+        "placeholder": "uw@email.com",
+        "valid": "Geldig e-mailadres"
+      },
+      "phone": {
+        "label": "Telefoon",
+        "error": "Ongeldig telefoonnummer",
+        "placeholder": "06 12 34 56 78",
+        "valid": "Geldig telefoonnummer"
+      },
+      "contactReason": {
+        "label": "Reden van Contact",
+        "options": {
+          "general": "Algemene Informatieaanvraag",
+          "login": "Inlogprobleem",
+          "payment": "Betalingsprobleem",
+          "bug": "Technische Fout",
+          "partnership": "Partnerschapsverzoek",
+          "training": "Vraag over Opleiding",
+          "reservations": "Vraag over Reserveringen",
+          "improvement": "Voorstel tot Verbetering",
+          "other": "Overig"
+        }
+      },
+      "customSubject": {
+        "label": "Specificeer uw onderwerp",
+        "error": "Voer een onderwerp in"
+      },
+      "message": {
+        "label": "Bericht",
+        "error": "Uw bericht is iets te kort"
+      },
+      "submit": "Verzenden",
+      "success": "Bericht succesvol verzonden!",
+      "error": "Fout bij het verzenden van het bericht",
+      "contactRequired": "Geef ten minste één contactmethode op",
+      "contactRequiredError": "Geef ten minste één contactmethode op (e-mail of telefoon)"
+    }
+  },
+  "createClub": {
+    "hero": {
+      "title": "Maak uw Vliegclub aan",
+      "subtitle": "Begin in slechts een paar minuten"
+    },
+    "form": {
+      "clubInfo": {
+        "title": "Clubinformatie",
+        "name": {
+          "label": "Naam van de Club",
+          "placeholder": "Vliegclub van...",
+          "error": "Clubnaam is verplicht"
+        },
+        "icao": {
+          "label": "ICAO-code",
+          "placeholder": "LFXX",
+          "error": "De ICAO-code moet uit 4 tekens bestaan",
+          "valid": "Geldig formaat"
+        },
+        "address": {
+          "label": "Adres",
+          "placeholder": "Adres van de club",
+          "error": "Adres is verplicht"
+        },
+        "phone": {
+          "label": "Telefoon",
+          "placeholder": "06 12 34 56 78",
+          "error": "Ongeldig telefoonnummer",
+          "valid": "Geldig formaat"
+        }
+      },
+      "adminInfo": {
+        "title": "Administrator Informatie",
+        "firstName": {
+          "label": "Voornaam",
+          "placeholder": "Uw voornaam",
+          "error": "Voornaam is verplicht"
+        },
+        "lastName": {
+          "label": "Achternaam",
+          "placeholder": "Uw achternaam",
+          "error": "Achternaam is verplicht"
+        },
+        "email": {
+          "label": "E-mail",
+          "placeholder": "uw@email.com",
+          "error": "Ongeldig e-mailadres",
+          "valid": "Geldig formaat"
+        },
+        "password": {
+          "label": "Wachtwoord",
+          "placeholder": "Minimaal 8 tekens",
+          "error": "Het wachtwoord moet minimaal 8 tekens bevatten",
+          "requirements": {
+            "length": "Minimaal 8 tekens",
+            "uppercase": "Minimaal één hoofdletter",
+            "lowercase": "Minimaal één kleine letter",
+            "number": "Minimaal één cijfer",
+            "special": "Minimaal één speciaal teken"
+          }
+        },
+        "confirmPassword": {
+          "label": "Bevestig Wachtwoord",
+          "error": "Wachtwoorden komen niet overeen"
+        }
+      },
+      "submit": "Maak mijn club aan",
+      "success": "Club succesvol aangemaakt!",
+      "error": "Fout bij het aanmaken van de club",
+      "termsAndConditions": {
+        "text": "Ik ga akkoord met de",
+        "link": "algemene voorwaarden",
+        "error": "U moet akkoord gaan met de algemene voorwaarden"
+      }
+    }
+  },
+  "login": {
+    "hero": {
+      "title": "Welkom bij 4fly",
+      "subtitle": "Log in om toegang te krijgen tot uw dashboard"
+    },
+    "form": {
+      "email": {
+        "label": "E-mail",
+        "placeholder": "Voer uw e-mailadres in",
+        "error": "E-mailadres is verplicht"
+      },
+      "password": {
+        "label": "Wachtwoord",
+        "placeholder": "Voer uw wachtwoord in",
+        "error": "Wachtwoord is verplicht",
+        "toggle": "Toon/verberg wachtwoord"
+      },
+      "rememberMe": "Onthoud mij",
+      "forgotPassword": "Wachtwoord vergeten?",
+      "submit": "Inloggen",
+      "createClub": "Maak een nieuwe club aan"
+    },
+    "success": "Succesvol ingelogd!",
+    "error": "Ongeldige inloggegevens",
+    "error": {
+      "unexpected": "Er is een onverwachte fout opgetreden"
+    }
+  },
+  "resetPassword": {
+    "title": "Wachtwoord Resetten",
+    "description": "Voer uw e-mailadres in om instructies te ontvangen voor het resetten van uw wachtwoord.",
+    "emailLabel": "E-mail",
+    "emailError": "Ongeldig e-mailadres",
+    "submitButton": "Verstuur Instructies",
+    "submitting": "Bezig met verzenden...",
+    "backToLogin": "Terug naar Inloggen",
+    "success": {
+      "title": "Instructies Verzonden!",
+      "description": "Controleer uw inbox en volg de instructies om uw wachtwoord te resetten."
+    },
+    "toast": {
+      "success": "Instructies verzonden per e-mail",
+      "error": "Fout bij het verzenden van de instructies"
+    }
+  },
+  "quotes": {
+    "saint-exupery-1": {
+      "text": "Het vliegtuig is geen doel op zich, maar een middel. Men riskeert zijn leven niet voor een vliegtuig: net zoals een boer niet ploegt om zijn ploeg. Maar door het vliegtuig te gebruiken, verlaat men de steden en hun boekhouders en ontdekt men een landelijke waarheid.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Vliegenier en Schrijver"
+    },
+    "saint-exupery-2": {
+      "text": "De aarde leert ons meer over onszelf dan alle boeken. Omdat ze ons tegenstand biedt. De mens ontdekt zichzelf wanneer hij zich meet met een obstakel.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Vliegenier en Schrijver"
+    },
+    "guillaumet-1": {
+      "text": "Wat ons redt is één stap. Dan nog één. Het is steeds dezelfde stap, maar hij moet worden gezet.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale Piloot"
+    },
+    "dassault-1": {
+      "text": "Een mooi vliegtuig is een vliegtuig dat goed vliegt.",
+      "author": "Marcel Dassault",
+      "role": "Vliegtuigbouwer"
+    },
+    "saint-exupery-3": {
+      "text": "In de lucht wordt de vogel door niets anders gedragen dan zijn eigen wil om niet te vallen.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Vliegenier en Schrijver"
+    },
+    "mermoz-1": {
+      "text": "Ik heb het gezicht van God gezien. Het was in de wolken, in de wind, in de sterren. Ik zag het in de hemel.",
+      "author": "Jean Mermoz",
+      "role": "Pionier van de Aéropostale"
+    },
+    "guillaumet-2": {
+      "text": "De mooiste reis is diegene die we nog niet hebben gemaakt.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale Piloot"
+    },
+    "dassault-2": {
+      "text": "Het vliegtuig is misschien wel de mooiste machine die de mens ooit heeft gemaakt. Het staat het dichtst bij levende wezens.",
+      "author": "Marcel Dassault",
+      "role": "Vliegtuigbouwer"
+    },
+    "garros-1": {
+      "text": "Lucht is een dikke vloeistof waarin we vaste vormen kunnen beeldhouwen.",
+      "author": "Roland Garros",
+      "role": "Pionier van de Luchtvaart"
+    },
+    "daurat-1": {
+      "text": "Als je boven de wolken vliegt, begrijp je waarom vogels zingen.",
+      "author": "Didier Daurat",
+      "role": "Directeur van de Aéropostale"
+    },
+    "bleriot-1": {
+      "text": "Vliegen is een permanente overwinning die we behalen op de zwaartekracht.",
+      "author": "Louis Blériot",
+      "role": "Pionier van de Luchtvaart"
+    },
+    "lindbergh-1": {
+      "text": "Luchtvaart is een veeleisende meesteres. Ze vergeeft geen fouten, maar beloont passie.",
+      "author": "Charles Lindbergh",
+      "role": "Vliegenier"
+    },
+    "mermoz-2": {
+      "text": "In de lucht zijn er geen wegen. Er zijn alleen sterren en dromen.",
+      "author": "Jean Mermoz",
+      "role": "Pionier van de Aéropostale"
+    },
+    "boucher-1": {
+      "text": "Vliegen is misschien een beetje dichter bij de engelen komen.",
+      "author": "Hélène Boucher",
+      "role": "Pionier in de Luchtvaart"
+    },
+    "guillaumet-3": {
+      "text": "De piloot die niet bang is, is een dode piloot. Moed is het beheersen van je angst.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale Piloot"
+    }
+  },
+  "legal": {
+    "title": "Juridische Vermeldingen",
+    "publisher": {
+      "title": "Website-uitgever",
+      "company": "Bedrijf",
+      "legalForm": "Rechtsvorm",
+      "legalFormValue": "SASU (Verenvoudigde Naamloze Vennootschap met Enige Aandeelhouder)",
+      "address": "Maatschappelijke zetel",
+      "rcs": "RCS-nummer",
+      "capital": "Maatschappelijk kapitaal",
+      "vat": "Btw-nummer"
+    },
+    "hosting": {
+      "title": "Hosting",
+      "provider": "Hostingprovider",
+      "company": "Bedrijf",
+      "address": "Adres"
+    },
+    "dataProtection": {
+      "title": "Bescherming van Persoonsgegevens",
+      "description": "In overeenstemming met de gewijzigde Franse Wet Bescherming Persoonsgegevens van 6 januari 1978 en de Algemene Verordening Gegevensbescherming (AVG), hebt u het recht op inzage, rectificatie, verwijdering en bezwaar met betrekking tot uw persoonlijke gegevens.",
+      "rights": "Om deze rechten uit te oefenen, kunt u contact met ons opnemen:",
+      "email": "Per e-mail",
+      "mail": "Per post"
+    },
+    "intellectualProperty": {
+      "title": "Intellectueel Eigendom",
+      "description": "Alle inhoud van deze site (structuur, tekst, afbeeldingen, logo’s, database...) is het exclusieve eigendom van MELBA CAPITAL. Elke reproductie, weergave, wijziging, publicatie, overdracht, wijziging, geheel of gedeeltelijk, van de site of de inhoud ervan, via welk middel dan ook, op welk medium dan ook, is verboden zonder voorafgaande schriftelijke toestemming van MELBA CAPITAL."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "description": "Deze site gebruikt cookies die nodig zijn voor een goede werking. Een cookie is een klein tekstbestand dat op uw computer wordt opgeslagen. De cookies die wij gebruiken, stellen ons niet in staat u persoonlijk te identificeren. Ze dienen enkel om uw gebruikerservaring te verbeteren en het siteverkeer te meten.",
+      "consent": "Door onze site te gebruiken, accepteert u het gebruik van cookies in overeenstemming met ons privacybeleid."
+    },
+    "links": {
+      "title": "Hyperlinks",
+      "description": "De website 4fly.io kan links bevatten naar andere sites. MELBA CAPITAL is niet verantwoordelijk voor de inhoud of het privacybeleid van deze sites."
+    }
+  },
+  "cgv": {
+    "title": "Algemene Verkoopvoorwaarden",
+    "lastUpdate": "Laatste update: {{date}}",
+    "article1": {
+      "title": "Artikel 1 - Doel",
+      "content": "Deze algemene verkoopvoorwaarden regelen het gebruik van het 4fly-platform, een beheersoplossing voor vliegclubs. Ze zijn exclusief van toepassing en vervangen alle andere voorwaarden."
+    },
+    "article2": {
+      "title": "Artikel 2 - Diensten",
+      "content": "4fly biedt een volledig beheersplatform met onder andere:\n- Beheer van vliegtuigreserveringen\n- Onderhoudsopvolging\n- Opleidingsbeheer\n- Ledenbeheer\n- Facturering en betalingen\n- Communicatietools"
+    },
+    "article3": {
+      "title": "Artikel 3 - Prijzen",
+      "content": "4fly biedt drie prijsplannen die zijn aangepast aan uw activiteiten:\n\n1. Starterplan (Gratis):\n- Voor clubs tot 1000 vlieguren per jaar\n- Toegang tot alle functies\n- Ondersteuning via e-mail\n\n2. Growthplan (€0,50/vlieguur excl. BTW):\n- Voor clubs met 1000 tot 3000 vlieguren per jaar\n- Alle functies inbegrepen\n- Prioritaire ondersteuning\n\n3. Performanceplan (Op maat):\n- Voor clubs met meer dan 3000 vlieguren per jaar\n- Alle functies inbegrepen\n- Aangepaste hosting\n- Training op locatie\n- 24/7 VIP-ondersteuning\n- Dedicated accountmanager"
+    },
+    "article4": {
+      "title": "Artikel 4 - Verplichtingen",
+      "content": "4fly verbindt zich ertoe:\n- De beschikbaarheid en het onderhoud van het platform te garanderen\n- De gegevens van gebruikers te beschermen\n- Technische ondersteuning te bieden\n\nDe gebruiker verbindt zich ertoe:\n- Juiste informatie te verstrekken\n- De gebruiksvoorwaarden te respecteren\n- Het platform niet verkeerd te gebruiken"
+    },
+    "article5": {
+      "title": "Artikel 5 - Persoonsgegevens",
+      "content": "4fly verzamelt en verwerkt persoonsgegevens in overeenstemming met de AVG. Gebruikers hebben het recht hun gegevens in te zien, te corrigeren en te verwijderen."
+    },
+    "article6": {
+      "title": "Artikel 6 - Intellectueel Eigendom",
+      "content": "Alle onderdelen van het 4fly-platform (logo, teksten, afbeeldingen, enz.) zijn beschermd door intellectuele eigendomsrechten. Elke reproductie is verboden zonder voorafgaande toestemming."
+    },
+    "article7": {
+      "title": "Artikel 7 - Aansprakelijkheid",
+      "content": "4fly kan niet aansprakelijk worden gesteld voor indirecte schade als gevolg van het gebruik van het platform. De aansprakelijkheid is beperkt tot het bedrag dat de gebruiker voor de diensten heeft betaald."
+    },
+    "article8": {
+      "title": "Artikel 8 - Beëindiging",
+      "content": "Elke partij kan het gebruik van de diensten beëindigen onder de voorziene voorwaarden. Bij ernstige inbreuk kan de beëindiging onmiddellijk worden doorgevoerd."
+    },
+    "article9": {
+      "title": "Artikel 9 - Toepasselijk Recht",
+      "content": "Deze algemene voorwaarden vallen onder het Franse recht. In geval van een geschil zijn uitsluitend de Franse rechtbanken bevoegd."
+    }
+  }
+}

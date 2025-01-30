@@ -46,7 +46,7 @@ const LegalPage = () => {
                   <p>{t('legal.dataProtection.description')}</p>
                   <p>{t('legal.dataProtection.rights')}</p>
                   <ul className="list-disc pl-6 space-y-2">
-                    <li>{t('legal.dataProtection.email')}: contact@4fly.fr</li>
+                    <li>{t('legal.dataProtection.email')}: contact@4fly.io</li>
                     <li>{t('legal.dataProtection.mail')}: MELBA CAPITAL, 5 route de Cussieux, 42400 Saint Chamond</li>
                   </ul>
                 </div>

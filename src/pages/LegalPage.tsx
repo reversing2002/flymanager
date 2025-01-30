@@ -47,7 +47,7 @@ const LegalPage = () => {
                     Pour exercer ces droits, vous pouvez nous contacter :
                   </p>
                   <ul className="list-disc pl-6 space-y-2">
-                    <li>Par email : contact@4fly.fr</li>
+                    <li>Par email : contact@4fly.io</li>
                     <li>Par courrier : MELBA CAPITAL, 5 route de Cussieux, 42400 Saint Chamond</li>
                   </ul>
                 </div>
@@ -78,7 +78,7 @@ const LegalPage = () => {
                 <h2 className="text-2xl font-semibold text-white mb-4">Liens hypertextes</h2>
                 <div className="text-gray-300">
                   <p>
-                    Le site 4fly.fr peut contenir des liens vers d'autres sites. MELBA CAPITAL n'est pas responsable du contenu ou de la politique de confidentialité de ces sites.
+                    Le site 4fly.io peut contenir des liens vers d'autres sites. MELBA CAPITAL n'est pas responsable du contenu ou de la politique de confidentialité de ces sites.
                   </p>
                 </div>
               </section>

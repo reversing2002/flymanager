@@ -29,7 +29,7 @@ export const useLanguageRedirect = () => {
     const pathParts = location.pathname.split('/').filter(Boolean);
     const firstPathPart = pathParts[0];
     const secondPathPart = pathParts[1];
-    const supportedLanguages = ['fr', 'en', 'de', 'es'];
+    const supportedLanguages = ['fr', 'en', 'de', 'es', 'it', 'pt'];
     
     // Ne rien faire si nous sommes déjà sur le bon chemin
     if (firstPathPart === i18n.language) {

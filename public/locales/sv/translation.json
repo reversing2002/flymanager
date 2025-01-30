@@ -1,0 +1,786 @@
+{
+  "rgpd": {
+    "title": "Dataskyddspolicy",
+    "introduction": {
+      "title": "Introduktion",
+      "content": "4fly åtar sig att skydda användarnas integritet för sitt flygklubbsadministrationssystem. Denna dataskyddspolicy förklarar hur vi samlar in, använder och skyddar dina personuppgifter."
+    },
+    "dataCollected": {
+      "title": "Insamlade Uppgifter",
+      "intro": "Vi samlar in följande information:",
+      "items": [
+        "Identifieringsuppgifter (förnamn, efternamn, e-postadress)",
+        "Information om flygcertifikat och kvalifikationer",
+        "Information om flyg och bokningar",
+        "Uppgifter om utbildning och progression",
+        "Betalningsinformation (bearbetas säkert)"
+      ]
+    },
+    "dataUsage": {
+      "title": "Användning av Uppgifter",
+      "intro": "Dina uppgifter används för att:",
+      "items": [
+        "Hantera bokningar och flygningar",
+        "Följa upp underhåll av flygplan",
+        "Administrera elevutbildning och progression",
+        "Bearbeta betalningar",
+        "Kommunicera viktig information för klubben"
+      ]
+    },
+    "dataProtection": {
+      "title": "Dataskydd",
+      "intro": "Vi vidtar tekniska och organisatoriska säkerhetsåtgärder för att skydda dina uppgifter:",
+      "items": [
+        "Kryptering av känslig data",
+        "Begränsad åtkomst till personuppgifter",
+        "Regelbundna och säkra säkerhetskopior",
+        "Kontinuerlig säkerhetsövervakning"
+      ]
+    },
+    "rights": {
+      "title": "Dina Rättigheter",
+      "intro": "I enlighet med GDPR har du följande rättigheter:",
+      "items": [
+        "Rätt till tillgång till dina personuppgifter",
+        "Rätt till rättelse av felaktiga uppgifter",
+        "Rätt till radering av dina uppgifter",
+        "Rätt till begränsning av behandling",
+        "Rätt till dataportabilitet",
+        "Rätt att invända mot behandling"
+      ]
+    },
+    "contact": {
+      "title": "Kontakt",
+      "content": "För frågor om skyddet av dina uppgifter eller för att utöva dina rättigheter, kontakta oss på: privacy@4fly.io"
+    },
+    "update": {
+      "title": "Uppdatering",
+      "content": "Denna dataskyddspolicy kan uppdateras regelbundet. Senaste uppdatering: {{date}}."
+    }
+  },
+  "common": {
+    "locale": "sv-SE",
+    "legal": "Juridisk Information",
+    "legalMentions": "Juridiskt Meddelande",
+    "cgv": "Försäljningsvillkor",
+    "back": "Tillbaka",
+    "next": "Nästa",
+    "login": "Logga in",
+    "footerDescription": "Den enkla lösningen för att hantera din flygklubb. Bokningar, underhåll, fakturering... allt på ett ställe!",
+    "copyright": "MELBA CAPITAL - SASU med ett aktiekapital på 2 700 000 € - RCS Saint-Etienne 840 514 913"
+  },
+  "features": {
+    "flightManagement": {
+      "title": "Flygadministration",
+      "description": "Planering och övervakning av flyg i realtid"
+    },
+    "reservations": {
+      "title": "Bokningar",
+      "description": "Dygnet-runt online-bokningssystem"
+    },
+    "maintenance": {
+      "title": "Underhåll",
+      "description": "Spårning av underhåll och automatiska aviseringar"
+    },
+    "training": {
+      "title": "Utbildning",
+      "description": "Fullständig hantering av elevutbildning"
+    },
+    "payments": {
+      "title": "Betalningar",
+      "description": "Förenklad hantering av betalningar och fakturor"
+    },
+    "memberManagement": {
+      "title": "Medlemsadministration",
+      "description": "Effektiv administration av klubbmedlemmar"
+    }
+  },
+  "home": {
+    "meta": {
+      "title": "4fly - Flygklubbsadministrationsprogram | Komplett Gratis Lösning",
+      "description": "4fly är en komplett lösning för att administrera din flygklubb. Flygadministration, bokningar, underhåll, utbildning och mer. Prova gratis!"
+    },
+    "title": "Hantera din flygklubb enkelt",
+    "description": "4fly är ett enkelt och kostnadsfritt verktyg för att hantera din flygklubb, oavsett om du har 2 eller 200 medlemmar. Slipp komplicerade kalkylblad och pappersarbete!",
+    "createClub": "Skapa min klubb",
+    "configurationTime": "Konfiguration på 2 minuter",
+    "startTitle": "Börja växa din klubb",
+    "startDescription": "Konfiguration på 2 minuter",
+    "startButton": "Kom igång gratis"
+  },
+  "nav": {
+    "home": "Start",
+    "about": "Om oss",
+    "features": "Funktioner",
+    "pricing": "Priser",
+    "faq": "FAQ",
+    "contact": "Kontakt",
+    "login": "Logga in"
+  },
+  "pricing": {
+    "title": "Välj din plan",
+    "subtitle": "Alla funktioner är tillgängliga från början: bokningar, scheman, underhåll, utbildning, fakturering... Ju mer du flyger, desto mer växer din klubb och desto mer stödjer 4fly dig!",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "volume": "Upp till 1000h/år",
+        "price": "Gratis",
+        "description": "Kom igång med 4fly utan kostnad och upptäck alla verktyg för att få din klubb att lyfta",
+        "cta": "Kom igång gratis"
+      },
+      "growth": {
+        "name": "Growth",
+        "volume": "Från 1000h till 3000h/år",
+        "price": "0,50 €/flygtimme exkl. moms",
+        "description": "Växer din klubb? 4fly växer med dig för att stödja din utveckling"
+      },
+      "performance": {
+        "name": "Performance",
+        "volume": "3000h+/år",
+        "price": "Skräddarsytt",
+        "description": "Få skräddarsytt stöd för att optimera din verksamhetshantering"
+      }
+    },
+    "startFree": "Kom igång gratis",
+    "footer": "Alla funktioner är tillgängliga från början: bokningar, scheman, underhåll, utbildning, fakturering... Ju mer du flyger, desto mer växer din klubb och desto mer stödjer 4fly dig!"
+  },
+  "about": {
+    "hero": {
+      "title": "Teamet bakom 4fly",
+      "description": "4fly utvecklas av ett passionerat team som åtar sig att erbjuda kontinuerligt stöd till våra användare."
+    },
+    "vision": {
+      "title": "Vår Vision",
+      "description": "Vårt team arbetar nära flygklubbar för att utveckla en lösning som exakt matchar branschens behov. Vi strävar efter att hålla plattformen säker, högpresterande och ständigt utvecklande.",
+      "approach": "Ett praktiskt tillvägagångssätt i nära samarbete med klubbarna"
+    },
+    "engagement": {
+      "title": "Vårt Åtagande",
+      "items": {
+        "training": {
+          "title": "Gratis Utbildning",
+          "description": "Personlig och kostnadsfri utbildning för alla klubbar som använder plattformen",
+          "subtitle": "På-plats-utbildning anpassad efter era behov"
+        },
+        "setup": {
+          "title": "Initial Konfiguration",
+          "description": "Skräddarsydd uppsättning och stöd i digitalisering av era historiska data",
+          "subtitle": "Från pärm till dator, vi tar hand om allt"
+        },
+        "support": {
+          "title": "Teknisk Support",
+          "description": "Ett team till ditt förfogande för att hjälpa dig dagligen med att använda plattformen",
+          "subtitle": "Personlig och snabb hjälp"
+        },
+        "accompaniment": {
+          "title": "Vägledning",
+          "description": "Personlig uppföljning för alla medlemmar i klubben, från IT-nybörjare till experter",
+          "subtitle": "Vi lyssnar på alla användare"
+        }
+      }
+    },
+    "support": {
+      "title": "Support och Hjälp",
+      "items": [
+        "Dagliga säkerhetskopior av dina data",
+        "24/7 övervakning av plattformen",
+        "Regelbundna uppdateringar med nya funktioner",
+        "Hjälp för alla dina tekniska frågor"
+      ]
+    },
+    "images": {
+      "team": "Teamet bakom 4fly",
+      "vision": "Samarbete med flygklubbar",
+      "support": "Support och hjälp"
+    }
+  },
+  "featuresPage": {
+    "hero": {
+      "title": "Våra Funktioner",
+      "subtitle": "Upptäck alla verktyg som gör vår plattform till den perfekta lösningen för din flygklubb"
+    },
+    "items": {
+      "flights": {
+        "title": "Flygadministration",
+        "description": "Fullständig spårning av flyg, digitala loggböcker och detaljerad statistik för varje pilot och flygplan.",
+        "details": [
+          "Enkel registrering av flyg",
+          "Digitala loggböcker",
+          "Spårning av flygtid",
+          "Detaljerad statistik"
+        ]
+      },
+      "reservations": {
+        "title": "Bokningar",
+        "description": "Online bokningssystem dygnet runt med hantering av krockar i realtid och tillgänglighet.",
+        "details": [
+          "Online bokning dygnet runt",
+          "Interaktiv kalender",
+          "Hantering av krockar",
+          "Automatiska aviseringar"
+        ]
+      },
+      "maintenance": {
+        "title": "Underhåll",
+        "description": "Detaljerad övervakning av underhåll med automatiska varningar och hantering av potentialer.",
+        "details": [
+          "Spårning av potential",
+          "Automatiska varningar",
+          "Digital underhållslogg",
+          "Fullständig historik"
+        ]
+      },
+      "training": {
+        "title": "Utbildning",
+        "description": "Komplett utbildningsadministration med pedagogisk uppföljning och elevprogression.",
+        "details": [
+          "Digital loggbok för progression",
+          "Utbildningsschema",
+          "Pedagogisk uppföljning",
+          "Online-resurser"
+        ]
+      },
+      "finance": {
+        "title": "Finansiell Administration",
+        "description": "Automatisk fakturering, uppföljning av medlemmarnas konton och online-betalningsintegration.",
+        "details": [
+          "Automatisk fakturering",
+          "Online-betalningar",
+          "Kontouppföljning",
+          "Export till bokföring"
+        ]
+      },
+      "members": {
+        "title": "Medlemsadministration",
+        "description": "Fullständig medlemsadministration med hantering av licenser och kvalifikationer.",
+        "details": [
+          "Detaljerade profiler",
+          "Spårning av licenser",
+          "Hantering av kvalifikationer",
+          "Medlemsregister"
+        ]
+      },
+      "communication": {
+        "title": "Kommunikation",
+        "description": "Integrerade kommunikationsverktyg för att underlätta utbyten inom klubben.",
+        "details": [
+          "Direktmeddelanden",
+          "Klubb-anslag",
+          "Aviseringar",
+          "Dokumentdelning"
+        ]
+      },
+      "statistics": {
+        "title": "Statistik och Rapporter",
+        "description": "Instrumentpaneler och detaljerade rapporter för att övervaka klubbens aktiviteter.",
+        "details": [
+          "Instrumentpaneler (dashboards)",
+          "Anpassade rapporter",
+          "Aktivitetsanalys",
+          "Dataexport"
+        ]
+      },
+      "events": {
+        "title": "Evenemang",
+        "description": "Organisation och hantering av klubbens evenemang med online-registrering.",
+        "details": [
+          "Evenemangskalender",
+          "Online-registrering",
+          "Deltagaradministration",
+          "Automatiska påminnelser"
+        ]
+      },
+      "security": {
+        "title": "Säkerhet och Efterlevnad",
+        "description": "Verktyg för att säkerställa säkerhet och regelöverensstämmelse.",
+        "details": [
+          "Hantering av säkerhetsrapporter",
+          "Dokumentuppföljning",
+          "GDPR-efterlevnad",
+          "Automatiska säkerhetskopior"
+        ]
+      }
+    }
+  },
+  "faqPage": {
+    "hero": {
+      "title": "Vanliga Frågor",
+      "subtitle": "Hitta svar på de vanligaste frågorna om 4fly"
+    },
+    "categories": {
+      "about": {
+        "title": "Om 4fly",
+        "questions": [
+          {
+            "question": "Vad är 4fly och för vem är det avsett?",
+            "answer": "4fly är en omfattande programvarulösning utformad för att förenkla och optimera administrationen av flygklubbar. Det riktar sig till flygklubbar av alla storlekar, oavsett om de är anslutna till luftfartsmyndigheter eller inte, som vill automatisera och centralisera sin dagliga verksamhet. Vårt mål är att stödja din klubbs utveckling."
+          },
+          {
+            "question": "Hur fungerar prissättningsmodellen?",
+            "answer": "Vår modell är enkel: gratis upp till 1000 flygtimmar per år, sedan 0,50 € per flygtimme på de totala timmarna. För stora klubbar som överskrider 3000 timmar årligen erbjuder vi skräddarsydda planer. Alla funktioner är tillgängliga från start."
+          },
+          {
+            "question": "Finns det några dolda avgifter?",
+            "answer": "Nej, vår timbaserade prissättning är helt transparent. Alla nödvändiga funktioner ingår i priset. Vissa tilläggstjänster, som betalning med kreditkort, erbjuds som tillval vid behov."
+          },
+          {
+            "question": "Vilka funktioner ingår?",
+            "answer": "Alla viktiga funktioner ingår i grundutbudet: bokningshantering, underhåll, utbildning, ekonomi... Extratjänster som kreditkortsbetalning är tillgängliga som tillval för klubbar som önskar det."
+          },
+          {
+            "question": "Vilket stöd finns tillgängligt?",
+            "answer": "Vi erbjuder fullständig teknisk support via e-post och telefon, inkluderad för alla klubbar oavsett storlek. Vårt team finns till hands för att hjälpa dig med den initiala konfigurationen och svara på dina frågor i vardagen."
+          }
+        ]
+      },
+      "reservations": {
+        "title": "Bokningar och Flyg",
+        "questions": [
+          {
+            "question": "Hur fungerar bokningssystemet?",
+            "answer": "Bokningssystemet är tillgängligt online dygnet runt. Medlemmar kan boka flygplan, se tillgänglighet i realtid och administrera sina bokningar från en smartphone eller dator."
+          },
+          {
+            "question": "Kan man boka flera tider i förväg?",
+            "answer": "Ja, du kan göra flera bokningar enligt klubbens regler. Systemet kontrollerar automatiskt konflikter och nödvändiga kvalifikationer."
+          },
+          {
+            "question": "Hur hanteras skol-/instruktionsflyg?",
+            "answer": "Skolflyg kan schemaläggas med tillgängliga instruktörer. Systemet kontrollerar automatiskt instruktörens och flygplanets tillgänglighet."
+          },
+          {
+            "question": "Vad händer vid en avbokning?",
+            "answer": "Avbokningar hanteras enligt klubbens regler. Systemet kan skicka automatiska aviseringar till berörda parter och frigör tiden för andra bokningar."
+          }
+        ]
+      },
+      "maintenance": {
+        "title": "Underhåll",
+        "questions": [
+          {
+            "question": "Hur följs underhåll av flygplan?",
+            "answer": "4fly inkluderar ett fullständigt övervakningssystem som spårar flygtimmar, cykler och kalenderbaserade deadlines. Automatiska aviseringar skickas när underhåll närmar sig."
+          },
+          {
+            "question": "Vem kan rapportera underhållsarbete?",
+            "answer": "Mekaniker och behörig personal kan registrera underhållsåtgärder. Varje insats dokumenteras och arkiveras i flygplanets historik."
+          },
+          {
+            "question": "Hur hanteras underhållsvarningar?",
+            "answer": "Systemet skickar automatiska notiser till ansvariga när underhåll närmar sig. Piloter informeras också om eventuella begränsningar eller om att flygplanet är otillgängligt."
+          },
+          {
+            "question": "Kan man anpassa olika underhållstyper?",
+            "answer": "Ja, du kan definiera anpassade underhållstyper baserat på dina behov, med intervaller baserade på flygtimmar, cykler eller kalender."
+          }
+        ]
+      },
+      "training": {
+        "title": "Utbildning",
+        "questions": [
+          {
+            "question": "Hur följs elevernas framsteg?",
+            "answer": "Varje elev har en digital progressionsbok. Instruktörer kan följa deras utveckling, notera slutförda övningar och planera kommande lektioner."
+          },
+          {
+            "question": "Kan man anpassa utbildningsprogrammet?",
+            "answer": "Ja, utbildningsprogram kan anpassas helt efter dina behov. Du kan skapa olika upplägg för PPL, LAPL eller andra kvalifikationer."
+          },
+          {
+            "question": "Hur hanteras teoretiska prov?",
+            "answer": "Plattformen inkluderar en modul för quiz och teoretiska prov. Instruktörer kan skapa test, följa resultaten och identifiera förbättringsområden."
+          },
+          {
+            "question": "Kan elever följa sin egen progression?",
+            "answer": "Ja, varje elev har tillgång till sin personliga vy där de kan följa sin progression, repetera lektioner och förbereda sig för prov."
+          }
+        ]
+      },
+      "members": {
+        "title": "Medlemsadministration",
+        "questions": [
+          {
+            "question": "Hur hanteras medlemskap?",
+            "answer": "4fly låter dig hantera medlemskap, avgifter och licenser. Systemet skickar automatiska påminnelser för förnyelser."
+          },
+          {
+            "question": "Kan man definiera olika medlemskategorier?",
+            "answer": "Ja, du kan skapa olika profiler (elev, pilot, instruktör, mekaniker etc.) med specifika åtkomsträttigheter."
+          },
+          {
+            "question": "Hur hanteras medlemmarnas dokument?",
+            "answer": "Alla dokument (licenser, läkarintyg, kvalifikationer) lagras digitalt och systemet skickar automatiska påminnelser inför utgångsdatum."
+          }
+        ]
+      },
+      "payments": {
+        "title": "Betalningar och Ekonomi",
+        "questions": [
+          {
+            "question": "Hur fungerar online-betalningar?",
+            "answer": "4fly integrerar ett säkert betalsystem med kreditkort. Medlemmar kan sätta in pengar på sitt konto och betala för flygningar direkt på plattformen."
+          },
+          {
+            "question": "Vilka ekonomiska rapporter finns tillgängliga?",
+            "answer": "Plattformen genererar detaljerade rapporter om flygningar, betalningar och ekonomi. Du kan exportera dessa data till din bokföring."
+          },
+          {
+            "question": "Hur hanteras fakturor?",
+            "answer": "Fakturor genereras automatiskt efter varje flygning eller betalning. De arkiveras digitalt och kan skickas via e-post."
+          }
+        ]
+      },
+      "security": {
+        "title": "Säkerhet och Data",
+        "questions": [
+          {
+            "question": "Hur skyddas data?",
+            "answer": "All data lagras säkert och krypteras. Vi uppfyller GDPR-standarder och utför regelbundna säkerhetskopior."
+          },
+          {
+            "question": "Vem har tillgång till klubbens data?",
+            "answer": "Åtkomst till data styrs strikt via ett behörighetssystem. Endast behörig personal kan se känslig information."
+          },
+          {
+            "question": "Kan vi exportera våra data?",
+            "answer": "Ja, du kan när som helst exportera dina data i standardformat (CSV, Excel). Vi underlättar även migrering från andra system."
+          },
+          {
+            "question": "Hur garanteras driftsäkerheten?",
+            "answer": "Vår infrastruktur är värdbaserad på redundanta servrar med hög tillgänglighet. Vi gör dagliga säkerhetskopior av all data."
+          }
+        ]
+      }
+    }
+  },
+  "contactPage": {
+    "hero": {
+      "title": "Kontakta Oss",
+      "subtitle": "Vi finns här för att hjälpa till",
+      "needHelp": "Behöver du hjälp?",
+      "supportMessage": "Vårt team finns till hands för att stötta dig i att administrera din flygklubb."
+    },
+    "form": {
+      "name": {
+        "label": "Namn",
+        "error": "Vänligen ange ditt namn"
+      },
+      "email": {
+        "label": "E-post",
+        "error": "Ogiltigt e-postformat",
+        "placeholder": "ditt@email.com",
+        "valid": "Giltigt e-postformat"
+      },
+      "phone": {
+        "label": "Telefon",
+        "error": "Ogiltigt telefonformat",
+        "placeholder": "06 12 34 56 78",
+        "valid": "Giltigt telefonformat"
+      },
+      "contactReason": {
+        "label": "Orsak till Kontakt",
+        "options": {
+          "general": "Allmän Informationsförfrågan",
+          "login": "Inloggningsproblem",
+          "payment": "Betalningsproblem",
+          "bug": "Tekniskt Fel",
+          "partnership": "Partnerskapsförfrågan",
+          "training": "Fråga om Utbildning",
+          "reservations": "Fråga om Bokningar",
+          "improvement": "Förslag på Förbättring",
+          "other": "Annat"
+        }
+      },
+      "customSubject": {
+        "label": "Specificera ditt ämne",
+        "error": "Vänligen ange ett ämne"
+      },
+      "message": {
+        "label": "Meddelande",
+        "error": "Ditt meddelande är lite för kort"
+      },
+      "submit": "Skicka",
+      "success": "Meddelande skickat!",
+      "error": "Fel vid skickande av meddelande",
+      "contactRequired": "Vänligen uppge minst en kontaktmetod",
+      "contactRequiredError": "Vänligen uppge minst en kontaktmetod (e-post eller telefon)"
+    }
+  },
+  "createClub": {
+    "hero": {
+      "title": "Skapa Din Flygklubb",
+      "subtitle": "Kom igång på bara några minuter"
+    },
+    "form": {
+      "clubInfo": {
+        "title": "Klubbinformation",
+        "name": {
+          "label": "Klubbens Namn",
+          "placeholder": "Flygklubben...",
+          "error": "Klubbens namn krävs"
+        },
+        "icao": {
+          "label": "ICAO-kod",
+          "placeholder": "LFXX",
+          "error": "ICAO-koden måste innehålla 4 tecken",
+          "valid": "Giltigt format"
+        },
+        "address": {
+          "label": "Adress",
+          "placeholder": "Klubbens adress",
+          "error": "Adress krävs"
+        },
+        "phone": {
+          "label": "Telefon",
+          "placeholder": "06 12 34 56 78",
+          "error": "Ogiltigt telefonformat",
+          "valid": "Giltigt format"
+        }
+      },
+      "adminInfo": {
+        "title": "Administratörsinformation",
+        "firstName": {
+          "label": "Förnamn",
+          "placeholder": "Ditt förnamn",
+          "error": "Förnamn krävs"
+        },
+        "lastName": {
+          "label": "Efternamn",
+          "placeholder": "Ditt efternamn",
+          "error": "Efternamn krävs"
+        },
+        "email": {
+          "label": "E-post",
+          "placeholder": "ditt@email.com",
+          "error": "Ogiltigt e-postformat",
+          "valid": "Giltigt format"
+        },
+        "password": {
+          "label": "Lösenord",
+          "placeholder": "Minst 8 tecken",
+          "error": "Lösenordet måste innehålla minst 8 tecken",
+          "requirements": {
+            "length": "Minst 8 tecken",
+            "uppercase": "Minst en versal",
+            "lowercase": "Minst en gemen",
+            "number": "Minst en siffra",
+            "special": "Minst ett specialtecken"
+          }
+        },
+        "confirmPassword": {
+          "label": "Bekräfta Lösenord",
+          "error": "Lösenorden matchar inte"
+        }
+      },
+      "submit": "Skapa min klubb",
+      "success": "Klubben skapades!",
+      "error": "Fel vid skapande av klubb",
+      "termsAndConditions": {
+        "text": "Jag godkänner",
+        "link": "villkoren",
+        "error": "Du måste godkänna villkoren"
+      }
+    }
+  },
+  "login": {
+    "hero": {
+      "title": "Välkommen till 4fly",
+      "subtitle": "Logga in för att få tillgång till din panel"
+    },
+    "form": {
+      "email": {
+        "label": "E-post",
+        "placeholder": "Ange din e-postadress",
+        "error": "E-post krävs"
+      },
+      "password": {
+        "label": "Lösenord",
+        "placeholder": "Ange ditt lösenord",
+        "error": "Lösenord krävs",
+        "toggle": "Visa/dölj lösenord"
+      },
+      "rememberMe": "Kom ihåg mig",
+      "forgotPassword": "Glömt lösenord?",
+      "submit": "Logga in",
+      "createClub": "Skapa en ny klubb"
+    },
+    "success": "Inloggningen lyckades!",
+    "error": "Ogiltiga inloggningsuppgifter",
+    "error": {
+      "unexpected": "Ett oväntat fel uppstod"
+    }
+  },
+  "resetPassword": {
+    "title": "Återställ Lösenord",
+    "description": "Ange din e-postadress för att få instruktioner om hur du återställer lösenordet.",
+    "emailLabel": "E-post",
+    "emailError": "Ogiltig e-post",
+    "submitButton": "Skicka Instruktioner",
+    "submitting": "Skickar...",
+    "backToLogin": "Tillbaka till Inloggning",
+    "success": {
+      "title": "Instruktioner Skickade!",
+      "description": "Kolla din inkorg och följ instruktionerna för att återställa lösenordet."
+    },
+    "toast": {
+      "success": "Instruktioner skickade via e-post",
+      "error": "Fel vid skickande av instruktioner"
+    }
+  },
+  "quotes": {
+    "saint-exupery-1": {
+      "text": "Ett flygplan är inte ett mål i sig, utan ett medel. Man riskerar inte livet för ett flygplan: lika lite som en bonde plöjer för sin plog. Men genom flygplanet lämnar man städerna och deras bokförare och upptäcker en lantlig sanning.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Flygare och Författare"
+    },
+    "saint-exupery-2": {
+      "text": "Jorden lär oss mer om oss själva än alla böcker. För den sätter sig emot oss. Människan upptäcker sig själv när hon mäter sig mot hindret.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Flygare och Författare"
+    },
+    "guillaumet-1": {
+      "text": "Det som räddar oss är att ta ett steg. Sedan ett till. Det är alltid samma steg, men det måste tas.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale-pilot"
+    },
+    "dassault-1": {
+      "text": "Ett vackert flygplan är ett flygplan som flyger bra.",
+      "author": "Marcel Dassault",
+      "role": "Flygplanstillverkare"
+    },
+    "saint-exupery-3": {
+      "text": "I luften hålls fågeln inte uppe av något annat än sin egen vilja att inte falla.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Flygare och Författare"
+    },
+    "mermoz-1": {
+      "text": "Jag såg Guds ansikte. Det var i molnen, i vinden, i stjärnorna. Jag såg det på himlen.",
+      "author": "Jean Mermoz",
+      "role": "Aéropostale-pionjär"
+    },
+    "guillaumet-2": {
+      "text": "Den vackraste resan är alltid den vi ännu inte gjort.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale-pilot"
+    },
+    "dassault-2": {
+      "text": "Flygplanet är kanske den vackraste maskin människan någonsin skapat. Det står närmast de levande varelserna.",
+      "author": "Marcel Dassault",
+      "role": "Flygplanstillverkare"
+    },
+    "garros-1": {
+      "text": "Luft är en tät vätska där vi kan mejsla fasta former.",
+      "author": "Roland Garros",
+      "role": "Flygpionjär"
+    },
+    "daurat-1": {
+      "text": "När du flyger över molnen förstår du varför fåglar sjunger.",
+      "author": "Didier Daurat",
+      "role": "Aéropostale-chef"
+    },
+    "bleriot-1": {
+      "text": "Att flyga är en ständig seger vi vinner över gravitationen.",
+      "author": "Louis Blériot",
+      "role": "Flygpionjär"
+    },
+    "lindbergh-1": {
+      "text": "Flyget är en krävande älskarinna. Hon förlåter inte misstag, men belönar passionen.",
+      "author": "Charles Lindbergh",
+      "role": "Flygare"
+    },
+    "mermoz-2": {
+      "text": "Det finns inga vägar på himlen. Det finns bara stjärnor och drömmar.",
+      "author": "Jean Mermoz",
+      "role": "Aéropostale-pionjär"
+    },
+    "boucher-1": {
+      "text": "Att flyga kan innebära att komma lite närmare änglarna.",
+      "author": "Hélène Boucher",
+      "role": "Flygpionjär"
+    },
+    "guillaumet-3": {
+      "text": "Piloten som inte är rädd är en död pilot. Mod handlar om att behärska sin rädsla.",
+      "author": "Henri Guillaumet",
+      "role": "Aéropostale-pilot"
+    }
+  },
+  "legal": {
+    "title": "Juridiskt Meddelande",
+    "publisher": {
+      "title": "Webbplatsens Utgivare",
+      "company": "Företag",
+      "legalForm": "Juridisk form",
+      "legalFormValue": "SASU (En förenklad aktiebolagsform med en enda aktieägare)",
+      "address": "Huvudkontor",
+      "rcs": "RCS-nummer",
+      "capital": "Aktiekapital",
+      "vat": "Momsnummer"
+    },
+    "hosting": {
+      "title": "Driftmiljö",
+      "provider": "Leverantör",
+      "company": "Företag",
+      "address": "Adress"
+    },
+    "dataProtection": {
+      "title": "Skydd av Personuppgifter",
+      "description": "I enlighet med den franska dataskyddslagen av den 6 januari 1978, i dess ändrade version, och EU:s allmänna dataskyddsförordning (GDPR), har du rätt till tillgång, rättelse, radering och invändning mot behandlingen av dina personuppgifter.",
+      "rights": "För att utöva dessa rättigheter kan du kontakta oss:",
+      "email": "Via e-post",
+      "mail": "Via post"
+    },
+    "intellectualProperty": {
+      "title": "Upphovsrätt",
+      "description": "Allt innehåll på denna webbplats (struktur, texter, bilder, logotyper, databaser...) tillhör MELBA CAPITAL. All reproduktion, representation, modifiering, publicering, överföring, helt eller delvis, av webbplatsen eller dess innehåll, på vilket sätt och i vilket medium som helst, är förbjuden utan föregående skriftligt godkännande från MELBA CAPITAL."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "description": "Denna webbplats använder cookies som är nödvändiga för dess korrekta funktion. En cookie är en liten textfil som lagras på din dator. De cookies vi använder tillåter oss inte att personligen identifiera dig. De används endast för att förbättra din användarupplevelse och mäta webbtrafik.",
+      "consent": "Genom att använda vår webbplats godkänner du användningen av cookies i enlighet med vår integritetspolicy."
+    },
+    "links": {
+      "title": "Hyperlänkar",
+      "description": "Webbplatsen 4fly.io kan innehålla länkar till andra webbplatser. MELBA CAPITAL ansvarar inte för innehållet eller integritetspolicyn på dessa webbplatser."
+    }
+  },
+  "cgv": {
+    "title": "Försäljningsvillkor",
+    "lastUpdate": "Senaste uppdatering: {{date}}",
+    "article1": {
+      "title": "Artikel 1 - Syfte",
+      "content": "Dessa försäljningsvillkor reglerar användningen av 4fly-plattformen, en lösning för att administrera flygklubbar. De gäller uteslutande och ersätter alla andra villkor."
+    },
+    "article2": {
+      "title": "Artikel 2 - Tjänster",
+      "content": "4fly erbjuder en komplett administrativ plattform som inkluderar:\n- Hantering av flygplansbokningar\n- Underhållsövervakning\n- Utbildningsadministration\n- Medlemsadministration\n- Fakturering och betalningar\n- Kommunikationsverktyg"
+    },
+    "article3": {
+      "title": "Artikel 3 - Priser",
+      "content": "4fly erbjuder tre prisplaner anpassade till din verksamhet:\n\n1. Starter-plan (Gratis):\n- För klubbar upp till 1000 flygtimmar per år\n- Tillgång till alla funktioner\n- E-postsupport\n\n2. Growth-plan (0,50 €/flygtimme exkl. moms):\n- För klubbar från 1000 till 3000 flygtimmar per år\n- Alla funktioner inkluderade\n- Prioriterad support\n\n3. Performance-plan (Skräddarsytt):\n- För klubbar med över 3000 flygtimmar per år\n- Alla funktioner inkluderade\n- Anpassad driftmiljö\n- På-plats-utbildning\n- 24/7 VIP-support\n- Dedikerad kontoansvarig"
+    },
+    "article4": {
+      "title": "Artikel 4 - Förpliktelser",
+      "content": "4fly åtar sig att:\n- Säkerställa plattformens tillgänglighet och underhåll\n- Skydda användardata\n- Ge teknisk support\n\nAnvändaren åtar sig att:\n- Lämna korrekt information\n- Följa användarvillkoren\n- Inte missbruka plattformen"
+    },
+    "article5": {
+      "title": "Artikel 5 - Personuppgifter",
+      "content": "4fly samlar in och behandlar personuppgifter i enlighet med GDPR. Användare har rätt att få tillgång till, rätta och radera sina data."
+    },
+    "article6": {
+      "title": "Artikel 6 - Immateriella Rättigheter",
+      "content": "Alla delar av 4fly-plattformen (logotyp, texter, bilder etc.) är skyddade av immateriella rättigheter. All reproduktion är förbjuden utan föregående tillstånd."
+    },
+    "article7": {
+      "title": "Artikel 7 - Ansvar",
+      "content": "4fly kan inte hållas ansvarigt för indirekta skador till följd av användningen av plattformen. Ansvaret är begränsat till det belopp som användaren har betalat för tjänsterna."
+    },
+    "article8": {
+      "title": "Artikel 8 - Uppsägning",
+      "content": "Vardera parten kan säga upp användningen av tjänsterna enligt de villkor som anges. Vid allvarligt kontraktsbrott kan uppsägning ske omedelbart."
+    },
+    "article9": {
+      "title": "Artikel 9 - Tillämplig Lag",
+      "content": "Dessa försäljningsvillkor lyder under fransk lag. Eventuella tvister ska lösas av fransk domstol med exklusiv behörighet."
+    }
+  }
+}

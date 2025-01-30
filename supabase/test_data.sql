@@ -10,7 +10,7 @@ TRUNCATE TABLE
 CASCADE;
 
 -- Nettoyage des utilisateurs dans auth.users
-DELETE FROM auth.users WHERE email LIKE '%@4fly.fr';
+DELETE FROM auth.users WHERE email LIKE '%@4fly.io';
 
 INSERT INTO flight_types (id, name, description, requires_instructor, accounting_category) VALUES
     ('77777777-0000-0000-0000-000000000000', 'Vol Local', 'Vol local sans instruction', false, 'REGULAR'),
@@ -30,16 +30,16 @@ INSERT INTO clubs (id, name, code, email, phone, address) VALUES
 -- Création des utilisateurs avec auth_id = id et login/password obligatoires
 INSERT INTO users (id, auth_id, first_name, last_name, email, role, balance, login, password) VALUES
     -- Club de Paris
-    ('aaaaaaaa-0000-0000-0000-000000000000', 'aaaaaaaa-0000-0000-0000-000000000000', 'Admin', 'System', 'admin@4fly.fr', 'ADMIN', 1000, 'admin', 'TemporaryPassword123!'),
-    ('aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-1111-1111-1111-111111111111', 'Marie', 'Martin', 'instructor@4fly.fr', 'INSTRUCTOR', 500, 'instructor', 'TemporaryPassword123!'),
-    ('aaaaaaaa-2222-2222-2222-222222222222', 'aaaaaaaa-2222-2222-2222-222222222222', 'Jean', 'Dupont', 'pilot@4fly.fr', 'PILOT', 750, 'pilot', 'TemporaryPassword123!'),
-    ('aaaaaaaa-3333-3333-3333-333333333333', 'aaaaaaaa-3333-3333-3333-333333333333', 'Pierre', 'Dubois', 'mechanic@4fly.fr', 'MECHANIC', 0, 'mechanic', 'TemporaryPassword123!'),
+    ('aaaaaaaa-0000-0000-0000-000000000000', 'aaaaaaaa-0000-0000-0000-000000000000', 'Admin', 'System', 'admin@4fly.io', 'ADMIN', 1000, 'admin', 'TemporaryPassword123!'),
+    ('aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-1111-1111-1111-111111111111', 'Marie', 'Martin', 'instructor@4fly.io', 'INSTRUCTOR', 500, 'instructor', 'TemporaryPassword123!'),
+    ('aaaaaaaa-2222-2222-2222-222222222222', 'aaaaaaaa-2222-2222-2222-222222222222', 'Jean', 'Dupont', 'pilot@4fly.io', 'PILOT', 750, 'pilot', 'TemporaryPassword123!'),
+    ('aaaaaaaa-3333-3333-3333-333333333333', 'aaaaaaaa-3333-3333-3333-333333333333', 'Pierre', 'Dubois', 'mechanic@4fly.io', 'MECHANIC', 0, 'mechanic', 'TemporaryPassword123!'),
     -- Club de Lyon
-    ('bbbbbbbb-1111-1111-1111-111111111111', 'bbbbbbbb-1111-1111-1111-111111111111', 'Sophie', 'Laurent', 'sophie.laurent@4fly.fr', 'INSTRUCTOR', 600, 'sophie', 'TemporaryPassword123!'),
-    ('bbbbbbbb-2222-2222-2222-222222222222', 'bbbbbbbb-2222-2222-2222-222222222222', 'Lucas', 'Bernard', 'lucas.bernard@4fly.fr', 'PILOT', 300, 'lucas', 'TemporaryPassword123!'),
+    ('bbbbbbbb-1111-1111-1111-111111111111', 'bbbbbbbb-1111-1111-1111-111111111111', 'Sophie', 'Laurent', 'sophie.laurent@4fly.io', 'INSTRUCTOR', 600, 'sophie', 'TemporaryPassword123!'),
+    ('bbbbbbbb-2222-2222-2222-222222222222', 'bbbbbbbb-2222-2222-2222-222222222222', 'Lucas', 'Bernard', 'lucas.bernard@4fly.io', 'PILOT', 300, 'lucas', 'TemporaryPassword123!'),
     -- Club de Bordeaux
-    ('cccccccc-1111-1111-1111-111111111111', 'cccccccc-1111-1111-1111-111111111111', 'Emma', 'Petit', 'emma.petit@4fly.fr', 'INSTRUCTOR', 800, 'emma', 'TemporaryPassword123!'),
-    ('cccccccc-2222-2222-2222-222222222222', 'cccccccc-2222-2222-2222-222222222222', 'Thomas', 'Roux', 'thomas.roux@4fly.fr', 'PILOT', 450, 'thomas', 'TemporaryPassword123!');
+    ('cccccccc-1111-1111-1111-111111111111', 'cccccccc-1111-1111-1111-111111111111', 'Emma', 'Petit', 'emma.petit@4fly.io', 'INSTRUCTOR', 800, 'emma', 'TemporaryPassword123!'),
+    ('cccccccc-2222-2222-2222-222222222222', 'cccccccc-2222-2222-2222-222222222222', 'Thomas', 'Roux', 'thomas.roux@4fly.io', 'PILOT', 450, 'thomas', 'TemporaryPassword123!');
 
 -- Association des utilisateurs aux clubs
 INSERT INTO club_members (club_id, user_id, role, status) VALUES

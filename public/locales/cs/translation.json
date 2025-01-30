@@ -1,0 +1,786 @@
+{
+  "rgpd": {
+    "title": "Zásady ochrany osobních údajů",
+    "introduction": {
+      "title": "Úvod",
+      "content": "4fly se zavazuje chránit soukromí uživatelů své platformy pro správu aeroklubů. Tyto zásady ochrany osobních údajů vysvětlují, jak shromažďujeme, používáme a chráníme vaše osobní údaje."
+    },
+    "dataCollected": {
+      "title": "Shromažďovaná data",
+      "intro": "Shromažďujeme následující informace:",
+      "items": [
+        "Identifikační údaje (jméno, příjmení, e-mailová adresa)",
+        "Údaje o pilotní licenci a kvalifikacích",
+        "Informace o letech a rezervacích",
+        "Údaje o výcviku a pokroku",
+        "Platební údaje (zpracovávané bezpečně)"
+      ]
+    },
+    "dataUsage": {
+      "title": "Využití dat",
+      "intro": "Vaše údaje jsou používány k:",
+      "items": [
+        "Správě rezervací a letů",
+        "Sledování údržby letadel",
+        "Správě výcviku a pokroku studentů",
+        "Zpracování plateb",
+        "Komunikaci důležitých informací klubu"
+      ]
+    },
+    "dataProtection": {
+      "title": "Ochrana dat",
+      "intro": "Provádíme technická a organizační bezpečnostní opatření k ochraně vašich dat:",
+      "items": [
+        "Šifrování citlivých dat",
+        "Omezený přístup k osobním údajům",
+        "Pravidelné a bezpečné zálohy",
+        "Nepřetržité monitorování zabezpečení"
+      ]
+    },
+    "rights": {
+      "title": "Vaše práva",
+      "intro": "V souladu s GDPR máte následující práva:",
+      "items": [
+        "Právo na přístup k vašim osobním údajům",
+        "Právo na opravu nesprávných údajů",
+        "Právo na výmaz údajů",
+        "Právo na omezení zpracování",
+        "Právo na přenositelnost údajů",
+        "Právo vznést námitku proti zpracování"
+      ]
+    },
+    "contact": {
+      "title": "Kontakt",
+      "content": "V případě dotazů týkajících se ochrany vašich údajů nebo k uplatnění vašich práv nás můžete kontaktovat na adrese: privacy@4fly.io"
+    },
+    "update": {
+      "title": "Aktualizace",
+      "content": "Tyto zásady ochrany osobních údajů mohou být pravidelně aktualizovány. Poslední aktualizace: {{date}}."
+    }
+  },
+  "common": {
+    "locale": "cs-CZ",
+    "legal": "Právní informace",
+    "legalMentions": "Právní upozornění",
+    "cgv": "Obchodní podmínky",
+    "back": "Zpět",
+    "next": "Další",
+    "login": "Přihlásit se",
+    "copyright": "MELBA CAPITAL – SASU se základním kapitálem 2 700 000 € – RCS Saint-Etienne 840 514 913",
+    "footerDescription": "Jednoduché řešení pro správu vašeho aeroklubu. Rezervace, údržba, fakturace... všechno na jednom místě!"
+  },
+  "features": {
+    "flightManagement": {
+      "title": "Správa letů",
+      "description": "Plánování a sledování letů v reálném čase"
+    },
+    "reservations": {
+      "title": "Rezervace",
+      "description": "Online rezervační systém dostupný 24/7"
+    },
+    "maintenance": {
+      "title": "Údržba",
+      "description": "Sledování údržby a automatická upozornění"
+    },
+    "training": {
+      "title": "Výcvik",
+      "description": "Komplexní správa výcviku studentů"
+    },
+    "payments": {
+      "title": "Platby",
+      "description": "Zjednodušená správa plateb a faktur"
+    },
+    "memberManagement": {
+      "title": "Správa členů",
+      "description": "Efektivní správa členů klubu"
+    }
+  },
+  "home": {
+    "meta": {
+      "title": "4fly – Software pro správu aeroklubů | Kompletní bezplatné řešení",
+      "description": "4fly je kompletní řešení pro správu vašeho aeroklubu. Správa letů, rezervace, údržba, výcvik a další. Vyzkoušejte zdarma!"
+    },
+    "title": "Spravujte svůj aeroklub jednoduše",
+    "description": "4fly je jednoduchý a bezplatný nástroj pro správu vašeho leteckého klubu, ať už máte 2 nebo 200 členů. Už žádné složité tabulky a papírování!",
+    "createClub": "Vytvořit klub",
+    "configurationTime": "Konfigurace za 2 minuty",
+    "startTitle": "Začněte rozvíjet svůj klub",
+    "startDescription": "Konfigurace za 2 minuty",
+    "startButton": "Začít zdarma"
+  },
+  "nav": {
+    "home": "Domů",
+    "about": "O nás",
+    "features": "Funkce",
+    "pricing": "Ceník",
+    "faq": "FAQ",
+    "contact": "Kontakt",
+    "login": "Přihlásit se"
+  },
+  "pricing": {
+    "title": "Vyberte si svůj plán",
+    "subtitle": "Všechny funkce jsou k dispozici hned od začátku: rezervace, harmonogramy, údržba, výcvik, fakturace... Čím více létáte, tím více váš klub roste a tím více vás 4fly podporuje!",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "volume": "Až 1000 h/rok",
+        "price": "Zdarma",
+        "description": "Začněte svou cestu s 4fly bez nákladů a objevte všechny nástroje, které pomohou vašemu klubu vzlétnout",
+        "cta": "Začít zdarma"
+      },
+      "growth": {
+        "name": "Growth",
+        "volume": "Od 1000 h do 3000 h/rok",
+        "price": "0,50 € / letová hodina bez DPH",
+        "description": "Váš klub roste? 4fly roste s vámi, aby podpořil váš rozvoj"
+      },
+      "performance": {
+        "name": "Performance",
+        "volume": "3000+ h/rok",
+        "price": "Na míru",
+        "description": "Získejte personalizovanou podporu pro optimalizaci správy vaší činnosti"
+      }
+    },
+    "startFree": "Začít zdarma",
+    "footer": "Všechny funkce jsou k dispozici hned od začátku: rezervace, harmonogramy, údržba, výcvik, fakturace... Čím více létáte, tím více váš klub roste a tím více vás 4fly podporuje!"
+  },
+  "about": {
+    "hero": {
+      "title": "Tým 4fly",
+      "description": "4fly je vyvíjen vášnivým týmem, který se zavazuje poskytovat trvalou podporu našim uživatelům."
+    },
+    "vision": {
+      "title": "Naše Vize",
+      "description": "Náš tým úzce spolupracuje s aerokluby na vývoji řešení, které přesně odpovídá potřebám tohoto odvětví. Zajišťujeme, aby byla platforma bezpečná, výkonná a neustále se vyvíjela.",
+      "approach": "Praktický přístup s přímým kontaktem s kluby"
+    },
+    "engagement": {
+      "title": "Naše Závazky",
+      "items": {
+        "training": {
+          "title": "Bezplatná školení",
+          "description": "Přizpůsobená a bezplatná školení pro všechny kluby, které platformu používají",
+          "subtitle": "Školení na místě, přizpůsobené vašim potřebám"
+        },
+        "setup": {
+          "title": "Počáteční Nastavení",
+          "description": "Individuální nastavení a podpora při digitalizaci historických dat",
+          "subtitle": "Od šanonu k počítači, o vše se postaráme"
+        },
+        "support": {
+          "title": "Technická Podpora",
+          "description": "Tým je k dispozici, aby vám denně pomáhal s používáním platformy",
+          "subtitle": "Přizpůsobená a pohotová pomoc"
+        },
+        "accompaniment": {
+          "title": "Doprovod",
+          "description": "Individuální dohled pro všechny členy klubu, od začátečníků v IT až po experty",
+          "subtitle": "Pozorně nasloucháme všem uživatelům"
+        }
+      }
+    },
+    "support": {
+      "title": "Podpora a pomoc",
+      "items": [
+        "Každodenní zálohování vašich dat",
+        "Nepřetržité sledování platformy 24/7",
+        "Pravidelné aktualizace s novými funkcemi",
+        "Pomoc se všemi vašimi technickými dotazy"
+      ]
+    },
+    "images": {
+      "team": "Tým 4fly",
+      "vision": "Spolupráce s aerokluby",
+      "support": "Podpora a pomoc"
+    }
+  },
+  "featuresPage": {
+    "hero": {
+      "title": "Naše Funkce",
+      "subtitle": "Objevte všechny nástroje, které z naší platformy dělají ideální řešení pro váš aeroklub"
+    },
+    "items": {
+      "flights": {
+        "title": "Správa letů",
+        "description": "Kompletní sledování letů, digitální zápisníky a podrobné statistiky pro každého pilota a letadlo.",
+        "details": [
+          "Zjednodušený záznam letů",
+          "Digitální zápisníky letů",
+          "Sledování letových hodin",
+          "Podrobné statistiky"
+        ]
+      },
+      "reservations": {
+        "title": "Rezervace",
+        "description": "Systém online rezervací 24/7 s řízením konfliktů v reálném čase a sledováním dostupnosti.",
+        "details": [
+          "Online rezervace 24/7",
+          "Interaktivní kalendář",
+          "Řízení konfliktů",
+          "Automatická oznámení"
+        ]
+      },
+      "maintenance": {
+        "title": "Údržba",
+        "description": "Podrobné sledování údržby s automatickými výstrahami a řízením resursů.",
+        "details": [
+          "Sledování resursů",
+          "Automatická upozornění",
+          "Digitální protokol údržby",
+          "Kompletní historie"
+        ]
+      },
+      "training": {
+        "title": "Výcvik",
+        "description": "Kompletní správa výcviku se sledováním výuky a pokroku studentů.",
+        "details": [
+          "Digitální kniha pokroku",
+          "Školící harmonogram",
+          "Pedagogické sledování",
+          "Online zdroje"
+        ]
+      },
+      "finance": {
+        "title": "Finanční správa",
+        "description": "Automatická fakturace, sledování účtů členů a integrace online plateb.",
+        "details": [
+          "Automatická fakturace",
+          "Online platby",
+          "Sledování účtů",
+          "Exporty pro účetnictví"
+        ]
+      },
+      "members": {
+        "title": "Správa členů",
+        "description": "Kompletní správa členů s přehledem licencí a kvalifikací.",
+        "details": [
+          "Podrobné profily",
+          "Sledování licencí",
+          "Správa kvalifikací",
+          "Adresář členů"
+        ]
+      },
+      "communication": {
+        "title": "Komunikace",
+        "description": "Integrované komunikační nástroje usnadňující výměnu informací v rámci klubu.",
+        "details": [
+          "Okamžité zasílání zpráv",
+          "Oznámení klubu",
+          "Upozornění",
+          "Sdílení dokumentů"
+        ]
+      },
+      "statistics": {
+        "title": "Statistiky a reporty",
+        "description": "Panely a podrobné reporty pro sledování aktivity klubu.",
+        "details": [
+          "Přehledové panely (dashboardy)",
+          "Vlastní reporty",
+          "Analýza aktivity",
+          "Export dat"
+        ]
+      },
+      "events": {
+        "title": "Události",
+        "description": "Organizace a správa klubových událostí s možností online registrace.",
+        "details": [
+          "Kalendář událostí",
+          "Online registrace",
+          "Správa účastníků",
+          "Automatická připomenutí"
+        ]
+      },
+      "security": {
+        "title": "Bezpečnost a soulad",
+        "description": "Nástroje pro zajištění bezpečnosti a regulačního souladu.",
+        "details": [
+          "Správa bezpečnostních hlášení",
+          "Sledování dokumentů",
+          "Soulad s GDPR",
+          "Automatické zálohy"
+        ]
+      }
+    }
+  },
+  "faqPage": {
+    "hero": {
+      "title": "Nejčastější Dotazy",
+      "subtitle": "Najděte odpovědi na nejčastější otázky o 4fly"
+    },
+    "categories": {
+      "about": {
+        "title": "O 4fly",
+        "questions": [
+          {
+            "question": "Co je 4fly a pro koho je určeno?",
+            "answer": "4fly je komplexní softwarové řešení navržené pro zjednodušení a optimalizaci správy aeroklubů. Je určeno pro aerokluby všech velikostí, ať už jsou přidružené k leteckým úřadům či nikoli, které chtějí automatizovat a centralizovat každodenní provoz. Naším cílem je podpořit rozvoj vašeho klubu."
+          },
+          {
+            "question": "Jak funguje cenový model?",
+            "answer": "Náš model je jednoduchý: zdarma až do 1000 letových hodin ročně, poté 0,50 € za letovou hodinu z celkového počtu hodin. Pro větší kluby, které přesáhnou 3000 hodin ročně, nabízíme individuální plány. Všechny funkce jsou od začátku dostupné."
+          },
+          {
+            "question": "Existují skryté poplatky?",
+            "answer": "Ne, naše ceny vycházející z letových hodin jsou zcela transparentní. Všechny zásadní funkce jsou v této ceně zahrnuty. Některé doplňkové služby, jako například platby kartou, jsou nabízeny jako volitelná možnost."
+          },
+          {
+            "question": "Jaké funkce jsou zahrnuty?",
+            "answer": "Všechny zásadní funkce jsou zahrnuty v základní nabídce: správa rezervací, údržba, výcvik, účetnictví... Doplňkové služby, jako je platba kartou, jsou dostupné jako volitelná možnost pro kluby, které o ně mají zájem."
+          },
+          {
+            "question": "Jakou podporu nabízíte?",
+            "answer": "Nabízíme kompletní technickou podporu prostřednictvím e-mailu a telefonu pro všechny kluby, bez ohledu na jejich velikost. Náš tým je k dispozici, aby vám pomohl s počátečním nastavením a odpověděl na vaše každodenní dotazy."
+          }
+        ]
+      },
+      "reservations": {
+        "title": "Rezervace a lety",
+        "questions": [
+          {
+            "question": "Jak funguje rezervační systém?",
+            "answer": "Rezervační systém je k dispozici online 24/7. Členové mohou rezervovat letadlo, zjišťovat dostupnost v reálném čase a spravovat své rezervace na smartphonu nebo počítači."
+          },
+          {
+            "question": "Je možné rezervovat více termínů předem?",
+            "answer": "Ano, můžete provádět více rezervací v souladu s pravidly vašeho klubu. Systém automaticky kontroluje konflikty a potřebné kvalifikace."
+          },
+          {
+            "question": "Jak se spravují výcvikové lety?",
+            "answer": "Výcvikové lety lze naplánovat s dostupnými instruktory. Systém automaticky kontroluje dostupnost instruktora a letadla."
+          },
+          {
+            "question": "Co se stane v případě zrušení?",
+            "answer": "Zrušení se řeší podle pravidel vašeho klubu. Systém může zasílat automatická oznámení dotčeným stranám a uvolnit termín pro další rezervace."
+          }
+        ]
+      },
+      "maintenance": {
+        "title": "Údržba",
+        "questions": [
+          {
+            "question": "Jak je sledována údržba letadel?",
+            "answer": "4fly obsahuje komplexní systém sledování, který monitoruje letové hodiny, cykly a kalendářní termíny. Před plánovanou údržbou jsou zasílána automatická upozornění."
+          },
+          {
+            "question": "Kdo může zadávat úkony údržby?",
+            "answer": "Mechanici a oprávněný personál mohou zaznamenávat úkony údržby. Každý zásah je dokumentován a uložen v historii letadla."
+          },
+          {
+            "question": "Jak se řeší upozornění na údržbu?",
+            "answer": "Systém odesílá automatická oznámení správcům, pokud se blíží termín údržby. Piloti jsou také informováni o omezeních či nedostupnosti letadla."
+          },
+          {
+            "question": "Je možné přizpůsobit typy údržby?",
+            "answer": "Ano, můžete definovat vlastní typy údržby podle svých potřeb, s intervaly na základě letových hodin, cyklů nebo kalendáře."
+          }
+        ]
+      },
+      "training": {
+        "title": "Výcvik",
+        "questions": [
+          {
+            "question": "Jak se sleduje pokrok studentů?",
+            "answer": "Každý student má digitální knihu pokroku. Instruktoři mohou sledovat jejich pokrok, zaznamenávat provedená cvičení a plánovat další lekce."
+          },
+          {
+            "question": "Lze upravit výcvikový program?",
+            "answer": "Ano, výcvikové programy lze plně přizpůsobit podle vašich potřeb. Můžete vytvořit různé učební osnovy pro PPL, LAPL nebo jiné kvalifikace."
+          },
+          {
+            "question": "Jak se řeší teoretické zkoušky?",
+            "answer": "Platforma zahrnuje modul pro kvízy a teoretické zkoušky. Instruktoři mohou vytvářet testy, sledovat výsledky a identifikovat oblasti pro zlepšení."
+          },
+          {
+            "question": "Mohou studenti sledovat svůj vlastní pokrok?",
+            "answer": "Ano, každý student má přístup do své osobní sekce, kde může sledovat svůj postup, procházet lekce a připravovat se na zkoušky."
+          }
+        ]
+      },
+      "members": {
+        "title": "Správa členů",
+        "questions": [
+          {
+            "question": "Jak se řeší členství?",
+            "answer": "4fly umožňuje správu členství, příspěvků a licencí. Pro obnovu se zasílají automatická upozornění."
+          },
+          {
+            "question": "Je možné definovat různé typy členů?",
+            "answer": "Ano, lze vytvářet různé profily (student, pilot, instruktor, mechanik atd.) s odlišnými úrovněmi přístupu."
+          },
+          {
+            "question": "Jak se spravují dokumenty členů?",
+            "answer": "Všechny dokumenty (licence, lékařská osvědčení, kvalifikace) jsou ukládány digitálně, přičemž systém automaticky upozorňuje na blížící se vypršení jejich platnosti."
+          }
+        ]
+      },
+      "payments": {
+        "title": "Platby a účetnictví",
+        "questions": [
+          {
+            "question": "Jak fungují online platby?",
+            "answer": "4fly integruje zabezpečený platební systém pro platby kartou. Členové si mohou dobít svůj účet a hradit lety přímo prostřednictvím platformy."
+          },
+          {
+            "question": "Jaké finanční reporty jsou k dispozici?",
+            "answer": "Platforma generuje podrobné reporty o letech, platbách a účetnictví. Tyto údaje můžete exportovat do svého účetního systému."
+          },
+          {
+            "question": "Jak se řeší faktury?",
+            "answer": "Faktury jsou generovány automaticky po každém letu nebo platbě. Jsou ukládány digitálně a je možné je odesílat e-mailem."
+          }
+        ]
+      },
+      "security": {
+        "title": "Zabezpečení a data",
+        "questions": [
+          {
+            "question": "Jak jsou data chráněna?",
+            "answer": "Všechna data jsou ukládána bezpečně a šifrována. Splňujeme normy GDPR a provádíme pravidelné zálohy."
+          },
+          {
+            "question": "Kdo má přístup k datům klubu?",
+            "answer": "Přístup k datům je přísně řízen systémem oprávnění. Pouze oprávněné osoby mají přístup k citlivým informacím."
+          },
+          {
+            "question": "Mohu svá data exportovat?",
+            "answer": "Ano, svá data můžete kdykoli exportovat ve standardních formátech (CSV, Excel). Usnadňujeme také migraci z jiných systémů."
+          },
+          {
+            "question": "Jak je zajištěna kontinuita služby?",
+            "answer": "Naše infrastruktura je hostována na redundantních serverech s vysokou dostupností. Denně provádíme zálohy všech dat."
+          }
+        ]
+      }
+    }
+  },
+  "contactPage": {
+    "hero": {
+      "title": "Kontaktujte nás",
+      "subtitle": "Jsme tu, abychom vám pomohli",
+      "needHelp": "Potřebujete pomoc?",
+      "supportMessage": "Náš tým je připraven vám pomoci se správou vašeho aeroklubu."
+    },
+    "form": {
+      "name": {
+        "label": "Jméno",
+        "error": "Zadejte prosím své jméno"
+      },
+      "email": {
+        "label": "E-mail",
+        "error": "Neplatný formát e-mailu",
+        "placeholder": "vase@email.com",
+        "valid": "Platný formát e-mailu"
+      },
+      "phone": {
+        "label": "Telefon",
+        "error": "Neplatný formát telefonního čísla",
+        "placeholder": "06 12 34 56 78",
+        "valid": "Platný formát telefonního čísla"
+      },
+      "contactReason": {
+        "label": "Důvod kontaktu",
+        "options": {
+          "general": "Obecný dotaz",
+          "login": "Problém s přihlášením",
+          "payment": "Problém s platbou",
+          "bug": "Technická chyba",
+          "partnership": "Žádost o partnerství",
+          "training": "Dotaz na výcvik",
+          "reservations": "Dotaz na rezervace",
+          "improvement": "Návrh na zlepšení",
+          "other": "Jiné"
+        }
+      },
+      "customSubject": {
+        "label": "Upřesněte, čeho se dotaz týká",
+        "error": "Zadejte prosím předmět"
+      },
+      "message": {
+        "label": "Zpráva",
+        "error": "Vaše zpráva je příliš krátká"
+      },
+      "submit": "Odeslat",
+      "success": "Zpráva úspěšně odeslána!",
+      "error": "Chyba při odesílání zprávy",
+      "contactRequired": "Zadejte alespoň jeden kontaktní údaj",
+      "contactRequiredError": "Zadejte alespoň jeden kontaktní údaj (e-mail nebo telefon)"
+    }
+  },
+  "createClub": {
+    "hero": {
+      "title": "Vytvořte si aeroklub",
+      "subtitle": "Začněte během několika minut"
+    },
+    "form": {
+      "clubInfo": {
+        "title": "Informace o klubu",
+        "name": {
+          "label": "Název klubu",
+          "placeholder": "Aeroklub...",
+          "error": "Název klubu je povinný"
+        },
+        "icao": {
+          "label": "ICAO kód",
+          "placeholder": "LFXX",
+          "error": "ICAO kód musí mít 4 znaky",
+          "valid": "Platný formát"
+        },
+        "address": {
+          "label": "Adresa",
+          "placeholder": "Adresa klubu",
+          "error": "Adresa je povinná"
+        },
+        "phone": {
+          "label": "Telefon",
+          "placeholder": "06 12 34 56 78",
+          "error": "Neplatný formát telefonního čísla",
+          "valid": "Platný formát"
+        }
+      },
+      "adminInfo": {
+        "title": "Informace správce",
+        "firstName": {
+          "label": "Jméno",
+          "placeholder": "Vaše jméno",
+          "error": "Jméno je povinné"
+        },
+        "lastName": {
+          "label": "Příjmení",
+          "placeholder": "Vaše příjmení",
+          "error": "Příjmení je povinné"
+        },
+        "email": {
+          "label": "E-mail",
+          "placeholder": "vase@email.com",
+          "error": "Neplatný formát e-mailu",
+          "valid": "Platný formát"
+        },
+        "password": {
+          "label": "Heslo",
+          "placeholder": "Minimálně 8 znaků",
+          "error": "Heslo musí mít alespoň 8 znaků",
+          "requirements": {
+            "length": "Minimálně 8 znaků",
+            "uppercase": "Alespoň jedno velké písmeno",
+            "lowercase": "Alespoň jedno malé písmeno",
+            "number": "Alespoň jedna číslice",
+            "special": "Alespoň jeden speciální znak"
+          }
+        },
+        "confirmPassword": {
+          "label": "Potvrzení hesla",
+          "error": "Hesla se neshodují"
+        }
+      },
+      "submit": "Vytvořit můj klub",
+      "success": "Klub byl úspěšně vytvořen!",
+      "error": "Chyba při vytváření klubu",
+      "termsAndConditions": {
+        "text": "Souhlasím s",
+        "link": "obchodními podmínkami",
+        "error": "Musíte souhlasit s obchodními podmínkami"
+      }
+    }
+  },
+  "login": {
+    "hero": {
+      "title": "Vítejte ve 4fly",
+      "subtitle": "Přihlaste se pro přístup k vašemu dashboardu"
+    },
+    "form": {
+      "email": {
+        "label": "E-mail",
+        "placeholder": "Zadejte svoji e-mailovou adresu",
+        "error": "E-mail je povinný"
+      },
+      "password": {
+        "label": "Heslo",
+        "placeholder": "Zadejte své heslo",
+        "error": "Heslo je povinné",
+        "toggle": "Zobrazit/skrýt heslo"
+      },
+      "rememberMe": "Zapamatovat si mě",
+      "forgotPassword": "Zapomněli jste heslo?",
+      "submit": "Přihlásit se",
+      "createClub": "Vytvořit nový klub"
+    },
+    "success": "Přihlášení proběhlo úspěšně!",
+    "error": "Neplatné přihlašovací údaje",
+    "error": {
+      "unexpected": "Došlo k neočekávané chybě"
+    }
+  },
+  "resetPassword": {
+    "title": "Obnovení hesla",
+    "description": "Zadejte svou e-mailovou adresu, abyste obdrželi pokyny k obnovení hesla.",
+    "emailLabel": "E-mail",
+    "emailError": "Neplatný e-mail",
+    "submitButton": "Odeslat pokyny",
+    "submitting": "Odesílání...",
+    "backToLogin": "Zpět na přihlášení",
+    "success": {
+      "title": "Pokyny odeslány!",
+      "description": "Zkontrolujte si svou e-mailovou schránku a postupujte podle pokynů pro obnovení hesla."
+    },
+    "toast": {
+      "success": "Pokyny byly odeslány na e-mail",
+      "error": "Chyba při odesílání pokynů"
+    }
+  },
+  "quotes": {
+    "saint-exupery-1": {
+      "text": "Letadlo není účel sám o sobě, je to prostředek. Život se neriskuje kvůli letadlu, stejně jako zemědělec neorá kvůli pluhu. Ale díky letadlu opouštíme města a jejich účetní a objevujeme venkovskou pravdu.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Letec a spisovatel"
+    },
+    "saint-exupery-2": {
+      "text": "Země nás učí o nás samotných víc než všechny knihy. Protože klade odpor. Člověk se poznává, když se měří s překážkou.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Letec a spisovatel"
+    },
+    "guillaumet-1": {
+      "text": "Co nás zachraňuje, je udělat jeden krok. A pak další. Je to stále ten samý krok, ale je třeba ho udělat.",
+      "author": "Henri Guillaumet",
+      "role": "Pilot Aéropostale"
+    },
+    "dassault-1": {
+      "text": "Krásné letadlo je takové, které dobře létá.",
+      "author": "Marcel Dassault",
+      "role": "Výrobce letadel"
+    },
+    "saint-exupery-3": {
+      "text": "Ve vzduchu ptáka nenese nic jiného než jeho vlastní vůle nespadnout.",
+      "author": "Antoine de Saint-Exupéry",
+      "role": "Letec a spisovatel"
+    },
+    "mermoz-1": {
+      "text": "Viděl jsem tvář Boha. Byla v mracích, ve větru, ve hvězdách. Viděl jsem ji na nebi.",
+      "author": "Jean Mermoz",
+      "role": "Průkopník Aéropostale"
+    },
+    "guillaumet-2": {
+      "text": "Nejkrásnější cesta je vždy ta, kterou jsme ještě neabsolvovali.",
+      "author": "Henri Guillaumet",
+      "role": "Pilot Aéropostale"
+    },
+    "dassault-2": {
+      "text": "Letadlo je možná nejkrásnější stroj, jaký člověk kdy vytvořil. Je nejblíže živým bytostem.",
+      "author": "Marcel Dassault",
+      "role": "Výrobce letadel"
+    },
+    "garros-1": {
+      "text": "Vzduch je hustá tekutina, ve které můžeme tesat pevné tvary.",
+      "author": "Roland Garros",
+      "role": "Průkopník letectví"
+    },
+    "daurat-1": {
+      "text": "Když letíte nad mraky, pochopíte, proč ptáci zpívají.",
+      "author": "Didier Daurat",
+      "role": "Ředitel Aéropostale"
+    },
+    "bleriot-1": {
+      "text": "Létání je neustálé vítězství, které získáváme nad gravitací.",
+      "author": "Louis Blériot",
+      "role": "Průkopník letectví"
+    },
+    "lindbergh-1": {
+      "text": "Letecká doprava je náročná milenka. Neodpouští chyby, ale odměňuje vášeň.",
+      "author": "Charles Lindbergh",
+      "role": "Letec"
+    },
+    "mermoz-2": {
+      "text": "Na obloze nejsou žádné cesty. Existují jen hvězdy a sny.",
+      "author": "Jean Mermoz",
+      "role": "Průkopník Aéropostale"
+    },
+    "boucher-1": {
+      "text": "Létání možná znamená přiblížit se o něco více k andělům.",
+      "author": "Hélène Boucher",
+      "role": "Průkopnice letectví"
+    },
+    "guillaumet-3": {
+      "text": "Pilot, který se nebojí, je mrtvý pilot. Odvaha je zvládnutí vlastního strachu.",
+      "author": "Henri Guillaumet",
+      "role": "Pilot Aéropostale"
+    }
+  },
+  "legal": {
+    "title": "Právní upozornění",
+    "publisher": {
+      "title": "Vydavatel webu",
+      "company": "Společnost",
+      "legalForm": "Právní forma",
+      "legalFormValue": "SASU (Zjednodušená akciová společnost s jediným akcionářem)",
+      "address": "Sídlo",
+      "rcs": "Číslo RCS",
+      "capital": "Základní kapitál",
+      "vat": "DIČ"
+    },
+    "hosting": {
+      "title": "Hosting",
+      "provider": "Poskytovatel",
+      "company": "Společnost",
+      "address": "Adresa"
+    },
+    "dataProtection": {
+      "title": "Ochrana osobních údajů",
+      "description": "V souladu s francouzským zákonem o ochraně osobních údajů z 6. ledna 1978, ve znění pozdějších předpisů, a Obecným nařízením o ochraně osobních údajů (GDPR) máte právo na přístup, opravu, výmaz a vznést námitku proti zpracování svých osobních údajů.",
+      "rights": "Chcete-li uplatnit tato práva, můžete nás kontaktovat:",
+      "email": "E-mailem",
+      "mail": "Poštou"
+    },
+    "intellectualProperty": {
+      "title": "Duševní vlastnictví",
+      "description": "Veškerý obsah této stránky (struktura, texty, obrázky, loga, databáze...) je výhradním vlastnictvím MELBA CAPITAL. Jakákoli reprodukce, úprava, publikace, přenos, pozměnění, ať už celá či částečná, stránek či jejich obsahu, jakýmkoli způsobem a na jakémkoli médiu, je zakázána bez předchozího písemného souhlasu společnosti MELBA CAPITAL."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "description": "Tato stránka používá cookies, které jsou nezbytné pro její správné fungování. Cookie je malý textový soubor uložený ve vašem počítači. Cookies, které používáme, nám neumožňují osobně vás identifikovat. Slouží pouze ke zlepšení uživatelského prostředí a měření návštěvnosti webu.",
+      "consent": "Používáním našich stránek souhlasíte s používáním cookies v souladu s našimi zásadami ochrany soukromí."
+    },
+    "links": {
+      "title": "Hypertextové odkazy",
+      "description": "Web 4fly.io může obsahovat odkazy na jiné stránky. MELBA CAPITAL neodpovídá za obsah ani zásady ochrany osobních údajů těchto stránek."
+    }
+  },
+  "cgv": {
+    "title": "Obchodní podmínky",
+    "lastUpdate": "Poslední aktualizace: {{date}}",
+    "article1": {
+      "title": "Článek 1 – Předmět",
+      "content": "Tyto obchodní podmínky upravují používání platformy 4fly, která slouží jako řešení pro správu aeroklubů. Platí výlučně a nahrazují veškeré jiné podmínky."
+    },
+    "article2": {
+      "title": "Článek 2 – Služby",
+      "content": "4fly nabízí komplexní platformu, která zahrnuje:\n- Správu rezervací letadel\n- Sledování údržby\n- Správu výcviku\n- Správu členů\n- Fakturaci a platby\n- Nástroje pro komunikaci"
+    },
+    "article3": {
+      "title": "Článek 3 – Ceny",
+      "content": "4fly nabízí tři cenové plány přizpůsobené vaší činnosti:\n\n1. Starter (Zdarma):\n- Pro kluby s až 1000 letovými hodinami ročně\n- Přístup ke všem funkcím\n- Podpora po e-mailu\n\n2. Growth (0,50 € / letová hodina bez DPH):\n- Pro kluby s 1000 až 3000 letovými hodinami ročně\n- Všechny funkce v ceně\n- Přednostní podpora\n\n3. Performance (Na míru):\n- Pro kluby s více než 3000 letovými hodinami ročně\n- Všechny funkce v ceně\n- Přizpůsobený hosting\n- Školení na místě\n- 24/7 VIP podpora\n- Vyhrazený manažer účtu"
+    },
+    "article4": {
+      "title": "Článek 4 – Povinnosti",
+      "content": "4fly se zavazuje:\n- Zajistit dostupnost a údržbu platformy\n- Chránit uživatelská data\n- Poskytovat technickou podporu\n\nUživatel se zavazuje:\n- Poskytovat pravdivé informace\n- Dodržovat podmínky použití\n- Platformu nezneužívat"
+    },
+    "article5": {
+      "title": "Článek 5 – Osobní údaje",
+      "content": "4fly shromažďuje a zpracovává osobní údaje v souladu s GDPR. Uživatelé mají právo na přístup, opravu a vymazání svých dat."
+    },
+    "article6": {
+      "title": "Článek 6 – Duševní vlastnictví",
+      "content": "Veškeré prvky platformy 4fly (logo, texty, obrázky apod.) jsou chráněny právy duševního vlastnictví. Jakákoliv reprodukce je zakázána bez předchozího souhlasu."
+    },
+    "article7": {
+      "title": "Článek 7 – Odpovědnost",
+      "content": "4fly nenese odpovědnost za nepřímé škody vzniklé v důsledku používání platformy. Odpovědnost je omezena na částku, kterou uživatel zaplatil za služby."
+    },
+    "article8": {
+      "title": "Článek 8 – Ukončení",
+      "content": "Každá strana může ukončit používání služeb za podmínek uvedených v této smlouvě. V případě závažného porušení může dojít k okamžitému ukončení."
+    },
+    "article9": {
+      "title": "Článek 9 – Rozhodné právo",
+      "content": "Tyto obchodní podmínky se řídí francouzským právem. Veškeré spory spadají do výlučné pravomoci francouzských soudů."
+    }
+  }
+}
