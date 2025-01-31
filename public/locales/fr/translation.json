@@ -636,8 +636,8 @@
       "createClub": "Créer un nouveau club"
     },
     "success": "Connexion réussie !",
-    "error": "Identifiants incorrects",
     "error": {
+      "invalid_credentials": "Identifiant ou mot de passe incorrect",
       "unexpected": "Une erreur inattendue est survenue"
     }
   },

@@ -40,7 +40,7 @@ export const signIn = async (login: string, password: string) => {
       .single();
 
     if (userError || !userData) {
-      throw new Error("Identifiants invalides");
+      return { error: { code: "invalid_credentials", message: "Invalid login credentials" } };
     }
 
     // 2. Utiliser l'authentification Supabase avec l'email
@@ -48,14 +48,13 @@ export const signIn = async (login: string, password: string) => {
       email: userData.email,
       password: password,
       options: {
-        // Définir une session de 30 jours
         expiresIn: 30 * 24 * 60 * 60, // 30 jours en secondes
       },
     });
 
     if (error) {
       console.error("Erreur auth:", error);
-      throw new Error("Identifiants invalides");
+      return { error };
     }
 
     // 3. Récupérer le profil complet
@@ -66,48 +65,39 @@ export const signIn = async (login: string, password: string) => {
       .single();
 
     if (profileError) {
-      throw profileError;
+      return { error: profileError };
     }
 
     return {
-      session: data.session,
-      user: {
-        ...data.user,
-        role: userProfile.role,
-        firstName: userProfile.first_name,
-        lastName: userProfile.last_name,
-      },
+      data: {
+        session: data.session,
+        user: {
+          ...data.user,
+          role: userProfile.role,
+          firstName: userProfile.first_name,
+          lastName: userProfile.last_name,
+        }
+      }
     };
   } catch (error) {
     console.error("Sign in error:", error);
-    throw error;
+    return { error };
   }
 };
 
 export const signOut = async () => {
   try {
-    // Vérifier d'abord si une session existe
-    const { data: sessionData } = await supabase.auth.getSession();
-    
-    if (!sessionData.session) {
-      console.log("Aucune session active trouvée");
-      return { error: null };
-    }
-
-    // Procéder à la déconnexion
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Erreur de déconnexion:", error);
-      throw error;
-    }
-
-    // Nettoyer le stockage local
+    // Nettoyer le stockage local d'abord
     window.localStorage.removeItem("flymanager_auth");
+    
+    // Procéder à la déconnexion Supabase
+    await supabase.auth.signOut();
     
     return { error: null };
   } catch (error) {
     console.error("Erreur lors de la déconnexion:", error);
-    throw error;
+    // Ne pas lancer d'erreur, retourner simplement l'erreur
+    return { error };
   }
 };
 

@@ -51,13 +51,17 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
+      // Nettoyer le stockage local d'abord
+      window.localStorage.clear();
+      
+      // Tenter la déconnexion Supabase
       await signOut();
-      // Forcer la redirection même si la déconnexion échoue
-      window.localStorage.clear(); // Nettoyer tout le stockage local
+      
+      // Rediriger vers la page de connexion
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
-      // Rediriger quand même vers la page de connexion en cas d'erreur
+      // En cas d'erreur, rediriger quand même vers la page de connexion
       navigate("/login", { replace: true });
     }
   };

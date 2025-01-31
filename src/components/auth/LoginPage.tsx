@@ -57,13 +57,13 @@ const LoginPage = () => {
     try {
       await signIn(email, password, rememberMe);
       if (!error) {
-        toast.success(t('login.success'));
+        //toast.success(t('login.success'));
       } else {
-        toast.error(t('login.error'));
+        //toast.error(t('login.error'));
       }
     } catch (err) {
       console.error("Erreur lors de la connexion:", err);
-      toast.error(t('login.error.unexpected'));
+      //toast.error(t('login.error.unexpected'));
     }
   };
 
