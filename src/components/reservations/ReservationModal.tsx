@@ -429,6 +429,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
           existingReservation.aircraftId ||
           preselectedAircraftId ||
           propAircraft?.[0]?.id ||
+          aircraft?.[0]?.id ||
           "",
         startTime: formatDateForInput(new Date(existingReservation.startTime)),
         endTime: formatDateForInput(new Date(existingReservation.endTime)),
@@ -586,8 +587,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         endTime: toUTC(formData.endTime),
         aircraftId: formData.aircraftId,
         pilotId: formData.pilotId,
-        userId: currentUser?.id, // Utiliser l'ID de l'utilisateur connecté comme userId
-        instructorId: formData.withInstructor ? formData.instructorId : null,
+        userId: currentUser?.id,
+        instructorId: formData.instructorId || null,
         flightTypeId: formData.flightTypeId,
       };
 

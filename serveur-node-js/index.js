@@ -1807,91 +1807,193 @@ async function isChecked(page, selector, options = {}) {
 
 // Fonction pour générer un token unique pour un instructeur
 async function generateInstructorCalendarToken(instructorId) {
-  console.log('🔑 Génération d\'un nouveau token pour l\'instructeur:', instructorId);
-  
-  // Récupérer tous les calendriers de l'instructeur
-  const { data: instructor } = await supabase
-    .from('instructor_calendars')
-    .select('calendar_token')
-    .eq('instructor_id', instructorId)
-    .single();
+  try {
+    console.log('Génération token pour instructeur:', instructorId);
 
-  const calendarToken = instructor?.calendar_token || crypto.randomBytes(32).toString('hex');
+    // Vérifier si un enregistrement existe déjà
+    const { data: existing } = await supabase
+      .from('instructor_calendars')
+      .select('id')
+      .eq('instructor_id', instructorId)
+      .single();
 
-  // Mettre à jour le token
-  const { error: updateError } = await supabase
-    .from('instructor_calendars')
-    .update({ calendar_token: calendarToken })
-    .eq('instructor_id', instructorId);
+    // Générer un token unique
+    const token = crypto
+      .createHash('sha256')
+      .update(instructorId + Date.now().toString())
+      .digest('hex');
+
+    // Générer un calendar_id unique
+    const calendarId = crypto
+      .randomBytes(16)
+      .toString('hex');
+
+    let result;
     
-  if (updateError) throw updateError;
-  
-  return calendarToken;
+    if (existing) {
+      // Mise à jour de l'enregistrement existant
+      const { data, error } = await supabase
+        .from('instructor_calendars')
+        .update({
+          calendar_token: token,
+          calendar_id: calendarId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('instructor_id', instructorId)
+        .select('calendar_token')
+        .single();
+
+      if (error) throw error;
+      result = data;
+    } else {
+      // Création d'un nouvel enregistrement
+      const { data, error } = await supabase
+        .from('instructor_calendars')
+        .insert({
+          instructor_id: instructorId,
+          calendar_token: token,
+          calendar_id: calendarId,
+          updated_at: new Date().toISOString()
+        })
+        .select('calendar_token')
+        .single();
+
+      if (error) throw error;
+      result = data;
+    }
+
+    console.log('Token généré avec succès');
+    return result.calendar_token;
+
+  } catch (error) {
+    console.error('Erreur lors de la génération du token:', error);
+    throw error;
+  }
 }
 
 // Fonction pour générer le flux iCal des réservations
 async function generateInstructorCalendar(instructorId) {
-  console.log(`📅 Début de la génération du calendrier ICS pour l'instructeur ${instructorId}`);
-  const calendar = icalGenerator.default({
-    name: '4fly - Réservations',
-    timezone: 'Europe/Paris'
-  });
-  console.log('✨ Calendrier ICS initialisé avec les paramètres de base');
-
+  console.log(`[ICS] Début génération calendrier pour ${instructorId}`);
+  
   try {
-    // Récupérer les réservations de l'instructeur
-    console.log('🔍 Recherche des réservations pour l\'instructeur...');
+    // 1. Validation de l'ID instructeur
+    if (!instructorId || typeof instructorId !== 'string') {
+      throw new Error(`ID instructeur invalide: ${instructorId}`);
+    }
+
+    // 2. Récupération des réservations avec gestion d'erreur améliorée
     const { data: reservations, error } = await supabase
       .from('reservations')
       .select(`
-        *,
-        users!reservations_user_id_fkey (
-          id,
-          first_name,
-          last_name
-        ),
-        aircraft (
-          registration
-        )
+        id, start_time, end_time, status,
+        pilot:pilot_id(full_name),
+        aircraft:aircraft_id(registration, name)
       `)
       .eq('instructor_id', instructorId)
-      .gte('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true });
+      .eq('status', 'ACTIVE')
+      .order('start_time');
 
     if (error) {
-      console.error('❌ Erreur lors de la récupération des réservations:', error);
-      throw error;
+      console.error('[ICS] Erreur Supabase:', {
+        code: error.code,
+        message: error.message,
+        details: error.details
+      });
+      throw new Error('Échec de récupération des réservations');
     }
 
-    console.log(`📊 ${reservations?.length || 0} réservations trouvées`);
+    // 3. Vérification des données reçues
+    console.log(`[ICS] ${reservations?.length || 0} réservations trouvées`);
+    
+    // 4. Construction du calendrier avec validation des dates
+    const icalEvents = [];
+    
+    reservations?.forEach((res, idx) => {
+      try {
+        // Validation des champs requis
+        if (!res.start_time || !res.end_time) {
+          throw new Error(`Reservation ${res.id} manque start_time/end_time`);
+        }
+        
+        const start = new Date(res.start_time);
+        const end = new Date(res.end_time);
+        
+        // Validation du format de date
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          throw new Error(`Dates invalides pour la réservation ${res.id}`);
+        }
 
-    if (reservations) {
-      for (const reservation of reservations) {
-        console.log(`➕ Ajout de la réservation ${reservation.id} au calendrier`);
-        const studentName = reservation.users ? 
-          `${reservation.users.first_name} ${reservation.users.last_name}` : 
-          'Étudiant inconnu';
-        const aircraft = reservation.aircraft ? 
-          `${reservation.aircraft.registration}` : 
-          'Avion non spécifié';
-
-        calendar.createEvent({
-          start: new Date(reservation.start_time),
-          end: new Date(reservation.end_time),
-          summary: `Vol avec ${studentName}`,
-          description: `Avion: ${aircraft}\nType de vol: ${reservation.flight_type || 'Non spécifié'}`,
-          location: reservation.location || '4fly'
-        });
+        const startStr = start.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+        const endStr = end.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+        
+        icalEvents.push(
+          'BEGIN:VEVENT',
+          `UID:${res.id}@flymanager`,
+          `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')}`,
+          `DTSTART:${startStr}`,
+          `DTEND:${endStr}`,
+          `SUMMARY:${res.aircraft?.registration || 'Réservation'}`,
+          `DESCRIPTION:Pilote: ${res.pilot?.full_name || 'Non spécifié'}\\nAvion: ${res.aircraft?.name || 'Non spécifié'}\\nStatut: ${res.status || 'Non spécifié'}`,
+          'END:VEVENT'
+        );
+      } catch (resError) {
+        console.error(`[ICS] Erreur réservation ${res?.id || 'inconnue'} (${idx}):`, resError.message);
+        // Continue avec les autres réservations
       }
+    });
+
+    // 5. Gestion du cas sans réservations valides
+    const calendar = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Flight School//Calendar//FR',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH'
+    ];
+
+    // Ajouter les événements s'il y en a
+    if (icalEvents.length > 0) {
+      calendar.push(...icalEvents);
     }
 
-    console.log('✅ Génération du calendrier ICS terminée avec succès');
-    return calendar;
+    calendar.push('END:VCALENDAR');
+    
+    console.log(`[ICS] Génération réussie avec ${icalEvents.length} événements`);
+    return calendar.join('\n');
+
   } catch (error) {
-    console.error('❌ Erreur lors de la génération du calendrier:', error);
+    console.error('[ICS] Erreur critique:', error.stack);
     throw error;
   }
 }
+
+// Route pour le calendrier ICS
+app.get("/api/instructor-calendar/:token/reservations.ics", async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    // Récupérer l'ID de l'instructeur à partir du token
+    const { data: instructor, error: tokenError } = await supabase
+      .from('instructor_calendars')
+      .select('instructor_id')
+      .eq('calendar_token', token)
+      .single();
+
+    if (tokenError || !instructor) {
+      console.error('[ICS] Token invalide:', token, tokenError);
+      return res.status(404).send('Calendrier non trouvé');
+    }
+
+    const calendar = await generateInstructorCalendar(instructor.instructor_id);
+    res.set('Content-Type', 'text/calendar');
+    res.set('Content-Disposition', 'attachment; filename=reservations.ics');
+    res.send(calendar);
+    
+  } catch (error) {
+    console.error('[ICS] Erreur route calendrier:', error);
+    res.status(500).send('Erreur lors de la génération du calendrier');
+  }
+});
 
 // Route pour obtenir l'URL du calendrier
 app.post("/api/instructor-calendar/get-url", async (req, res) => {
@@ -1922,31 +2024,6 @@ app.post("/api/instructor-calendar/get-url", async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur lors de la génération de l\'URL du calendrier:', error);
-    return res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Route pour accéder au flux iCal
-app.get("/api/instructor-calendar/:token/reservations.ics", async (req, res) => {
-  try {
-    const { token } = req.params;
-
-    // Vérifier le token et récupérer l'ID de l'instructeur
-    const { data: instructor, error } = await supabase
-      .from('instructor_calendars')
-      .select('instructor_id')
-      .eq('calendar_token', token)
-      .single();
-
-    if (error || !instructor) {
-      return res.status(404).json({ error: 'Calendrier non trouvé' });
-    }
-
-    const calendar = await generateInstructorCalendar(instructor.instructor_id);
-    res.type('text/calendar');
-    return res.send(calendar.toString());
-  } catch (error) {
-    console.error('Erreur lors de la génération du calendrier:', error);
     return res.status(500).json({ error: 'Erreur serveur' });
   }
 });
