@@ -239,7 +239,27 @@ router.post('/users', checkAdminRole, async (req, res) => {
     }
 
     // Générer un login unique à partir de l'email
-    const login = email.split('@')[0];
+    let login = email.split('@')[0];
+    let increment = 0;
+    let loginExists = true;
+    
+    // Boucle pour trouver un login unique
+    while (loginExists) {
+      const loginToTry = increment === 0 ? login : `${login}${increment}`;
+      const { data: existingLogin } = await adminClient
+        .from('users')
+        .select('login')
+        .eq('login', loginToTry)
+        .single();
+      
+      if (!existingLogin) {
+        login = loginToTry;
+        loginExists = false;
+      } else {
+        increment++;
+      }
+    }
+
     console.log('🔑 Login généré:', login);
 
     // Créer l'utilisateur dans la base de données
