@@ -149,6 +149,17 @@ interface FlightType {
   is_system: boolean;
 }
 
+const generateCode = (name: string): string => {
+  return name
+    .normalize('NFD') // Décompose les caractères accentués
+    .replace(/[\u0300-\u036f]/g, '') // Supprime les accents
+    .toUpperCase() // Met en majuscules
+    .replace(/[^A-Z0-9]/g, '_') // Remplace les caractères spéciaux par des underscores
+    .replace(/_+/g, '_') // Remplace les underscores multiples par un seul
+    .replace(/^_|_$/g, '') // Supprime les underscores au début et à la fin
+    .substring(0, 10); // Limite à 10 caractères
+};
+
 const FlightTypeManager = () => {
   const { user } = useAuth();
   const [flightTypes, setFlightTypes] = useState<FlightType[]>([]);
@@ -158,11 +169,9 @@ const FlightTypeManager = () => {
   const [error, setError] = useState<string | null>(null);
   const [newFlightType, setNewFlightType] = useState({
     name: "",
-    code: "",
     description: "",
     requires_instructor: false,
     accounting_category_id: "",
-    is_default: false,
     club_id: user?.user_metadata?.club_id,
   });
 
@@ -237,7 +246,7 @@ const FlightTypeManager = () => {
     if (!newFlightType.name.trim() || !user?.club?.id) return;
 
     try {
-      // Si ce nouveau type est défini par défaut, on retire d'abord le statut par défaut des autres types
+      // Si ce nouveau type est défini par défaut, on retire le statut par défaut de tous les autres types
       if (newFlightType.is_default) {
         const { error } = await supabase
           .from("flight_types")
@@ -248,7 +257,7 @@ const FlightTypeManager = () => {
 
       await createFlightType({
         name: newFlightType.name,
-        code: newFlightType.code,
+        code: generateCode(newFlightType.name),
         description: newFlightType.description,
         requires_instructor: newFlightType.requires_instructor,
         accounting_category_id: newFlightType.accounting_category_id || null,
@@ -258,11 +267,9 @@ const FlightTypeManager = () => {
 
       setNewFlightType({
         name: "",
-        code: "",
         description: "",
         requires_instructor: false, 
         accounting_category_id: "",
-        is_default: false,
         club_id: user?.club?.id,
       });
       loadFlightTypes();
@@ -278,6 +285,15 @@ const FlightTypeManager = () => {
       if (!user?.club?.id) {
         toast.error("Erreur: club_id manquant");
         return;
+      }
+
+      // Si ce type est défini par défaut, on retire le statut par défaut de tous les autres types
+      if (updatedType.is_default) {
+        const { error } = await supabase
+          .from("flight_types")
+          .update({ is_default: false })
+          .neq("id", updatedType.id!);
+        if (error) throw error;
       }
       
       await updateFlightType(updatedType.id!, updatedType, user.club.id);
@@ -330,21 +346,6 @@ const FlightTypeManager = () => {
           </div>
 
           <div>
-            <label htmlFor="code" className="block text-sm font-medium text-slate-700">
-              Code
-            </label>
-            <input
-              type="text"
-              id="code"
-              value={newFlightType.code}
-              onChange={(e) =>
-                setNewFlightType((prev) => ({ ...prev, code: e.target.value }))
-              }
-              className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-            />
-          </div>
-
-          <div>
             <label htmlFor="description" className="block text-sm font-medium text-slate-700">
               Description
             </label>
@@ -381,27 +382,6 @@ const FlightTypeManager = () => {
                 className="ml-2 block text-sm text-slate-700"
               >
                 Instructeur requis
-              </label>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="is_default"
-                checked={newFlightType.is_default}
-                onChange={(e) =>
-                  setNewFlightType((prev) => ({
-                    ...prev,
-                    is_default: e.target.checked,
-                  }))
-                }
-                className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-              />
-              <label
-                htmlFor="is_default"
-                className="ml-2 block text-sm text-slate-700"
-              >
-                Type par défaut
               </label>
             </div>
           </div>
@@ -474,12 +454,12 @@ const FlightTypeManager = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          {type.is_default ? (
+                          {type.is_default && !type.is_system ? (
                             <div className="flex items-center gap-1 px-2 py-1 bg-sky-50 text-sky-700 rounded-lg">
                               <Star className="h-4 w-4" />
                               <span className="text-sm">Par défaut</span>
                             </div>
-                          ) : (
+                          ) : !type.is_system ? (
                             <button
                               onClick={() => handleUpdateType({ id: type.id, is_default: true })}
                               className="flex items-center gap-1 px-2 py-1 text-slate-600 hover:bg-slate-100 rounded-lg"
@@ -487,7 +467,7 @@ const FlightTypeManager = () => {
                             >
                               <Star className="h-4 w-4" />
                             </button>
-                          )}
+                          ) : null}
                           {!type.is_system && (
                             <>
                               <button

@@ -59,18 +59,28 @@ export const updateFlightType = async (id: string, flightType: Partial<FlightTyp
 };
 
 export const deleteFlightType = async (id: string): Promise<void> => {
-  // 1. Trouver le type de vol par défaut
+  // 1. Récupérer d'abord le type de vol qu'on veut supprimer pour avoir son club_id
+  const { data: typeToDelete, error: typeError } = await supabase
+    .from("flight_types")
+    .select("club_id")
+    .eq("id", id)
+    .single();
+
+  if (typeError) throw typeError;
+
+  // 2. Trouver le type de vol par défaut pour ce club
   const { data: defaultType, error: defaultTypeError } = await supabase
     .from("flight_types")
     .select("id")
     .eq("is_default", true)
+    .eq("club_id", typeToDelete.club_id)
     .single();
 
   if (defaultTypeError || !defaultType) {
     throw new Error("Aucun type de vol par défaut trouvé. Veuillez en définir un avant de supprimer ce type.");
   }
 
-  // 2. Mettre à jour tous les vols qui utilisent ce type vers le type par défaut
+  // 3. Mettre à jour tous les vols qui utilisent ce type vers le type par défaut
   const { error: updateError } = await supabase
     .from("flights")
     .update({ flight_type_id: defaultType.id })
@@ -80,7 +90,7 @@ export const deleteFlightType = async (id: string): Promise<void> => {
     throw new Error("Erreur lors de la mise à jour des vols associés");
   }
 
-  // 3. Supprimer le type de vol
+  // 4. Supprimer le type de vol
   const { error } = await supabase
     .from("flight_types")
     .delete()
