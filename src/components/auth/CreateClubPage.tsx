@@ -35,7 +35,7 @@ interface CreateClubFormData {
   adminLogin: string;
 }
 
-const generateLogin = (firstName: string, lastName: string): string => {
+const generateLogin = async (firstName: string, lastName: string): Promise<string> => {
   // Retire les accents et caractères spéciaux
   const normalizeString = (str: string) => {
     return str
@@ -49,7 +49,29 @@ const generateLogin = (firstName: string, lastName: string): string => {
   const normalizedLastName = normalizeString(lastName);
 
   // Prend la première lettre du prénom et le nom complet
-  return `${normalizedFirstName.charAt(0)}${normalizedLastName}`;
+  let baseLogin = `${normalizedFirstName.charAt(0)}${normalizedLastName}`;
+  let increment = 0;
+  let loginExists = true;
+  let finalLogin = baseLogin;
+  
+  // Boucle pour trouver un login unique
+  while (loginExists) {
+    const loginToTry = increment === 0 ? baseLogin : `${baseLogin}${increment}`;
+    const { data: existingLogin } = await supabase
+      .from('users')
+      .select('login')
+      .eq('login', loginToTry)
+      .single();
+    
+    if (!existingLogin) {
+      finalLogin = loginToTry;
+      loginExists = false;
+    } else {
+      increment++;
+    }
+  }
+
+  return finalLogin;
 };
 
 const CreateClubPage = () => {
@@ -135,22 +157,23 @@ const CreateClubPage = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => {
-      const newData = { ...prev, [name]: value };
+    
+    // Pour éviter les mises à jour d'état concurrentes, on gère tout dans une seule mise à jour
+    const newData = { ...formData, [name]: value };
+    
+    // Si on modifie le prénom ou le nom, on met à jour le login
+    if (name === 'adminFirstName' || name === 'adminLastName') {
+      const firstName = name === 'adminFirstName' ? value : formData.adminFirstName;
+      const lastName = name === 'adminLastName' ? value : formData.adminLastName;
       
-      if (name === 'adminFirstName' || name === 'adminLastName') {
-        const firstName = name === 'adminFirstName' ? value : prev.adminFirstName;
-        const lastName = name === 'adminLastName' ? value : prev.adminLastName;
-        
-        if (firstName && lastName) {
-          newData.adminLogin = generateLogin(firstName, lastName);
-        }
+      if (firstName && lastName) {
+        newData.adminLogin = await generateLogin(firstName, lastName);
       }
-      
-      return newData;
-    });
+    }
+    
+    setFormData(newData);
   };
 
   const handleNext = () => {
