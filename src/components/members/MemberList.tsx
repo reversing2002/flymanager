@@ -140,10 +140,7 @@ const MemberList = () => {
       return isAfter(validUntil, new Date());
     })();
 
-    // Si l'utilisateur n'est pas admin, ne montrer que les cotisations valides
-    if (!isAdmin && !isMembershipValid) {
-      return false;
-    }
+
 
     // Pour les admins, appliquer le filtre sélectionné
     const matchesMembershipStatus =
