@@ -261,7 +261,9 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
       
       const data = await response.json();
       if (data.success) {
-        window.open(data.google_calendar_url, '_blank', 'noopener noreferrer');
+        // Convertir directement l'URL en webcal
+        const webcalUrl = data.calendar_url.replace('https://', 'webcal://');
+        window.open(webcalUrl, '_blank', 'noopener noreferrer');
       } else {
         toast.error('Erreur lors de la récupération du lien du calendrier');
       }
@@ -511,7 +513,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                     className="ml-2"
                     startIcon={<CalendarMonthIcon />}
                   >
-                    Exporter mes réservations 4fly dans Google calendar
+                    Synchroniser mes réservations 4fly dans mon calendrier
                   </Button>
                 </div>
               </div>
