@@ -55,10 +55,26 @@ const RoleManagement = () => {
 
   const toggleGroup = async (memberId: string, groupId: string) => {
     const newSelectedGroups = { ...selectedGroups };
-    if (newSelectedGroups[memberId]?.includes(groupId)) {
-      newSelectedGroups[memberId] = newSelectedGroups[memberId].filter(g => g !== groupId);
+    const currentGroups = newSelectedGroups[memberId] || [];
+    const isAdmin = groups.find(g => g.id === groupId)?.name?.toLowerCase() === 'admin';
+    const hasAdminRole = currentGroups.some(gId => groups.find(g => g.id === gId)?.name?.toLowerCase() === 'admin');
+
+    // Si on essaie d'ajouter un rôle à un admin
+    if (hasAdminRole && !currentGroups.includes(groupId)) {
+      toast.error("Un administrateur ne peut pas avoir d'autres rôles");
+      return;
+    }
+
+    // Si on essaie d'ajouter le rôle admin à quelqu'un qui a déjà d'autres rôles
+    if (isAdmin && currentGroups.length > 0) {
+      toast.error("Le rôle administrateur ne peut pas être cumulé avec d'autres rôles");
+      return;
+    }
+
+    if (currentGroups.includes(groupId)) {
+      newSelectedGroups[memberId] = currentGroups.filter(g => g !== groupId);
     } else {
-      newSelectedGroups[memberId] = [...(newSelectedGroups[memberId] || []), groupId];
+      newSelectedGroups[memberId] = [...currentGroups, groupId];
     }
     setSelectedGroups(newSelectedGroups);
 

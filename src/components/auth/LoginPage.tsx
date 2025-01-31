@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { aviationQuotes } from "../../data/aviation-quotes";
 import { useTranslation } from 'react-i18next';
 import PageSEO from '../SEO/PageSEO';
+import { useLanguageRedirect } from '../../hooks/useLanguageRedirect';
 
 const LoginPage = () => {
   const { t } = useTranslation();
@@ -44,6 +45,8 @@ const LoginPage = () => {
     const randomIndex = Math.floor(Math.random() * aviationQuotes.length);
     return aviationQuotes[randomIndex];
   }, []);
+
+  useLanguageRedirect();
 
   if (user) {
     return <Navigate to={from} replace />;
