@@ -32,6 +32,7 @@ import { getInitials } from "../../lib/utils/avatarUtils";
 import type { Role } from "../../types/roles";
 import { Logo } from '../common/Logo';
 import { SupportDialog } from './SupportDialog';
+import { useUnreadMessages } from "../../hooks/useUnreadMessages";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [supportDialogOpen, setSupportDialogOpen] = useState(false);
+  const unreadMessagesCount = useUnreadMessages();
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -349,8 +351,18 @@ const Navbar = () => {
             {/* Additional Links */}
             <div className="py-4">
               {canAccessChat && (
-                <Link to="/chat" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                  <MessageSquare className="w-5 h-5 mr-3" />
+                <Link 
+                  to="/chat" 
+                  className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400"
+                >
+                  <div className="relative">
+                    <MessageSquare className="w-5 h-5 mr-3" />
+                    {unreadMessagesCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                      </span>
+                    )}
+                  </div>
                   <span>Messages</span>
                 </Link>
               )}

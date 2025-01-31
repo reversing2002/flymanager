@@ -45,6 +45,26 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, refetchRooms }) => {
     loadMessages();
     loadRoom();
     
+    // Marquer les messages comme lus
+    const markMessagesAsRead = async () => {
+      if (!user?.id || !roomId) return;
+      
+      try {
+        const { error } = await supabase.rpc('mark_room_messages_as_read', {
+          p_room_id: roomId,
+          p_user_id: user.id
+        });
+        
+        if (error) {
+          console.error('Error marking messages as read:', error);
+        }
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+      }
+    };
+
+    markMessagesAsRead();
+    
     const channel = supabase.channel(`room:${roomId}`)
       .on(
         'postgres_changes',

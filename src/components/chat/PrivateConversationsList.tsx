@@ -91,6 +91,26 @@ const PrivateConversationsList: React.FC<Props> = ({
     };
   }, [user?.id]);
 
+  const handleSelectRecipient = async (recipientId: string) => {
+    if (!user?.id) return;
+
+    try {
+      // Marquer les messages comme lus
+      const { error } = await supabase.rpc('mark_private_messages_as_read', {
+        p_sender_id: recipientId,
+        p_recipient_id: user.id
+      });
+
+      if (error) {
+        console.error('Error marking messages as read:', error);
+      }
+
+      onSelectRecipient(recipientId);
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="animate-pulse space-y-4 p-4">
@@ -117,7 +137,7 @@ const PrivateConversationsList: React.FC<Props> = ({
         return (
           <button
             key={otherId}
-            onClick={() => onSelectRecipient(otherId)}
+            onClick={() => handleSelectRecipient(otherId)}
             className={`w-full flex items-center space-x-3 p-4 hover:bg-gray-50 ${
               selectedRecipientId === otherId ? 'bg-blue-50' : ''
             }`}

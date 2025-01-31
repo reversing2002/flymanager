@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { format, addDays, startOfDay, endOfDay } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '../../lib/supabase';
 import type { ClubEvent } from '../../types/database';
 import EventDetails from './EventDetails';
 
-const UpcomingEvents = () => {
+interface UpcomingEventsProps {
+  maxEvents?: number;
+}
+
+const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ maxEvents = 1 }) => {
   const [events, setEvents] = useState<ClubEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<ClubEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,8 +20,7 @@ const UpcomingEvents = () => {
 
   const loadUpcomingEvents = async () => {
     try {
-      const start = startOfDay(new Date());
-      const end = endOfDay(addDays(start, 30)); // Prochains 30 jours
+      const start = startOfDay(new Date()); // On ne garde que les événements à partir d'aujourd'hui
 
       const { data, error } = await supabase
         .from('club_events')
@@ -37,8 +40,8 @@ const UpcomingEvents = () => {
           )
         `)
         .gte('start_time', start.toISOString())
-        .lte('start_time', end.toISOString())
-        .order('start_time');
+        .order('start_time')
+        .limit(maxEvents);
 
       if (error) throw error;
       setEvents(data || []);
@@ -60,7 +63,7 @@ const UpcomingEvents = () => {
   if (events.length === 0) {
     return (
       <div className="p-4 text-center text-slate-500">
-        Aucun événement prévu dans les 30 prochains jours.
+        Aucun événement prévu.
       </div>
     );
   }

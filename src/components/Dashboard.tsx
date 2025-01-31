@@ -28,7 +28,7 @@ import AnnouncementBanner from "./announcements/AnnouncementBanner";
 import { supabase } from "../lib/supabase";
 import AdminDashboard from "./admin/AdminDashboard";
 import UpcomingEvents from "./events/UpcomingEvents";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SunCalc from "suncalc";
 import { format } from "date-fns";
 import SunTimesDisplay from "./common/SunTimesDisplay";
@@ -37,6 +37,7 @@ import PendingDiscoveryFlights from "./discovery/PendingDiscoveryFlights";
 import DashboardWeatherWidget from "./weather/DashboardWeatherWidget";
 import SimpleCreditModal from "./accounts/SimpleCreditModal";
 import MiniWindWidget from "./weather/MiniWindWidget";
+import { useUnreadMessages } from "../hooks/useUnreadMessages";
 
 const StatCard = ({
   icon,
@@ -72,6 +73,8 @@ const RecentMessages = () => {
   const [rooms, setRooms] = useState<any[]>([]);
   const [privateChats, setPrivateChats] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'rooms' | 'private'>('rooms');
+  const unreadMessagesCount = useUnreadMessages();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user?.id || !user?.club?.id) return;
@@ -124,15 +127,7 @@ const RecentMessages = () => {
 
               return {
                 ...conv,
-                participant: userData,
-                last_message: [{
-                  content: conv.content,
-                  created_at: conv.created_at,
-                  sender: conv.sender_id === user.id ? {
-                    id: user.id,
-                    first_name: 'Vous'
-                  } : userData
-                }]
+                participant: userData
               };
             })
           );
@@ -147,164 +142,136 @@ const RecentMessages = () => {
     fetchRooms();
     fetchPrivateChats();
 
-    // Souscription aux changements des messages
-    const messagesChannel = supabase
-      .channel('messages_changes')
+    // Souscription aux changements
+    const roomsChannel = supabase
+      .channel('rooms_changes')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-        () => {
-          fetchRooms();
-        }
+        { event: '*', schema: 'public', table: 'chat_messages' },
+        () => fetchRooms()
       )
       .subscribe();
 
-    const privateMessagesChannel = supabase
-      .channel('private_messages_changes')
+    const privateChannel = supabase
+      .channel('private_changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
+        { 
+          event: '*', 
+          schema: 'public', 
           table: 'private_messages',
           filter: `or(sender_id=eq.${user.id},recipient_id=eq.${user.id})`
         },
-        () => {
-          fetchPrivateChats();
-        }
+        () => fetchPrivateChats()
       )
       .subscribe();
 
     return () => {
-      messagesChannel.unsubscribe();
-      privateMessagesChannel.unsubscribe();
+      roomsChannel.unsubscribe();
+      privateChannel.unsubscribe();
     };
   }, [user?.id, user?.club?.id]);
 
-  const formatDate = (date: string) => {
-    const messageDate = new Date(date);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (messageDate.toDateString() === today.toDateString()) {
-      return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (messageDate.toDateString() === yesterday.toDateString()) {
-      return 'Hier';
-    } else {
-      return messageDate.toLocaleDateString();
-    }
-  };
-
   return (
-    <div className="bg-white rounded-xl shadow-sm">
-      <div className="border-b border-slate-200">
-        <div className="flex items-center justify-between p-4">
-          <h2 className="text-lg font-semibold text-slate-900">Messages</h2>
-          <Link to="/chat" className="text-sm text-blue-600 hover:text-blue-700">
-            Voir tout
-          </Link>
+    <div className="rounded-xl bg-white p-4 shadow-sm border border-slate-100">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <MessageSquare className="h-5 w-5 text-slate-600" />
+          <h2 className="text-lg font-semibold text-slate-800">Messages</h2>
+          {unreadMessagesCount > 0 && (
+            <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+              {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+            </span>
+          )}
         </div>
-        <div className="flex border-b border-slate-200">
-          <button
-            className={`flex-1 py-2 px-4 text-sm font-medium ${
-              activeTab === 'rooms'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-            onClick={() => setActiveTab('rooms')}
-          >
-            Salons
-          </button>
-          <button
-            className={`flex-1 py-2 px-4 text-sm font-medium ${
-              activeTab === 'private'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-            onClick={() => setActiveTab('private')}
-          >
-            Messages privés
-          </button>
-        </div>
+        <Link
+          to="/chat"
+          className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+        >
+          <span>Voir tout</span>
+          <Plus className="h-4 w-4" />
+        </Link>
       </div>
-      <div className="divide-y divide-slate-200">
+
+      <div className="flex border-b border-slate-200 mb-4">
+        <button
+          className={`flex-1 py-2 text-sm font-medium ${
+            activeTab === 'rooms'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+          onClick={() => setActiveTab('rooms')}
+        >
+          Salons
+        </button>
+        <button
+          className={`flex-1 py-2 text-sm font-medium ${
+            activeTab === 'private'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+          onClick={() => setActiveTab('private')}
+        >
+          Messages privés
+        </button>
+      </div>
+      
+      <div className="space-y-4">
         {activeTab === 'rooms' ? (
-          rooms.length > 0 ? (
-            rooms.map((room) => {
-              const lastMessage = room.chat_messages?.[0];
-              return (
-                <Link
-                  key={room.id}
-                  to={`/chat?room=${room.id}`}
-                  className="block p-4 hover:bg-slate-50"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900">
-                        {room.name}
-                      </p>
-                      {lastMessage && (
-                        <p className="text-sm text-slate-500 truncate">
-                          <span className="font-medium">
-                            {lastMessage.user.firstName}:
-                          </span>{' '}
-                          {lastMessage.content}
-                        </p>
-                      )}
-                    </div>
+          rooms.slice(0, 3).map((room) => {
+            const lastMessage = room.chat_messages?.[0];
+            return (
+              <Link
+                key={room.id}
+                to={`/chat/`}
+                className="block p-3 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-medium text-slate-900">{room.name}</h3>
                     {lastMessage && (
-                      <div className="flex-shrink-0 text-xs text-slate-400">
-                        {formatDate(lastMessage.created_at)}
-                      </div>
+                      <p className="text-sm text-slate-600 mt-1">
+                        <span className="font-medium">
+                          {lastMessage.user?.firstName} {lastMessage.user?.LastName}:
+                        </span>{" "}
+                        {lastMessage.content}
+                      </p>
                     )}
                   </div>
-                </Link>
-              );
-            })
-          ) : (
-            <div className="p-4 text-center text-sm text-slate-500">
-              Aucun salon disponible
-            </div>
-          )
+                  {lastMessage && (
+                    <span className="text-xs text-slate-500">
+                      {format(new Date(lastMessage.created_at), "HH:mm")}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })
         ) : (
-          privateChats.length > 0 ? (
-            privateChats.map((chat) => {
-              const lastMessage = chat.last_message?.[0];
-              return (
-                <Link
-                  key={chat.id || `${chat.sender_id}-${chat.recipient_id}`}
-                  to={`/chat?private=${chat.participant.id}`}
-                  className="block p-4 hover:bg-slate-50"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900">
-                        {chat.participant.first_name} {chat.participant.last_name}
-                      </p>
-                      {lastMessage && (
-                        <p className="text-sm text-slate-500 truncate">
-                          <span className="font-medium">
-                            {lastMessage.sender.id === user?.id ? 'Vous' : lastMessage.sender.first_name}:
-                          </span>{' '}
-                          {lastMessage.content}
-                        </p>
-                      )}
-                    </div>
-                    {lastMessage && (
-                      <div className="flex-shrink-0 text-xs text-slate-400">
-                        {formatDate(lastMessage.created_at)}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              );
-            })
-          ) : (
-            <div className="p-4 text-center text-sm text-slate-500">
-              Aucune conversation privée
-            </div>
-          )
+          privateChats.slice(0, 3).map((chat) => (
+            <Link
+              key={`${chat.sender_id}-${chat.recipient_id}`}
+              to={`/chat/`}
+              className="block p-3 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-medium text-slate-900">
+                    {chat.participant.first_name} {chat.participant.last_name}
+                  </h3>
+                  <p className="text-sm text-slate-600 mt-1">
+                    <span className="font-medium">
+                      {chat.sender_id === user?.id ? 'Vous' : chat.participant.first_name}:
+                    </span>{" "}
+                    {chat.content}
+                  </p>
+                </div>
+                <span className="text-xs text-slate-500">
+                  {format(new Date(chat.created_at), "HH:mm")}
+                </span>
+              </div>
+            </Link>
+          ))
         )}
       </div>
     </div>
@@ -628,7 +595,7 @@ const Dashboard = () => {
             <h2 className="text-lg font-semibold text-slate-900">Événements à venir</h2>
           </div>
           <div className="h-[320px] overflow-y-auto">
-            <UpcomingEvents />
+            <UpcomingEvents maxEvents={5} />
           </div>
         </div>
       </div>
