@@ -396,7 +396,7 @@ router.post('/chat', verifyToken, async (req, res) => {
 
       // Créer la complétion
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-2024-08-06',
+        model: 'o3-mini',
         messages: conversation.messages,
         response_format: {
           type: "json_schema",
