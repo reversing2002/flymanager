@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 // Liste des routes publiques qui doivent être préfixées par la langue
 const PUBLIC_ROUTES = [
@@ -29,7 +30,7 @@ export const useLanguageRedirect = () => {
     const pathParts = location.pathname.split('/').filter(Boolean);
     const firstPathPart = pathParts[0];
     const secondPathPart = pathParts[1];
-    const supportedLanguages = ['fr', 'en', 'de', 'es', 'it', 'pt'];
+    const supportedLanguages = i18n.options.supportedLngs;
     
     // Ne rien faire si nous sommes déjà sur le bon chemin
     if (firstPathPart === i18n.language) {
@@ -58,9 +59,9 @@ export const useLanguageRedirect = () => {
           navigate(newPath, { replace: true });
         }
       }
-    } else if (supportedLanguages.includes(firstPathPart)) {
-      // Si ce n'est pas une route publique mais qu'elle a un préfixe de langue, on le retire
-      const newPath = '/' + pathParts.slice(1).join('/');
+    } else if (supportedLanguages.includes(firstPathPart) && firstPathPart !== i18n.language) {
+      // Si ce n'est pas une route publique mais qu'elle a un préfixe de langue différent de la langue courante
+      const newPath = `/${i18n.language}/` + pathParts.slice(1).join('/');
       if (newPath !== location.pathname) {
         navigate(newPath, { replace: true });
       }

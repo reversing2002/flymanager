@@ -13,7 +13,7 @@ export const useLanguageNavigation = () => {
     // Extraire le code de langue actuel de l'URL
     const pathParts = location.pathname.split('/');
     const currentLangInUrl = pathParts[1];
-    const supportedLanguages = ['fr', 'en', 'de', 'es', 'it', 'pt', 'nl', 'pl', 'cs', 'sv'];
+    const supportedLanguages = i18n.options.supportedLngs || [];
 
     // Construire la nouvelle URL
     let newPath;

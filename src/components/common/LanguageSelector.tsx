@@ -15,7 +15,8 @@ const languages = [
   { code: 'nl', name: '🇳🇱 NL' },
   { code: 'pl', name: '🇵🇱 PL' },
   { code: 'cs', name: '🇨🇿 CS' },
-  { code: 'sv', name: '🇸🇪 SE' }
+  { code: 'sv', name: '🇸🇪 SE' },
+  { code: 'ar', name: '🇸🇦 AR' }
 ];
 
 const LanguageSelector: React.FC = () => {
