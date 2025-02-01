@@ -29,7 +29,15 @@ const MemberList = () => {
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   const handleExportCSV = () => {
-    const headers = ['Nom', 'Prénom', 'Email', 'Date de fin de cotisation', 'Montant'];
+    const clubUsesCotisations = members.some(member => {
+      return member.contributions && member.contributions.length > 0 && (() => {
+        const sortedContributions = [...member.contributions].sort((a, b) => new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime());
+        const lastContribution = sortedContributions[0];
+        return isAfter(new Date(lastContribution.valid_until), new Date());
+      })();
+    });
+
+    const headers = clubUsesCotisations ? ['Nom', 'Prénom', 'Email', 'Date de fin de cotisation', 'Montant'] : ['Nom', 'Prénom', 'Email'];
     const data = filteredMembers.map(member => {
       const lastContribution = member.contributions && member.contributions.length > 0
         ? [...member.contributions].sort((a, b) => new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime())[0]
@@ -52,7 +60,15 @@ const MemberList = () => {
   };
 
   const handleExportPDF = () => {
-    const headers = ['Nom', 'Prénom', 'Email', 'Date de fin', 'Montant'];
+    const clubUsesCotisations = members.some(member => {
+      return member.contributions && member.contributions.length > 0 && (() => {
+        const sortedContributions = [...member.contributions].sort((a, b) => new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime());
+        const lastContribution = sortedContributions[0];
+        return isAfter(new Date(lastContribution.valid_until), new Date());
+      })();
+    });
+
+    const headers = clubUsesCotisations ? ['Nom', 'Prénom', 'Email', 'Date de fin', 'Montant'] : ['Nom', 'Prénom', 'Email'];
     const data = filteredMembers.map(member => {
       const lastContribution = member.contributions && member.contributions.length > 0
         ? [...member.contributions].sort((a, b) => new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime())[0]
@@ -118,6 +134,14 @@ const MemberList = () => {
     setSelectedMembershipStatus(isAdmin ? 'all' : 'valid');
   }, [isAdmin]);
 
+  const clubUsesCotisations = members.some(member => {
+    return member.contributions && member.contributions.length > 0 && (() => {
+      const sortedContributions = [...member.contributions].sort((a, b) => new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime());
+      const lastContribution = sortedContributions[0];
+      return isAfter(new Date(lastContribution.valid_until), new Date());
+    })();
+  });
+
   const filteredMembers = members.filter((member) => {
     const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/);
     const memberFields = [
@@ -130,17 +154,15 @@ const MemberList = () => {
       memberFields.some(field => field.includes(term))
     );
 
+    if (!clubUsesCotisations) return matchesSearch;
+
     // Vérifier si la cotisation est valide
     const isMembershipValid = member.contributions && member.contributions.length > 0 && (() => {
-      const sortedContributions = [...member.contributions].sort(
-        (a, b) => new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime()
-      );
+      const sortedContributions = [...member.contributions].sort((a, b) => new Date(b.valid_until).getTime() - new Date(a.valid_until).getTime());
       const lastContribution = sortedContributions[0];
       const validUntil = new Date(lastContribution.valid_until);
       return isAfter(validUntil, new Date());
     })();
-
-
 
     // Pour les admins, appliquer le filtre sélectionné
     const matchesMembershipStatus =
@@ -152,6 +174,9 @@ const MemberList = () => {
   })
   // Tri par année de dernière cotisation DESC puis par nom ASC
   .sort((a, b) => {
+    if (!clubUsesCotisations) {
+      return a.last_name.localeCompare(b.last_name);
+    }
     // Récupérer la dernière cotisation pour chaque membre
     const getLastContribution = (member: typeof a) => {
       if (!member.contributions || member.contributions.length === 0) return null;
@@ -297,25 +322,29 @@ const MemberList = () => {
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                if (e.target.value !== "") {
-                  setSelectedMembershipStatus("all");
-                } else {
-                  setSelectedMembershipStatus("valid");
+                if (clubUsesCotisations) {
+                  if (e.target.value !== "") {
+                    setSelectedMembershipStatus("all");
+                  } else {
+                    setSelectedMembershipStatus("valid");
+                  }
                 }
               }}
             />
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="inline-flex items-center px-4 py-2 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <Filter className="h-5 w-5 mr-2" />
-            Filtres
-          </button>
+          {clubUsesCotisations && (
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="inline-flex items-center px-4 py-2 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <Filter className="h-5 w-5 mr-2" />
+              Filtres
+            </button>
+          )}
         </div>
 
-        {showFilters && (
+        {clubUsesCotisations && showFilters && (
           <div className="mt-4 flex flex-col sm:flex-row gap-4">
             <select
               className="form-select block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
@@ -340,6 +369,7 @@ const MemberList = () => {
                 <MemberCard 
                   member={member}
                   onDelete={loadMembers}
+                  showContributionInfo={clubUsesCotisations}
                 />
               </div>
             </div>
@@ -353,6 +383,7 @@ const MemberList = () => {
               key={member.id} 
               member={member}
               onDelete={loadMembers}
+              showContributionInfo={clubUsesCotisations}
             />
           ))}
       </div>
