@@ -38,6 +38,7 @@ export async function getAircraft(): Promise<Aircraft[]> {
       club_id: aircraft.club_id,
       last_hour_meter: aircraft.last_hour_meter,
       hour_format: aircraft.hour_format,
+      has_hour_meter: aircraft.has_hour_meter,
       description: aircraft.description,
     }));
   } catch (error) {
@@ -62,6 +63,7 @@ export async function createAircraft(data: Partial<Aircraft>): Promise<void> {
     updated_at: new Date().toISOString(),
     last_hour_meter: data.last_hour_meter,
     hour_format: data.hour_format,
+    has_hour_meter: data.has_hour_meter,
     description: data.description,
   });
 
@@ -87,6 +89,7 @@ export async function updateAircraft(id: string, data: Partial<Aircraft>): Promi
       updated_at: new Date().toISOString(),
       last_hour_meter: data.last_hour_meter,
       hour_format: data.hour_format,
+      has_hour_meter: data.has_hour_meter,
       description: data.description,
     })
     .eq("id", id);

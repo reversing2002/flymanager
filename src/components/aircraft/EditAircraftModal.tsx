@@ -31,8 +31,8 @@ const EditAircraftModal: React.FC<EditAircraftModalProps> = ({
       ? new Date(aircraft.lastMaintenance).toISOString().split("T")[0]
       : "",
     imageUrl: aircraft?.imageUrl || "",
-    last_hour_meter: aircraft?.last_hour_meter || 0,
     hour_format: aircraft?.hour_format || "CLASSIC",
+    has_hour_meter: aircraft?.has_hour_meter === false ? false : true,
     description: aircraft?.description || "",
   });
 
@@ -108,6 +108,7 @@ const EditAircraftModal: React.FC<EditAircraftModalProps> = ({
           ...formData,
           club_id: user.club.id,
           lastMaintenance: formData.lastMaintenance || null,
+          has_hour_meter: formData.has_hour_meter,
         });
         toast.success("Appareil mis à jour");
       } else {
@@ -115,6 +116,7 @@ const EditAircraftModal: React.FC<EditAircraftModalProps> = ({
           ...formData,
           club_id: user.club.id,
           lastMaintenance: formData.lastMaintenance || null,
+          has_hour_meter: formData.has_hour_meter,
         });
         toast.success("Appareil créé");
       }
@@ -300,38 +302,42 @@ const EditAircraftModal: React.FC<EditAircraftModalProps> = ({
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Horamètre actuel
+                    Type d'horamètre
                   </label>
-                  <input
-                    type="number"
-                    value={formData.last_hour_meter}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        last_hour_meter: parseFloat(e.target.value),
-                      })
-                    }
-                    className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Format d'affichage des heures
-                  </label>
-                  <select
-                    value={formData.hour_format}
-                    onChange={(e) =>
-                      setFormData({ ...formData, hour_format: e.target.value })
-                    }
-                    className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                    required
-                  >
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="has_hour_meter"
+                        checked={formData.has_hour_meter}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            has_hour_meter: e.target.checked,
+                            hour_format: e.target.checked ? formData.hour_format : "CLASSIC"
+                          })
+                        }
+                        className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-600"
+                      />
+                      <label htmlFor="has_hour_meter" className="ml-2 text-sm text-slate-600">
+                        Possède un horamètre
+                      </label>
+                    </div>
+                    <select
+                      value={formData.hour_format}
+                      onChange={(e) =>
+                        setFormData({ ...formData, hour_format: e.target.value })
+                      }
+                      disabled={!formData.has_hour_meter}
+                      className={`w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500 ${
+                        !formData.has_hour_meter ? "bg-slate-100" : ""
+                      }`}
+                      required
+                    >
                     <option value="DECIMAL">Décimal (1.5h)</option>
                     <option value="CLASSIC">Classique (1h30)</option>
-                  </select>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="col-span-2">
@@ -343,9 +349,8 @@ const EditAircraftModal: React.FC<EditAircraftModalProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
                     }
+                    rows={3}
                     className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-                    rows={4}
-                    placeholder="Description de l'appareil..."
                   />
                 </div>
 
