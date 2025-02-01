@@ -127,7 +127,8 @@
     "pricing": "Cennik",
     "faq": "FAQ",
     "contact": "Kontakt",
-    "login": "Zaloguj się"
+    "login": "Zaloguj się",
+    "menu": "Nawigacja"
   },
   "pricing": {
     "title": "Wybierz swój plan",
@@ -647,9 +648,9 @@
       "createClub": "Utwórz nowy klub"
     },
     "success": "Zalogowano pomyślnie!",
-    "error": "Nieprawidłowe dane logowania",
     "error": {
-      "unexpected": "Wystąpił nieoczekiwany błąd"
+      "unexpected": "Wystąpił nieoczekiwany błąd",
+      "invalid_credentials": "Nieprawidłowy email lub hasło"
     }
   },
   "resetPassword": {

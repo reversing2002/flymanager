@@ -127,7 +127,8 @@
     "pricing": "Pricing",
     "faq": "FAQ",
     "contact": "Contact",
-    "login": "Log in"
+    "login": "Log in",
+    "menu": "Navigation"
   },
   "pricing": {
     "meta": {
@@ -647,9 +648,9 @@
       "createClub": "Create a new club"
     },
     "success": "Successfully logged in!",
-    "error": "Invalid credentials",
     "error": {
-      "unexpected": "An unexpected error occurred"
+      "unexpected": "An unexpected error occurred",
+      "invalid_credentials": "Invalid email or password"
     }
   },
   "resetPassword": {

@@ -112,7 +112,8 @@
     "features": "Fonctionnalités",
     "pricing": "Tarifs",
     "faq": "FAQ",
-    "contact": "Contact"
+    "contact": "Contact",
+    "menu":"Navigation"
   },
   "pricing": {
     "meta": {

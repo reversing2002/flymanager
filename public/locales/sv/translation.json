@@ -697,7 +697,8 @@
     },
     "success": "Inloggningen lyckades!",
     "error": {
-      "unexpected": "Ett oväntat fel uppstod"
+      "unexpected": "Ett oväntat fel uppstod",
+      "invalid_credentials": "Ogiltig e-post eller lösenord"
     }
   },
   "resetPassword": {

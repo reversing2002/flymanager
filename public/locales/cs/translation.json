@@ -696,7 +696,8 @@
     },
     "success": "Přihlášení proběhlo úspěšně!",
     "error": {
-      "unexpected": "Došlo k neočekávané chybě"
+      "unexpected": "Došlo k neočekávané chybě",
+      "invalid_credentials": "Neplatný email nebo heslo"
     }
   },
   "resetPassword": {

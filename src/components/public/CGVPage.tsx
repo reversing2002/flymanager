@@ -87,17 +87,7 @@ const CGVPage = () => {
             ))}
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-12 text-center text-gray-400 text-sm"
-          >
-            Pour toute question concernant nos CGV, veuillez nous contacter à{' '}
-            <a href="mailto:legal@4fly.io" className="text-blue-500 hover:text-blue-400">
-              legal@4fly.io
-            </a>
-          </motion.div>
+          
         </div>
       </div>
     </>

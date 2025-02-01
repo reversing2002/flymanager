@@ -103,7 +103,8 @@
       "back": "Kembali",
       "next": "Berikutnya",
       "footerDescription": "Solusi sederhana untuk mengelola aeroklub Anda. Pemesanan, pemeliharaan, penagihan... semuanya ada di sini!",
-      "copyright": "MELBA CAPITAL - SASU dengan modal €2.700.000 - RCS Saint-Etienne 840 514 913"
+      "copyright": "MELBA CAPITAL - SASU dengan modal €2.700.000 - RCS Saint-Etienne 840 514 913",
+      "rgpd": "Kebijakan RGPD"
     },
     "nav": {
       "home": "Beranda",
@@ -111,7 +112,8 @@
       "features": "Fitur",
       "pricing": "Harga",
       "faq": "FAQ",
-      "contact": "Kontak"
+      "contact": "Kontak",
+      "menu": "Navigasi"
     },
     "pricing": {
       "meta": {
@@ -763,7 +765,7 @@
       },
       "article6": {
         "title": "Pasal 6 - Hak Kekayaan Intelektual",
-        "content": "Seluruh elemen platform 4fly (logo, teks, gambar, dll.) dilindungi oleh hak kekayaan intelektual. Setiap reproduksi dilarang tanpa izin terlebih dahulu."
+        "content": "Seluruh elemen platform 4fly (logo, teks, gambar, logo, basis data, dll.) dilindungi oleh hak kekayaan intelektual. Setiap reproduksi, representasi, modifikasi, publikasi, transmisi, atau perubahan, seluruhnya atau sebagian, situs atau isinya, dengan cara apa pun, pada media apa pun, dilarang tanpa izin tertulis sebelumnya dari MELBA CAPITAL."
       },
       "article7": {
         "title": "Pasal 7 - Tanggung Jawab",
@@ -803,7 +805,7 @@
       },
       "dataProtection": {
         "title": "Perlindungan Data Pribadi",
-        "description": "Sesuai dengan Undang-Undang Prancis tentang Informatika dan Kebebasan tanggal 6 Januari 1978 yang telah diubah, serta Peraturan Perlindungan Data Umum (RGPD), Anda memiliki hak untuk mengakses, memperbaiki, menghapus, dan menolak pemrosesan data pribadi Anda.",
+        "description": "Sesuai dengan Undang-Undang Prancis tentang Informatika dan Kebebasan tanggal 6 Januari 1978 yang telah diubah, serta Peraturan Perlindungan Data Umum (RGPD), Anda memiliki hak untuk mengakses, memperbaiki, dan menghapus data pribadi Anda.",
         "rights": "Untuk menggunakan hak tersebut, Anda dapat menghubungi kami:",
         "email": "Via email",
         "mail": "Via pos"
@@ -837,4 +839,3 @@
       "startButton": "Mulai gratis"
     }
   }
-  

@@ -638,9 +638,9 @@
       "createClub": "Crear un nuevo club"
     },
     "success": "¡Sesión iniciada con éxito!",
-    "error": "Credenciales inválidas",
     "error": {
-      "unexpected": "Ha ocurrido un error inesperado"
+      "unexpected": "Ha ocurrido un error inesperado",
+      "invalid_credentials": "Correo electrónico o contraseña inválidos"
     }
   },
   "resetPassword": {

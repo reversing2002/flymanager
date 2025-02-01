@@ -697,7 +697,8 @@
     },
     "success": "Accesso effettuato con successo!",
     "error": {
-      "unexpected": "Si è verificato un errore inaspettato"
+      "unexpected": "Si è verificato un errore inaspettato",
+      "invalid_credentials": "Email o password non validi"
     }
   },
   "resetPassword": {

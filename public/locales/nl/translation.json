@@ -584,7 +584,7 @@
     },
     "meta": {
       "title": "4fly - Contact | Ondersteuning en Hulp",
-      "description": "Hulp nodig? Neem contact op met het 4fly team voor al uw vragen over onze vliegclub beheer oplossing. Snelle en persoonlijke ondersteuning.",
+      "description": "Hulp nodig? Neem contact op met het 4fly-team voor al uw vragen over onze vliegclub beheer oplossing. Snelle en persoonlijke ondersteuning.",
       "image": "/images/contact-hero.jpg"
     }
   },
@@ -697,7 +697,8 @@
     },
     "success": "Succesvol ingelogd!",
     "error": {
-      "unexpected": "Er is een onverwachte fout opgetreden"
+      "unexpected": "Er is een onverwachte fout opgetreden",
+      "invalid_credentials": "Ongeldige e-mail of wachtwoord"
     }
   },
   "resetPassword": {

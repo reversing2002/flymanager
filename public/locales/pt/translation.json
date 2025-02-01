@@ -697,7 +697,8 @@
     },
     "success": "Login efetuado com sucesso!",
     "error": {
-      "unexpected": "Ocorreu um erro inesperado"
+      "unexpected": "Ocorreu um erro inesperado",
+      "invalid_credentials": "Email ou senha inválidos"
     }
   },
   "resetPassword": {
