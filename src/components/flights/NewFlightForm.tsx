@@ -400,6 +400,40 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
     }));
   };
 
+  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const duration = parseInt(e.target.value, 10);
+    if (isNaN(duration)) return;
+
+    const selectedAircraft = aircraft.find(a => a.id === formData.aircraftId);
+    const hourlyRate = selectedAircraft?.hourlyRate || 0;
+    const cost = (hourlyRate * duration) / 60;
+
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        duration,
+        cost
+      };
+
+      // Si l'avion n'a pas d'horamètre, on ne met pas à jour les horamètres
+      if (!selectedAircraft?.has_hour_meter) {
+        return newData;
+      }
+
+      // Si on a un horamètre de début, calculer l'horamètre de fin
+      if (prev.start_hour_meter !== null) {
+        const durationInHours = duration / 60;
+        const end_hour_meter = prev.start_hour_meter + durationInHours;
+        return {
+          ...newData,
+          end_hour_meter
+        };
+      }
+
+      return newData;
+    });
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -471,62 +505,83 @@ const NewFlightForm: React.FC<NewFlightFormProps> = ({
           </select>
         </div>
 
-        {/* Hour Meters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Horamètre départ
-            </label>
-            <input
-              type="text"
-              value={hourMeterInputs.start}
-              onChange={(e) => handleHourMeterInputChange('start', e.target.value)}
-              onBlur={(e) => handleHourMeterBlur('start', e.target.value)}
-              className={`w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500 ${
-                hourMeterErrors.start || hourMeterErrors.range ? 'border-red-500' : ''
-              }`}
-            />
-            {hourMeterErrors.start && (
-              <p className="mt-1 text-sm text-red-600">{hourMeterErrors.start}</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Horamètre arrivée
-            </label>
-            <input
-              type="text"
-              value={hourMeterInputs.end}
-              onChange={(e) => handleHourMeterInputChange('end', e.target.value)}
-              onBlur={(e) => handleHourMeterBlur('end', e.target.value)}
-              className={`w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500 ${
-                hourMeterErrors.end || hourMeterErrors.range ? 'border-red-500' : ''
-              }`}
-            />
-            {hourMeterErrors.end && (
-              <p className="mt-1 text-sm text-red-600">{hourMeterErrors.end}</p>
-            )}
-          </div>
-        </div>
-        {hourMeterErrors.range && (
-          <p className="mt-1 text-sm text-red-600">{hourMeterErrors.range}</p>
-        )}
-        {/* Durée (calculée) */}
+        {/* Durée du vol */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Durée (minutes)
           </label>
           <input
             type="number"
-            value={formData.duration || ""}
-            className="w-full rounded-lg border-slate-200 bg-slate-50 text-slate-500"
-            disabled
+            value={formData.duration}
+            onChange={handleDurationChange}
+            disabled={aircraft.find(a => a.id === formData.aircraftId)?.has_hour_meter ?? true}
+            className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+            min="0"
+            step="1"
           />
-          <p className="mt-1 text-sm text-slate-500">
-            {formData.duration ? `${convertMinutesToDecimalHours(formData.duration)} heures` : ''}
-          </p>
         </div>
 
+        {/* Horamètres */}
+        {aircraft.find(a => a.id === formData.aircraftId)?.has_hour_meter && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Horamètre début
+              </label>
+              <input
+                type="text"
+                value={hourMeterInputs.start}
+                onChange={(e) => {
+                  setHourMeterInputs(prev => ({
+                    ...prev,
+                    start: e.target.value
+                  }));
+                  setHourMeterErrors(prev => ({
+                    ...prev,
+                    start: undefined
+                  }));
+                }}
+                onBlur={() => handleHourMeterBlur('start', hourMeterInputs.start)}
+                className={`w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500 ${
+                  hourMeterErrors.start ? 'border-red-500' : ''
+                }`}
+              />
+              {hourMeterErrors.start && (
+                <p className="mt-1 text-sm text-red-500">{hourMeterErrors.start}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Horamètre fin
+              </label>
+              <input
+                type="text"
+                value={hourMeterInputs.end}
+                onChange={(e) => {
+                  setHourMeterInputs(prev => ({
+                    ...prev,
+                    end: e.target.value
+                  }));
+                  setHourMeterErrors(prev => ({
+                    ...prev,
+                    end: undefined
+                  }));
+                }}
+                onBlur={() => handleHourMeterBlur('end', hourMeterInputs.end)}
+                className={`w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500 ${
+                  hourMeterErrors.end ? 'border-red-500' : ''
+                }`}
+              />
+              {hourMeterErrors.end && (
+                <p className="mt-1 text-sm text-red-500">{hourMeterErrors.end}</p>
+              )}
+            </div>
+          </>
+        )}
+        {hourMeterErrors.range && (
+          <p className="mt-1 text-sm text-red-500">{hourMeterErrors.range}</p>
+        )}
         {/* Date */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
