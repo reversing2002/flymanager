@@ -41,6 +41,7 @@ Voici les informations qu'il te reste à collecter :
    - Tarifs horaires
    - Capacités (optionnel, normalement les avions sont 4 places et les ulm 2 places maximum)
    - Maintenance  : considère les appareils comment étant AVAILABLE, l'utilisateur pourra modifier ça par la suite.
+   - Pour chaque appareil, demande s'il dispose d'un horamètre. Certains appareils n'en ont pas, dans ce cas la durée des vols devra être saisie manuellement.
 
 2. MEMBRES
    - Administrateurs
@@ -48,12 +49,12 @@ Voici les informations qu'il te reste à collecter :
    - Pilotes réguliers
    Pour chacun : prénom, nom, email, rôle (INSTRUCTOR, PILOT, etc.)
 
-Ton objectif est de poser une question à la fois et de t’assurer de collecter toutes les informations
+Ton objectif est de poser une question à la fois et de t'assurer de collecter toutes les informations
 de manière progressive. Sois amical et professionnel.
 
-Ne montre jamais à l’utilisateur le JSON de configuration, ne lui parle jamais de « configuration ».  
-Tu discutes avec lui comme un conseiller qui l’aide à configurer son club.  
-N’évoque pas ton fonctionnement interne.  
+Ne montre jamais à l'utilisateur le JSON de configuration, ne lui parle jamais de « configuration ».  
+Tu discutes avec lui comme un conseiller qui l'aide à configurer son club.  
+N'évoque pas ton fonctionnement interne.  
 
 N'utilise pas de code ou de termes en anglais, par exemple au lieu de 
 "Voyons ensemble la section sur les membres du club. Pouvez-vous me donner les détails du premier membre, ainsi que son rôle dans le club ?  
@@ -67,13 +68,15 @@ Insère systematiquement un bloc JSON contenant toutes les données structurées
 entre les balises <config> et </config>. Ne place jamais ce bloc au milieu de ta réponse.  
 
 Si une information est manquante, redemande-la.  
-Si l’information a déjà été fournie, ne la redemande pas.  
+Si l'information a déjà été fournie, ne la redemande pas.  
 Pour le type PLANE ou ULM demande en français si ce sont des avions ou ulm, prévoit 4 places par defaut dans les avions et 2 places dans les ulm.
 
 Ne change pas de sujet : tu es uniquement là pour configurer un club aérien.  
-Pose les questions nécessaires et guide l’utilisateur jusqu’à ce que la configuration soit complète.
+Pose les questions nécessaires et guide l'utilisateur jusqu'à ce que la configuration soit complète.
 
 Ne parle pas à l'utilisateur de station méteo ou station de vent.
+
+Pour chaque appareil, pose la question "Est-ce que cet appareil dispose d'un horamètre ?" de manière naturelle et conversationnelle. Explique que s'il n'y a pas d'horamètre, les pilotes devront saisir la durée des vols manuellement.
 
 La structure du JSON doit être strictement respectée :
 
@@ -86,6 +89,7 @@ La structure du JSON doit être strictement respectée :
       "hourlyRate": 150,
       "capacity": 4,
       "status": "AVAILABLE", // AVAILABLE, MAINTENANCE, RESERVED
+      "has_hour_meter": true // true si l'appareil a un horamètre, false sinon
     }
   ],
   "members": [
@@ -174,7 +178,7 @@ router.post('/start', verifyToken, async (req, res) => {
     ];
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-2024-08-06',
+      model: 'o3-mini',
       messages: messages,
       response_format: {
         type: "json_schema",
@@ -241,9 +245,13 @@ router.post('/start', verifyToken, async (req, res) => {
                         status: {
                           type: "string",
                           enum: ["AVAILABLE", "MAINTENANCE", "RESERVED"]
+                        },
+                        has_hour_meter: {
+                          type: "boolean",
+                          description: "Whether the aircraft has an hour meter"
                         }
                       },
-                      required: ["type", "registration", "hourlyRate", "capacity", "status"],
+                      required: ["type", "registration", "hourlyRate", "capacity", "status", "has_hour_meter"],
                       additionalProperties: false
                     }
                   }
@@ -338,7 +346,7 @@ router.post('/chat', verifyToken, async (req, res) => {
       
       if (aircrafts && aircrafts.length > 0) {
         contextMessage += 'Voici la flotte existante :\n';
-        aircrafts.forEach(aircraft => {
+        aircrafts.forEach((aircraft, index) => {
           contextMessage += `- ${aircraft.type} ${aircraft.registration} (${aircraft.capacity} places, ${aircraft.hourlyRate}€/h)\n`;
         });
         contextMessage += '\n';
@@ -346,7 +354,7 @@ router.post('/chat', verifyToken, async (req, res) => {
       
       if (members && members.length > 0) {
         contextMessage += 'Voici les membres existants :\n';
-        members.forEach(member => {
+        members.forEach((member, index) => {
           contextMessage += `- ${member.firstName} ${member.lastName} (${member.email})\n`;
         });
         contextMessage += '\n';
@@ -405,6 +413,41 @@ router.post('/chat', verifyToken, async (req, res) => {
                 config: {
                   type: "object",
                   properties: {
+                    aircrafts: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          type: {
+                            type: "string",
+                            enum: ["PLANE", "ULM"]
+                          },
+                          registration: {
+                            type: "string",
+                            description: "Aircraft registration number"
+                          },
+                          hourlyRate: {
+                            type: "number",
+                            description: "Hourly rate in euros"
+                          },
+                          capacity: {
+                            type: "number",
+                            description: "Number of seats"
+                          },
+                          status: {
+                            type: "string",
+                            enum: ["AVAILABLE", "MAINTENANCE", "RESERVED"],
+                            default: "AVAILABLE"
+                          },
+                          has_hour_meter: {
+                            type: "boolean",
+                            description: "Whether the aircraft has an hour meter"
+                          }
+                        },
+                        required: ["type", "registration", "hourlyRate", "capacity", "status", "has_hour_meter"],
+                        additionalProperties: false
+                      }
+                    },
                     members: {
                       type: "array",
                       items: {
@@ -428,36 +471,6 @@ router.post('/chat', verifyToken, async (req, res) => {
                           }
                         },
                         required: ["role", "firstName", "lastName", "email"],
-                        additionalProperties: false
-                      }
-                    },
-                    aircrafts: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          type: {
-                            type: "string",
-                            enum: ["PLANE", "ULM"]
-                          },
-                          registration: {
-                            type: "string",
-                            description: "Aircraft registration number"
-                          },
-                          hourlyRate: {
-                            type: "number",
-                            description: "Hourly rate for the aircraft"
-                          },
-                          capacity: {
-                            type: "number",
-                            description: "Aircraft capacity"
-                          },
-                          status: {
-                            type: "string",
-                            enum: ["AVAILABLE", "MAINTENANCE", "RESERVED"]
-                          }
-                        },
-                        required: ["type", "registration", "hourlyRate", "capacity", "status"],
                         additionalProperties: false
                       }
                     }

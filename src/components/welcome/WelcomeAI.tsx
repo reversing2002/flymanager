@@ -604,7 +604,8 @@ const WelcomeAI = () => {
           hourly_rate: Number(aircraft.hourlyRate),
           capacity: aircraft.capacity || (aircraft.type === 'PLANE' ? 4 : 2), // 4 places pour avion, 2 pour ULM
           status: aircraft.status || 'AVAILABLE', // Utiliser le statut du JSON ou 'AVAILABLE' par défaut
-          hour_format: 'CLASSIC'
+          hour_format: 'CLASSIC',
+          has_hour_meter: aircraft.has_hour_meter ?? true // Par défaut true pour la rétrocompatibilité
         };
         console.log('Aircraft data:', formattedAircraft);
         return formattedAircraft;
@@ -724,6 +725,7 @@ const WelcomeAI = () => {
           ...aircraft,
           club_id: user.club.id,
           status: aircraft.status || 'AVAILABLE', // Utiliser le statut du JSON ou 'AVAILABLE' par défaut
+          has_hour_meter: aircraft.has_hour_meter ?? true // Par défaut true pour la rétrocompatibilité
         }));
         await supabase.from('aircraft').insert(aircraftWithClubId);
       }

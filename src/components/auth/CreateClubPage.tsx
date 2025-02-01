@@ -49,26 +49,22 @@ const generateLogin = async (firstName: string, lastName: string): Promise<strin
   const normalizedLastName = normalizeString(lastName);
 
   // Prend la première lettre du prénom et le nom complet
-  let baseLogin = `${normalizedFirstName.charAt(0)}${normalizedLastName}`;
-  let increment = 0;
-  let loginExists = true;
-  let finalLogin = baseLogin;
+  const baseLogin = `${normalizedFirstName.charAt(0)}${normalizedLastName}`;
   
-  // Boucle pour trouver un login unique
-  while (loginExists) {
-    const loginToTry = increment === 0 ? baseLogin : `${baseLogin}${increment}`;
-    const { data: existingLogin } = await supabase
-      .from('users')
-      .select('login')
-      .eq('login', loginToTry)
-      .single();
-    
-    if (!existingLogin) {
-      finalLogin = loginToTry;
-      loginExists = false;
-    } else {
-      increment++;
-    }
+  // Ajouter un nombre aléatoire de 4 chiffres
+  const randomNum = Math.floor(1000 + Math.random() * 9000); // Génère un nombre entre 1000 et 9999
+  const finalLogin = `${baseLogin}${randomNum}`;
+
+  // Vérifier si le login existe déjà
+  const { data: existingLogin } = await supabase
+    .from('users')
+    .select('login')
+    .eq('login', finalLogin)
+    .single();
+
+  // Si le login existe déjà (cas très rare), on réessaie récursivement
+  if (existingLogin) {
+    return generateLogin(firstName, lastName);
   }
 
   return finalLogin;
