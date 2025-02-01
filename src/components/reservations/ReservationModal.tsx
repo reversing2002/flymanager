@@ -722,10 +722,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   return (
     <>
       <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
           
-          <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+          <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-full max-w-lg mx-auto max-h-[90vh] overflow-y-auto">
             <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
@@ -900,8 +900,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                     />
                   </div>
 
-                  {/* Affichage du solde seulement si < 100€ et si un pilote est sélectionné */}
+                  {/* Affichage du solde seulement si < 100€ et si un pilote est sélectionné et si l'utilisateur a les droits */}
                   {balance !== null && balance.pending < 100 && formData.pilotId && (
+                    currentUser?.id === formData.pilotId || isAdmin || isInstructor
+                  ) && (
                     <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
                       <div>
                         <p className="text-sm font-medium text-slate-600">Solde du pilote</p>
@@ -922,6 +924,16 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                 </div>
 
                 <div className="mt-6 flex flex-col space-y-6">
+                  {existingReservation && onCreateFlight && canTransformToFlight && !hasExistingFlight && (
+                    <button
+                      type="button"
+                      onClick={() => setShowNewFlightForm(true)}
+                      className="w-full px-6 py-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 shadow-sm"
+                    >
+                      Valider mon vol
+                    </button>
+                  )}
+
                   <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                     <button
                       type="submit"
@@ -947,18 +959,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                       </button>
                     )}
                   </div>
-                  
-                  {existingReservation && onCreateFlight && canTransformToFlight && !hasExistingFlight && (
-                    <div className="sm:flex sm:justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setShowNewFlightForm(true)}
-                        className="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 shadow-sm"
-                      >
-                        Valider mon vol
-                      </button>
-                    </div>
-                  )}
                 </div>
               </form>
             </div>
