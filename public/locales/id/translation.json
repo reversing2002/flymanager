@@ -1,0 +1,840 @@
+{
+    "rgpd": {
+      "meta": {
+        "title": "4fly - Kebijakan Perlindungan Data (RGPD)",
+        "description": "Pelajari bagaimana 4fly melindungi data pribadi Anda sesuai dengan RGPD. Kebijakan privasi, hak pengguna, dan langkah-langkah keamanan.",
+        "image": "/images/data-protection.jpg"
+      },
+      "title": "Kebijakan Perlindungan Data",
+      "introduction": {
+        "title": "Pendahuluan",
+        "content": "4fly berkomitmen untuk melindungi privasi pengguna platform manajemen aeroklubnya. Kebijakan perlindungan data ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi pribadi Anda."
+      },
+      "dataCollected": {
+        "title": "Data yang Dikumpulkan",
+        "intro": "Kami mengumpulkan informasi berikut:",
+        "items": [
+          "Informasi identitas (nama, nama belakang, email)",
+          "Data lisensi dan kualifikasi penerbangan",
+          "Informasi penerbangan dan pemesanan",
+          "Data pelatihan dan perkembangan",
+          "Informasi pembayaran (diproses dengan aman)"
+        ]
+      },
+      "dataUsage": {
+        "title": "Penggunaan Data",
+        "intro": "Data Anda digunakan untuk:",
+        "items": [
+          "Mengelola pemesanan dan penerbangan",
+          "Memantau pemeliharaan pesawat",
+          "Mengelola pelatihan dan perkembangan siswa",
+          "Memproses pembayaran",
+          "Menyampaikan informasi penting terkait klub"
+        ]
+      },
+      "dataProtection": {
+        "title": "Perlindungan Data",
+        "intro": "Kami menerapkan langkah-langkah keamanan teknis dan organisatoris untuk melindungi data Anda:",
+        "items": [
+          "Enkripsi data sensitif",
+          "Akses terbatas ke data pribadi",
+          "Pencadangan (backup) rutin dan aman",
+          "Pemantauan keamanan berkelanjutan"
+        ]
+      },
+      "rights": {
+        "title": "Hak Anda",
+        "intro": "Sesuai dengan RGPD, Anda memiliki hak-hak berikut:",
+        "items": [
+          "Hak untuk mengakses data pribadi Anda",
+          "Hak untuk memperbaiki data yang tidak akurat",
+          "Hak untuk menghapus data Anda",
+          "Hak untuk membatasi pemrosesan",
+          "Hak atas portabilitas data",
+          "Hak untuk menolak pemrosesan"
+        ]
+      },
+      "contact": {
+        "title": "Kontak",
+        "content": "Untuk pertanyaan terkait perlindungan data Anda atau untuk menggunakan hak-hak Anda, silakan hubungi kami di: privacy@4fly.io"
+      },
+      "update": {
+        "title": "Pembaruan",
+        "content": "Kebijakan perlindungan data ini dapat diperbarui secara berkala. Pembaruan terakhir dilakukan pada {{date}}."
+      }
+    },
+    "features": {
+      "meta": {
+        "title": "4fly - Fitur Manajemen Aeroklub | Solusi Lengkap",
+        "description": "Temukan semua fitur 4fly: manajemen penerbangan, pemesanan, pemeliharaan, pelatihan... Solusi lengkap untuk aeroklub Anda.",
+        "image": "/images/features-hero.jpg"
+      },
+      "flightManagement": {
+        "title": "Manajemen Penerbangan",
+        "description": "Perencanaan dan pemantauan penerbangan secara real-time"
+      },
+      "reservations": {
+        "title": "Pemesanan",
+        "description": "Sistem pemesanan online 24/7 dengan manajemen konflik dan ketersediaan secara real-time."
+      },
+      "maintenance": {
+        "title": "Pemeliharaan",
+        "description": "Pemantauan pemeliharaan secara detail dengan peringatan otomatis dan manajemen potensial."
+      },
+      "training": {
+        "title": "Pelatihan",
+        "description": "Manajemen pelatihan lengkap dengan pemantauan pedagogis dan perkembangan siswa."
+      },
+      "payments": {
+        "title": "Pembayaran",
+        "description": "Manajemen pembayaran dan faktur yang disederhanakan"
+      },
+      "memberManagement": {
+        "title": "Manajemen Anggota",
+        "description": "Administrasi efektif anggota klub"
+      }
+    },
+    "common": {
+      "locale": "id-ID",
+      "login": "Masuk",
+      "legal": "Informasi Hukum",
+      "legalMentions": "Pernyataan Hukum",
+      "cgv": "Ketentuan Penjualan",
+      "back": "Kembali",
+      "next": "Berikutnya",
+      "footerDescription": "Solusi sederhana untuk mengelola aeroklub Anda. Pemesanan, pemeliharaan, penagihan... semuanya ada di sini!",
+      "copyright": "MELBA CAPITAL - SASU dengan modal €2.700.000 - RCS Saint-Etienne 840 514 913"
+    },
+    "nav": {
+      "home": "Beranda",
+      "about": "Tentang Kami",
+      "features": "Fitur",
+      "pricing": "Harga",
+      "faq": "FAQ",
+      "contact": "Kontak"
+    },
+    "pricing": {
+      "meta": {
+        "title": "4fly - Harga | Solusi Manajemen Aeroklub Gratis",
+        "description": "Temukan harga yang sesuai dengan ukuran aeroklub Anda. Mulai gratis dan berkembang sesuai kebutuhan. Semua fitur termasuk!",
+        "image": "/images/pricing-hero.jpg"
+      },
+      "title": "Pilih Paket Anda",
+      "subtitle": "Semua fitur tersedia sejak awal: pemesanan, penjadwalan, pemeliharaan, pelatihan, penagihan... Semakin sering Anda terbang, semakin klub Anda berkembang, dan semakin 4fly mendukung Anda!",
+      "plans": {
+        "starter": {
+          "name": "Mulai",
+          "volume": "Hingga 1000 jam/tahun",
+          "price": "Gratis",
+          "description": "Mulailah perjalanan Anda dengan 4fly tanpa biaya dan temukan semua alat untuk menerbangkan klub Anda",
+          "cta": "Mulai gratis"
+        },
+        "growth": {
+          "name": "Berkembang",
+          "volume": "1000 s/d 3000 jam/tahun",
+          "price": "€0,50/jam terbang (belum termasuk PPN)",
+          "description": "Apakah klub Anda berkembang? 4fly berkembang bersama Anda untuk mendukung pertumbuhan Anda"
+        },
+        "performance": {
+          "name": "Kinerja",
+          "volume": "Lebih dari 3000 jam/tahun",
+          "price": "Disesuaikan",
+          "description": "Dapatkan dukungan khusus untuk mengoptimalkan manajemen aktivitas Anda"
+        }
+      },
+      "startFree": "Mulai gratis",
+      "footer": "Semua fitur tersedia sejak awal: pemesanan, penjadwalan, pemeliharaan, pelatihan, penagihan... Semakin sering Anda terbang, semakin klub Anda berkembang, dan semakin 4fly mendukung Anda!"
+    },
+    "about": {
+      "meta": {
+        "title": "4fly - Tentang Kami | Tim di Balik Solusi Anda",
+        "description": "Temukan tim 4fly, visi kami, dan komitmen kami untuk menyederhanakan pengelolaan aeroklub. Dukungan personal dan pelatihan gratis sudah termasuk.",
+        "image": "/images/about-team.jpg"
+      },
+      "hero": {
+        "title": "Tim 4fly",
+        "description": "4fly dikembangkan oleh tim yang bersemangat dan berkomitmen memberikan dukungan berkelanjutan bagi para pengguna kami."
+      },
+      "vision": {
+        "title": "Visi Kami",
+        "description": "Tim kami bekerja sama dengan aeroklub untuk mengembangkan solusi yang benar-benar menjawab kebutuhan sektor ini. Kami berkomitmen menjaga platform yang aman, berperforma tinggi, dan selalu berkembang.",
+        "approach": "Pendekatan lapangan yang dekat dengan klub"
+      },
+      "engagement": {
+        "title": "Komitmen Kami",
+        "items": {
+          "training": {
+            "title": "Pelatihan Gratis",
+            "description": "Pelatihan khusus dan gratis untuk semua klub pengguna",
+            "subtitle": "Pelatihan di lokasi, disesuaikan dengan kebutuhan Anda"
+          },
+          "setup": {
+            "title": "Penyiapan Awal",
+            "description": "Penyesuaian sistem dan dukungan dalam digitalisasi data historis Anda",
+            "subtitle": "Dari arsip kertas ke komputer, kami mengurus semuanya"
+          },
+          "support": {
+            "title": "Dukungan Teknis",
+            "description": "Tim yang siap membantu Anda setiap hari dalam penggunaan platform",
+            "subtitle": "Bantuan personal dan responsif"
+          },
+          "accompaniment": {
+            "title": "Pendampingan",
+            "description": "Pendampingan khusus untuk semua anggota klub, dari pemula hingga ahli IT",
+            "subtitle": "Mendengarkan seluruh pengguna"
+          }
+        }
+      },
+      "support": {
+        "title": "Dukungan dan Bantuan",
+        "items": [
+          "Pencadangan data harian",
+          "Pemantauan platform 24/7",
+          "Pembaruan rutin dengan fitur baru",
+          "Bantuan untuk semua pertanyaan teknis Anda"
+        ]
+      },
+      "images": {
+        "team": "Tim 4fly",
+        "vision": "Kolaborasi dengan aeroklub",
+        "support": "Dukungan dan bantuan"
+      }
+    },
+    "featuresPage": {
+      "hero": {
+        "title": "Fitur Kami",
+        "subtitle": "Temukan semua alat yang membuat platform kami menjadi solusi ideal untuk aeroklub Anda"
+      },
+      "items": {
+        "flights": {
+          "title": "Manajemen Penerbangan",
+          "description": "Pemantauan penerbangan menyeluruh, logbook digital, dan statistik terperinci untuk setiap pilot dan pesawat.",
+          "details": [
+            "Pencatatan penerbangan yang disederhanakan",
+            "Logbook penerbangan digital",
+            "Pemantauan jam terbang",
+            "Statistik terperinci"
+          ]
+        },
+        "reservations": {
+          "title": "Pemesanan",
+          "description": "Sistem pemesanan online 24/7 dengan manajemen konflik real-time dan ketersediaan.",
+          "details": [
+            "Pemesanan online 24/7",
+            "Kalender interaktif",
+            "Manajemen konflik",
+            "Notifikasi otomatis"
+          ]
+        },
+        "maintenance": {
+          "title": "Pemeliharaan",
+          "description": "Pemantauan detail pemeliharaan dengan peringatan otomatis dan pengelolaan potensial.",
+          "details": [
+            "Pemantauan potensial",
+            "Peringatan otomatis",
+            "Logbook pemeliharaan digital",
+            "Riwayat lengkap"
+          ]
+        },
+        "training": {
+          "title": "Pelatihan",
+          "description": "Manajemen pelatihan penuh dengan pemantauan pedagogis dan perkembangan siswa.",
+          "details": [
+            "Log perkembangan digital",
+            "Penjadwalan pelatihan",
+            "Pemantauan pedagogis",
+            "Sumber daya online"
+          ]
+        },
+        "finance": {
+          "title": "Manajemen Keuangan",
+          "description": "Fakturasi otomatis, pemantauan akun anggota, dan integrasi pembayaran online.",
+          "details": [
+            "Fakturasi otomatis",
+            "Pembayaran online",
+            "Pemantauan akun",
+            "Ekspor akuntansi"
+          ]
+        },
+        "members": {
+          "title": "Manajemen Anggota",
+          "description": "Administrasi lengkap anggota dengan manajemen lisensi dan kualifikasi.",
+          "details": [
+            "Profil terperinci",
+            "Pemantauan lisensi",
+            "Manajemen kualifikasi",
+            "Direktori anggota"
+          ]
+        },
+        "communication": {
+          "title": "Komunikasi",
+          "description": "Alat komunikasi terintegrasi untuk memudahkan interaksi di dalam klub.",
+          "details": [
+            "Pesan instan",
+            "Pengumuman klub",
+            "Notifikasi",
+            "Berbagi dokumen"
+          ]
+        },
+        "statistics": {
+          "title": "Statistik dan Laporan",
+          "description": "Dashboard dan laporan terperinci untuk memantau aktivitas klub.",
+          "details": [
+            "Dashboard",
+            "Laporan khusus",
+            "Analisis aktivitas",
+            "Ekspor data"
+          ]
+        },
+        "events": {
+          "title": "Acara",
+          "description": "Organisasi dan manajemen acara klub dengan pendaftaran online.",
+          "details": [
+            "Kalender acara",
+            "Pendaftaran online",
+            "Manajemen peserta",
+            "Pengingat otomatis"
+          ]
+        },
+        "security": {
+          "title": "Keamanan dan Kepatuhan",
+          "description": "Alat untuk memastikan keamanan dan kepatuhan peraturan.",
+          "details": [
+            "Manajemen laporan keselamatan",
+            "Pemantauan dokumen",
+            "Kepatuhan RGPD",
+            "Pencadangan otomatis"
+          ]
+        }
+      }
+    },
+    "faq": {
+      "meta": {
+        "title": "4fly - FAQ | Pertanyaan Umum tentang Manajemen Aeroklub",
+        "description": "Temukan jawaban atas semua pertanyaan Anda tentang 4fly: fitur, harga, dukungan teknis, pelatihan, dan banyak lagi.",
+        "image": "/images/faq-hero.jpg"
+      }
+    },
+    "faqPage": {
+      "hero": {
+        "title": "Pertanyaan Umum",
+        "subtitle": "Temukan di sini jawaban atas pertanyaan yang paling sering diajukan tentang 4fly"
+      },
+      "categories": {
+        "about": {
+          "title": "Tentang 4fly",
+          "questions": [
+            {
+              "question": "Apa itu 4fly dan untuk siapa ditujukan?",
+              "answer": "4fly adalah solusi perangkat lunak lengkap yang dirancang untuk menyederhanakan dan mengoptimalkan manajemen aeroklub. Solusi ini ditujukan untuk aeroklub dari berbagai ukuran, baik terafiliasi dengan otoritas penerbangan maupun tidak, yang ingin mengotomatisasi dan memusatkan operasi harian mereka. Tujuan kami adalah mendukung klub Anda dalam proses pertumbuhannya."
+            },
+            {
+              "question": "Bagaimana model harga bekerja?",
+              "answer": "Model kami sederhana: gratis hingga 1000 jam terbang per tahun, kemudian €0,50 per jam terbang (belum termasuk pajak) untuk total jam. Untuk klub besar yang melampaui 3000 jam per tahun, kami menawarkan paket khusus. Semua fitur tersedia sejak awal."
+            },
+            {
+              "question": "Apakah ada biaya tersembunyi?",
+              "answer": "Tidak, penetapan harga berbasis jam terbang kami sepenuhnya transparan. Semua fitur penting disertakan dalam tarif ini. Beberapa layanan tambahan seperti pembayaran kartu kredit tersedia sebagai opsi sesuai kebutuhan."
+            },
+            {
+              "question": "Fitur apa saja yang termasuk?",
+              "answer": "Semua fitur utama termasuk dalam penawaran dasar: manajemen pemesanan, pemeliharaan, pelatihan, akuntansi... Layanan tambahan seperti pembayaran kartu kredit tersedia sebagai opsi bagi klub yang menginginkannya."
+            },
+            {
+              "question": "Dukungan apa yang tersedia?",
+              "answer": "Kami menyediakan dukungan teknis lengkap melalui email dan telepon, termasuk untuk semua klub tanpa memandang ukurannya. Tim kami siap membantu Anda dalam penyiapan awal dan menjawab pertanyaan harian Anda."
+            }
+          ]
+        },
+        "reservations": {
+          "title": "Pemesanan dan Penerbangan",
+          "questions": [
+            {
+              "question": "Bagaimana sistem pemesanan bekerja?",
+              "answer": "Sistem pemesanan tersedia online 24/7. Anggota dapat memesan pesawat, melihat ketersediaan secara real-time, dan mengelola pemesanan mereka melalui smartphone atau komputer."
+            },
+            {
+              "question": "Bisakah memesan beberapa slot sekaligus di awal?",
+              "answer": "Ya, Anda dapat melakukan pemesanan berganda sesuai aturan klub Anda. Sistem akan secara otomatis memeriksa konflik dan kualifikasi yang diperlukan."
+            },
+            {
+              "question": "Bagaimana penerbangan instruksi dikelola?",
+              "answer": "Penerbangan instruksi dapat dijadwalkan dengan instruktur yang tersedia. Sistem secara otomatis memeriksa ketersediaan instruktur dan pesawat."
+            },
+            {
+              "question": "Apa yang terjadi jika ada pembatalan?",
+              "answer": "Pembatalan dikelola sesuai aturan klub. Sistem dapat mengirim notifikasi otomatis ke pihak terkait dan membebaskan slot untuk pemesanan lain."
+            }
+          ]
+        },
+        "maintenance": {
+          "title": "Pemeliharaan",
+          "questions": [
+            {
+              "question": "Bagaimana pemeliharaan pesawat dipantau?",
+              "answer": "4fly menyertakan sistem pemantauan lengkap yang mengawasi jam terbang, siklus, dan tenggat waktu kalendar. Peringatan otomatis dikirim untuk pemeliharaan yang akan datang."
+            },
+            {
+              "question": "Siapa yang bisa melaporkan pemeliharaan?",
+              "answer": "Mekanik dan staf berwenang dapat mencatat operasi pemeliharaan. Setiap intervensi terdokumentasi dan diarsipkan dalam riwayat pesawat."
+            },
+            {
+              "question": "Bagaimana peringatan pemeliharaan dikelola?",
+              "answer": "Sistem mengirim pemberitahuan otomatis kepada penanggung jawab ketika pemeliharaan sudah dekat. Pilot juga diinformasikan tentang batasan atau ketidaktersediaan pesawat."
+            },
+            {
+              "question": "Bisakah jenis pemeliharaan disesuaikan?",
+              "answer": "Ya, Anda dapat menentukan jenis pemeliharaan khusus sesuai kebutuhan, dengan interval berdasarkan jam terbang, siklus, atau kalender."
+            }
+          ]
+        },
+        "training": {
+          "title": "Pelatihan",
+          "questions": [
+            {
+              "question": "Bagaimana siswa dipantau?",
+              "answer": "Setiap siswa memiliki buku progres digital. Instruktur dapat memantau perkembangan mereka, mencatat latihan yang dilakukan, dan merencanakan pelajaran berikutnya."
+            },
+            {
+              "question": "Bisakah program pelatihan disesuaikan?",
+              "answer": "Ya, program pelatihan sepenuhnya dapat disesuaikan menurut kebutuhan Anda. Anda dapat membuat kurikulum berbeda untuk PPL, LAPL, atau kualifikasi lainnya."
+            },
+            {
+              "question": "Bagaimana ujian teoretis dikelola?",
+              "answer": "Platform menyertakan modul kuis dan ujian teori. Instruktur dapat membuat tes, mengikuti hasil, dan mengidentifikasi area yang perlu ditingkatkan."
+            },
+            {
+              "question": "Bisakah siswa memantau kemajuan mereka sendiri?",
+              "answer": "Ya, setiap siswa memiliki akses ke ruang pribadi mereka untuk memantau kemajuan, meninjau materi, dan mempersiapkan ujian."
+            }
+          ]
+        },
+        "members": {
+          "title": "Manajemen Anggota",
+          "questions": [
+            {
+              "question": "Bagaimana keanggotaan dikelola?",
+              "answer": "4fly memungkinkan Anda mengelola keanggotaan, iuran, dan lisensi. Pengingat otomatis dikirim untuk perpanjangan."
+            },
+            {
+              "question": "Bisakah kami menentukan tipe anggota yang berbeda?",
+              "answer": "Ya, Anda dapat membuat profil berbeda (siswa, pilot, instruktur, mekanik, dll.) dengan hak akses khusus."
+            },
+            {
+              "question": "Bagaimana dokumen anggota dikelola?",
+              "answer": "Semua dokumen (lisensi, sertifikat medis, kualifikasi) disimpan secara digital, dan sistem memberikan peringatan otomatis menjelang kedaluwarsa."
+            }
+          ]
+        },
+        "payments": {
+          "title": "Pembayaran dan Akuntansi",
+          "questions": [
+            {
+              "question": "Bagaimana pembayaran online bekerja?",
+              "answer": "4fly mengintegrasikan sistem pembayaran kartu kredit yang aman. Anggota dapat mengisi saldo dan membayar penerbangan langsung dari platform."
+            },
+            {
+              "question": "Laporan keuangan apa saja yang tersedia?",
+              "answer": "Platform menghasilkan laporan terperinci tentang penerbangan, pembayaran, dan akuntansi. Anda dapat mengekspor data ini untuk keperluan akuntansi Anda."
+            },
+            {
+              "question": "Bagaimana faktur dikelola?",
+              "answer": "Faktur dihasilkan secara otomatis setelah setiap penerbangan atau pembayaran. Faktur diarsipkan secara digital dan dapat dikirim melalui email."
+            }
+          ]
+        },
+        "security": {
+          "title": "Keamanan dan Data",
+          "questions": [
+            {
+              "question": "Bagaimana data dilindungi?",
+              "answer": "Semua data disimpan dengan aman dan dienkripsi. Kami mematuhi standar RGPD dan melakukan pencadangan rutin."
+            },
+            {
+              "question": "Siapa yang memiliki akses ke data klub?",
+              "answer": "Akses ke data dikontrol ketat melalui sistem izin. Hanya orang yang berwenang yang dapat mengakses informasi sensitif."
+            },
+            {
+              "question": "Bisakah kami mengekspor data kami?",
+              "answer": "Ya, Anda dapat mengekspor data kapan saja dalam format standar (CSV, Excel). Kami juga memudahkan migrasi dari sistem lain."
+            },
+            {
+              "question": "Bagaimana jaminan kontinuitas layanan?",
+              "answer": "Infrastruktur kami di-host di server redundan dengan ketersediaan tinggi. Kami melakukan pencadangan harian untuk semua data."
+            }
+          ]
+        }
+      }
+    },
+    "contact": {
+      "meta": {
+        "title": "4fly - Kontak | Dukungan dan Bantuan",
+        "description": "Butuh bantuan? Hubungi tim 4fly untuk semua pertanyaan tentang solusi manajemen aeroklub kami. Dukungan responsif dan personal.",
+        "image": "/images/contact-hero.jpg"
+      }
+    },
+    "contactPage": {
+      "hero": {
+        "title": "Hubungi Kami",
+        "subtitle": "Kami siap membantu Anda",
+        "needHelp": "Perlu bantuan?",
+        "supportMessage": "Tim kami siap mendukung Anda dalam mengelola aeroklub Anda."
+      },
+      "form": {
+        "name": {
+          "label": "Nama",
+          "error": "Silakan masukkan nama Anda"
+        },
+        "email": {
+          "label": "Email",
+          "error": "Format email tidak valid",
+          "placeholder": "email@anda.com",
+          "valid": "✓ Format email valid"
+        },
+        "phone": {
+          "label": "Telepon",
+          "error": "Format nomor telepon tidak valid",
+          "placeholder": "0812 3456 7890",
+          "valid": "✓ Format nomor telepon valid"
+        },
+        "contactReason": {
+          "label": "Alasan Kontak",
+          "options": {
+            "general": "Permintaan Informasi Umum",
+            "login": "Masalah Login",
+            "payment": "Masalah Pembayaran",
+            "bug": "Bug Teknis",
+            "partnership": "Permintaan Kerja Sama",
+            "training": "Pertanyaan tentang Pelatihan",
+            "reservations": "Pertanyaan tentang Pemesanan",
+            "improvement": "Saran Peningkatan",
+            "other": "Lainnya"
+          }
+        },
+        "customSubject": {
+          "label": "Spesifikasikan subjek Anda",
+          "error": "Silakan masukkan subjek"
+        },
+        "message": {
+          "label": "Pesan",
+          "error": "Pesan Anda terlalu singkat"
+        },
+        "submit": "Kirim",
+        "success": "Pesan berhasil dikirim!",
+        "error": "Terjadi kesalahan saat mengirim pesan",
+        "contactRequired": "Berikan setidaknya satu metode kontak",
+        "contactRequiredError": "Silakan berikan setidaknya satu metode kontak (email atau telepon)"
+      }
+    },
+    "createClub": {
+      "meta": {
+        "title": "4fly - Buat Aeroklub Anda | Mulai Gratis",
+        "description": "Buat aeroklub Anda dalam hitungan menit dengan 4fly. Pengaturan mudah dan cepat, tanpa komitmen.",
+        "image": "/images/create-club-hero.jpg"
+      },
+      "hero": {
+        "title": "Buat Aeroklub Anda",
+        "subtitle": "Dalam beberapa menit, wujudkan proyek Anda"
+      },
+      "form": {
+        "clubInfo": {
+          "title": "Informasi Klub",
+          "name": {
+            "label": "Nama Klub",
+            "placeholder": "Aeroklub...",
+            "error": "Nama klub wajib diisi"
+          },
+          "icao": {
+            "label": "Kode OACI",
+            "placeholder": "LFXX",
+            "error": "Kode OACI harus berisi 4 karakter",
+            "valid": "✓ Format valid"
+          },
+          "address": {
+            "label": "Alamat",
+            "placeholder": "Alamat klub",
+            "error": "Alamat wajib diisi"
+          },
+          "phone": {
+            "label": "Telepon",
+            "placeholder": "0812 3456 7890",
+            "error": "Format nomor telepon tidak valid",
+            "valid": "✓ Format valid"
+          }
+        },
+        "adminInfo": {
+          "title": "Informasi Administrator",
+          "firstName": {
+            "label": "Nama Depan",
+            "placeholder": "Nama depan Anda",
+            "error": "Nama depan wajib diisi"
+          },
+          "lastName": {
+            "label": "Nama Belakang",
+            "placeholder": "Nama belakang Anda",
+            "error": "Nama belakang wajib diisi"
+          },
+          "email": {
+            "label": "Email",
+            "placeholder": "email@anda.com",
+            "error": "Format email tidak valid",
+            "valid": "✓ Format valid"
+          },
+          "password": {
+            "label": "Kata Sandi",
+            "placeholder": "Minimal 8 karakter",
+            "error": "Kata sandi harus memiliki minimal 8 karakter",
+            "requirements": {
+              "length": "Minimal 8 karakter",
+              "uppercase": "Satu huruf kapital",
+              "lowercase": "Satu huruf kecil",
+              "number": "Satu angka",
+              "special": "Satu karakter khusus"
+            }
+          },
+          "confirmPassword": {
+            "label": "Konfirmasi Kata Sandi",
+            "error": "Kata sandi tidak cocok"
+          }
+        },
+        "submit": "Buat Klub Saya",
+        "success": "Klub berhasil dibuat!",
+        "error": "Terjadi kesalahan saat membuat klub",
+        "termsAndConditions": {
+          "text": "Saya menyetujui",
+          "link": "syarat dan ketentuan umum",
+          "error": "Anda harus menyetujui syarat dan ketentuan"
+        }
+      }
+    },
+    "login": {
+      "meta": {
+        "title": "4fly - Masuk ke Ruang Aeroklub Anda",
+        "description": "Masuk ke akun 4fly Anda untuk mengelola pemesanan, penerbangan, pelatihan, dan pemeliharaan aeronautika."
+      },
+      "hero": {
+        "title": "Selamat Datang di 4fly",
+        "subtitle": "Masuk untuk mengakses ruang Anda"
+      },
+      "form": {
+        "email": {
+          "label": "Email",
+          "placeholder": "Masukkan alamat email Anda",
+          "error": "Email wajib diisi"
+        },
+        "password": {
+          "label": "Kata Sandi",
+          "placeholder": "Masukkan kata sandi Anda",
+          "error": "Kata sandi wajib diisi",
+          "toggle": "Tampilkan/sembunyikan kata sandi"
+        },
+        "rememberMe": "Ingat saya",
+        "forgotPassword": "Lupa kata sandi?",
+        "submit": "Masuk",
+        "createClub": "Buat klub baru"
+      },
+      "success": "Masuk berhasil!",
+      "error": {
+        "invalid_credentials": "Nama pengguna atau kata sandi salah",
+        "unexpected": "Terjadi kesalahan yang tidak terduga"
+      }
+    },
+    "resetPassword": {
+      "title": "Atur Ulang Kata Sandi",
+      "description": "Masukkan alamat email Anda untuk menerima instruksi mengatur ulang kata sandi.",
+      "emailLabel": "Email",
+      "emailError": "Email tidak valid",
+      "submitButton": "Kirim Instruksi",
+      "submitting": "Mengirim...",
+      "backToLogin": "Kembali ke Login",
+      "success": {
+        "title": "Instruksi Terkirim!",
+        "description": "Periksa kotak masuk Anda dan ikuti instruksi untuk mengatur ulang kata sandi."
+      },
+      "toast": {
+        "success": "Instruksi telah dikirim via email",
+        "error": "Terjadi kesalahan saat mengirim instruksi"
+      }
+    },
+    "quotes": {
+      "saint-exupery-1": {
+        "text": "Pesawat bukanlah tujuan akhir, melainkan sarana. Kita tidak mempertaruhkan nyawa demi pesawat, sebagaimana seorang petani tidak membajak hanya demi bajaknya. Namun melalui pesawat, kita meninggalkan kota dan para akuntannya, dan menemukan kebenaran pedesaan.",
+        "author": "Antoine de Saint-Exupéry",
+        "role": "Penerbang dan Penulis"
+      },
+      "saint-exupery-2": {
+        "text": "Bumi mengajarkan kita lebih banyak tentang diri kita daripada semua buku. Karena ia menentang kita. Manusia menemukan dirinya ketika mengukur dirinya terhadap rintangan.",
+        "author": "Antoine de Saint-Exupéry",
+        "role": "Penerbang dan Penulis"
+      },
+      "guillaumet-1": {
+        "text": "Hal yang menyelamatkan kita adalah mengambil satu langkah. Lalu satu langkah lagi. Langkah yang sama, tetapi kita harus melakukannya.",
+        "author": "Henri Guillaumet",
+        "role": "Pilot Aéropostale"
+      },
+      "dassault-1": {
+        "text": "Sebuah pesawat yang indah adalah pesawat yang terbang dengan baik.",
+        "author": "Marcel Dassault",
+        "role": "Produsen Pesawat"
+      },
+      "saint-exupery-3": {
+        "text": "Di udara, tidak ada yang menopang burung kecuali keinginannya sendiri untuk tidak jatuh.",
+        "author": "Antoine de Saint-Exupéry",
+        "role": "Penerbang dan Penulis"
+      },
+      "mermoz-1": {
+        "text": "Aku telah melihat wajah Tuhan. Ia ada di awan, di angin, di bintang-bintang. Kulihat Dia di langit.",
+        "author": "Jean Mermoz",
+        "role": "Perintis Aéropostale"
+      },
+      "guillaumet-2": {
+        "text": "Perjalanan terindah adalah yang belum kita tempuh.",
+        "author": "Henri Guillaumet",
+        "role": "Pilot Aéropostale"
+      },
+      "dassault-2": {
+        "text": "Pesawat mungkin adalah mesin terindah yang pernah diciptakan manusia. Ia paling mendekati makhluk hidup.",
+        "author": "Marcel Dassault",
+        "role": "Produsen Pesawat"
+      },
+      "garros-1": {
+        "text": "Udara adalah fluida padat tempat kita bisa memahat bentuk padat.",
+        "author": "Roland Garros",
+        "role": "Pelopor Penerbangan"
+      },
+      "daurat-1": {
+        "text": "Saat Anda terbang di atas awan, Anda mengerti mengapa burung bernyanyi.",
+        "author": "Didier Daurat",
+        "role": "Direktur Aéropostale"
+      },
+      "bleriot-1": {
+        "text": "Terbang adalah kemenangan abadi yang kita menangkan atas gravitasi.",
+        "author": "Louis Blériot",
+        "role": "Pelopor Penerbangan"
+      },
+      "lindbergh-1": {
+        "text": "Penerbangan adalah kekasih yang menuntut. Dia tidak memaafkan kesalahan, tetapi memberi penghargaan pada hasrat.",
+        "author": "Charles Lindbergh",
+        "role": "Penerbang"
+      },
+      "mermoz-2": {
+        "text": "Di langit, tidak ada jalan. Yang ada hanya bintang dan mimpi.",
+        "author": "Jean Mermoz",
+        "role": "Perintis Aéropostale"
+      },
+      "boucher-1": {
+        "text": "Terbang mungkin berarti mendekat sedikit lebih dekat ke malaikat.",
+        "author": "Hélène Boucher",
+        "role": "Pelopor Aviatrix"
+      },
+      "guillaumet-3": {
+        "text": "Pilot yang tidak takut adalah pilot yang sudah mati. Keberanian adalah mengendalikan rasa takut Anda.",
+        "author": "Henri Guillaumet",
+        "role": "Pilot Aéropostale"
+      }
+    },
+    "cgv": {
+      "meta": {
+        "title": "4fly - Ketentuan Penjualan",
+        "description": "Lihat ketentuan penjualan kami: syarat penggunaan, harga, dan ketentuan kontrak untuk platform 4fly.",
+        "image": "/images/cgv-hero.jpg"
+      },
+      "title": "Ketentuan Penjualan Umum",
+      "lastUpdate": "Pembaruan terakhir: {{date}}",
+      "article1": {
+        "title": "Pasal 1 - Objek",
+        "content": "Ketentuan penjualan umum (CGV) ini mengatur penggunaan platform 4fly, sebuah solusi manajemen aeroklub. Ketentuan ini berlaku secara eksklusif dan menggantikan ketentuan lain."
+      },
+      "article2": {
+        "title": "Pasal 2 - Layanan",
+        "content": "4fly menawarkan platform manajemen lengkap yang mencakup:\n- Manajemen pemesanan pesawat\n- Pemantauan pemeliharaan\n- Manajemen pelatihan\n- Administrasi anggota\n- Penagihan dan pembayaran\n- Alat komunikasi"
+      },
+      "article3": {
+        "title": "Pasal 3 - Harga",
+        "content": "4fly menawarkan tiga paket harga yang disesuaikan dengan aktivitas Anda:\n\n1. Paket Mulai (Gratis):\n- Untuk klub hingga 1000 jam terbang per tahun\n- Akses ke semua fitur\n- Dukungan via email\n\n2. Paket Berkembang (€0,50/jam terbang belum termasuk PPN):\n- Untuk klub 1000 hingga 3000 jam terbang per tahun\n- Semua fitur disertakan\n- Dukungan prioritas\n\n3. Paket Kinerja (Disesuaikan):\n- Untuk klub di atas 3000 jam terbang per tahun\n- Semua fitur disertakan\n- Hosting khusus\n- Pelatihan di lokasi\n- Dukungan VIP 24/7\n- Manajer akun khusus"
+      },
+      "article4": {
+        "title": "Pasal 4 - Kewajiban",
+        "content": "4fly berkomitmen untuk:\n- Menjamin ketersediaan dan pemeliharaan platform\n- Mengamankan data pengguna\n- Memberikan dukungan teknis\n\nPengguna berkomitmen untuk:\n- Memberikan informasi yang akurat\n- Mematuhi syarat penggunaan\n- Tidak menyalahgunakan platform"
+      },
+      "article5": {
+        "title": "Pasal 5 - Data Pribadi",
+        "content": "4fly mengumpulkan dan memproses data pribadi sesuai dengan RGPD. Pengguna memiliki hak untuk mengakses, memperbaiki, dan menghapus data mereka."
+      },
+      "article6": {
+        "title": "Pasal 6 - Hak Kekayaan Intelektual",
+        "content": "Seluruh elemen platform 4fly (logo, teks, gambar, dll.) dilindungi oleh hak kekayaan intelektual. Setiap reproduksi dilarang tanpa izin terlebih dahulu."
+      },
+      "article7": {
+        "title": "Pasal 7 - Tanggung Jawab",
+        "content": "4fly tidak bertanggung jawab atas kerugian tidak langsung yang diakibatkan oleh penggunaan platform. Tanggung jawabnya terbatas pada jumlah layanan yang dibayar oleh pengguna."
+      },
+      "article8": {
+        "title": "Pasal 8 - Pengakhiran",
+        "content": "Masing-masing pihak dapat mengakhiri penggunaan layanan berdasarkan ketentuan yang disebutkan. Dalam hal pelanggaran serius, pengakhiran dapat dilakukan segera."
+      },
+      "article9": {
+        "title": "Pasal 9 - Hukum yang Berlaku",
+        "content": "Ketentuan penjualan umum ini tunduk pada hukum Prancis. Setiap perselisihan berada di bawah yurisdiksi eksklusif pengadilan Prancis."
+      }
+    },
+    "legal": {
+      "meta": {
+        "title": "4fly - Pernyataan Hukum",
+        "description": "Pernyataan hukum 4fly: informasi tentang penerbit, hosting, dan ketentuan penggunaan platform kami.",
+        "image": "/images/legal-hero.jpg"
+      },
+      "title": "Pernyataan Hukum",
+      "publisher": {
+        "title": "Penerbit Situs",
+        "company": "Perusahaan",
+        "legalForm": "Bentuk Hukum",
+        "legalFormValue": "SASU (Perusahaan Saham Sederhana dengan Pemegang Saham Tunggal)",
+        "address": "Alamat Terdaftar",
+        "rcs": "Nomor RCS",
+        "capital": "Modal Saham",
+        "vat": "Nomor PPN"
+      },
+      "hosting": {
+        "title": "Hosting",
+        "provider": "Penyedia Hosting",
+        "company": "Perusahaan",
+        "address": "Alamat"
+      },
+      "dataProtection": {
+        "title": "Perlindungan Data Pribadi",
+        "description": "Sesuai dengan Undang-Undang Prancis tentang Informatika dan Kebebasan tanggal 6 Januari 1978 yang telah diubah, serta Peraturan Perlindungan Data Umum (RGPD), Anda memiliki hak untuk mengakses, memperbaiki, menghapus, dan menolak pemrosesan data pribadi Anda.",
+        "rights": "Untuk menggunakan hak tersebut, Anda dapat menghubungi kami:",
+        "email": "Via email",
+        "mail": "Via pos"
+      },
+      "intellectualProperty": {
+        "title": "Kekayaan Intelektual",
+        "description": "Seluruh konten situs ini (struktur, teks, gambar, logo, basis data, dll.) adalah milik eksklusif MELBA CAPITAL. Setiap reproduksi, representasi, modifikasi, publikasi, transmisi, atau perubahan, seluruhnya atau sebagian, situs atau isinya, dengan cara apa pun, pada media apa pun, dilarang tanpa izin tertulis sebelumnya dari MELBA CAPITAL."
+      },
+      "cookies": {
+        "title": "Cookie",
+        "description": "Situs ini menggunakan cookie yang diperlukan untuk fungsinya dengan benar. Cookie adalah file teks kecil yang disimpan di komputer Anda. Cookie yang kami gunakan tidak memungkinkan kami untuk mengidentifikasi Anda secara pribadi. Cookie hanya digunakan untuk meningkatkan pengalaman pengguna Anda dan mengukur lalu lintas situs.",
+        "consent": "Dengan menggunakan situs kami, Anda menyetujui penggunaan cookie sesuai kebijakan privasi kami."
+      },
+      "links": {
+        "title": "Tautan Hiperteks",
+        "description": "Situs 4fly.io dapat berisi tautan ke situs lain. MELBA CAPITAL tidak bertanggung jawab atas konten atau kebijakan privasi situs-situs tersebut."
+      }
+    },
+    "home": {
+      "meta": {
+        "title": "4fly - Perangkat Lunak Manajemen Aeroklub | Solusi Lengkap Gratis",
+        "description": "4fly adalah solusi lengkap untuk mengelola aeroklub Anda. Manajemen penerbangan, pemesanan, pemeliharaan, pelatihan, dan banyak lagi. Coba gratis sekarang!",
+        "image": "/images/home-hero.jpg"
+      },
+      "title": "Kelola aeroklub Anda dengan mudah",
+      "description": "4fly adalah alat sederhana dan gratis untuk mengelola aeroklub Anda, baik beranggotakan 2 atau 200 orang. Tidak perlu lagi spreadsheet rumit dan banyak kertas!",
+      "createClub": "Buat Klub Saya",
+      "configurationTime": "Konfigurasi dalam 2 menit",
+      "startTitle": "Kembangkan aeroklub Anda",
+      "startDescription": "Konfigurasi dalam 2 menit",
+      "startButton": "Mulai gratis"
+    }
+  }
+  
