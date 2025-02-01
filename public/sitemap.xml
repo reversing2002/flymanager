@@ -12,9 +12,14 @@
     <xhtml:link rel="alternate" hreflang="de" href="https://4fly.io/de"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://4fly.io/es"/>
     <xhtml:link rel="alternate" hreflang="it" href="https://4fly.io/it"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://4fly.io/pt"/>
     <xhtml:link rel="alternate" hreflang="nl" href="https://4fly.io/nl"/>
     <xhtml:link rel="alternate" hreflang="pl" href="https://4fly.io/pl"/>
     <xhtml:link rel="alternate" hreflang="cs" href="https://4fly.io/cs"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://4fly.io/sv"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://4fly.io/ar"/>
+    <xhtml:link rel="alternate" hreflang="id" href="https://4fly.io/id"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://4fly.io/tr"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://4fly.io/fr"/>
   </url>
 
@@ -29,9 +34,14 @@
     <xhtml:link rel="alternate" hreflang="de" href="https://4fly.io/de/about"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://4fly.io/es/about"/>
     <xhtml:link rel="alternate" hreflang="it" href="https://4fly.io/it/about"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://4fly.io/pt/about"/>
     <xhtml:link rel="alternate" hreflang="nl" href="https://4fly.io/nl/about"/>
     <xhtml:link rel="alternate" hreflang="pl" href="https://4fly.io/pl/about"/>
     <xhtml:link rel="alternate" hreflang="cs" href="https://4fly.io/cs/about"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://4fly.io/sv/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://4fly.io/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="id" href="https://4fly.io/id/about"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://4fly.io/tr/about"/>
   </url>
 
   <!-- Tarifs -->
@@ -45,9 +55,14 @@
     <xhtml:link rel="alternate" hreflang="de" href="https://4fly.io/de/pricing"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://4fly.io/es/pricing"/>
     <xhtml:link rel="alternate" hreflang="it" href="https://4fly.io/it/pricing"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://4fly.io/pt/pricing"/>
     <xhtml:link rel="alternate" hreflang="nl" href="https://4fly.io/nl/pricing"/>
     <xhtml:link rel="alternate" hreflang="pl" href="https://4fly.io/pl/pricing"/>
     <xhtml:link rel="alternate" hreflang="cs" href="https://4fly.io/cs/pricing"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://4fly.io/sv/pricing"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://4fly.io/ar/pricing"/>
+    <xhtml:link rel="alternate" hreflang="id" href="https://4fly.io/id/pricing"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://4fly.io/tr/pricing"/>
   </url>
 
   <!-- Fonctionnalités -->
@@ -61,9 +76,14 @@
     <xhtml:link rel="alternate" hreflang="de" href="https://4fly.io/de/features"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://4fly.io/es/features"/>
     <xhtml:link rel="alternate" hreflang="it" href="https://4fly.io/it/features"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://4fly.io/pt/features"/>
     <xhtml:link rel="alternate" hreflang="nl" href="https://4fly.io/nl/features"/>
     <xhtml:link rel="alternate" hreflang="pl" href="https://4fly.io/pl/features"/>
     <xhtml:link rel="alternate" hreflang="cs" href="https://4fly.io/cs/features"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://4fly.io/sv/features"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://4fly.io/ar/features"/>
+    <xhtml:link rel="alternate" hreflang="id" href="https://4fly.io/id/features"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://4fly.io/tr/features"/>
   </url>
 
   <!-- Contact -->
@@ -77,9 +97,14 @@
     <xhtml:link rel="alternate" hreflang="de" href="https://4fly.io/de/contact"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://4fly.io/es/contact"/>
     <xhtml:link rel="alternate" hreflang="it" href="https://4fly.io/it/contact"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://4fly.io/pt/contact"/>
     <xhtml:link rel="alternate" hreflang="nl" href="https://4fly.io/nl/contact"/>
     <xhtml:link rel="alternate" hreflang="pl" href="https://4fly.io/pl/contact"/>
     <xhtml:link rel="alternate" hreflang="cs" href="https://4fly.io/cs/contact"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://4fly.io/sv/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://4fly.io/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="id" href="https://4fly.io/id/contact"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://4fly.io/tr/contact"/>
   </url>
 
   <!-- FAQ -->
@@ -93,9 +118,14 @@
     <xhtml:link rel="alternate" hreflang="de" href="https://4fly.io/de/faq"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://4fly.io/es/faq"/>
     <xhtml:link rel="alternate" hreflang="it" href="https://4fly.io/it/faq"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://4fly.io/pt/faq"/>
     <xhtml:link rel="alternate" hreflang="nl" href="https://4fly.io/nl/faq"/>
     <xhtml:link rel="alternate" hreflang="pl" href="https://4fly.io/pl/faq"/>
     <xhtml:link rel="alternate" hreflang="cs" href="https://4fly.io/cs/faq"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://4fly.io/sv/faq"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://4fly.io/ar/faq"/>
+    <xhtml:link rel="alternate" hreflang="id" href="https://4fly.io/id/faq"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://4fly.io/tr/faq"/>
   </url>
 
   <!-- CGV -->
@@ -109,9 +139,14 @@
     <xhtml:link rel="alternate" hreflang="de" href="https://4fly.io/de/cgv"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://4fly.io/es/cgv"/>
     <xhtml:link rel="alternate" hreflang="it" href="https://4fly.io/it/cgv"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://4fly.io/pt/cgv"/>
     <xhtml:link rel="alternate" hreflang="nl" href="https://4fly.io/nl/cgv"/>
     <xhtml:link rel="alternate" hreflang="pl" href="https://4fly.io/pl/cgv"/>
     <xhtml:link rel="alternate" hreflang="cs" href="https://4fly.io/cs/cgv"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://4fly.io/sv/cgv"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://4fly.io/ar/cgv"/>
+    <xhtml:link rel="alternate" hreflang="id" href="https://4fly.io/id/cgv"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://4fly.io/tr/cgv"/>
   </url>
 
   <!-- Mentions légales -->
@@ -125,9 +160,14 @@
     <xhtml:link rel="alternate" hreflang="de" href="https://4fly.io/de/legal"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://4fly.io/es/legal"/>
     <xhtml:link rel="alternate" hreflang="it" href="https://4fly.io/it/legal"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://4fly.io/pt/legal"/>
     <xhtml:link rel="alternate" hreflang="nl" href="https://4fly.io/nl/legal"/>
     <xhtml:link rel="alternate" hreflang="pl" href="https://4fly.io/pl/legal"/>
     <xhtml:link rel="alternate" hreflang="cs" href="https://4fly.io/cs/legal"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://4fly.io/sv/legal"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://4fly.io/ar/legal"/>
+    <xhtml:link rel="alternate" hreflang="id" href="https://4fly.io/id/legal"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://4fly.io/tr/legal"/>
   </url>
 
   <!-- RGPD -->
@@ -141,8 +181,13 @@
     <xhtml:link rel="alternate" hreflang="de" href="https://4fly.io/de/rgpd"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://4fly.io/es/rgpd"/>
     <xhtml:link rel="alternate" hreflang="it" href="https://4fly.io/it/rgpd"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://4fly.io/pt/rgpd"/>
     <xhtml:link rel="alternate" hreflang="nl" href="https://4fly.io/nl/rgpd"/>
     <xhtml:link rel="alternate" hreflang="pl" href="https://4fly.io/pl/rgpd"/>
     <xhtml:link rel="alternate" hreflang="cs" href="https://4fly.io/cs/rgpd"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://4fly.io/sv/rgpd"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://4fly.io/ar/rgpd"/>
+    <xhtml:link rel="alternate" hreflang="id" href="https://4fly.io/id/rgpd"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://4fly.io/tr/rgpd"/>
   </url>
 </urlset>

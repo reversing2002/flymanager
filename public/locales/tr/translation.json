@@ -1,0 +1,842 @@
+{
+    "rgpd": {
+      "meta": {
+        "title": "4fly - Veri Koruma Politikası (RGPD)",
+        "description": "4fly'ın RGPD kapsamında kişisel verilerinizi nasıl koruduğunu keşfedin. Gizlilik politikası, kullanıcı hakları ve güvenlik önlemleri.",
+        "image": "/images/data-protection.jpg"
+      },
+      "title": "Veri Koruma Politikası",
+      "introduction": {
+        "title": "Giriş",
+        "content": "4fly, hava kulübü yönetim platformu kullanıcılarının gizliliğini korumayı taahhüt eder. Bu veri koruma politikası, kişisel bilgilerinizi nasıl topladığımızı, kullandığımızı ve koruduğumuzu açıklar."
+      },
+      "dataCollected": {
+        "title": "Toplanan Veriler",
+        "intro": "Aşağıdaki bilgileri topluyoruz:",
+        "items": [
+          "Kimlik bilgileri (ad, soyad, e-posta)",
+          "Pilot lisans ve yeterlilik verileri",
+          "Uçuş ve rezervasyon bilgileri",
+          "Eğitim ve ilerleme verileri",
+          "Güvenli şekilde işlenen ödeme bilgileri"
+        ]
+      },
+      "dataUsage": {
+        "title": "Verilerin Kullanımı",
+        "intro": "Verileriniz şu amaçlarla kullanılır:",
+        "items": [
+          "Rezervasyonların ve uçuşların yönetimi",
+          "Uçak bakımlarının takibi",
+          "Öğrencilerin eğitim ve ilerlemesinin yönetimi",
+          "Ödemelerin işlenmesi",
+          "Kulüp ile ilgili önemli bilgilerin iletilmesi"
+        ]
+      },
+      "dataProtection": {
+        "title": "Veri Koruması",
+        "intro": "Verilerinizi korumak için teknik ve organizasyonel güvenlik önlemleri uyguluyoruz:",
+        "items": [
+          "Hassas verilerin şifrelenmesi",
+          "Kişisel verilere sınırlı erişim",
+          "Düzenli ve güvenli yedeklemeler",
+          "Sürekli güvenlik takibi"
+        ]
+      },
+      "rights": {
+        "title": "Haklarınız",
+        "intro": "RGPD’ye uygun olarak şu haklara sahipsiniz:",
+        "items": [
+          "Kişisel verilerinize erişim hakkı",
+          "Yanlış verilerin düzeltilmesi hakkı",
+          "Verilerinizin silinmesi hakkı",
+          "İşlemenin sınırlandırılması hakkı",
+          "Veri taşınabilirliği hakkı",
+          "İşlemeye itiraz etme hakkı"
+        ]
+      },
+      "contact": {
+        "title": "İletişim",
+        "content": "Verilerinizin korunmasıyla ilgili herhangi bir sorunuz varsa veya haklarınızı kullanmak isterseniz, lütfen bizimle şu adres üzerinden iletişime geçin: privacy@4fly.io"
+      },
+      "update": {
+        "title": "Güncelleme",
+        "content": "Bu veri koruma politikası periyodik olarak güncellenebilir. Son güncelleme tarihi: {{date}}."
+      }
+    },
+    "features": {
+      "meta": {
+        "title": "4fly - Hava Kulübü Yönetimi Özellikleri | Kapsamlı Çözüm",
+        "description": "4fly’ın tüm özelliklerini keşfedin: uçuş yönetimi, rezervasyon, bakım, eğitim... Hava kulübünüz için eksiksiz bir çözüm.",
+        "image": "/images/features-hero.jpg"
+      },
+      "flightManagement": {
+        "title": "Uçuş Yönetimi",
+        "description": "Gerçek zamanlı uçuş planlama ve takibi"
+      },
+      "reservations": {
+        "title": "Rezervasyonlar",
+        "description": "Çevrimiçi rezervasyon sistemi (7/24), eşzamanlı çakışma yönetimi ve gerçek zamanlı müsaitlik takibi."
+      },
+      "maintenance": {
+        "title": "Bakım",
+        "description": "Otomatik uyarılar ve potansiyel yönetimiyle detaylı bakım takibi."
+      },
+      "training": {
+        "title": "Eğitim",
+        "description": "Pedagojik takip ve öğrencilerin ilerlemelerini de içeren eksiksiz eğitim yönetimi."
+      },
+      "payments": {
+        "title": "Ödemeler",
+        "description": "Basitleştirilmiş ödeme ve faturalama yönetimi"
+      },
+      "memberManagement": {
+        "title": "Üye Yönetimi",
+        "description": "Kulüp üyelerinin etkin yönetimi"
+      }
+    },
+    "common": {
+      "locale": "tr-TR",
+      "login": "Giriş Yap",
+      "legal": "Yasal Bilgiler",
+      "legalMentions": "Yasal Uyarılar",
+      "cgv": "Satış Koşulları",
+      "back": "Geri",
+      "next": "İleri",
+      "rgpd": "Kişisel Verilerin Korunması",
+      "footerDescription": "Hava kulübünüzü yönetmek için basit bir çözüm. Rezervasyonlar, bakım, faturalama... hepsi burada!",
+      "copyright": "MELBA CAPITAL - 2.700.000 € sermayeli bir SASU - RCS Saint-Etienne 840 514 913"
+    },
+    "nav": {
+      "home": "Ana Sayfa",
+      "about": "Hakkımızda",
+      "features": "Özellikler",
+      "pricing": "Fiyatlar",
+      "faq": "SSS",
+      "contact": "İletişim",
+      "menu": "Menü"
+    },
+    "pricing": {
+      "meta": {
+        "title": "4fly - Fiyatlar | Ücretsiz Hava Kulübü Yönetim Çözümü",
+        "description": "Hava kulübünüzün boyutuna uygun fiyatlarımızı keşfedin. Ücretsiz başlayın ve ihtiyaçlarınıza göre ölçeklendirin. Tüm özellikler dahil!",
+        "image": "/images/pricing-hero.jpg"
+      },
+      "title": "Planınızı Seçin",
+      "subtitle": "Tüm özellikler en baştan itibaren mevcuttur: rezervasyonlar, takvimler, bakım, eğitim, faturalama... Ne kadar çok uçarsanız, kulübünüz o kadar büyür ve 4fly size o kadar destek sağlar!",
+      "plans": {
+        "starter": {
+          "name": "Başlangıç",
+          "volume": "Yılda 1000 saate kadar",
+          "price": "Ücretsiz",
+          "description": "4fly'a ücretsiz başlayın ve kulübünüzü uçuşa geçirmek için gereken tüm araçları keşfedin",
+          "cta": "Ücretsiz Başlayın"
+        },
+        "growth": {
+          "name": "Büyüme",
+          "volume": "Yılda 1000 ila 3000 saat",
+          "price": "0,50€ / uçuş saati (KDV hariç)",
+          "description": "Kulübünüz büyüyor mu? 4fly sizinle birlikte gelişerek büyümenize destek olur"
+        },
+        "performance": {
+          "name": "Performans",
+          "volume": "Yılda 3000 saat ve üzeri",
+          "price": "Özel",
+          "description": "Faaliyet yönetiminizi optimize etmek için kişiselleştirilmiş destek alın"
+        }
+      },
+      "startFree": "Ücretsiz Başlayın",
+      "footer": "Tüm özellikler en baştan itibaren mevcuttur: rezervasyonlar, takvimler, bakım, eğitim, faturalama... Ne kadar çok uçarsanız, kulübünüz o kadar büyür ve 4fly size o kadar destek sağlar!"
+    },
+    "about": {
+      "meta": {
+        "title": "4fly - Hakkımızda | Havacılık Çözümlerinizin Arkasındaki Ekip",
+        "description": "4fly ekibini, vizyonumuzu ve hava kulüplerinin yönetimini kolaylaştırmaya yönelik bağlılığımızı keşfedin. Kişiselleştirilmiş destek ve ücretsiz eğitim dahildir.",
+        "image": "/images/about-team.jpg"
+      },
+      "hero": {
+        "title": "4fly Ekibi",
+        "description": "4fly, kullanıcılarımıza sürekli destek sağlamak için kendini adamış tutkulu bir ekip tarafından geliştirilmektedir."
+      },
+      "vision": {
+        "title": "Vizyonumuz",
+        "description": "Ekibimiz, sektörün gereksinimlerini tam olarak karşılayan bir çözüm geliştirmek için hava kulüpleriyle yakın işbirliği içinde çalışıyor. Güvenli, yüksek performanslı ve sürekli gelişen bir platform sağlamayı taahhüt ediyoruz.",
+        "approach": "Kulüplere yakın saha yaklaşımı"
+      },
+      "engagement": {
+        "title": "Taahhüdümüz",
+        "items": {
+          "training": {
+            "title": "Ücretsiz Eğitim",
+            "description": "Platformu kullanan tüm kulüplere kişiselleştirilmiş ve ücretsiz eğitim",
+            "subtitle": "İhtiyaçlarınıza uygun yerinde eğitim"
+          },
+          "setup": {
+            "title": "İlk Kurulum",
+            "description": "Özel kurulum ve eski verilerinizin dijitalleştirilmesinde destek",
+            "subtitle": "Klasörden bilgisayara, her şeyi biz hallediyoruz"
+          },
+          "support": {
+            "title": "Teknik Destek",
+            "description": "Platformu günlük olarak kullanırken size yardımcı olmaya hazır bir ekip",
+            "subtitle": "Kişiselleştirilmiş ve hızlı yardım"
+          },
+          "accompaniment": {
+            "title": "Refakat",
+            "description": "BT'de yeni başlayanlardan uzmanlara kadar tüm kulüp üyeleri için özel takip",
+            "subtitle": "Tüm kullanıcıları dinliyoruz"
+          }
+        }
+      },
+      "support": {
+        "title": "Destek ve Yardım",
+        "items": [
+          "Verilerinizin günlük yedeklenmesi",
+          "7/24 platform izleme",
+          "Yeni özelliklerle düzenli güncellemeler",
+          "Tüm teknik sorularınız için yardım"
+        ]
+      },
+      "images": {
+        "team": "4fly Ekibi",
+        "vision": "Hava kulüpleriyle işbirliği",
+        "support": "Destek ve yardım"
+      }
+    },
+    "featuresPage": {
+      "hero": {
+        "title": "Özelliklerimiz",
+        "subtitle": "Platformumuzu hava kulübünüz için ideal bir çözüm haline getiren tüm araçları keşfedin"
+      },
+      "items": {
+        "flights": {
+          "title": "Uçuş Yönetimi",
+          "description": "Kapsamlı uçuş takibi, dijital defterler ve her pilot ve uçak için ayrıntılı istatistikler.",
+          "details": [
+            "Basitleştirilmiş uçuş girişi",
+            "Dijital uçuş defterleri",
+            "Uçuş süresi takibi",
+            "Ayrıntılı istatistikler"
+          ]
+        },
+        "reservations": {
+          "title": "Rezervasyonlar",
+          "description": "7/24 çevrimiçi rezervasyon sistemi, gerçek zamanlı çakışma yönetimi ve müsaitlik takibi.",
+          "details": [
+            "7/24 çevrimiçi rezervasyon",
+            "Etkileşimli takvim",
+            "Çakışma yönetimi",
+            "Otomatik bildirimler"
+          ]
+        },
+        "maintenance": {
+          "title": "Bakım",
+          "description": "Otomatik uyarılar ve potansiyel yönetimiyle kapsamlı bakım takibi.",
+          "details": [
+            "Potansiyel takibi",
+            "Otomatik uyarılar",
+            "Dijital bakım kaydı",
+            "Eksiksiz bakım geçmişi"
+          ]
+        },
+        "training": {
+          "title": "Eğitim",
+          "description": "Pedagojik takip ve öğrenci ilerlemesiyle eksiksiz eğitim yönetimi.",
+          "details": [
+            "Dijital ilerleme defteri",
+            "Eğitim planlaması",
+            "Pedagojik takip",
+            "Çevrimiçi kaynaklar"
+          ]
+        },
+        "finance": {
+          "title": "Finansal Yönetim",
+          "description": "Otomatik faturalama, üye hesap takibi ve çevrimiçi ödeme entegrasyonu.",
+          "details": [
+            "Otomatik faturalama",
+            "Çevrimiçi ödemeler",
+            "Hesap takibi",
+            "Muhasebe dışa aktarımları"
+          ]
+        },
+        "members": {
+          "title": "Üye Yönetimi",
+          "description": "Lisans ve yeterlilik yönetimiyle eksiksiz üye yönetimi.",
+          "details": [
+            "Ayrıntılı profiller",
+            "Lisans takibi",
+            "Yeterlilik yönetimi",
+            "Üye dizini"
+          ]
+        },
+        "communication": {
+          "title": "İletişim",
+          "description": "Kulüp içi etkileşimi kolaylaştıran entegre iletişim araçları.",
+          "details": [
+            "Anlık mesajlaşma",
+            "Kulüp duyuruları",
+            "Bildirimler",
+            "Belge paylaşımı"
+          ]
+        },
+        "statistics": {
+          "title": "İstatistikler ve Raporlar",
+          "description": "Kulüp faaliyetlerini takip etmek için panolar ve ayrıntılı raporlar.",
+          "details": [
+            "Panolar",
+            "Özel raporlar",
+            "Faaliyet analizi",
+            "Veri dışa aktarımları"
+          ]
+        },
+        "events": {
+          "title": "Etkinlikler",
+          "description": "Kulüp etkinliklerinin düzenlenmesi ve yönetimi, çevrimiçi kayıt imkanıyla.",
+          "details": [
+            "Etkinlik takvimi",
+            "Çevrimiçi kayıt",
+            "Katılımcı yönetimi",
+            "Otomatik hatırlatmalar"
+          ]
+        },
+        "security": {
+          "title": "Güvenlik ve Uyum",
+          "description": "Güvenliği ve yasal uyumu sağlamak için araçlar.",
+          "details": [
+            "Güvenlik raporu yönetimi",
+            "Belge takibi",
+            "RGPD uyumluluğu",
+            "Otomatik yedeklemeler"
+          ]
+        }
+      }
+    },
+    "faq": {
+      "meta": {
+        "title": "4fly - SSS | Hava Kulübü Yönetimi Hakkında Sıkça Sorulan Sorular",
+        "description": "4fly hakkındaki tüm sorularınıza yanıt bulun: özellikler, fiyatlar, teknik destek, eğitim ve daha fazlası.",
+        "image": "/images/faq-hero.jpg"
+      }
+    },
+    "faqPage": {
+      "hero": {
+        "title": "Sıkça Sorulan Sorular",
+        "subtitle": "4fly ile ilgili en sık sorulan soruların yanıtlarını burada bulabilirsiniz"
+      },
+      "categories": {
+        "about": {
+          "title": "4fly Hakkında",
+          "questions": [
+            {
+              "question": "4fly nedir ve kime yöneliktir?",
+              "answer": "4fly, hava kulüplerinin yönetimini basitleştirmek ve optimize etmek için tasarlanmış kapsamlı bir yazılım çözümüdür. Büyüklük gözetmeksizin tüm hava kulüplerine hitap eder; resmi havacılık otoritelerine bağlı olsun ya da olmasın, günlük operasyonlarını otomatikleştirmek ve merkezileştirmek isteyen kulüpler için tasarlanmıştır. Amacımız, kulübünüzün büyüme sürecinde sizi desteklemektir."
+            },
+            {
+              "question": "Fiyatlandırma modeli nasıl çalışıyor?",
+              "answer": "Modelimiz basit: yılda 1000 uçuş saatine kadar ücretsiz, ardından toplam uçuş saati başına 0,50€ (vergiler hariç). Yılda 3000 uçuş saatini aşan büyük kulüpler için özel planlar sunuyoruz. Tüm özellikler en baştan itibaren dahildir."
+            },
+            {
+              "question": "Gizli ücretler var mı?",
+              "answer": "Hayır, uçuş saati temelli fiyatlandırmamız tamamen şeffaftır. Gerekli tüm temel özellikler bu tarifeye dahildir. Kredi kartı ödemesi gibi bazı ek hizmetler, ihtiyaçlara göre opsiyonel olarak sunulur."
+            },
+            {
+              "question": "Hangi özellikler dahil?",
+              "answer": "Temel teklife tüm ana özellikler dahildir: rezervasyon yönetimi, bakım, eğitim, muhasebe... İsteyen kulüpler için kredi kartı ödemesi gibi ek hizmetler opsiyonel olarak sunulur."
+            },
+            {
+              "question": "Ne tür destek mevcut?",
+              "answer": "Tüm kulüpler (her boyutta) için email ve telefon aracılığıyla kapsamlı teknik destek sunuyoruz. Ekibimiz, ilk kurulumda size yardımcı olmak ve günlük sorularınızı yanıtlamak için hazır."
+            }
+          ]
+        },
+        "reservations": {
+          "title": "Rezervasyonlar ve Uçuşlar",
+          "questions": [
+            {
+              "question": "Rezervasyon sistemi nasıl çalışıyor?",
+              "answer": "Rezervasyon sistemi 7/24 çevrimiçi olarak sunulur. Üyeler uçak ayırtabilir, gerçek zamanlı müsaitlik durumunu görebilir ve akıllı telefon veya bilgisayar üzerinden rezervasyonlarını yönetebilir."
+            },
+            {
+              "question": "Önceden birden fazla slot rezervasyonu yapılabilir mi?",
+              "answer": "Evet, kulübünüzün kurallarına göre birden fazla rezervasyon yapılabilir. Sistem otomatik olarak çakışmaları ve gerekli yeterlilikleri kontrol eder."
+            },
+            {
+              "question": "Eğitim (talim) uçuşları nasıl yönetilir?",
+              "answer": "Eğitim uçuşları, uygun durumdaki eğitmenlerle planlanabilir. Sistem eğitmenin ve uçağın müsaitliğini otomatik olarak kontrol eder."
+            },
+            {
+              "question": "İptal durumunda ne olur?",
+              "answer": "İptaller kulübünüzün kurallarına göre yönetilir. Sistem ilgili kişilere otomatik bildirimler gönderebilir ve slotu diğer rezervasyonlar için serbest bırakır."
+            }
+          ]
+        },
+        "maintenance": {
+          "title": "Bakım",
+          "questions": [
+            {
+              "question": "Uçak bakımı nasıl takip ediliyor?",
+              "answer": "4fly, uçuş saatlerini, döngüleri ve takvim tarihlerini izleyen kapsamlı bir bakım takibi sistemi içerir. Yaklaşan bakımlar için otomatik uyarılar gönderilir."
+            },
+            {
+              "question": "Bakım işlemlerini kim kaydedebilir?",
+              "answer": "Teknisyenler ve yetkili personel bakım işlemlerini kaydedebilir. Her müdahale belgelenir ve uçağın geçmişine arşivlenir."
+            },
+            {
+              "question": "Bakım uyarıları nasıl yönetilir?",
+              "answer": "Sistem, yaklaşan bakımlar için sorumlulara otomatik bildirimler gönderir. Pilotlar da uçak kısıtlamaları veya kullanılmaz durum hakkında bilgilendirilir."
+            },
+            {
+              "question": "Bakım türleri özelleştirilebilir mi?",
+              "answer": "Evet, ihtiyaçlarınıza göre uçuş saatine, döngülere veya takvim esaslarına dayalı bakım türleri belirleyebilirsiniz."
+            }
+          ]
+        },
+        "training": {
+          "title": "Eğitim",
+          "questions": [
+            {
+              "question": "Öğrencilerin ilerlemesi nasıl takip edilir?",
+              "answer": "Her öğrencinin dijital bir ilerleme defteri vardır. Eğitmenler, öğrencinin gelişimini izleyebilir, gerçekleştirdiği alıştırmaları not edebilir ve sonraki dersleri planlayabilir."
+            },
+            {
+              "question": "Eğitim programı özelleştirilebilir mi?",
+              "answer": "Evet, eğitim programları tamamen ihtiyaçlarınıza göre uyarlanabilir. PPL, LAPL veya diğer yeterlilikler için farklı müfredatlar oluşturabilirsiniz."
+            },
+            {
+              "question": "Teorik sınavlar nasıl yönetilir?",
+              "answer": "Platform, test ve teorik sınav modülünü içerir. Eğitmenler testler oluşturabilir, sonuçları takip edebilir ve geliştirilmesi gereken noktaları belirleyebilir."
+            },
+            {
+              "question": "Öğrenciler kendi ilerlemelerini takip edebilir mi?",
+              "answer": "Evet, her öğrenci, ilerlemesini izleyebileceği, dersleri gözden geçirebileceği ve sınavlara hazırlanabileceği kişisel alanına erişime sahiptir."
+            }
+          ]
+        },
+        "members": {
+          "title": "Üye Yönetimi",
+          "questions": [
+            {
+              "question": "Üyelikler nasıl yönetiliyor?",
+              "answer": "4fly, üyeliklerin, aidatların ve lisansların yönetilmesini sağlar. Yenilemeler için otomatik hatırlatmalar gönderilir."
+            },
+            {
+              "question": "Farklı üye türleri tanımlanabilir mi?",
+              "answer": "Evet, farklı erişim haklarına sahip (öğrenci, pilot, eğitmen, teknisyen vb.) çeşitli profiller oluşturabilirsiniz."
+            },
+            {
+              "question": "Üyelerin belgeleri nasıl yönetilir?",
+              "answer": "Lisans, sağlık sertifikaları, yeterlilikler gibi tüm belgeler dijital olarak saklanır. Sistem, yaklaşan son kullanma tarihleri için otomatik uyarılar gönderir."
+            }
+          ]
+        },
+        "payments": {
+          "title": "Ödemeler ve Muhasebe",
+          "questions": [
+            {
+              "question": "Çevrimiçi ödemeler nasıl çalışır?",
+              "answer": "4fly, güvenli bir kredi kartı ödeme sistemini entegre eder. Üyeler hesaplarına bakiye yükleyebilir ve uçuş ücretlerini platform üzerinden ödeyebilir."
+            },
+            {
+              "question": "Hangi finansal raporlar mevcut?",
+              "answer": "Platform, uçuşlar, ödemeler ve muhasebe hakkında detaylı raporlar oluşturur. Bu verileri muhasebe için dışa aktarabilirsiniz."
+            },
+            {
+              "question": "Faturalar nasıl yönetilir?",
+              "answer": "Her uçuş veya ödeme sonrasında faturalar otomatik olarak oluşturulur. Dijital olarak arşivlenir ve e-posta ile gönderilebilir."
+            }
+          ]
+        },
+        "security": {
+          "title": "Güvenlik ve Veriler",
+          "questions": [
+            {
+              "question": "Veriler nasıl korunuyor?",
+              "answer": "Tüm veriler güvenli ve şifreli şekilde saklanır. RGPD standartlarına uygun hareket ediyor ve düzenli yedeklemeler yapıyoruz."
+            },
+            {
+              "question": "Kulüp verilerine kimler erişebilir?",
+              "answer": "Veri erişimi, bir yetkilendirme sistemiyle sıkı şekilde kontrol edilir. Yalnızca yetkili kişiler hassas bilgilere erişebilir."
+            },
+            {
+              "question": "Verilerimizi dışa aktarabilir miyiz?",
+              "answer": "Evet, verilerinizi her zaman CSV, Excel gibi standart formatlarda dışa aktarabilirsiniz. Başka sistemlerden geçişi de kolaylaştırıyoruz."
+            },
+            {
+              "question": "Hizmet sürekliliği nasıl sağlanıyor?",
+              "answer": "Altyapımız, yüksek erişilebilirliğe sahip yedekli sunucularda barındırılmaktadır. Tüm verilerin günlük yedeklemesini yapıyoruz."
+            }
+          ]
+        }
+      }
+    },
+    "contact": {
+      "meta": {
+        "title": "4fly - İletişim | Destek ve Yardım",
+        "description": "Yardıma mı ihtiyacınız var? Hava kulübü yönetimi çözümümüz hakkında tüm sorularınız için 4fly ekibiyle iletişime geçin. Hızlı ve kişisel destek.",
+        "image": "/images/contact-hero.jpg"
+      }
+    },
+    "contactPage": {
+      "hero": {
+        "title": "Bize Ulaşın",
+        "subtitle": "Size yardımcı olmak için buradayız",
+        "needHelp": "Yardıma mı ihtiyacınız var?",
+        "supportMessage": "Hava kulübünüzü yönetmeniz konusunda ekibimiz yanınızda."
+      },
+      "form": {
+        "name": {
+          "label": "İsim",
+          "error": "Lütfen adınızı girin"
+        },
+        "email": {
+          "label": "E-posta",
+          "error": "Geçersiz e-posta formatı",
+          "placeholder": "ornek@email.com",
+          "valid": "✓ Geçerli e-posta formatı"
+        },
+        "phone": {
+          "label": "Telefon",
+          "error": "Geçersiz telefon formatı",
+          "placeholder": "0555 123 45 67",
+          "valid": "✓ Geçerli telefon formatı"
+        },
+        "contactReason": {
+          "label": "İletişim Nedeni",
+          "options": {
+            "general": "Genel Bilgi Talebi",
+            "login": "Giriş Sorunu",
+            "payment": "Ödeme Sorunu",
+            "bug": "Teknik Hata",
+            "partnership": "Ortaklık Talebi",
+            "training": "Eğitim Hakkında Soru",
+            "reservations": "Rezervasyon Hakkında Soru",
+            "improvement": "Geliştirme Önerisi",
+            "other": "Diğer"
+          }
+        },
+        "customSubject": {
+          "label": "Konu Başlığınızı Belirtin",
+          "error": "Lütfen bir konu girin"
+        },
+        "message": {
+          "label": "Mesaj",
+          "error": "Mesajınız çok kısa"
+        },
+        "submit": "Gönder",
+        "success": "Mesaj başarıyla gönderildi!",
+        "error": "Mesaj gönderilirken bir hata oluştu",
+        "contactRequired": "En az bir iletişim yöntemi belirtin",
+        "contactRequiredError": "Lütfen en az bir iletişim yöntemi (e-posta veya telefon) belirtin"
+      }
+    },
+    "createClub": {
+      "meta": {
+        "title": "4fly - Hava Kulübünüzü Oluşturun | Ücretsiz Başlayın",
+        "description": "4fly ile birkaç dakika içinde kendi hava kulübünüzü oluşturun. Basit ve hızlı kurulum, taahhütsüz.",
+        "image": "/images/create-club-hero.jpg"
+      },
+      "hero": {
+        "title": "Hava Kulübünüzü Oluşturun",
+        "subtitle": "Sadece birkaç dakikada projenize hayat verin"
+      },
+      "form": {
+        "clubInfo": {
+          "title": "Kulüp Bilgileri",
+          "name": {
+            "label": "Kulüp Adı",
+            "placeholder": "... Hava Kulübü",
+            "error": "Kulüp adı gereklidir"
+          },
+          "icao": {
+            "label": "OACI Kodu",
+            "placeholder": "LFXX",
+            "error": "OACI kodu 4 karakterden oluşmalıdır",
+            "valid": "✓ Geçerli format"
+          },
+          "address": {
+            "label": "Adres",
+            "placeholder": "Kulübün adresi",
+            "error": "Adres gereklidir"
+          },
+          "phone": {
+            "label": "Telefon",
+            "placeholder": "0555 123 45 67",
+            "error": "Geçersiz telefon formatı",
+            "valid": "✓ Geçerli format"
+          }
+        },
+        "adminInfo": {
+          "title": "Yönetici Bilgileri",
+          "firstName": {
+            "label": "Ad",
+            "placeholder": "Adınız",
+            "error": "Adınız gereklidir"
+          },
+          "lastName": {
+            "label": "Soyad",
+            "placeholder": "Soyadınız",
+            "error": "Soyadınız gereklidir"
+          },
+          "email": {
+            "label": "E-posta",
+            "placeholder": "ornek@email.com",
+            "error": "Geçersiz e-posta formatı",
+            "valid": "✓ Geçerli format"
+          },
+          "password": {
+            "label": "Şifre",
+            "placeholder": "En az 8 karakter",
+            "error": "Şifre en az 8 karakter içermelidir",
+            "requirements": {
+              "length": "En az 8 karakter",
+              "uppercase": "Bir büyük harf",
+              "lowercase": "Bir küçük harf",
+              "number": "Bir rakam",
+              "special": "Bir özel karakter"
+            }
+          },
+          "confirmPassword": {
+            "label": "Şifreyi Doğrula",
+            "error": "Şifreler eşleşmiyor"
+          }
+        },
+        "submit": "Kulübümü Oluştur",
+        "success": "Kulüp başarıyla oluşturuldu!",
+        "error": "Kulüp oluşturulurken bir hata oluştu",
+        "termsAndConditions": {
+          "text": "Şu şartları kabul ediyorum",
+          "link": "genel kullanım koşulları",
+          "error": "Genel şartları kabul etmelisiniz"
+        }
+      }
+    },
+    "login": {
+      "meta": {
+        "title": "4fly - Hava Kulübü Alanınıza Giriş Yapın",
+        "description": "Rezervasyon, uçuş, eğitim ve havacılık bakımı yönetiminizi yapmak için 4fly hesabınıza giriş yapın."
+      },
+      "hero": {
+        "title": "4fly'a Hoş Geldiniz",
+        "subtitle": "Alanınıza erişmek için giriş yapın"
+      },
+      "form": {
+        "email": {
+          "label": "E-posta",
+          "placeholder": "E-posta adresinizi girin",
+          "error": "E-posta gereklidir"
+        },
+        "password": {
+          "label": "Şifre",
+          "placeholder": "Şifrenizi girin",
+          "error": "Şifre gereklidir",
+          "toggle": "Şifreyi göster/gizle"
+        },
+        "rememberMe": "Beni hatırla",
+        "forgotPassword": "Şifrenizi mi unuttunuz?",
+        "submit": "Giriş Yap",
+        "createClub": "Yeni bir kulüp oluştur"
+      },
+      "success": "Giriş başarılı!",
+      "error": {
+        "invalid_credentials": "Kullanıcı adı veya şifre hatalı",
+        "unexpected": "Beklenmeyen bir hata oluştu"
+      }
+    },
+    "resetPassword": {
+      "title": "Şifre Sıfırlama",
+      "description": "Şifre sıfırlama talimatları almak için e-posta adresinizi girin.",
+      "emailLabel": "E-posta",
+      "emailError": "Geçersiz e-posta",
+      "submitButton": "Talimatları Gönder",
+      "submitting": "Gönderiliyor...",
+      "backToLogin": "Girişe geri dön",
+      "success": {
+        "title": "Talimatlar Gönderildi!",
+        "description": "Gelen kutunuzu kontrol edin ve şifre sıfırlamak için talimatları izleyin."
+      },
+      "toast": {
+        "success": "Talimatlar e-posta ile gönderildi",
+        "error": "Talimatlar gönderilirken bir hata oluştu"
+      }
+    },
+    "quotes": {
+      "saint-exupery-1": {
+        "text": "Uçak, kendi başına bir amaç değil, bir araçtır. Tıpkı bir çiftçinin saban uğruna hayatını riske etmemesi gibi, kimse uçak uğruna hayatını riske etmez. Ancak uçak sayesinde şehirler ve onların muhasebecileri geride bırakılır, kırsal bir gerçeğe varılır.",
+        "author": "Antoine de Saint-Exupéry",
+        "role": "Pilot ve Yazar"
+      },
+      "saint-exupery-2": {
+        "text": "Dünya, kitapların hepsinden daha çok şey öğretir bize. Çünkü bize direnç gösterir. İnsan, bir engelle karşılaştığında kendini keşfeder.",
+        "author": "Antoine de Saint-Exupéry",
+        "role": "Pilot ve Yazar"
+      },
+      "guillaumet-1": {
+        "text": "Bizi kurtaran, bir adım atmaktır. Sonra bir adım daha. Hep aynı adımdır ama atılması gerekir.",
+        "author": "Henri Guillaumet",
+        "role": "Aéropostale Pilotu"
+      },
+      "dassault-1": {
+        "text": "Güzel bir uçak, iyi uçan bir uçaktır.",
+        "author": "Marcel Dassault",
+        "role": "Uçak Üreticisi"
+      },
+      "saint-exupery-3": {
+        "text": "Havada, kuşu ayakta tutan tek şey düşmemek konusundaki kendi iradesidir.",
+        "author": "Antoine de Saint-Exupéry",
+        "role": "Pilot ve Yazar"
+      },
+      "mermoz-1": {
+        "text": "Tanrı’nın yüzünü gördüm. Bulutlarda, rüzgarda, yıldızlarda. Onu gökte gördüm.",
+        "author": "Jean Mermoz",
+        "role": "Aéropostale Öncüsü"
+      },
+      "guillaumet-2": {
+        "text": "En güzel yolculuk, henüz yapmadığımızdır.",
+        "author": "Henri Guillaumet",
+        "role": "Aéropostale Pilotu"
+      },
+      "dassault-2": {
+        "text": "Uçak, insanın icat ettiği belki de en güzel makinedir. Yaşayan varlıklara en yakın olanıdır.",
+        "author": "Marcel Dassault",
+        "role": "Uçak Üreticisi"
+      },
+      "garros-1": {
+        "text": "Hava, içinde katı formlar yontabileceğimiz yoğun bir akışkandır.",
+        "author": "Roland Garros",
+        "role": "Havacılık Öncüsü"
+      },
+      "daurat-1": {
+        "text": "Bulutların üzerinde uçtuğunuzda, kuşların neden şarkı söylediğini anlarsınız.",
+        "author": "Didier Daurat",
+        "role": "Aéropostale Müdürü"
+      },
+      "bleriot-1": {
+        "text": "Uçmak, yerçekimine karşı kazandığımız bitmeyen bir zaferdir.",
+        "author": "Louis Blériot",
+        "role": "Havacılık Öncüsü"
+      },
+      "lindbergh-1": {
+        "text": "Havacılık talepkar bir sevgilidir. Hataları affetmez ama tutkuyu ödüllendirir.",
+        "author": "Charles Lindbergh",
+        "role": "Pilot"
+      },
+      "mermoz-2": {
+        "text": "Gökyüzünde yol yoktur. Sadece yıldızlar ve rüyalar vardır.",
+        "author": "Jean Mermoz",
+        "role": "Aéropostale Öncüsü"
+      },
+      "boucher-1": {
+        "text": "Uçmak, belki de meleklere biraz daha yakın olmaktır.",
+        "author": "Hélène Boucher",
+        "role": "Kadın Pilot Öncü"
+      },
+      "guillaumet-3": {
+        "text": "Korkusu olmayan pilot, ölmüş pilottur. Cesaret, korkunu kontrol etmektir.",
+        "author": "Henri Guillaumet",
+        "role": "Aéropostale Pilotu"
+      }
+    },
+    "cgv": {
+      "meta": {
+        "title": "4fly - Satış Koşulları",
+        "description": "Satış koşullarımızı inceleyin: kullanım koşulları, fiyatlandırma ve 4fly platformuna ilişkin sözleşme hükümleri.",
+        "image": "/images/cgv-hero.jpg"
+      },
+      "title": "Genel Satış Koşulları",
+      "lastUpdate": "Son güncelleme: {{date}}",
+      "article1": {
+        "title": "Madde 1 - Konu",
+        "content": "Bu genel satış koşulları (CGV), bir hava kulübü yönetim çözümü olan 4fly platformunun kullanımını düzenler. Bu koşullar, başka herhangi bir koşulu dışlayarak münhasıran uygulanır."
+      },
+      "article2": {
+        "title": "Madde 2 - Hizmetler",
+        "content": "4fly, aşağıdakileri içeren eksiksiz bir yönetim platformu sunar:\n- Uçak rezervasyonu yönetimi\n- Bakım takibi\n- Eğitim yönetimi\n- Üye yönetimi\n- Faturalama ve ödemeler\n- İletişim araçları"
+      },
+      "article3": {
+        "title": "Madde 3 - Fiyatlandırma",
+        "content": "4fly, faaliyetlerinize göre uyarlanmış üç fiyat planı sunar:\n\n1. Başlangıç Planı (Ücretsiz):\n- Yılda 1000 uçuş saatine kadar olan kulüpler için\n- Tüm özelliklere erişim\n- E-posta desteği\n\n2. Büyüme Planı (0,50€/uçuş saati, KDV hariç):\n- Yılda 1000 ila 3000 uçuş saati olan kulüpler için\n- Tüm özellikler dahil\n- Öncelikli destek\n\n3. Performans Planı (Özel):\n- Yılda 3000 uçuş saatini aşan kulüpler için\n- Tüm özellikler dahil\n- Özelleştirilmiş barındırma\n- Yerinde eğitim\n- 7/24 VIP destek\n- Özel hesap yöneticisi"
+      },
+      "article4": {
+        "title": "Madde 4 - Yükümlülükler",
+        "content": "4fly şunları taahhüt eder:\n- Platformun erişilebilirliğini ve bakımını sağlamak\n- Kullanıcı verilerini korumak\n- Teknik destek sağlamak\n\nKullanıcı şunları taahhüt eder:\n- Doğru bilgi sağlamak\n- Kullanım koşullarına uymak\n- Platformu yanlış amaçla kullanmamak"
+      },
+      "article5": {
+        "title": "Madde 5 - Kişisel Veriler",
+        "content": "4fly, kişisel verileri RGPD ile uyumlu şekilde toplar ve işler. Kullanıcıların verilerine erişme, düzeltme ve silme hakkı vardır."
+      },
+      "article6": {
+        "title": "Madde 6 - Fikri Mülkiyet",
+        "content": "4fly platformunun tüm unsurları (logo, metinler, görseller vb.) fikri mülkiyet haklarıyla korunmaktadır. İzin alınmadan herhangi bir çoğaltma yasaktır."
+      },
+      "article7": {
+        "title": "Madde 7 - Sorumluluk",
+        "content": "4fly, platformun kullanımından doğan dolaylı zararlardan sorumlu tutulamaz. Sorumluluk, kullanıcının ödediği hizmet bedeliyle sınırlıdır."
+      },
+      "article8": {
+        "title": "Madde 8 - Fesih",
+        "content": "Her bir taraf, belirtilen koşullara göre hizmet kullanımını sonlandırabilir. Ciddi ihlal durumunda fesih derhal uygulanabilir."
+      },
+      "article9": {
+        "title": "Madde 9 - Uygulanacak Hukuk",
+        "content": "Bu genel satış koşulları Fransız hukuka tabidir. Her türlü uyuşmazlık, münhasıran Fransız mahkemelerinin yetkisi altındadır."
+      }
+    },
+    "legal": {
+      "meta": {
+        "title": "4fly - Yasal Uyarılar",
+        "description": "4fly'ın yasal uyarıları: yayımcı, barındırma ve platform kullanım koşulları hakkındaki bilgiler.",
+        "image": "/images/legal-hero.jpg"
+      },
+      "title": "Yasal Uyarılar",
+      "publisher": {
+        "title": "Site Yayımcısı",
+        "company": "Şirket",
+        "legalForm": "Hukuki Yapı",
+        "legalFormValue": "SASU (Tek Ortaklı Basitleştirilmiş Anonim Şirket)",
+        "address": "Merkez Adres",
+        "rcs": "RCS Numarası",
+        "capital": "Şirket Sermayesi",
+        "vat": "KDV Numarası"
+      },
+      "hosting": {
+        "title": "Barındırma",
+        "provider": "Barındırma Hizmeti Sağlayıcısı",
+        "company": "Şirket",
+        "address": "Adres"
+      },
+      "dataProtection": {
+        "title": "Kişisel Verilerin Korunması",
+        "description": "6 Ocak 1978 tarihli ve değişiklik yapılmış Fransız Bilişim ve Özgürlükler Yasası ile Genel Veri Koruma Yönetmeliği (RGPD) uyarınca, kişisel verilerinize erişme, düzeltme, silme ve işlemeye itiraz etme hakkınız bulunur.",
+        "rights": "Bu hakları kullanmak için bizimle iletişime geçebilirsiniz:",
+        "email": "E-posta ile",
+        "mail": "Posta ile"
+      },
+      "intellectualProperty": {
+        "title": "Fikri Mülkiyet",
+        "description": "Bu sitenin tüm içeriği (yapı, metinler, görseller, logolar, veritabanları vb.) MELBA CAPITAL'e aittir. Herhangi bir çoğaltma, temsil, değiştirme, yayınlama, iletme veya kısmen ya da tamamen tahrifat, hangi yöntemle olursa olsun ve hangi ortamda olursa olsun, MELBA CAPITAL'in yazılı izni olmadan yasaktır."
+      },
+      "cookies": {
+        "title": "Çerezler",
+        "description": "Bu site, düzgün çalışması için gerekli olan çerezleri kullanmaktadır. Çerez, bilgisayarınızda saklanan küçük bir metin dosyasıdır. Kullandığımız çerezler, sizi kişisel olarak tanımlamamıza izin vermez. Kullanıcı deneyiminizi geliştirmek ve site trafiğini ölçmek amacıyla kullanılırlar.",
+        "consent": "Sitemizi kullanarak, gizlilik politikamıza uygun olarak çerez kullanımını kabul etmiş olursunuz."
+      },
+      "links": {
+        "title": "Köprü Bağlantıları (Hyperlinks)",
+        "description": "4fly.io sitesi, başka sitelere bağlantılar içerebilir. MELBA CAPITAL, bu sitelerin içeriklerinden veya gizlilik politikalarından sorumlu değildir."
+      }
+    },
+    "home": {
+      "meta": {
+        "title": "4fly - Hava Kulübü Yönetim Yazılımı | Ücretsiz Komple Çözüm",
+        "description": "4fly, hava kulübünüzü yönetmek için eksiksiz bir çözümdür. Uçuş yönetimi, rezervasyonlar, bakım, eğitim ve daha fazlası. Şimdi ücretsiz deneyin!",
+        "image": "/images/home-hero.jpg"
+      },
+      "title": "Hava kulübünüzü kolayca yönetin",
+      "description": "4fly, 2 veya 200 üyesi olan kulüpler için basit ve ücretsiz bir yönetim aracıdır. Artık karmaşık elektronik tablolar ve evraklarla uğraşmaya son!",
+      "createClub": "Kulübümü Oluştur",
+      "configurationTime": "2 dakikada konfigürasyon",
+      "startTitle": "Hava kulübünüzü büyütün",
+      "startDescription": "2 dakikada konfigürasyon",
+      "startButton": "Ücretsiz başlayın"
+    }
+  }
+  
