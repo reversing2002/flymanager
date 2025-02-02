@@ -224,127 +224,167 @@ router.delete('/users/:userId', checkAdminRole, async (req, res) => {
 router.post('/users', checkAdminRole, async (req, res) => {
   try {
     const { email, password, userData, roles, clubId } = req.body;
-    console.log('➕ Création utilisateur:', email);
+    console.log('➕ Création/Rattachement utilisateur:', email);
 
     // Vérifier si l'email existe déjà
-    const { data: existingUser } = await adminClient
+    const { data: existingUser, error: userError } = await adminClient
       .from('users')
-      .select('email')
+      .select('id, email')
       .eq('email', email)
       .single();
 
+    if (userError && userError.code !== 'PGRST116') { // PGRST116 = not found
+      console.error('❌ Erreur vérification utilisateur:', userError);
+      return res.status(500).json({ error: userError.message });
+    }
+
+    let userId;
+
     if (existingUser) {
-      console.error('❌ Email déjà utilisé:', email);
-      return res.status(400).json({ error: 'Cet email est déjà utilisé' });
-    }
+      console.log('ℹ️ Utilisateur existant trouvé:', existingUser.id);
+      userId = existingUser.id;
 
-    // Générer un login unique à partir de l'email
-    let login = email.split('@')[0];
-    let increment = 0;
-    let loginExists = true;
-    
-    // Boucle pour trouver un login unique
-    while (loginExists) {
-      const loginToTry = increment === 0 ? login : `${login}${increment}`;
-      const { data: existingLogin } = await adminClient
-        .from('users')
-        .select('login')
-        .eq('login', loginToTry)
+      // Vérifier si l'utilisateur est déjà membre du club
+      const { data: existingMembership, error: membershipError } = await adminClient
+        .from('club_members')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('club_id', clubId)
         .single();
+
+      if (membershipError && membershipError.code !== 'PGRST116') {
+        console.error('❌ Erreur vérification membership:', membershipError);
+        return res.status(500).json({ error: membershipError.message });
+      }
+
+      if (existingMembership) {
+        console.error('❌ L\'utilisateur est déjà membre de ce club');
+        return res.status(400).json({ error: 'L\'utilisateur est déjà membre de ce club' });
+      }
+
+      // Ajouter l'utilisateur au club
+      const { error: addMemberError } = await adminClient
+        .from('club_members')
+        .insert([{
+          user_id: userId,
+          club_id: clubId,
+          status: 'ACTIVE'
+        }]);
+
+      if (addMemberError) {
+        console.error('❌ Erreur ajout au club:', addMemberError);
+        return res.status(400).json({ error: addMemberError.message });
+      }
+
+      console.log('✅ Utilisateur rattaché au club avec succès');
+      return res.json({ 
+        success: true, 
+        user: existingUser,
+        message: 'Utilisateur rattaché au club avec succès'
+      });
+
+    } else {
+      // Générer un login unique à partir de l'email
+      let login = email.split('@')[0];
+      let increment = 0;
+      let loginExists = true;
       
-      if (!existingLogin) {
-        login = loginToTry;
-        loginExists = false;
-      } else {
-        increment++;
-      }
-    }
-
-    console.log('🔑 Login généré:', login);
-
-    // Créer l'utilisateur dans la base de données
-    const { data: newUser, error: createError } = await adminClient
-      .from('users')
-      .insert([{
-        email,
-        login,
-        first_name: userData.first_name || login,
-        last_name: userData.last_name || '',
-        phone: userData.phone
-      }])
-      .select()
-      .single();
-
-    if (createError) {
-      console.error('❌ Erreur création utilisateur:', createError);
-      return res.status(400).json({ error: createError.message });
-    }
-
-    // Créer l'utilisateur auth avec le même ID
-    const { error: authError } = await adminClient.rpc('create_auth_user', {
-      p_user_id: newUser.id,
-      p_email: email,
-      p_password: password,
-      p_login: login,
-      p_role: 'authenticated',
-      p_user_metadata: {
-        db_id: newUser.id,
-        first_name: userData.first_name,
-        last_name: userData.last_name
-      }
-    });
-
-    if (authError) {
-      console.error('❌ Erreur création auth:', authError);
-      // Nettoyer l'utilisateur créé si l'auth échoue
-      await adminClient.from('users').delete().eq('id', newUser.id);
-      return res.status(400).json({ error: authError.message });
-    }
-
-    // Ajouter l'utilisateur au club
-    const { error: clubError } = await adminClient
-      .from('club_members')
-      .insert([{
-        user_id: newUser.id,
-        club_id: clubId,
-        status: 'ACTIVE'
-      }]);
-
-    if (clubError) {
-      console.error('❌ Erreur ajout au club:', clubError);
-      // Nettoyer tout si l'ajout au club échoue
-      await adminClient.auth.admin.deleteUser(newUser.auth_id);
-      await adminClient.from('users').delete().eq('id', newUser.id);
-      return res.status(400).json({ error: clubError.message });
-    }
-
-    // Ajouter les groupes
-    if (roles && roles.length > 0) {
-      const { data: groups } = await adminClient
-        .from('user_groups')
-        .select('id, code')
-        .in('code', roles);
-
-      if (groups && groups.length > 0) {
-        const { error: groupsError } = await adminClient
-          .from('user_group_memberships')
-          .insert(groups.map(group => ({
-            user_id: newUser.id,
-            group_id: group.id
-          })));
-
-        if (groupsError) {
-          console.error('❌ Erreur ajout groupes:', groupsError);
-          // Nettoyer tout si l'attribution des groupes échoue
-          await adminClient.auth.admin.deleteUser(newUser.auth_id);
-          await adminClient.from('users').delete().eq('id', newUser.id);
-          return res.status(400).json({ error: groupsError.message });
+      // Boucle pour trouver un login unique
+      while (loginExists) {
+        const loginToTry = increment === 0 ? login : `${login}${increment}`;
+        const { data: existingLogin } = await adminClient
+          .from('users')
+          .select('login')
+          .eq('login', loginToTry)
+          .single();
+        
+        if (!existingLogin) {
+          login = loginToTry;
+          loginExists = false;
+        } else {
+          increment++;
         }
       }
-    }
 
-    console.log('✅ Utilisateur créé avec succès:', newUser.id);
-    res.json({ user: newUser });
+      console.log('🔑 Login généré:', login);
+
+      // Créer l'utilisateur dans la base de données
+      const { data: newUser, error: createError } = await adminClient
+        .from('users')
+        .insert([{
+          email,
+          login,
+          first_name: userData.first_name || login,
+          last_name: userData.last_name || '',
+          phone: userData.phone
+        }])
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('❌ Erreur création utilisateur:', createError);
+        return res.status(400).json({ error: createError.message });
+      }
+
+      userId = newUser.id;
+
+      // Créer l'utilisateur auth avec le même ID
+      const { error: authError } = await adminClient.rpc('create_auth_user', {
+        p_user_id: userId,
+        p_email: email,
+        p_password: password,
+        p_login: login,
+        p_role: 'authenticated',
+        p_user_metadata: {
+          db_id: userId,
+          first_name: userData.first_name,
+          last_name: userData.last_name
+        }
+      });
+
+      if (authError) {
+        console.error('❌ Erreur création auth:', authError);
+        // Nettoyer l'utilisateur créé si l'auth échoue
+        await adminClient.from('users').delete().eq('id', userId);
+        return res.status(400).json({ error: authError.message });
+      }
+
+      // Ajouter l'utilisateur au club
+      const { error: addMemberError } = await adminClient
+        .from('club_members')
+        .insert([{
+          user_id: userId,
+          club_id: clubId,
+          status: 'ACTIVE'
+        }]);
+
+      if (addMemberError) {
+        console.error('❌ Erreur ajout au club:', addMemberError);
+        // Nettoyer l'utilisateur créé si l'ajout au club échoue
+        await adminClient.from('users').delete().eq('id', userId);
+        return res.status(400).json({ error: addMemberError.message });
+      }
+
+      // Ajouter les rôles
+      if (roles && roles.length > 0) {
+        const { error: rolesError } = await adminClient
+          .from('user_group_memberships')
+          .insert(
+            roles.map(role => ({
+              user_id: userId,
+              user_group_id: role
+            }))
+          );
+
+        if (rolesError) {
+          console.error('❌ Erreur ajout rôles:', rolesError);
+          // Ne pas nettoyer l'utilisateur ici car c'est moins critique
+        }
+      }
+
+      console.log('✅ Utilisateur créé avec succès');
+      return res.json({ success: true, user: newUser });
+    }
   } catch (error) {
     console.error('❌ Erreur inattendue:', error);
     res.status(500).json({ error: 'Erreur lors de la création de l\'utilisateur' });

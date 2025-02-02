@@ -249,7 +249,7 @@ const App = () => {
                       {/* Training */}
                       <Route path="/training" element={<TrainingPage />} />
                       <Route path="/training/:moduleId" element={<TrainingModuleDetails />} />
-                      <Route path="/training-admin" element={<ProtectedRoute roles={["admin", "instructor"]}><TrainingAdminPage /></ProtectedRoute>} />
+                      <Route path="/training-admin" element={<ProtectedRoute roles={["system_admin"]}><TrainingAdminPage /></ProtectedRoute>} />
 
                       {/* Progression */}
                       <Route path="/progression" element={<ProtectedRoute roles={["instructor", "pilot"]}><ProgressionPage /></ProtectedRoute>} />

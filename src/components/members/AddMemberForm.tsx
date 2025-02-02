@@ -92,20 +92,25 @@ const AddMemberForm = ({ isOpen, onClose, onSuccess }: AddMemberFormProps) => {
 
       console.log("Résultat:", result);
 
-      if (result && result.user) {
-        setShowSuccess(true);
-        toast.success("Membre créé avec succès");
-        // Ne pas appeler onSuccess ici car on veut d'abord montrer l'écran avec les infos
+      if (result && (result.user || result.success)) {
+        if (result.message?.includes('rattaché')) {
+          // Cas d'un utilisateur existant rattaché au club
+          toast.success("Membre rattaché au club avec succès");
+          onSuccess();
+          onClose();
+        } else {
+          // Cas d'un nouvel utilisateur
+          setShowSuccess(true);
+          toast.success("Membre créé avec succès");
+          // Ne pas appeler onSuccess ici car on veut d'abord montrer l'écran avec les infos
+        }
       } else {
         throw new Error("Erreur lors de la création de l'utilisateur");
       }
+
     } catch (error: any) {
-      console.error("Erreur complète:", error);
-      if (error.message.includes("duplicate key") || error.message.includes("already exists")) {
-        toast.error("Un utilisateur avec cet email existe déjà");
-      } else {
-        toast.error(error.message || "Erreur lors de la création du membre");
-      }
+      console.error("Erreur:", error);
+      toast.error(error.message || "Une erreur est survenue");
     } finally {
       setLoading(false);
     }

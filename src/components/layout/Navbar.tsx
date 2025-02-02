@@ -37,7 +37,7 @@ import { useUnreadMessages } from "../../hooks/useUnreadMessages";
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, setActiveClub } = useAuth();
   const permissions = usePermissions(currentUser);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -100,22 +100,34 @@ const Navbar = () => {
           <div className="px-8 py-2 z-50 bg-[#1a1f2e] lg:block hidden">
             <Logo className="h-8" />
           </div>
-          <div className="px-8 py-2 z-50 bg-[#1a1f2e] lg:hidden block" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-            <Logo className="h-8 cursor-pointer" disableLink={true} />
-          </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden px-2"
-            aria-label="Menu"
+            className="p-4 lg:hidden"
           >
             {isMobileMenuOpen ? (
-              <X className="h-6 w-6 text-gray-300" />
+              <X className="h-6 w-6 text-gray-400" />
             ) : (
-              <Menu className="h-6 w-6 text-gray-300" />
+              <Menu className="h-6 w-6 text-gray-400" />
             )}
           </button>
         </div>
 
+        {/* Club selector */}
+        {currentUser && (
+          <div className="flex items-center px-4">
+            <select
+              className="bg-gray-800 text-white rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none border border-gray-700 hover:border-gray-600 transition-colors"
+              value={currentUser.club?.id || ''}
+              onChange={(e) => setActiveClub(e.target.value)}
+            >
+              {currentUser.availableClubs?.map((club) => (
+                <option key={club.id} value={club.id}>
+                  {club.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         {/* Icônes de navigation - visibles sur tous les écrans */}
         <div className="flex items-center gap-4 px-4 py-2">
           {canAccessChat && (
@@ -315,10 +327,21 @@ const Navbar = () => {
                 )
               )}
               {canAccessTraining && (
-              <Link to={canAccessTrainingAdmin ? "/training-admin" : "/training"} className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
-                <Book className="w-5 h-5 mr-3" />
-                <span>QCM</span>
-              </Link>
+                <div className="space-y-1">
+                  <Link to="/training" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                    <GraduationCap className="w-5 h-5 mr-3" />
+                    <span>QCM</span>
+                  </Link>
+                </div>
+              )}
+              {hasAnyGroup(currentUser, ["SYSTEM_ADMIN"]) && (
+                <div className="space-y-1">
+                  <Link to="/training-admin" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
+                    <Book className="w-5 h-5 mr-3" />
+                    <span>Admin QCM</span>
+                    <Shield className="w-4 h-4 ml-2 text-rose-500" />
+                  </Link>
+                </div>
               )}
               {canAccessTrainingAdmin && (
                 <Link to="/progression/admin" className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#2a2f3e] hover:text-blue-400">
