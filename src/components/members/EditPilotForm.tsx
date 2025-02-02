@@ -60,6 +60,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [newCalendar, setNewCalendar] = useState({ id: "", name: "" });
+  const [calendarUrl, setCalendarUrl] = useState<string>("");
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -261,15 +262,12 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
       
       const data = await response.json();
       if (data.success) {
-        // Convertir directement l'URL en webcal
-        const webcalUrl = data.calendar_url.replace('https://', 'webcal://');
-        window.open(webcalUrl, '_blank', 'noopener noreferrer');
-      } else {
-        toast.error('Erreur lors de la récupération du lien du calendrier');
+        setCalendarUrl(data.calendar_url);
+        toast.success("URL du calendrier générée avec succès");
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      toast.error('Erreur lors de la récupération du lien du calendrier');
+      console.error("Erreur lors de la récupération de l'URL du calendrier:", error);
+      toast.error("Erreur lors de la récupération de l'URL du calendrier");
     }
   };
 
@@ -507,15 +505,29 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                     <Check className="h-5 w-5 mr-2" />
                     Ajouter un calendrier Google pour mes indisponibilités
                   </button>
-                  <Button
-                    variant="outlined"
+                  <button
+                    type="button"
                     onClick={getCalendarUrl}
-                    className="ml-2"
-                    startIcon={<CalendarMonthIcon />}
+                    className="inline-flex items-center ml-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
-                    Synchroniser mes réservations 4fly dans mon calendrier
-                  </Button>
+                    <CalendarMonthIcon className="h-5 w-5 mr-2" />
+                    Synchroniser mon calendrier
+                  </button>
                 </div>
+                {calendarUrl && (
+                  <div className="mt-2 space-y-2">
+                    <p className="text-sm text-gray-600">
+                      Pour voir vos réservations dans Google Agenda, copiez cette URL et ajoutez-la dans les paramètres de votre agenda Google :
+                    </p>
+                    <input
+                      type="text"
+                      value={calendarUrl}
+                      readOnly
+                      className="w-full p-2 border rounded-md bg-gray-50"
+                      onClick={(e) => e.currentTarget.select()}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
