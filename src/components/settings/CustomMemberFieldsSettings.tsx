@@ -263,8 +263,8 @@ export default function CustomMemberFieldsSettings() {
                     <option value="multiselect">Sélection multiple</option>
                     <option value="email">Email</option>
                     <option value="tel">Téléphone</option>
-                    <option value="url">URL</option>
                     <option value="file">Fichier</option>
+                    <option value="url">URL</option>
                     <option value="color">Couleur</option>
                     <option value="range">Plage de valeurs</option>
                   </select>

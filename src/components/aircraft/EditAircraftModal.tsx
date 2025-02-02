@@ -398,11 +398,12 @@ const EditAircraftModal: React.FC<EditAircraftModalProps> = ({
                   )}
                 </div>
 
-                {aircraft && user?.club?.id && (
-                  <div className="col-span-2">
+                {aircraft && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-medium mb-4">Champs personnalisés</h3>
                     <CustomFieldsCard
                       aircraftId={aircraft.id}
-                      clubId={user.club.id}
+                      clubId={user?.club?.id || ""}
                       canEdit={true}
                     />
                   </div>

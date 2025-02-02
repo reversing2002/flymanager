@@ -27,11 +27,17 @@ interface Props {
   canEdit: boolean;
 }
 
+interface FileValue {
+  fileName: string;
+  fileUrl: string;
+}
+
 export default function CustomFieldsCard({ aircraftId, clubId, canEdit }: Props) {
   const [fields, setFields] = useState<CustomField[]>([]);
   const [values, setValues] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     loadFieldsAndValues();
@@ -73,14 +79,53 @@ export default function CustomFieldsCard({ aircraftId, clubId, canEdit }: Props)
     }
   };
 
+  const uploadFile = async (file: File, fieldId: string): Promise<FileValue> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${aircraftId}_${fieldId}_${Date.now()}.${fileExt}`;
+    const filePath = `custom_fields/${clubId}/${fileName}`;
+
+    const { error: uploadError, data } = await supabase.storage
+      .from('documents')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    // Générer l'URL publique du fichier
+    const { data: { publicUrl } } = supabase.storage
+      .from('documents')
+      .getPublicUrl(filePath);
+
+    return {
+      fileName: file.name,
+      fileUrl: publicUrl
+    };
+  };
+
   const handleChange = async (fieldId: string, value: any) => {
     if (!canEdit) return;
+    setError(null);
     
     try {
       let processedValue = value;
       const field = fields.find(f => f.id === fieldId);
       
-      if (field?.type === "number" || field?.type === "range") {
+      if (field?.type === "file" && value instanceof FileList && value.length > 0) {
+        setIsUploading(true);
+        try {
+          processedValue = await uploadFile(value[0], fieldId);
+        } catch (err) {
+          console.error("Erreur lors de l'upload du fichier:", err);
+          toast.error(`Erreur lors de l'upload du fichier ${value[0].name}`);
+          return;
+        } finally {
+          setIsUploading(false);
+        }
+      } else if (field?.type === "number" || field?.type === "range") {
         processedValue = value ? Number(value) : null;
       } else if (field?.type === "boolean") {
         processedValue = value === "on" || value === true;
@@ -207,6 +252,36 @@ export default function CustomFieldsCard({ aircraftId, clubId, canEdit }: Props)
                   <span className="text-sm text-gray-600">
                     {values[field.id] || field.min_value || 0}
                   </span>
+                </div>
+              ) : field.type === "file" ? (
+                <div>
+                  <input
+                    type="file"
+                    name={field.id}
+                    onChange={(e) => handleChange(field.id, e.target.files)}
+                    disabled={!canEdit || isUploading}
+                    className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500 disabled:bg-gray-100"
+                    required={field.required}
+                    accept={field.accepted_file_types?.join(',')}
+                  />
+                  {values[field.id] && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      Fichier actuel : {values[field.id].fileName}
+                      <a
+                        href={values[field.id].fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-2 text-sky-600 hover:text-sky-700"
+                      >
+                        Voir le fichier
+                      </a>
+                    </p>
+                  )}
+                  {isUploading && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      Upload en cours...
+                    </p>
+                  )}
                 </div>
               ) : (
                 <input
