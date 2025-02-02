@@ -22,6 +22,11 @@ interface CustomFieldValue {
   value: any;
 }
 
+interface FileValue {
+  fileName: string;
+  fileUrl: string;
+}
+
 interface Props {
   userId: string;
   clubId: string;
@@ -59,21 +64,47 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
 
       if (valuesError) throw valuesError;
 
+      const newValues: Record<string, any> = {};
+
+      for (const value of valuesData || []) {
+        newValues[value.field_id] = value.value;
+      }
+
       setFields(fieldsData || []);
-      
-      // Convertir les valeurs en un objet avec field_id comme clé
-      const valuesMap = (valuesData || []).reduce((acc, curr) => ({
-        ...acc,
-        [curr.field_id]: curr.value
-      }), {});
-      
-      setValues(valuesMap);
+      setValues(newValues);
+      setLoading(false);
     } catch (err) {
-      console.error("Erreur lors du chargement des champs personnalisés:", err);
+      console.error("Erreur lors du chargement des champs:", err);
       setError("Erreur lors du chargement des champs personnalisés");
-    } finally {
       setLoading(false);
     }
+  };
+
+  const uploadFile = async (file: File, fieldId: string): Promise<FileValue> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}_${fieldId}_${Date.now()}.${fileExt}`;
+    const filePath = `custom_fields/${clubId}/${fileName}`;
+
+    const { error: uploadError, data } = await supabase.storage
+      .from('documents')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    // Générer l'URL publique du fichier
+    const { data: { publicUrl } } = supabase.storage
+      .from('documents')
+      .getPublicUrl(filePath);
+
+    return {
+      fileName: file.name,
+      fileUrl: publicUrl
+    };
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -83,30 +114,21 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
     try {
       console.log("Tentative de mise à jour pour l'utilisateur:", userId);
 
-      // Vérifier que l'userId est un UUID valide
+      // Vérifications de l'utilisateur...
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(userId)) {
         console.error("UUID invalide:", userId);
         throw new Error("ID utilisateur invalide");
       }
 
-      // Vérifier que l'utilisateur existe
-      console.log("Vérification de l'existence de l'utilisateur...");
+      // Vérification de l'existence de l'utilisateur...
       const { data: userExists, error: userError } = await supabase
         .from("users")
         .select("id, email")
         .eq("id", userId)
         .maybeSingle();
 
-      console.log("Résultat de la vérification:", { userExists, userError });
-
-      if (userError) {
-        console.error("Erreur lors de la vérification de l'utilisateur:", userError);
-        throw userError;
-      }
-
-      if (!userExists) {
-        console.error("Utilisateur non trouvé dans la base de données:", userId);
+      if (userError || !userExists) {
         throw new Error("Utilisateur non trouvé");
       }
 
@@ -128,11 +150,13 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
         } else if (field.type === "file") {
           const fileInput = formElement.querySelector(`input[name="${field.id}"]`) as HTMLInputElement;
           if (fileInput?.files?.length) {
-            // Pour l'instant, on garde juste le nom du fichier
-            // TODO: Implémenter l'upload du fichier vers un stockage
-            value = fileInput.files[0].name;
+            try {
+              value = await uploadFile(fileInput.files[0], field.id);
+            } catch (err) {
+              console.error("Erreur lors de l'upload du fichier:", err);
+              throw new Error(`Erreur lors de l'upload du fichier ${fileInput.files[0].name}`);
+            }
           } else {
-            // Si aucun nouveau fichier n'est sélectionné, garder l'ancienne valeur
             value = values[field.id];
           }
         } else if (field.type === "boolean") {
@@ -152,22 +176,17 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
           field_id: field.id,
           value: value
         };
-        console.log("Préparation de la mise à jour:", update);
         updates.push(update);
       }
 
-      console.log("Tentative d'upsert avec les données:", updates);
       const { error: upsertError } = await supabase
         .from("custom_member_field_values")
         .upsert(updates, {
           onConflict: "user_id,field_id",
-          returning: "minimal" // Pour réduire la taille de la réponse
+          returning: "minimal"
         });
 
-      if (upsertError) {
-        console.error("Erreur lors de l'upsert:", upsertError);
-        throw upsertError;
-      }
+      if (upsertError) throw upsertError;
 
       await loadFieldsAndValues();
       setIsEditing(false);
@@ -176,7 +195,9 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
       console.error("Erreur détaillée lors de la mise à jour:", err);
       let errorMessage = "Erreur lors de la mise à jour";
       
-      if (err.message === "ID utilisateur invalide") {
+      if (err.message.includes("upload du fichier")) {
+        errorMessage = err.message;
+      } else if (err.message === "ID utilisateur invalide") {
         errorMessage = "L'identifiant de l'utilisateur n'est pas valide";
       } else if (err.message === "Utilisateur non trouvé") {
         errorMessage = "L'utilisateur n'existe pas dans la base de données";
@@ -231,6 +252,20 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
                   values[field.id] ? new Date(values[field.id]).toLocaleDateString() : "-"
                 ) : field.type === "multiselect" ? (
                   Array.isArray(values[field.id]) ? values[field.id]?.join(", ") : "-"
+                ) : field.type === "file" ? (
+                  <div>
+                    {values[field.id]?.fileName}
+                    {values[field.id]?.fileUrl && (
+                      <a
+                        href={values[field.id].fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-2 text-sky-600 hover:text-sky-700"
+                      >
+                        Voir le fichier
+                      </a>
+                    )}
+                  </div>
                 ) : (
                   values[field.id] || "-"
                 )}
@@ -334,7 +369,15 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
                         />
                         {values[field.id] && (
                           <p className="mt-1 text-sm text-gray-500">
-                            Fichier actuel : {values[field.id]}
+                            Fichier actuel : {values[field.id].fileName}
+                            <a
+                              href={values[field.id].fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-2 text-sky-600 hover:text-sky-700"
+                            >
+                              Voir le fichier
+                            </a>
                           </p>
                         )}
                       </div>
