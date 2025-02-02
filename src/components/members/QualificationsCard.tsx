@@ -11,6 +11,7 @@ import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { FileText } from 'lucide-react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { loadQualificationsWithOrder } from '../../lib/utils/qualificationUtils';
 
 interface QualificationsCardProps {
   userId: string;
@@ -20,7 +21,7 @@ interface QualificationsCardProps {
   canEdit?: boolean;
 }
 
-const fetchQualifications = async (userId: string) => {
+const fetchQualifications = async (userId: string, clubId: string | undefined) => {
   const { data, error } = await supabase
     .from('pilot_qualifications')
     .select(`
@@ -30,7 +31,36 @@ const fetchQualifications = async (userId: string) => {
     .eq('pilot_id', userId);
 
   if (error) throw error;
-  return data || [];
+
+  // Trier les qualifications selon l'ordre défini
+  const qualificationTypes = data?.map(q => ({
+    ...q.qualification_type,
+    pilot_qualification_id: q.id,
+    obtained_at: q.obtained_at,
+    expires_at: q.expires_at
+  })) || [];
+
+  const sortedTypes = await loadQualificationsWithOrder(clubId, qualificationTypes);
+
+  // Réorganiser les qualifications selon l'ordre des types
+  return sortedTypes.map(type => ({
+    id: type.pilot_qualification_id,
+    pilot_id: userId,
+    qualification_type_id: type.id,
+    obtained_at: type.obtained_at,
+    expires_at: type.expires_at,
+    qualification_type: {
+      id: type.id,
+      name: type.name,
+      description: type.description,
+      validity_period: type.validity_period,
+      requires_instructor_validation: type.requires_instructor_validation,
+      club_id: type.club_id,
+      is_system: type.is_system,
+      created_at: type.created_at,
+      updated_at: type.updated_at
+    }
+  }));
 };
 
 const isFuture = (date: Date) => {
@@ -50,8 +80,8 @@ const QualificationsCard: React.FC<QualificationsCardProps> = ({
   const [selectedQualification, setSelectedQualification] = useState<PilotQualification | null>(null);
 
   const { data: qualifications = [], isLoading } = useQuery({
-    queryKey: ['qualifications', userId],
-    queryFn: () => fetchQualifications(userId),
+    queryKey: ['qualifications', userId, currentUser?.club?.id],
+    queryFn: () => fetchQualifications(userId, currentUser?.club?.id),
   });
 
   const deleteMutation = useMutation({

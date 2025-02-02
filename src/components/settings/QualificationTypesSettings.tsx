@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertTriangle, MoveVertical } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-hot-toast";
+import QualificationOrderModal from "../members/QualificationOrderModal";
+import { loadQualificationsWithOrder } from "../../lib/utils/qualificationUtils";
 
 interface QualificationType {
   id: string;
@@ -23,6 +25,7 @@ export default function QualificationTypesSettings() {
   const [error, setError] = useState<string | null>(null);
   const [editingType, setEditingType] = useState<QualificationType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const { user } = useAuth();
 
   const clubId = user?.club?.id;
@@ -35,13 +38,16 @@ export default function QualificationTypesSettings() {
 
   const loadTypes = async () => {
     try {
-      const { data, error: fetchError } = await supabase
+      // Charger les types de qualification
+      const { data: typesData, error: typesError } = await supabase
         .from("qualification_types")
-        .select("*")
-        .order("display_order");
+        .select("*");
 
-      if (fetchError) throw fetchError;
-      setTypes(data || []);
+      if (typesError) throw typesError;
+
+      // Trier les qualifications selon l'ordre
+      const sortedTypes = await loadQualificationsWithOrder(clubId, typesData || []);
+      setTypes(sortedTypes);
     } catch (err) {
       console.error("Erreur lors du chargement des types de qualification:", err);
       setError("Erreur lors du chargement des types de qualification");
@@ -127,18 +133,27 @@ export default function QualificationTypesSettings() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Types de qualifications</h2>
-        <button
-          onClick={() => {
-            setEditingType(null);
-            setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Ajouter
-        </button>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold">Types de qualification</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsOrderModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            <MoveVertical className="h-4 w-4" />
+            Réorganiser
+          </button>
+          <button
+            onClick={() => {
+              setEditingType(null);
+              setIsModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -279,6 +294,18 @@ export default function QualificationTypesSettings() {
             </form>
           </div>
         </div>
+      )}
+
+      {isOrderModalOpen && clubId && (
+        <QualificationOrderModal
+          qualifications={types}
+          clubId={clubId}
+          onClose={() => setIsOrderModalOpen(false)}
+          onSuccess={() => {
+            setIsOrderModalOpen(false);
+            loadTypes();
+          }}
+        />
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import type { QualificationType, PilotQualification } from '../../types/qualifications';
+import { loadQualificationsWithOrder } from '../../lib/utils/qualificationUtils';
 
 interface EditQualificationsFormProps {
   userId: string;
@@ -21,14 +22,13 @@ interface QualificationFormData {
   has_expiration: boolean;
 }
 
-const fetchQualificationTypes = async () => {
+const fetchQualificationTypes = async (clubId: string | undefined) => {
   const { data, error } = await supabase
     .from('qualification_types')
-    .select('*')
-    .order('name');
+    .select('*');
 
   if (error) throw error;
-  return data;
+  return loadQualificationsWithOrder(clubId, data || []);
 };
 
 const EditQualificationsForm: React.FC<EditQualificationsFormProps> = ({
@@ -37,6 +37,7 @@ const EditQualificationsForm: React.FC<EditQualificationsFormProps> = ({
   onSuccess,
   qualification,
 }) => {
+  const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<QualificationFormData>({
@@ -47,8 +48,8 @@ const EditQualificationsForm: React.FC<EditQualificationsFormProps> = ({
   });
 
   const { data: qualificationTypes = [] } = useQuery({
-    queryKey: ['qualificationTypes'],
-    queryFn: fetchQualificationTypes,
+    queryKey: ['qualificationTypes', currentUser?.club?.id],
+    queryFn: () => fetchQualificationTypes(currentUser?.club?.id),
   });
 
   const addQualificationMutation = useMutation({
