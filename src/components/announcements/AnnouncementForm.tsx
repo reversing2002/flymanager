@@ -63,10 +63,14 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({
 
         if (createError) throw createError;
         toast.success('Annonce créée');
+        
+        if (typeof onSuccess === 'function') {
+          onSuccess();
+        }
+        if (typeof onClose === 'function') {
+          onClose();
+        }
       }
-
-      onSuccess();
-      onClose();
     } catch (err) {
       console.error('Error saving announcement:', err);
       setError('Erreur lors de l\'enregistrement de l\'annonce');

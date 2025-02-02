@@ -38,6 +38,7 @@ import DashboardWeatherWidget from "./weather/DashboardWeatherWidget";
 import SimpleCreditModal from "./accounts/SimpleCreditModal";
 import MiniWindWidget from "./weather/MiniWindWidget";
 import { useUnreadMessages } from "../hooks/useUnreadMessages";
+import { toast } from "react-hot-toast";
 
 const StatCard = ({
   icon,
@@ -347,19 +348,18 @@ const Dashboard = () => {
     if (!user?.id) return;
 
     try {
-      // Load announcements
-      const { data: announcementsData } = await supabase
-        .from("announcements")
+      // Load announcements and filter out dismissed ones
+      const { data: announcementsData, error: announcementsError } = await supabase
+        .from('announcements')
         .select(`
           *,
-          dismissed:dismissed_announcements(
-            user_id
-          )
+          dismissed_announcements!left(id)
         `)
-        .eq("dismissed.user_id", user.id)
-        .is("dismissed.user_id", null)
-        .order("created_at", { ascending: false });
+        .eq('club_id', user.club?.id)
+        .is('dismissed_announcements.id', null)
+        .order('created_at', { ascending: false });
 
+      if (announcementsError) throw announcementsError;
       setAnnouncements(announcementsData || []);
 
       // Load club coordinates and calculate sun times
@@ -391,6 +391,33 @@ const Dashboard = () => {
       setError("Erreur lors du chargement des données");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDismissAnnouncement = async (announcementId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { error: dismissError } = await supabase
+        .from('dismissed_announcements')
+        .upsert([
+          {
+            user_id: user.id,
+            announcement_id: announcementId,
+            dismissed_at: new Date().toISOString()
+          }
+        ], {
+          onConflict: 'user_id,announcement_id'
+        });
+
+      if (dismissError) throw dismissError;
+      
+      // Update local state to remove the dismissed announcement
+      setAnnouncements(prev => prev.filter(a => a.id !== announcementId));
+      toast.success('Annonce masquée');
+    } catch (error) {
+      console.error('Error dismissing announcement:', error);
+      toast.error('Erreur lors du masquage de l\'annonce');
     }
   };
 
