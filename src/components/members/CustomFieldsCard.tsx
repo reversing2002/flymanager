@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Pencil } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -34,6 +34,7 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     loadFieldsAndValues();
@@ -80,49 +81,113 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
     setError(null);
     
     try {
-      const formData = new FormData(e.currentTarget);
+      console.log("Tentative de mise à jour pour l'utilisateur:", userId);
+
+      // Vérifier que l'userId est un UUID valide
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(userId)) {
+        console.error("UUID invalide:", userId);
+        throw new Error("ID utilisateur invalide");
+      }
+
+      // Vérifier que l'utilisateur existe
+      console.log("Vérification de l'existence de l'utilisateur...");
+      const { data: userExists, error: userError } = await supabase
+        .from("users")
+        .select("id, email")
+        .eq("id", userId)
+        .maybeSingle();
+
+      console.log("Résultat de la vérification:", { userExists, userError });
+
+      if (userError) {
+        console.error("Erreur lors de la vérification de l'utilisateur:", userError);
+        throw userError;
+      }
+
+      if (!userExists) {
+        console.error("Utilisateur non trouvé dans la base de données:", userId);
+        throw new Error("Utilisateur non trouvé");
+      }
+
+      if (!formRef.current) {
+        throw new Error("Formulaire non trouvé");
+      }
+
       const updates = [];
+      const formElement = formRef.current;
 
       for (const field of fields) {
         let value;
         
         if (field.type === "multiselect") {
-          // Pour un select multiple, on récupère toutes les options sélectionnées
-          const selectElement = e.currentTarget.querySelector(`select[name="${field.id}"]`) as HTMLSelectElement;
-          value = Array.from(selectElement.selectedOptions).map(option => option.value);
+          const selectElement = formElement.querySelector(`select[name="${field.id}"]`) as HTMLSelectElement;
+          if (selectElement) {
+            value = Array.from(selectElement.selectedOptions).map(option => option.value);
+          }
+        } else if (field.type === "file") {
+          const fileInput = formElement.querySelector(`input[name="${field.id}"]`) as HTMLInputElement;
+          if (fileInput?.files?.length) {
+            // Pour l'instant, on garde juste le nom du fichier
+            // TODO: Implémenter l'upload du fichier vers un stockage
+            value = fileInput.files[0].name;
+          } else {
+            // Si aucun nouveau fichier n'est sélectionné, garder l'ancienne valeur
+            value = values[field.id];
+          }
+        } else if (field.type === "boolean") {
+          const checkbox = formElement.querySelector(`input[name="${field.id}"]`) as HTMLInputElement;
+          value = checkbox ? checkbox.checked : false;
         } else {
-          value = formData.get(field.id);
+          const element = formElement.querySelector(`[name="${field.id}"]`) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+          value = element ? element.value : null;
           
-          // Conversion des valeurs selon le type
-          if (field.type === "boolean") {
-            value = value === "on";
-          } else if (field.type === "number" || field.type === "range") {
+          if (field.type === "number" || field.type === "range") {
             value = value ? Number(value) : null;
           }
         }
 
-        updates.push({
+        const update = {
           user_id: userId,
           field_id: field.id,
           value: value
-        });
+        };
+        console.log("Préparation de la mise à jour:", update);
+        updates.push(update);
       }
 
+      console.log("Tentative d'upsert avec les données:", updates);
       const { error: upsertError } = await supabase
         .from("custom_member_field_values")
         .upsert(updates, {
-          onConflict: "user_id,field_id"
+          onConflict: "user_id,field_id",
+          returning: "minimal" // Pour réduire la taille de la réponse
         });
 
-      if (upsertError) throw upsertError;
+      if (upsertError) {
+        console.error("Erreur lors de l'upsert:", upsertError);
+        throw upsertError;
+      }
 
       await loadFieldsAndValues();
       setIsEditing(false);
       toast.success("Champs personnalisés mis à jour");
-    } catch (err) {
-      console.error("Erreur lors de la mise à jour:", err);
-      setError("Erreur lors de la mise à jour");
-      toast.error("Erreur lors de la mise à jour");
+    } catch (err: any) {
+      console.error("Erreur détaillée lors de la mise à jour:", err);
+      let errorMessage = "Erreur lors de la mise à jour";
+      
+      if (err.message === "ID utilisateur invalide") {
+        errorMessage = "L'identifiant de l'utilisateur n'est pas valide";
+      } else if (err.message === "Utilisateur non trouvé") {
+        errorMessage = "L'utilisateur n'existe pas dans la base de données";
+      } else if (err.message === "Formulaire non trouvé") {
+        errorMessage = "Erreur technique : formulaire non trouvé";
+      } else if (err.code === "23503") {
+        errorMessage = "L'utilisateur référencé n'existe pas. Veuillez vérifier que l'utilisateur existe toujours dans la base de données.";
+      }
+      
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -184,7 +249,7 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
               </h2>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+            <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
               <div className="p-6 space-y-6 flex-1 overflow-y-auto">
                 {fields.map((field) => (
                   <div key={field.id}>
@@ -213,12 +278,12 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
                         multiple
                         className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500 min-h-[100px]"
                         required={field.required}
+                        defaultValue={Array.isArray(values[field.id]) ? values[field.id] : []}
                       >
                         {field.options?.map((option) => (
                           <option 
                             key={option} 
                             value={option}
-                            selected={Array.isArray(values[field.id]) && values[field.id]?.includes(option)}
                           >
                             {option}
                           </option>
@@ -257,6 +322,21 @@ export default function CustomFieldsCard({ userId, clubId, canEdit }: Props) {
                           <span>{field.min_value}</span>
                           <span>{field.max_value}</span>
                         </div>
+                      </div>
+                    ) : field.type === "file" ? (
+                      <div>
+                        <input
+                          type="file"
+                          name={field.id}
+                          className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
+                          required={field.required}
+                          accept={field.accepted_file_types?.join(',')}
+                        />
+                        {values[field.id] && (
+                          <p className="mt-1 text-sm text-gray-500">
+                            Fichier actuel : {values[field.id]}
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <input
