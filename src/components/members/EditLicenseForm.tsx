@@ -20,7 +20,7 @@ interface FormData {
   number: string;
   authority: string;
   issued_at: string;
-  expires_at: string | null;
+  // expires_at: string | null;
   data: Record<string, any>;
 }
 
@@ -42,9 +42,9 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
     issued_at: currentLicense?.issued_at 
       ? format(new Date(currentLicense.issued_at), 'yyyy-MM-dd') 
       : format(new Date(), 'yyyy-MM-dd'),
-    expires_at: currentLicense?.expires_at 
-      ? format(new Date(currentLicense.expires_at), 'yyyy-MM-dd') 
-      : null,
+    // expires_at: currentLicense?.expires_at 
+    //   ? format(new Date(currentLicense.expires_at), 'yyyy-MM-dd') 
+    //   : null,
     data: currentLicense?.data || {},
   }));
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
@@ -57,9 +57,9 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
         number: currentLicense.number,
         authority: currentLicense.authority,
         issued_at: format(new Date(currentLicense.issued_at), 'yyyy-MM-dd'),
-        expires_at: currentLicense.expires_at 
-          ? format(new Date(currentLicense.expires_at), 'yyyy-MM-dd') 
-          : null,
+        // expires_at: currentLicense.expires_at 
+        //   ? format(new Date(currentLicense.expires_at), 'yyyy-MM-dd') 
+        //   : null,
         data: currentLicense.data || {},
       });
 
@@ -411,7 +411,7 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
               />
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Date d'expiration
               </label>
@@ -421,12 +421,12 @@ const EditLicenseForm: React.FC<EditLicenseFormProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, expires_at: e.target.value || null }))}
                 className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
               />
-            </div>
+            </div> */}
 
             {formData.license_type_id && licenseTypes
               .find(lt => lt.id === formData.license_type_id)
               ?.required_fields
-              .filter(field => !['number', 'authority', 'issued_at', 'expires_at'].includes(field.name))
+              .filter(field => !['number', 'authority', 'issued_at'/* , 'expires_at' */].includes(field.name))
               .map((field) => (
                 <div key={field.name}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
