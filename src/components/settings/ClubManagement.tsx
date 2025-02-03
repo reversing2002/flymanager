@@ -347,16 +347,16 @@ const ClubManagement = () => {
               name="weather_station_id"
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
               disabled={stationsLoading}
-              defaultValue={clubData.wind_station_id || ""}
+              value={clubData.wind_station_id || ""}
+              onChange={(e) => setClubData({ ...clubData, wind_station_id: e.target.value })}
             >
               <option value="">Sélectionner une station</option>
               {Array.isArray(stations) && stations.map((station) => (
                 <option 
                   key={station.Id_station} 
                   value={station.Id_station}
-                  selected={station.Id_station === clubData.wind_station_id}
                 >
-                  {station.Nom_usuel} ({station.Altitude}m)
+                  {station.Nom_usuel}{station.distance !== undefined ? ` (${station.distance.toFixed(1)}km)` : ''}
                 </option>
               ))}
             </select>

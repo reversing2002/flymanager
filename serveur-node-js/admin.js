@@ -1,8 +1,7 @@
 const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
 const router = express.Router();
+const { createClient } = require('@supabase/supabase-js');
 
-// Création du client Supabase admin
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -18,53 +17,47 @@ const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
-// Middleware de vérification admin
+// Middleware pour vérifier le rôle admin
 const checkAdminRole = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Non autorisé' });
-  }
-
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Token d\'authentification manquant' });
+    }
+
     const token = authHeader.split(' ')[1];
     const { data: { user }, error } = await adminClient.auth.getUser(token);
     
     if (error) {
-      console.error('❌ Erreur auth.getUser:', error);
-      return res.status(401).json({ error: 'Non autorisé' });
-    }
-    
-    if (!user) {
-      console.error('❌ Utilisateur non trouvé');
-      return res.status(401).json({ error: 'Non autorisé' });
+      console.error('Erreur lors de la vérification du token:', error);
+      return res.status(401).json({ error: 'Token invalide' });
     }
 
-    // Vérifier si l'utilisateur est admin via user_group_memberships
-    const { data: groups, error: groupsError } = await adminClient
+    if (!user) {
+      return res.status(401).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    // Vérifier le rôle admin
+    const { data: roles, error: rolesError } = await adminClient
       .from('user_group_memberships')
-      .select(`
-        user_groups (
-          code
-        )
-      `)
+      .select('user_groups (code)')
       .eq('user_id', user.id);
 
-    if (groupsError) {
-      console.error('❌ Erreur récupération groupes:', groupsError);
-      return res.status(500).json({ error: 'Erreur serveur' });
+    if (rolesError) {
+      console.error('Erreur lors de la vérification des rôles:', rolesError);
+      return res.status(500).json({ error: 'Erreur lors de la vérification des rôles' });
     }
 
-    const isAdmin = groups?.some(membership => membership.user_groups?.code === 'ADMIN');
+    const isAdmin = roles?.some(membership => membership.user_groups?.code === 'ADMIN');
     if (!isAdmin) {
-      console.error('❌ Utilisateur non admin:', user.id);
-      return res.status(403).json({ error: 'Accès refusé' });
+      return res.status(403).json({ error: 'Accès non autorisé' });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    console.error('❌ Erreur middleware admin:', error);
-    return res.status(500).json({ error: 'Erreur serveur' });
+    console.error('Erreur dans le middleware admin:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 };
 
@@ -173,7 +166,7 @@ router.get('/users/:userId/auth', checkAdminRole, async (req, res) => {
   }
 });
 
-// Suppression d'un utilisateur
+// Supprimer un utilisateur
 router.delete('/users/:userId', checkAdminRole, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -307,6 +300,25 @@ router.post('/users', checkAdminRole, async (req, res) => {
       }
 
       console.log('🔑 Login généré:', login);
+
+      // Créer le club et l'admin via RPC
+      const { data, error: rpcError } = await adminClient.rpc('create_club_with_admin', {
+        p_club_name: club.clubName,
+        p_club_code: club.clubCode || login.substring(0, 10).toUpperCase(),
+        p_admin_email: email,
+        p_admin_password: password,
+        p_admin_login: login,
+        p_admin_first_name: userData.first_name || login,
+        p_admin_last_name: userData.last_name || ''
+      });
+
+      if (rpcError) {
+        console.error('❌ Erreur RPC:', rpcError);
+        throw rpcError;
+      }
+
+      clubId = data;
+      console.log('✅ Club et admin créés avec succès');
 
       // Créer l'utilisateur dans la base de données
       const { data: newUser, error: createError } = await adminClient
@@ -495,5 +507,284 @@ router.put('/users/:userId', checkAdminRole, async (req, res) => {
     res.status(500).json({ error: 'Erreur lors de la mise à jour de l\'utilisateur' });
   }
 });
+
+// Import des clubs
+router.post('/import-clubs', checkAdminRole, async (req, res) => {
+  try {
+    const { clubs } = req.body;
+    const results = {
+      success: [],
+      errors: []
+    };
+
+    for (const club of clubs) {
+      try {
+        const clubSlug = slugify(club.clubName, { lower: true, strict: true });
+        const adminEmail = club.email || `${clubSlug}@4fly.fr`;
+        console.log('🔑 Tentative création club avec admin:', adminEmail);
+
+        // Check if user already exists
+        const { data: existingUser, error: userError } = await adminClient
+          .from('users')
+          .select('*')
+          .eq('email', adminEmail)
+          .single();
+
+        if (userError && userError.code !== 'PGRST116') {
+          throw userError;
+        }
+
+        let clubId;
+        if (existingUser) {
+          console.log('ℹ️ Utilisateur existe déjà, mise à jour du club existant');
+          // Get existing club ID if user is already a club member
+          const { data: clubMember } = await adminClient
+            .from('club_members')
+            .select('club_id')
+            .eq('user_id', existingUser.id)
+            .single();
+          
+          if (clubMember) {
+            clubId = clubMember.club_id;
+          }
+        }
+
+        if (!clubId) {
+          // Generate a valid club code (3-10 alphanumeric characters)
+          const generateClubCode = (name) => {
+            // Remove all non-alphanumeric characters and get first 10 chars
+            const code = name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            // Ensure at least 3 characters
+            return code.length < 3 ? code.padEnd(3, '1') : code.substring(0, 10);
+          };
+
+          const clubCode = club.clubCode || generateClubCode(club.clubName);
+
+          // Créer le club et l'admin via RPC
+          const { data, error: rpcError } = await adminClient.rpc('create_club_with_admin', {
+            p_club_name: club.clubName,
+            p_club_code: clubCode,
+            p_admin_email: adminEmail,
+            p_admin_password: generateRandomPassword(),
+            p_admin_login: clubSlug,
+            p_admin_first_name: 'Admin',
+            p_admin_last_name: club.clubName
+          });
+
+          if (rpcError) {
+            console.error('❌ Erreur RPC:', rpcError);
+            throw rpcError;
+          }
+
+          clubId = data;
+        }
+        
+        // Mettre à jour les informations du club
+        const { error: updateError } = await adminClient
+          .from('clubs')
+          .update({
+            address: club.postalAddress,
+            phone: club.phone,
+            email: adminEmail,
+            latitude: club.latitude,
+            longitude: club.longitude,
+            settings: {
+              website: club.website,
+              location: club.location
+            },
+            auto_imported: true,
+            import_date: new Date().toISOString()
+          })
+          .eq('id', clubId);
+
+        if (updateError) {
+          console.error('❌ Erreur mise à jour club:', updateError);
+          throw updateError;
+        }
+
+        console.log('✅ Informations du club mises à jour');
+
+        // Créer ou mettre à jour les paramètres du site web du club
+        console.log('📝 Mise à jour des paramètres du site web');
+        const { error: settingsError } = await adminClient
+          .from('club_website_settings')
+          .upsert({
+            club_id: clubId,
+            hero_title: `Bienvenue à ${club.clubName}`,
+            hero_subtitle: club.location ? `Situé à ${club.location}` : undefined,
+            cached_club_info: {
+              email: adminEmail,
+              phone: club.phone,
+              address: club.postalAddress,
+              latitude: club.latitude,
+              longitude: club.longitude
+            },
+            pages: [
+              {
+                slug: 'about',
+                title: 'À propos',
+                content: `Bienvenue à ${club.clubName}. Notre aéroclub est situé à ${club.location}.`
+              },
+              {
+                slug: 'contact',
+                title: 'Contact',
+                content: JSON.stringify({
+                  address: club.postalAddress,
+                  phone: club.phone,
+                  website: club.website,
+                  email: adminEmail,
+                  coordinates: {
+                    lat: club.latitude,
+                    lng: club.longitude
+                  }
+                })
+              }
+            ]
+          }, {
+            onConflict: 'club_id'
+          });
+
+        if (settingsError) {
+          console.error('❌ Erreur mise à jour paramètres site web:', settingsError);
+          throw settingsError;
+        }
+
+        console.log('✅ Paramètres du site web mis à jour');
+
+        // Créer les pages du club
+        console.log('📝 Création des pages du club');
+        const pages = [
+          {
+            club_id: clubId,
+            slug: 'about',
+            title: 'À propos',
+            content: `Bienvenue à ${club.clubName}. Notre aéroclub est situé à ${club.location}.`
+          },
+          {
+            club_id: clubId,
+            slug: 'contact',
+            title: 'Contact',
+            content: JSON.stringify({
+              address: club.postalAddress,
+              phone: club.phone,
+              website: club.website,
+              email: adminEmail,
+              coordinates: {
+                lat: club.latitude,
+                lng: club.longitude
+              }
+            })
+          }
+        ];
+
+        for (const page of pages) {
+          const { error: pageError } = await adminClient
+            .from('club_pages')
+            .upsert(page, {
+              onConflict: 'club_id,slug'
+            });
+
+          if (pageError) {
+            console.error(`❌ Erreur création/mise à jour page ${page.slug}:`, pageError);
+            throw pageError;
+          }
+        }
+
+        console.log('✅ Pages du club créées/mises à jour');
+
+        results.success.push({
+          clubName: club.clubName,
+          email: adminEmail,
+          password: generateRandomPassword()
+        });
+
+        console.log(`✅ Import club ${club.clubName} terminé avec succès`);
+
+      } catch (error) {
+        console.error(`❌ Erreur import club ${club.clubName}:`, error);
+        results.errors.push({
+          clubName: club.clubName,
+          error: error.message
+        });
+      }
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error('❌ Erreur inattendue:', error);
+    res.status(500).json({ error: 'Erreur lors de l\'import des clubs' });
+  }
+});
+
+// Supprimer un utilisateur
+router.delete('/users/:userId', checkAdminRole, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { error } = await adminClient.auth.admin.deleteUser(userId);
+    
+    if (error) {
+      console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+      return res.status(500).json({ error: error.message });
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression de l\'utilisateur' });
+  }
+});
+
+function generateRandomPassword() {
+  const length = 16;
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset[Math.floor(Math.random() * charset.length)];
+  }
+  return password;
+}
+
+function slugify(str, options = {}) {
+  const defaults = {
+    replacement: '-',
+    lower: false,
+    strict: false,
+    trim: true,
+    charmap: {}
+  };
+
+  options = Object.assign({}, defaults, options);
+
+  let result = '';
+  const regex = /[\u{0080}-\u{FFFF}]/gu;
+
+  if (options.trim) {
+    str = str.trim();
+  }
+
+  if (options.lower) {
+    str = str.toLowerCase();
+  }
+
+  if (options.strict) {
+    str = str.replace(/[^a-z0-9]/g, options.replacement);
+  } else {
+    str = str.replace(regex, match => {
+      const char = match.charCodeAt(0);
+      if (char >= 128) {
+        return options.replacement;
+      }
+      return match;
+    });
+  }
+
+  for (const char in options.charmap) {
+    str = str.replace(new RegExp(char, 'g'), options.charmap[char]);
+  }
+
+  result = str;
+
+  return result;
+}
 
 module.exports = router;

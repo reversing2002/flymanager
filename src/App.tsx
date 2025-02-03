@@ -90,6 +90,8 @@ import { Contact } from './components/public/pages/Contact';
 import NewsPage from "./components/public/pages/NewsPage";
 import NewsDetail from "./components/public/pages/NewsDetail";
 import useLanguageRedirect from './hooks/useLanguageRedirect';
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { supabase } from './lib/supabase';
 
 // Initialiser dayjs avec la locale francaise
 dayjs.locale('fr');
@@ -114,187 +116,190 @@ const App = () => {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={theme}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Router>
-              <LanguageRedirectWrapper />
-              {isClubSubdomain ? (
-                <ClubRouter clubCode={clubCode} />
-              ) : (
-                <AuthProvider>
-                  <GoogleTagManager />
-                  <Toaster
-                    position="top-right"
-                    toastOptions={{
-                      duration: 3000,
-                    }}
-                  />
-                  <Routes>
-                    {/* Route pour les sites de club - disponible dans tous les environnements */}
-                    <Route path="/club/:clubCode/*" element={<ClubRouter />} />
+        <SessionContextProvider supabaseClient={supabase}>
+          <ThemeProvider theme={theme}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <Router>
+                <LanguageRedirectWrapper />
+                {isClubSubdomain ? (
+                  <ClubRouter clubCode={clubCode} />
+                ) : (
+                  <AuthProvider>
+                    <GoogleTagManager />
+                    <Toaster
+                      position="top-right"
+                      toastOptions={{
+                        duration: 3000,
+                      }}
+                    />
+                    <Routes>
+                      {/* Route pour les sites de club - disponible dans tous les environnements */}
+                      <Route path="/club/:clubCode/*" element={<ClubRouter />} />
 
-                    {/* Pages publiques avec préfixe de langue */}
-                    <Route element={<PublicLayout />}>
-                      <Route path="/" element={<RootPage />} />
-                      <Route path="/:lang" element={<RootPage />} />
-                      <Route path="/:lang/about" element={<AboutUsPage />} />
-                      <Route path="/:lang/features" element={<FeaturesPage />} />
-                      <Route path="/:lang/pricing" element={<PricingPage />} />
-                      <Route path="/:lang/faq" element={<FAQPage />} />
-                      <Route path="/:lang/cgv" element={<CGVPage />} />
-                      <Route path="/:lang/rgpd" element={<RGPDPage />} />
-                      <Route path="/:lang/contact" element={<ContactPage />} />
-                      <Route path="/:lang/legal" element={<LegalPage />} />
-                      <Route path="/:lang/reset-password" element={<ResetPasswordPage />} />
-                      <Route path="/:lang/update-password" element={<UpdatePasswordPage />} />
-                      <Route path="/:lang/login" element={<LoginPage />} />
-                      <Route path="/:lang/create-club" element={<CreateClubPage />} />
-                      
-                      {/* Routes sans préfixe de langue (redirection) */}
-                      <Route path="/about" element={<Navigate to={`/${defaultLanguage}/about`} replace />} />
-                      <Route path="/features" element={<Navigate to={`/${defaultLanguage}/features`} replace />} />
-                      <Route path="/pricing" element={<Navigate to={`/${defaultLanguage}/pricing`} replace />} />
-                      <Route path="/faq" element={<Navigate to={`/${defaultLanguage}/faq`} replace />} />
-                      <Route path="/cgv" element={<Navigate to={`/${defaultLanguage}/cgv`} replace />} />
-                      <Route path="/rgpd" element={<Navigate to={`/${defaultLanguage}/rgpd`} replace />} />
-                      <Route path="/contact" element={<Navigate to={`/${defaultLanguage}/contact`} replace />} />
-                      <Route path="/legal" element={<Navigate to={`/${defaultLanguage}/legal`} replace />} />
-                      <Route path="/reset-password" element={<Navigate to={`/${defaultLanguage}/reset-password`} replace />} />
-                      <Route path="/update-password" element={<Navigate to={`/${defaultLanguage}/update-password`} replace />} />
-                      <Route path="/login" element={<Navigate to={`/${defaultLanguage}/login`} replace />} />
-                      <Route path="/create-club" element={<Navigate to={`/${defaultLanguage}/create-club`} replace />} />
-                    </Route>
+                      {/* Pages publiques avec préfixe de langue */}
+                      <Route element={<PublicLayout />}>
+                        <Route path="/" element={<RootPage />} />
+                        <Route path="/:lang" element={<RootPage />} />
+                        <Route path="/:lang/about" element={<AboutUsPage />} />
+                        <Route path="/:lang/features" element={<FeaturesPage />} />
+                        <Route path="/:lang/pricing" element={<PricingPage />} />
+                        <Route path="/:lang/faq" element={<FAQPage />} />
+                        <Route path="/:lang/cgv" element={<CGVPage />} />
+                        <Route path="/:lang/rgpd" element={<RGPDPage />} />
+                        <Route path="/:lang/contact" element={<ContactPage />} />
+                        <Route path="/:lang/legal" element={<LegalPage />} />
+                        <Route path="/:lang/reset-password" element={<ResetPasswordPage />} />
+                        <Route path="/:lang/update-password" element={<UpdatePasswordPage />} />
+                        <Route path="/:lang/login" element={<LoginPage />} />
+                        <Route path="/:lang/create-club" element={<CreateClubPage />} />
+                        
+                        {/* Routes sans préfixe de langue (redirection) */}
+                        <Route path="/about" element={<Navigate to={`/${defaultLanguage}/about`} replace />} />
+                        <Route path="/features" element={<Navigate to={`/${defaultLanguage}/features`} replace />} />
+                        <Route path="/pricing" element={<Navigate to={`/${defaultLanguage}/pricing`} replace />} />
+                        <Route path="/faq" element={<Navigate to={`/${defaultLanguage}/faq`} replace />} />
+                        <Route path="/cgv" element={<Navigate to={`/${defaultLanguage}/cgv`} replace />} />
+                        <Route path="/rgpd" element={<Navigate to={`/${defaultLanguage}/rgpd`} replace />} />
+                        <Route path="/contact" element={<Navigate to={`/${defaultLanguage}/contact`} replace />} />
+                        <Route path="/legal" element={<Navigate to={`/${defaultLanguage}/legal`} replace />} />
+                        <Route path="/reset-password" element={<Navigate to={`/${defaultLanguage}/reset-password`} replace />} />
+                        <Route path="/update-password" element={<Navigate to={`/${defaultLanguage}/update-password`} replace />} />
+                        <Route path="/login" element={<Navigate to={`/${defaultLanguage}/login`} replace />} />
+                        <Route path="/create-club" element={<Navigate to={`/${defaultLanguage}/create-club`} replace />} />
+                      </Route>
 
-                    {/* Routes de vol découverte */}
-                    <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
-                    <Route path="/discovery/qr2" element={<EnhancedDiscoveryPage />} />
-                    <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
-                    <Route path="/discovery-flight/success" element={<DiscoveryFlightSuccessPage />} />
-                    <Route path="/discovery-flight/cancel" element={<DiscoveryFlightCancelPage />} />
-                    <Route path="/discovery-flight/error" element={<DiscoveryFlightError />} />
-                    <Route path="/discovery-flights/:flightId/passenger-info" element={<PassengerInfoForm />} />
-                    <Route path="/discovery-flights/:flightId/passenger-confirmation" element={<PassengerInfoConfirmation />} />
-                    <Route path="/discovery-flights/:flightId/client" element={<DiscoveryFlightClientPage />} />
-                    <Route path="/discovery-flights/:flightId/confirmation" element={<DiscoveryFlightSuccess />} />
+                      {/* Routes de vol découverte */}
+                      <Route path="/discovery/qr" element={<DiscoveryQRCode />} />
+                      <Route path="/discovery/qr2" element={<EnhancedDiscoveryPage />} />
+                      <Route path="/discovery/new" element={<NewDiscoveryFlightPage />} />
+                      <Route path="/discovery-flight/success" element={<DiscoveryFlightSuccessPage />} />
+                      <Route path="/discovery-flight/cancel" element={<DiscoveryFlightCancelPage />} />
+                      <Route path="/discovery-flight/error" element={<DiscoveryFlightError />} />
+                      <Route path="/discovery-flights/:flightId/passenger-info" element={<PassengerInfoForm />} />
+                      <Route path="/discovery-flights/:flightId/passenger-confirmation" element={<PassengerInfoConfirmation />} />
+                      <Route path="/discovery-flights/:flightId/client" element={<DiscoveryFlightClientPage />} />
+                      <Route path="/discovery-flights/:flightId/confirmation" element={<DiscoveryFlightSuccess />} />
 
-                    {/* Routes protégées */}
-                    <Route
-                      element={
-                        <ProtectedRoute>
-                          <MainLayout />
-                        </ProtectedRoute>
-                      }
-                    >
-                      {/* Dashboard */}
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/welcome" element={<WelcomeAI />} />
-
-                      {/* Profile */}
-                      <Route path="/profile" element={<ProfilePage />} />
-
-                      {/* Members */}
-                      <Route path="/members" element={<ProtectedRoute><MemberList /></ProtectedRoute>} />
-                      <Route path="/members/roles" element={<RoleManagement />} />
-                      <Route path="/members/:id" element={<MemberProfile />} />
-                      <Route path="/members/:id/stats" element={<PilotStatsPage />} />
-                      <Route path="/members/balances" element={<ProtectedRoute roles={["admin"]}><MemberBalancesPage /></ProtectedRoute>} />
-
-                      {/* Statistiques des clubs */}
-                      <Route path="/club-stats" element={<ProtectedRoute><ClubStatsPage /></ProtectedRoute>} />
-
-                      {/* Factures */}
-                      <Route path="/invoices" element={<ProtectedRoute roles={["admin"]}><InvoicesPage /></ProtectedRoute>} />
-
-                      {/* Instructor Students */}
-                      <Route path="/instructor-students" element={<ProtectedRoute roles={["instructor"]}><InstructorStudentsPage /></ProtectedRoute>} />
-
-                      {/* Aircraft */}
-                      <Route path="/aircraft" element={<AircraftList />} />
-                      <Route path="/aircraft/:aircraftId" element={<AircraftList />} />
-                      <Route path="/aircraft/:id/maintenance" element={<ProtectedRoute roles={["admin", "mechanic"]}><MaintenancePage /></ProtectedRoute>} />
-
-                      {/* Discovery Flights */}
-                      <Route path="/discovery-flights" element={<ProtectedRoute roles={["admin", "discovery", "instructor"]}><DiscoveryFlightsPage /></ProtectedRoute>} />
-
-                      {/* Reservations */}
-                      <Route path="/reservations" element={<ProtectedRoute roles={["admin", "instructor", "pilot", "mechanic"]}><CalendarContainer /></ProtectedRoute>} />
-                      <Route path="/my-reservations" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><ReservationList /></ProtectedRoute>} />
-
-                      {/* Flights */}
-                      <Route path="/flights" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><FlightList /></ProtectedRoute>} />
-                      <Route path="/flights/new" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><NewFlightForm /></ProtectedRoute>} />
-                      <Route path="/instructor-flights" element={<ProtectedRoute roles={["instructor"]}><InstructorFlightsPage /></ProtectedRoute>} />
-
-                      {/* Accounts */}
-                      <Route path="/accounts" element={<AccountList />} />
-                      <Route path="/notifications" element={<ProtectedRoute roles={["admin"]}><NotificationList /></ProtectedRoute>} />
-                      <Route path="/instructor-billing" element={<ProtectedRoute roles={["admin"]}><InstructorBillingList /></ProtectedRoute>} />
-
-                      {/* Chat */}
+                      {/* Routes protégées */}
                       <Route
-                        path="/chat"
-                        element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><ChatPage /></ProtectedRoute>}
+                        element={
+                          <ProtectedRoute>
+                            <MainLayout />
+                          </ProtectedRoute>
+                        }
                       >
-                        <Route index element={<ChatList />} />
-                        <Route path="room/:roomId" element={<ChatRoom />} />
-                        <Route path="private/:recipientId" element={<PrivateChat />} />
+                        {/* Dashboard */}
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/welcome" element={<WelcomeAI />} />
+
+                        {/* Profile */}
+                        <Route path="/profile" element={<ProfilePage />} />
+
+                        {/* Members */}
+                        <Route path="/members" element={<ProtectedRoute><MemberList /></ProtectedRoute>} />
+                        <Route path="/members/roles" element={<RoleManagement />} />
+                        <Route path="/members/:id" element={<MemberProfile />} />
+                        <Route path="/members/:id/stats" element={<PilotStatsPage />} />
+                        <Route path="/members/balances" element={<ProtectedRoute roles={["admin"]}><MemberBalancesPage /></ProtectedRoute>} />
+
+                        {/* Statistiques des clubs */}
+                        <Route path="/club-stats" element={<ProtectedRoute><ClubStatsPage /></ProtectedRoute>} />
+
+                        {/* Factures */}
+                        <Route path="/invoices" element={<ProtectedRoute roles={["admin"]}><InvoicesPage /></ProtectedRoute>} />
+
+                        {/* Instructor Students */}
+                        <Route path="/instructor-students" element={<ProtectedRoute roles={["instructor"]}><InstructorStudentsPage /></ProtectedRoute>} />
+
+                        {/* Aircraft */}
+                        <Route path="/aircraft" element={<AircraftList />} />
+                        <Route path="/aircraft/:aircraftId" element={<AircraftList />} />
+                        <Route path="/aircraft/:id/maintenance" element={<ProtectedRoute roles={["admin", "mechanic"]}><MaintenancePage /></ProtectedRoute>} />
+
+                        {/* Discovery Flights */}
+                        <Route path="/discovery-flights" element={<ProtectedRoute roles={["admin", "discovery", "instructor"]}><DiscoveryFlightsPage /></ProtectedRoute>} />
+
+                        {/* Reservations */}
+                        <Route path="/reservations" element={<ProtectedRoute roles={["admin", "instructor", "pilot", "mechanic"]}><CalendarContainer /></ProtectedRoute>} />
+                        <Route path="/my-reservations" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><ReservationList /></ProtectedRoute>} />
+
+                        {/* Flights */}
+                        <Route path="/flights" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><FlightList /></ProtectedRoute>} />
+                        <Route path="/flights/new" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><NewFlightForm /></ProtectedRoute>} />
+                        <Route path="/instructor-flights" element={<ProtectedRoute roles={["instructor"]}><InstructorFlightsPage /></ProtectedRoute>} />
+
+                        {/* Accounts */}
+                        <Route path="/accounts" element={<AccountList />} />
+                        <Route path="/notifications" element={<ProtectedRoute roles={["admin"]}><NotificationList /></ProtectedRoute>} />
+                        <Route path="/instructor-billing" element={<ProtectedRoute roles={["admin"]}><InstructorBillingList /></ProtectedRoute>} />
+
+                        {/* Chat */}
+                        <Route
+                          path="/chat"
+                          element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><ChatPage /></ProtectedRoute>}
+                        >
+                          <Route index element={<ChatList />} />
+                          <Route path="room/:roomId" element={<ChatRoom />} />
+                          <Route path="private/:recipientId" element={<PrivateChat />} />
+                        </Route>
+
+                        {/* Events */}
+                        <Route path="/events" element={<EventsPage />} />
+
+                        {/* Documentation */}
+                        <Route path="/documentation" element={<ProtectedRoute><DocumentationPage /></ProtectedRoute>} />
+
+                        {/* Training */}
+                        <Route path="/training" element={<TrainingPage />} />
+                        <Route path="/training/:moduleId" element={<TrainingModuleDetails />} />
+                        <Route path="/training-admin" element={<ProtectedRoute roles={["system_admin"]}><TrainingAdminPage /></ProtectedRoute>} />
+
+                        {/* Progression */}
+                        <Route path="/progression" element={<ProtectedRoute roles={["instructor", "pilot"]}><ProgressionPage /></ProtectedRoute>} />
+                        <Route path="/progression/admin" element={<ProtectedRoute roles={["admin", "instructor"]}><ProgressionAdminPage /></ProtectedRoute>} />
+                        <Route path="/progression/students" element={<ProtectedRoute roles={["admin", "instructor"]}><StudentProgressionsPage /></ProtectedRoute>} />
+
+                        {/* Availability Management */}
+                        <Route path="/availability" element={<ProtectedRoute roles={["admin", "instructor", "mechanic", "pilot"]}><AvailabilityManagementPage /></ProtectedRoute>} />
+                        <Route path="/availability/instructor/:id" element={<ProtectedRoute roles={["admin", "instructor"]}><InstructorAvailabilityPage /></ProtectedRoute>} />
+                        <Route path="/availability/aircraft/:id" element={<ProtectedRoute roles={["admin", "mechanic"]}><AircraftAvailabilityPage /></ProtectedRoute>} />
+
+                        {/* Stats */}
+                        <Route path="/stats" element={<StatsPage />} />
+
+                        {/* Settings */}
+                        <Route path="/settings" element={<ProtectedRoute groups={["ADMIN"]}><SettingsPage /></ProtectedRoute>}>
+                          <Route path="accounting-migration" element={<AccountingMigrationSettings />} />
+                        </Route>
+
+                        {/* Email - Admin only */}
+                        <Route path="/admin/email" element={<ProtectedRoute roles={["admin"]}><EmailMembersPage /></ProtectedRoute>} />
+
+                        {/* Weather */}
+                        <Route path="/weather" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><Weather /></ProtectedRoute>} />
+
+                        {/* Comptabilité */}
+                        <Route path="/accounting" element={<ProtectedRoute><SimpleAccountingView /></ProtectedRoute>} />
                       </Route>
 
-                      {/* Events */}
-                      <Route path="/events" element={<EventsPage />} />
-
-                      {/* Documentation */}
-                      <Route path="/documentation" element={<ProtectedRoute><DocumentationPage /></ProtectedRoute>} />
-
-                      {/* Training */}
-                      <Route path="/training" element={<TrainingPage />} />
-                      <Route path="/training/:moduleId" element={<TrainingModuleDetails />} />
-                      <Route path="/training-admin" element={<ProtectedRoute roles={["system_admin"]}><TrainingAdminPage /></ProtectedRoute>} />
-
-                      {/* Progression */}
-                      <Route path="/progression" element={<ProtectedRoute roles={["instructor", "pilot"]}><ProgressionPage /></ProtectedRoute>} />
-                      <Route path="/progression/admin" element={<ProtectedRoute roles={["admin", "instructor"]}><ProgressionAdminPage /></ProtectedRoute>} />
-                      <Route path="/progression/students" element={<ProtectedRoute roles={["admin", "instructor"]}><StudentProgressionsPage /></ProtectedRoute>} />
-
-                      {/* Availability Management */}
-                      <Route path="/availability" element={<ProtectedRoute roles={["admin", "instructor", "mechanic", "pilot"]}><AvailabilityManagementPage /></ProtectedRoute>} />
-                      <Route path="/availability/instructor/:id" element={<ProtectedRoute roles={["admin", "instructor"]}><InstructorAvailabilityPage /></ProtectedRoute>} />
-                      <Route path="/availability/aircraft/:id" element={<ProtectedRoute roles={["admin", "mechanic"]}><AircraftAvailabilityPage /></ProtectedRoute>} />
-
-                      {/* Stats */}
-                      <Route path="/stats" element={<StatsPage />} />
-
-                      {/* Settings */}
-                      <Route path="/settings" element={<ProtectedRoute groups={["ADMIN"]}><SettingsPage /></ProtectedRoute>}>
-                        <Route path="accounting-migration" element={<AccountingMigrationSettings />} />
-                      </Route>
-
-                      {/* Email - Admin only */}
-                      <Route path="/admin/email" element={<ProtectedRoute roles={["admin"]}><EmailMembersPage /></ProtectedRoute>} />
-
-                      {/* Weather */}
-                      <Route path="/weather" element={<ProtectedRoute roles={["admin", "instructor", "pilot"]}><Weather /></ProtectedRoute>} />
-
-                      {/* Comptabilité */}
-                      <Route path="/accounting" element={<ProtectedRoute><SimpleAccountingView /></ProtectedRoute>} />
-                    </Route>
-
-                    {/* Route pour les pages du club */}
-                    <Route path="/club/:clubCode" element={<ClubPublicHome />} />
-                    <Route path="/club/:clubCode/page/:slug" element={<ClubPublicHome />} />
-                    <Route path="/club/:clubCode/fleet" element={<OurFleet />} />
-                    <Route path="/club/:clubCode/training" element={<Training />} />
-                    <Route path="/club/:clubCode/tarifs" element={<Pricing />} />
-                    <Route path="/club/:clubCode/contact" element={<Contact />} />
-                    <Route path="/club/:clubCode/actualites" element={<NewsPage />} />
-                    <Route path="/club/:clubCode/actualites/:newsId/:slug" element={<NewsDetail />} />
-                    
-                  </Routes>
-                </AuthProvider>
-              )}
-            </Router>
-          </LocalizationProvider>
-        </ThemeProvider>
+                      {/* Route pour les pages du club */}
+                      <Route path="/club/:clubCode" element={<ClubPublicHome />} />
+                      <Route path="/club/:clubCode/page/:slug" element={<ClubPublicHome />} />
+                      <Route path="/club/:clubCode/fleet" element={<OurFleet />} />
+                      <Route path="/club/:clubCode/training" element={<Training />} />
+                      <Route path="/club/:clubCode/tarifs" element={<Pricing />} />
+                      <Route path="/club/:clubCode/contact" element={<Contact />} />
+                      <Route path="/club/:clubCode/actualites" element={<NewsPage />} />
+                      <Route path="/club/:clubCode/actualites/:newsId/:slug" element={<NewsDetail />} />
+                      
+                    </Routes>
+                  </AuthProvider>
+                )}
+              </Router>
+            </LocalizationProvider>
+          </ThemeProvider>
+        </SessionContextProvider>
+        <Toaster />
       </QueryClientProvider>
     </HelmetProvider>
   );

@@ -19,12 +19,16 @@ interface AuthContextType {
           name: string;
           wind_station_id?: string;
           wind_station_name?: string;
+          latitude?: number;
+          longitude?: number;
         } | null;
         availableClubs?: {
           id: string;
           name: string;
           wind_station_id?: string;
           wind_station_name?: string;
+          latitude?: number;
+          longitude?: number;
         }[];
       })
     | null;
@@ -121,7 +125,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               id,
               name,
               wind_station_id,
-              wind_station_name
+              wind_station_name,
+              latitude,
+              longitude
             )
           `)
           .eq("user_id", session.user.id)
@@ -137,7 +143,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 id,
                 name,
                 wind_station_id,
-                wind_station_name
+                wind_station_name,
+                latitude,
+                longitude
               )
             )
           `)
@@ -188,7 +196,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     id: userData.club[0].club.id,
                     name: userData.club[0].club.name,
                     wind_station_id: userData.club[0].club.wind_station_id,
-                    wind_station_name: userData.club[0].club.wind_station_name
+                    wind_station_name: userData.club[0].club.wind_station_name,
+                    latitude: userData.club[0].club.latitude,
+                    longitude: userData.club[0].club.longitude
                   } : null;
 
                   setUser({
@@ -224,7 +234,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id,
           name,
           wind_station_id,
-          wind_station_name
+          wind_station_name,
+          latitude,
+          longitude
         )
       `)
       .eq("user_id", session.user.id)
@@ -250,7 +262,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 id,
                 name,
                 wind_station_id,
-                wind_station_name
+                wind_station_name,
+                latitude,
+                longitude
               )
             )
           `)
@@ -287,7 +301,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     supabase
       .from("clubs")
-      .select("id, name, wind_station_id, wind_station_name")
+      .select("id, name, wind_station_id, wind_station_name, latitude, longitude")
       .eq("id", clubId)
       .single()
       .then(({ data: selectedClub, error: clubError }) => {
@@ -306,7 +320,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               id,
               name,
               wind_station_id,
-              wind_station_name
+              wind_station_name,
+              latitude,
+              longitude
             )
           `)
           .eq("user_id", session.user.id)

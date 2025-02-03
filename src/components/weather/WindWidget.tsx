@@ -6,6 +6,7 @@ import { useUser } from '@/hooks/useUser';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useWeatherStations } from '@/hooks/useWeatherStations';
+import { supabase } from '@/lib/supabase';
 
 interface WindData {
   time: string;
@@ -44,6 +45,23 @@ const WindWidget: React.FC = () => {
       }
 
       try {
+        const { data: clubData, error: clubError } = await supabase
+          .from('clubs')
+          .select('wind_station_id, wind_station_name')
+          .eq('id', user.club.id)
+          .single();
+
+        if (clubError) {
+          console.error('Erreur lors de la récupération des données du club:', clubError);
+          setError('Erreur lors de la récupération des données du club');
+          return;
+        }
+
+        if (!clubData?.wind_station_id) {
+          setError('not_configured');
+          return;
+        }
+
         const response = await fetch(`https://stripe.linked.fr/api/meteo/wind-data/${user.club.id}`);
         if (!response.ok) {
           throw new Error(`Erreur HTTP: ${response.status}`);
@@ -96,6 +114,21 @@ const WindWidget: React.FC = () => {
     }
     return null;
   };
+
+  if (error === 'not_configured') {
+    return (
+      <Card className="w-full p-4">
+        <div className="flex flex-col items-center justify-center text-center space-y-2">
+          <div className="text-yellow-600 font-medium">
+            La balise de vent n'est pas configurée
+          </div>
+          <div className="text-sm text-gray-500">
+            Un administrateur doit sélectionner une balise de vent dans les paramètres pour afficher les données
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full">
