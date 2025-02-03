@@ -396,39 +396,43 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
 
           <Divider className="my-6" />
 
-          <Typography variant="h6" className="mb-4 text-gray-700">
-            Rôles et permissions
-          </Typography>
+          {isAdmin && (
+            <>
+              <Typography variant="h6" className="mb-4 text-gray-700">
+                Rôles et permissions
+              </Typography>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-            {availableRoles
-              .filter(role => {
-                // Si l'utilisateur est un superadmin, on montre tous les rôles
-                if (currentUser?.roles?.includes('SYSTEM_ADMIN')) {
-                  return true;
-                }
-                // Sinon on cache le rôle SYSTEM_ADMIN
-                return role.code.toUpperCase() !== 'SYSTEM_ADMIN';
-              })
-              .map((role) => (
-                <FormControlLabel
-                  key={role.code}
-                  control={
-                    <Checkbox.Root
-                      className="checkbox-root"
-                      checked={formData.roles.includes(role.code)}
-                      onCheckedChange={() => handleRoleChange(role.code)}
-                    >
-                      <Checkbox.Indicator className="checkbox-indicator">
-                        <Check className="w-4 h-4" />
-                      </Checkbox.Indicator>
-                    </Checkbox.Root>
-                  }
-                  label={getRoleLabel(role.code)}
-                  className="flex items-center space-x-2"
-                />
-              ))}
-          </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                {availableRoles
+                  .filter(role => {
+                    // Si l'utilisateur est un superadmin, on montre tous les rôles
+                    if (currentUser?.roles?.includes('SYSTEM_ADMIN')) {
+                      return true;
+                    }
+                    // Sinon on cache le rôle SYSTEM_ADMIN
+                    return role.code.toUpperCase() !== 'SYSTEM_ADMIN';
+                  })
+                  .map((role) => (
+                    <FormControlLabel
+                      key={role.code}
+                      control={
+                        <Checkbox.Root
+                          className="checkbox-root"
+                          checked={formData.roles.includes(role.code)}
+                          onCheckedChange={() => handleRoleChange(role.code)}
+                        >
+                          <Checkbox.Indicator className="checkbox-indicator">
+                            <Check className="w-4 h-4" />
+                          </Checkbox.Indicator>
+                        </Checkbox.Root>
+                      }
+                      label={getRoleLabel(role.code)}
+                      className="flex items-center space-x-2"
+                    />
+                  ))}
+              </div>
+            </>
+          )}
 
           {formData.roles.includes('INSTRUCTOR') && (
             <>
