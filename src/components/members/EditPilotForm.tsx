@@ -13,7 +13,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ImportCalendarIcon from '@mui/icons-material/CalendarToday';
 import IosShareIcon from '@mui/icons-material/IosShare';
-import LockIcon from '@mui/icons-material/Lock';
 import Typography from '@mui/material/Typography';
 import PilotFlightStats from './PilotFlightStats';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -64,14 +63,8 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
-  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
   const [newCalendar, setNewCalendar] = useState({ id: "", name: "" });
   const [calendarUrl, setCalendarUrl] = useState<string>("");
-  const [credentialsForm, setCredentialsForm] = useState({
-    email: pilot.email || "",
-    password: "",
-    confirmPassword: ""
-  });
 
   const [existingCalendars, setExistingCalendars] = useState<Array<{id: string, name: string}>>([]);
 
@@ -164,12 +157,41 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     setError(null);
 
     try {
-      const dataToSubmit = { 
-        ...formData,
-        roles: formData.roles.map(role => role.toUpperCase()),
-        password: undefined,
-        confirmPassword: undefined
-      };
+      const dataToSubmit = { ...formData };
+      dataToSubmit.roles = formData.roles.map(role => role.toUpperCase());
+
+      // Vérifier si l'email a été modifié
+      if (canEditSensitiveInfo && formData.email !== pilot.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: formData.email
+        });
+        if (emailError) throw emailError;
+      }
+
+      // Mise à jour du mot de passe si nécessaire
+      if (formData.password || formData.confirmPassword) {
+        if (formData.password !== formData.confirmPassword) {
+          setError("Les mots de passe ne correspondent pas");
+          setLoading(false);
+          return;
+        }
+        if (formData.password.length < 6) {
+          setError("Le mot de passe doit contenir au moins 6 caractères");
+          setLoading(false);
+          return;
+        }
+
+        // Si c'est un admin qui modifie le mot de passe d'un autre utilisateur
+        if (isAdmin && currentUser?.id !== pilot.id) {
+          dataToSubmit.password = formData.password;
+        } else {
+          // Si l'utilisateur modifie son propre mot de passe
+          const { error: passwordError } = await supabase.auth.updateUser({
+            password: formData.password
+          });
+          if (passwordError) throw passwordError;
+        }
+      }
 
       // Mise à jour des calendriers si c'est un instructeur
       if (dataToSubmit.roles.includes('INSTRUCTOR')) {
@@ -283,57 +305,8 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     }
   };
 
-  const handleCredentialsSubmit = async () => {
-    if (!credentialsForm.email) {
-      toast.error("L'email est requis");
-      return;
-    }
-
-    try {
-      // Vérifier si le mot de passe doit être mis à jour
-      if (credentialsForm.password) {
-        if (credentialsForm.password !== credentialsForm.confirmPassword) {
-          toast.error("Les mots de passe ne correspondent pas");
-          return;
-        }
-        if (credentialsForm.password.length < 6) {
-          toast.error("Le mot de passe doit contenir au moins 6 caractères");
-          return;
-        }
-
-        // Si c'est un admin qui modifie le mot de passe d'un autre utilisateur
-        if (isAdmin && currentUser?.id !== pilot.id) {
-          await onSubmit({ ...formData, password: credentialsForm.password });
-        } else {
-          // Si l'utilisateur modifie son propre mot de passe
-          const { error: passwordError } = await supabase.auth.updateUser({
-            password: credentialsForm.password
-          });
-          if (passwordError) throw passwordError;
-        }
-      }
-
-      // Mettre à jour l'email si modifié
-      if (credentialsForm.email !== pilot.email) {
-        if (isAdmin && currentUser?.id !== pilot.id) {
-          await onSubmit({ ...formData, email: credentialsForm.email });
-        } else {
-          const { error: emailError } = await supabase.auth.updateUser({
-            email: credentialsForm.email
-          });
-          if (emailError) throw emailError;
-        }
-        // Mettre à jour formData avec le nouvel email
-        setFormData(prev => ({ ...prev, email: credentialsForm.email }));
-      }
-
-      setShowCredentialsModal(false);
-      toast.success("Identifiants mis à jour avec succès");
-    } catch (err: any) {
-      console.error('[EditPilotForm] Erreur lors de la mise à jour des identifiants:', err);
-      toast.error(err.message || "Erreur lors de la mise à jour des identifiants");
-    }
-  };
+  // Vérifier si l'utilisateur peut modifier les informations sensibles
+  const canEditSensitiveInfo = isAdmin || currentUser?.id === pilot.id;
 
   return (
     <Card className="w-full max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
@@ -371,15 +344,16 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
               <TextField
                 fullWidth
                 label="Email"
-                type="email"
                 name="email"
+                type="email"
                 value={formData.email}
                 onChange={handleChange}
                 variant="outlined"
                 required
+                disabled={!canEditSensitiveInfo}
+                helperText={!canEditSensitiveInfo ? "Seul un administrateur ou le membre lui-même peut modifier l'email" : ""}
               />
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -389,18 +363,6 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                 onChange={handleChange}
                 variant="outlined"
               />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<LockIcon />}
-                onClick={() => setShowCredentialsModal(true)}
-                className="w-full sm:w-auto"
-              >
-                Modifier email et mot de passe
-              </Button>
             </Grid>
 
             <Grid item xs={12} sm={6}>
@@ -598,6 +560,44 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
 
           <Divider className="my-6" />
 
+          {canEditSensitiveInfo && (
+            <>
+              <Typography variant="h6" className="mb-4 text-gray-700">
+                Mot de passe
+              </Typography>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Nouveau mot de passe"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    variant="outlined"
+                    helperText="Laissez vide pour ne pas modifier"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Confirmer le mot de passe"
+                    name="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    variant="outlined"
+                    error={formData.password !== formData.confirmPassword && formData.confirmPassword !== ""}
+                    helperText={formData.password !== formData.confirmPassword && formData.confirmPassword !== "" ? "Les mots de passe ne correspondent pas" : ""}
+                  />
+                </Grid>
+              </Grid>
+            </>
+          )}
+
+          <Divider className="my-6" />
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4 flex items-center">
               <AlertTriangle className="w-5 h-5 mr-2" />
@@ -659,60 +659,6 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
               disabled={!newCalendar.id || !newCalendar.name}
             >
               Ajouter
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Modal de gestion des identifiants */}
-        <Dialog 
-          open={showCredentialsModal} 
-          onClose={() => setShowCredentialsModal(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Modifier les identifiants</DialogTitle>
-          <DialogContent>
-            <div className="space-y-4 mt-4">
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={credentialsForm.email}
-                onChange={(e) => setCredentialsForm(prev => ({ ...prev, email: e.target.value }))}
-                variant="outlined"
-                required
-              />
-              <TextField
-                fullWidth
-                label="Nouveau mot de passe"
-                type="password"
-                value={credentialsForm.password}
-                onChange={(e) => setCredentialsForm(prev => ({ ...prev, password: e.target.value }))}
-                variant="outlined"
-                helperText="Laissez vide pour ne pas modifier"
-              />
-              <TextField
-                fullWidth
-                label="Confirmer le mot de passe"
-                type="password"
-                value={credentialsForm.confirmPassword}
-                onChange={(e) => setCredentialsForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                variant="outlined"
-                error={credentialsForm.password !== credentialsForm.confirmPassword && credentialsForm.confirmPassword !== ""}
-                helperText={credentialsForm.password !== credentialsForm.confirmPassword && credentialsForm.confirmPassword !== "" ? "Les mots de passe ne correspondent pas" : ""}
-              />
-            </div>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowCredentialsModal(false)}>
-              Annuler
-            </Button>
-            <Button 
-              onClick={handleCredentialsSubmit}
-              variant="contained" 
-              color="primary"
-            >
-              Enregistrer
             </Button>
           </DialogActions>
         </Dialog>

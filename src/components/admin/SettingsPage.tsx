@@ -140,7 +140,7 @@ const SettingsPage = () => {
 
   // Filtrer les onglets en fonction des permissions
   const availableTabs = tabs.filter(tab => {
-    if (["api", "adminTest", "smile", "contactMessages", "accountingMigration", "clubs"].includes(tab.id)) {
+    if (["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration", "clubs"].includes(tab.id)) {
       return user && hasAnyGroup(user, ["SYSTEM_ADMIN"]);
     }
     return true;
@@ -148,7 +148,7 @@ const SettingsPage = () => {
 
   useEffect(() => {
     // Si l'onglet actif n'est pas disponible pour l'utilisateur, rediriger vers "club"
-    if (["api", "adminTest", "smile", "contactMessages", "accountingMigration", "clubs"].includes(activeTab) && (!user || !hasAnyGroup(user, ["SYSTEM_ADMIN"]))) {
+    if (["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration", "clubs"].includes(activeTab) && (!user || !hasAnyGroup(user, ["SYSTEM_ADMIN"]))) {
       setActiveTab("club");
       toast.error("Accès non autorisé. Seuls les super-administrateurs peuvent accéder à cette page.");
     }
@@ -277,7 +277,7 @@ const SettingsPage = () => {
                   >
                     <Icon className="h-4 w-4" />
                     {tab.label}
-                    {["api", "adminTest", "smile", "contactMessages", "accountingMigration", "clubs"].includes(tab.id) && (
+                    {["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration", "clubs"].includes(tab.id) && (
                       <Shield className="h-3 w-3 ml-auto text-rose-500" />
                     )}
                   </button>
@@ -303,7 +303,7 @@ const SettingsPage = () => {
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
-                {["api", "adminTest", "smile", "contactMessages", "accountingMigration", "clubs"].includes(tab.id) && (
+                {["api", "adminTest", "backups", "smile", "contactMessages", "accountingMigration", "clubs"].includes(tab.id) && (
                   <Shield className="h-3 w-3 ml-auto text-rose-500" />
                 )}
               </button>

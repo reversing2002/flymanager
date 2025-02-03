@@ -356,7 +356,7 @@ const MemberProfile = () => {
             Retour à la liste
           </button>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          {canEdit && (
+          {(isAdmin || isOwnProfile) && (
               <>
                 <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
                   <button
@@ -374,15 +374,13 @@ const MemberProfile = () => {
                     <span>Vols</span>
                   </button>
       
-                  {canEdit && (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center justify-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 col-span-2 sm:col-span-1"
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      <span>Modifier</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center justify-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 col-span-2 sm:col-span-1"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    <span>Modifier</span>
+                  </button>
                 </div>
               </>
             )}
