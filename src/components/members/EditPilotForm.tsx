@@ -406,7 +406,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                 {availableRoles
                   .filter(role => {
                     // Si l'utilisateur est un superadmin, on montre tous les rôles
-                    if (currentUser?.roles?.includes('SYSTEM_ADMIN')) {
+                    if (currentUser?.roles?.includes('ADMIN')) {
                       return true;
                     }
                     // Sinon on cache le rôle SYSTEM_ADMIN
