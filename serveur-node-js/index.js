@@ -899,6 +899,19 @@ async function syncInstructorCalendars() {
         const data = await response.json();
         const events = data.items || [];
 
+        console.log(`📅 Nombre d'événements trouvés dans Google Calendar: ${events.length}`);
+        
+        // Log détaillé des événements
+        events.forEach((event, index) => {
+          console.log(`📌 Événement ${index + 1}/${events.length}:`, {
+            summary: event.summary,
+            start: event.start.dateTime || event.start.date,
+            end: event.end.dateTime || event.end.date,
+            status: event.status,
+            recurringEventId: event.recurringEventId
+          });
+        });
+
         // Convertir les événements en indisponibilités
         const availabilities = events.map(event => ({
           user_id: instructor.instructor_id,
@@ -912,6 +925,17 @@ async function syncInstructorCalendars() {
 
         // Fusionner les indisponibilités qui se chevauchent
         const mergedAvailabilities = mergeOverlappingUnavailabilities(availabilities);
+
+        console.log(`🔄 Nombre d'indisponibilités après fusion: ${mergedAvailabilities.length}`);
+        
+        // Log détaillé des indisponibilités fusionnées
+        mergedAvailabilities.forEach((avail, index) => {
+          console.log(`📋 Indisponibilité ${index + 1}/${mergedAvailabilities.length}:`, {
+            start: avail.start_time,
+            end: avail.end_time,
+            reason: avail.reason
+          });
+        });
 
         // Insérer par lots de 50
         const batchSize = 50;

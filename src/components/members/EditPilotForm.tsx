@@ -8,10 +8,14 @@ import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { getInitials } from "../../lib/utils/avatarUtils";
 import * as Checkbox from "@radix-ui/react-checkbox";
 import "../../styles/checkbox.css";
-import { Button } from "@mui/material";
+import { Button, Card, CardContent, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Divider, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import ImportCalendarIcon from '@mui/icons-material/CalendarToday';
+import IosShareIcon from '@mui/icons-material/IosShare';
 import Typography from '@mui/material/Typography';
 import PilotFlightStats from './PilotFlightStats';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 interface EditPilotFormProps {
   pilot: User;
@@ -62,6 +66,8 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   const [newCalendar, setNewCalendar] = useState({ id: "", name: "" });
   const [calendarUrl, setCalendarUrl] = useState<string>("");
 
+  const [existingCalendars, setExistingCalendars] = useState<Array<{id: string, name: string}>>([]);
+
   useEffect(() => {
     const loadUserData = async () => {
       console.log('[EditPilotForm] useEffect déclenché avec pilot.id:', pilot.id);
@@ -72,8 +78,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
       }
 
       try {
-        // Charger les groupes de l'utilisateur avec une jointure sur user_groups
-        console.log('[EditPilotForm] Chargement des groupes pour pilot.id:', pilot.id);
+        // Charger les groupes de l'utilisateur
         const { data: groupData, error: groupError } = await supabase
           .from('user_group_memberships')
           .select(`
@@ -83,27 +88,32 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
           `)
           .eq('user_id', pilot.id);
 
-        if (groupError) {
-          console.error('[EditPilotForm] Erreur lors du chargement des groupes:', groupError);
-          throw groupError;
-        }
+        if (groupError) throw groupError;
 
-        console.log('[EditPilotForm] Groupes reçus:', groupData);
-        
-        // Extraire les codes des groupes
         const groups = groupData
           .map(g => g.user_groups?.code)
           .filter(Boolean) as string[];
-        
-        console.log('[EditPilotForm] Groupes normalisés:', groups);
 
-        // Mettre à jour les rôles dans le formulaire
+        // Charger les calendriers existants
+        const { data: calendarData, error: calendarError } = await supabase
+          .from('instructor_calendars')
+          .select('calendar_id, calendar_name')
+          .eq('instructor_id', pilot.id);
+
+        if (calendarError) throw calendarError;
+
+        const calendars = calendarData.map(cal => ({
+          id: cal.calendar_id,
+          name: cal.calendar_name
+        }));
+
+        setExistingCalendars(calendars);
         setFormData(prev => ({
           ...prev,
-          roles: groups
+          roles: groups,
+          calendars: calendars
         }));
         
-        console.log('[EditPilotForm] Mise à jour des rôles sans calendriers:', groups);
       } catch (err) {
         console.error('[EditPilotForm] Erreur lors du chargement des données:', err);
         toast.error("Erreur lors du chargement des données");
@@ -248,6 +258,22 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     }
   };
 
+  const handleAddCalendar = () => {
+    if (!newCalendar.id || !newCalendar.name) {
+      toast.error("Veuillez remplir tous les champs");
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      calendars: [...prev.calendars, newCalendar]
+    }));
+    setExistingCalendars(prev => [...prev, newCalendar]);
+    setNewCalendar({ id: "", name: "" });
+    setShowCalendarModal(false);
+    toast.success("Calendrier ajouté avec succès");
+  };
+
   const isInstructor = formData.roles.includes("INSTRUCTOR");
 
   const getCalendarUrl = async () => {
@@ -272,392 +298,356 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   };
 
   return (
-    <div>
-      {/* Formulaire principal */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-            {error}
-          </div>
-        )}
+    <Card className="w-full max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
+      <CardContent className="p-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Typography variant="h5" component="h2" className="mb-6 text-gray-800 font-semibold">
+            Modifier le profil
+          </Typography>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              {formData.image_url ? (
-                <img
-                  src={formData.image_url}
-                  alt={`${formData.first_name} ${formData.last_name}`}
-                  className="w-20 h-20 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-xl font-medium text-white">
-                  {getInitials(formData.first_name, formData.last_name)}
-                </div>
-              )}
-              <label
-                htmlFor="photo"
-                className="absolute bottom-0 right-0 p-1 bg-slate-800 rounded-full cursor-pointer hover:bg-slate-700"
-              >
-                <Upload className="h-4 w-4" />
-                <input
-                  type="file"
-                  id="photo"
-                  name="photo"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoUpload}
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Prénom
-              </label>
-              <input
-                type="text"
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Prénom"
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+                variant="outlined"
                 required
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Nom
-              </label>
-              <input
-                type="text"
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Nom"
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleChange}
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+                variant="outlined"
                 required
               />
-            </div>
+            </Grid>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Email"
                 name="email"
+                type="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+                variant="outlined"
                 required
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Téléphone
-              </label>
-              <input
-                type="tel"
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Téléphone"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+                variant="outlined"
               />
-            </div>
+            </Grid>
 
-            {isAdmin && (
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Rôles
-                </label>
-                <div className="space-y-2">
-                  {availableRoles.map((group) => (
-                    <div key={group.code} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`role-${group.code}`}
-                        checked={formData.roles.includes(group.code.toUpperCase())}
-                        onChange={() => handleRoleChange(group.code)}
-                        className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
-                      />
-                      <label
-                        htmlFor={`role-${group.code}`}
-                        className="ml-2 block text-sm text-gray-900"
-                      >
-                        {group.name}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Genre</InputLabel>
+                <Select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  label="Genre"
+                >
+                  <MenuItem value="">Sélectionner</MenuItem>
+                  <MenuItem value="M">Homme</MenuItem>
+                  <MenuItem value="F">Femme</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Date de naissance"
+                name="birth_date"
+                type="date"
+                value={formData.birth_date}
+                onChange={handleChange}
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+          </Grid>
 
-            {formData.roles.includes("INSTRUCTOR") && (
-              <>
-                <div>
-                  <label htmlFor="instructor_rate" className="block text-sm font-medium text-gray-700">
-                    Tarif horaire d'instruction
-                  </label>
-                  <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">€</span>
-                    </div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      name="instructor_rate"
-                      id="instructor_rate"
-                      value={formData.instructor_rate ?? ''}
-                      onChange={handleChange}
-                      className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
-                      placeholder="0.00"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">/heure</span>
-                    </div>
-                  </div>
-                </div>
+          <Divider className="my-6" />
 
-                <div>
-                  <label htmlFor="instructor_fee" className="block text-sm font-medium text-gray-700">
-                    Rémunération horaire instructeur
-                  </label>
-                  <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">€</span>
-                    </div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      name="instructor_fee"
-                      id="instructor_fee"
-                      value={formData.instructor_fee ?? ''}
-                      onChange={handleChange}
-                      className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
-                      placeholder="0.00"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">/heure</span>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
+          <Typography variant="h6" className="mb-4 text-gray-700">
+            Rôles et permissions
+          </Typography>
 
-            {/* Section Calendriers Google (visible uniquement pour les instructeurs) */}
-            {formData.roles.includes('INSTRUCTOR') && (
-              <div className="col-span-2">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Calendriers Google
-                </h3>
-                <div className="space-y-4">
-                  {formData.calendars.map((calendar, index) => (
-                    <div key={index} className="flex items-center space-x-4">
-                      <input
-                        type="text"
-                        value={calendar.name}
-                        onChange={(e) => {
-                          const newCalendars = [...formData.calendars];
-                          newCalendars[index].name = e.target.value;
-                          setFormData(prev => ({ ...prev, calendars: newCalendars }));
-                        }}
-                        placeholder="Nom du calendrier"
-                        className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                      <input
-                        type="text"
-                        value={calendar.id}
-                        onChange={(e) => {
-                          const newCalendars = [...formData.calendars];
-                          newCalendars[index].id = e.target.value;
-                          setFormData(prev => ({ ...prev, calendars: newCalendars }));
-                        }}
-                        placeholder="ID du calendrier Google"
-                        className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newCalendars = formData.calendars.filter((_, i) => i !== index);
-                          setFormData(prev => ({ ...prev, calendars: newCalendars }));
-                        }}
-                        className="p-2 text-red-600 hover:text-red-800"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        calendars: [...prev.calendars, { id: "", name: "" }]
-                      }));
-                    }}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            {availableRoles
+              .filter(role => {
+                // Si l'utilisateur est un superadmin, on montre tous les rôles
+                if (currentUser?.roles?.includes('SYSTEM_ADMIN')) {
+                  return true;
+                }
+                // Sinon on cache le rôle SYSTEM_ADMIN
+                return role.code.toUpperCase() !== 'SYSTEM_ADMIN';
+              })
+              .map((role) => (
+                <FormControlLabel
+                  key={role.code}
+                  control={
+                    <Checkbox.Root
+                      className="checkbox-root"
+                      checked={formData.roles.includes(role.code)}
+                      onCheckedChange={() => handleRoleChange(role.code)}
+                    >
+                      <Checkbox.Indicator className="checkbox-indicator">
+                        <Check className="w-4 h-4" />
+                      </Checkbox.Indicator>
+                    </Checkbox.Root>
+                  }
+                  label={getRoleLabel(role.code)}
+                  className="flex items-center space-x-2"
+                />
+              ))}
+          </div>
+
+          {formData.roles.includes('INSTRUCTOR') && (
+            <>
+              <Divider className="my-6" />
+              
+              <Typography variant="h6" className="mb-4 text-gray-700 flex items-center">
+                <CalendarMonthIcon className="mr-2" />
+                Calendriers synchronisés
+              </Typography>
+
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                {existingCalendars.length > 0 ? (
+                  <List>
+                    {existingCalendars.map((calendar) => (
+                      <ListItem key={calendar.id} className="bg-white rounded-md mb-2 shadow-sm">
+                        <ListItemText
+                          primary={calendar.name}
+                          secondary={calendar.id}
+                          className="text-gray-800"
+                        />
+                        <ListItemSecondaryAction>
+                          <IconButton
+                            edge="end"
+                            aria-label="delete"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                calendars: prev.calendars.filter(cal => cal.id !== calendar.id)
+                              }));
+                              setExistingCalendars(prev => prev.filter(cal => cal.id !== calendar.id));
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  <Typography variant="body2" className="text-gray-500 italic text-center py-4">
+                    Aucun calendrier synchronisé
+                  </Typography>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<ImportCalendarIcon />}
+                    onClick={() => setShowCalendarModal(true)}
+                    className="w-full sm:flex-1"
+                    size="large"
                   >
-                    <Check className="h-5 w-5 mr-2" />
-                    Ajouter un calendrier Google pour mes indisponibilités
-                  </button>
-                  <button
-                    type="button"
+                    Importer un Google Calendar
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<IosShareIcon />}
                     onClick={getCalendarUrl}
-                    className="inline-flex items-center ml-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="w-full sm:flex-1"
+                    size="large"
                   >
-                    <CalendarMonthIcon className="h-5 w-5 mr-2" />
-                    Synchroniser mon calendrier
-                  </button>
+                    Exporter mes réservations
+                  </Button>
                 </div>
+
                 {calendarUrl && (
-                  <div className="mt-2 space-y-2">
-                    <p className="text-sm text-gray-600">
+                  <div className="mt-4 p-4 bg-white rounded-md border border-gray-200">
+                    <Typography variant="body2" className="text-gray-600 mb-2">
                       Pour voir vos réservations dans Google Agenda, copiez cette URL et ajoutez-la dans les paramètres de votre agenda Google :
-                    </p>
-                    <input
-                      type="text"
+                    </Typography>
+                    <TextField
+                      fullWidth
                       value={calendarUrl}
-                      readOnly
-                      className="w-full p-2 border rounded-md bg-gray-50"
-                      onClick={(e) => e.currentTarget.select()}
+                      variant="outlined"
+                      size="small"
+                      InputProps={{
+                        readOnly: true,
+                        endAdornment: (
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              navigator.clipboard.writeText(calendarUrl);
+                              toast.success('URL copiée dans le presse-papier');
+                            }}
+                          >
+                            <ContentCopyIcon />
+                          </IconButton>
+                        ),
+                      }}
                     />
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Section SMILE */}
-            <div className="space-y-4 mt-6">
-              <Typography variant="h6">Synchronisation SMILE</Typography>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="smile_login" className="block text-sm font-medium text-gray-700">
-                    Identifiant SMILE
-                  </label>
-                  <input
-                    type="text"
-                    id="smile_login"
-                    name="smile_login"
-                    value={formData.smile_login}
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Tarif horaire instructeur"
+                    name="instructor_rate"
+                    type="number"
+                    value={formData.instructor_rate || ''}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    variant="outlined"
+                    InputProps={{
+                      startAdornment: <span className="text-gray-500">€/h</span>,
+                    }}
                   />
-                </div>
-                <div>
-                  <label htmlFor="smile_password" className="block text-sm font-medium text-gray-700">
-                    Mot de passe SMILE
-                  </label>
-                  <input
-                    type="password"
-                    id="smile_password"
-                    name="smile_password"
-                    value={formData.smile_password}
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Frais instructeur"
+                    name="instructor_fee"
+                    type="number"
+                    value={formData.instructor_fee || ''}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    variant="outlined"
+                    InputProps={{
+                      startAdornment: <span className="text-gray-500">€</span>,
+                    }}
                   />
-                </div>
-              </div>
-              {formData.last_smile_sync && (
-                <Typography variant="body2" className="text-gray-500">
-                  Dernière synchronisation : {new Date(formData.last_smile_sync).toLocaleString()}
-                </Typography>
-              )}
-            </div>
+                </Grid>
+              </Grid>
+            </>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Genre
-              </label>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
-              >
-                <option value="">Sélectionner</option>
-                <option value="Homme">Homme</option>
-                <option value="Femme">Femme</option>
-              </select>
-            </div>
+          <Divider className="my-6" />
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Date de naissance
-              </label>
-              <input
-                type="date"
-                name="birth_date"
-                value={formData.birth_date}
+          <Typography variant="h6" className="mb-4 text-gray-700">
+            Mot de passe
+          </Typography>
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Nouveau mot de passe"
+                name="password"
+                type="password"
+                value={formData.password}
                 onChange={handleChange}
-                className="w-full rounded-lg border-slate-200 focus:border-sky-500 focus:ring-sky-500"
+                variant="outlined"
+                helperText="Laissez vide pour ne pas modifier"
               />
-            </div>
-          </div>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Confirmer le mot de passe"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                variant="outlined"
+                error={formData.password !== formData.confirmPassword && formData.confirmPassword !== ""}
+                helperText={formData.password !== formData.confirmPassword && formData.confirmPassword !== "" ? "Les mots de passe ne correspondent pas" : ""}
+              />
+            </Grid>
+          </Grid>
 
-          {/* Section mot de passe */}
-          <div className="border-t pt-6 mt-6">
-            <h3 className="text-lg font-medium mb-4">Changer le mot de passe</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nouveau mot de passe
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  minLength={6}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirmer le mot de passe
-                </label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  minLength={6}
-                />
-              </div>
-            </div>
-          </div>
+          <Divider className="my-6" />
 
-          <div className="flex justify-end space-x-4 pt-6 border-t">
-            <button
-              type="button"
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4 flex items-center">
+              <AlertTriangle className="w-5 h-5 mr-2" />
+              {error}
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-4 mt-6">
+            <Button
+              variant="outlined"
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
               disabled={loading}
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors disabled:opacity-50"
               disabled={loading}
             >
-              {loading ? "Enregistrement..." : "Enregistrer"}
-            </button>
+              {loading ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
           </div>
-        </div>
-      </form>
+        </form>
 
-      {/* Statistiques de vol */}
-      <PilotFlightStats 
-        userId={pilot.id} 
-        isInstructor={formData.roles.includes("INSTRUCTOR")} 
-      />
-    </div>
+        {/* Modal d'ajout de calendrier */}
+        <Dialog open={showCalendarModal} onClose={() => setShowCalendarModal(false)}>
+          <DialogTitle>Ajouter un calendrier Google</DialogTitle>
+          <DialogContent>
+            <div className="space-y-4 mt-4">
+              <TextField
+                fullWidth
+                label="ID du calendrier Google"
+                value={newCalendar.id}
+                onChange={(e) => setNewCalendar(prev => ({ ...prev, id: e.target.value }))}
+                variant="outlined"
+                placeholder="ID du calendrier (ex: example@group.calendar.google.com)"
+                helperText="Vous pouvez trouver l'ID dans les paramètres de votre calendrier Google"
+              />
+              <TextField
+                fullWidth
+                label="Nom du calendrier"
+                value={newCalendar.name}
+                onChange={(e) => setNewCalendar(prev => ({ ...prev, name: e.target.value }))}
+                variant="outlined"
+                placeholder="Ex: Calendrier personnel"
+              />
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowCalendarModal(false)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleAddCalendar}
+              variant="contained" 
+              color="primary"
+              disabled={!newCalendar.id || !newCalendar.name}
+            >
+              Ajouter
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+      </CardContent>
+    </Card>
   );
 };
 
