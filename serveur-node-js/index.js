@@ -959,7 +959,8 @@ async function syncInstructorCalendars() {
           slot_type: 'unavailability',
           is_recurring: false,
           reason: `[Google Calendar] ${event.summary || 'Indispo'}`,
-          club_id: memberData.club_id
+          club_id: memberData.club_id,
+          instructor_calendar_id: instructor.id
         }));
 
         // Fusionner les indisponibilités qui se chevauchent
@@ -1875,7 +1876,7 @@ async function generateInstructorCalendarToken(instructorId) {
 
     // Vérifier si un enregistrement existe déjà
     const { data: existing } = await supabase
-      .from('instructor_calendars')
+      .from('instructor_ics')
       .select('id')
       .eq('instructor_id', instructorId)
       .single();
@@ -1896,7 +1897,7 @@ async function generateInstructorCalendarToken(instructorId) {
     if (existing) {
       // Mise à jour de l'enregistrement existant
       const { data, error } = await supabase
-        .from('instructor_calendars')
+        .from('instructor_ics')
         .update({
           calendar_token: token,
           calendar_id: calendarId,
@@ -1911,7 +1912,7 @@ async function generateInstructorCalendarToken(instructorId) {
     } else {
       // Création d'un nouvel enregistrement
       const { data, error } = await supabase
-        .from('instructor_calendars')
+        .from('instructor_ics')
         .insert({
           instructor_id: instructorId,
           calendar_token: token,
@@ -2037,7 +2038,7 @@ app.get("/api/instructor-calendar/:token/reservations.ics", async (req, res) => 
     
     // Récupérer l'ID de l'instructeur à partir du token
     const { data: instructor, error: tokenError } = await supabase
-      .from('instructor_calendars')
+      .from('instructor_ics')
       .select('instructor_id')
       .eq('calendar_token', token)
       .single();
@@ -2068,7 +2069,7 @@ app.post("/api/instructor-calendar/get-url", async (req, res) => {
 
     // Générer ou récupérer le token existant
     let { data: instructor } = await supabase
-      .from('instructor_calendars')
+      .from('instructor_ics')
       .select('calendar_token')
       .eq('instructor_id', user_id)
       .single();

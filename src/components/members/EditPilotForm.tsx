@@ -13,6 +13,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ImportCalendarIcon from '@mui/icons-material/CalendarToday';
 import IosShareIcon from '@mui/icons-material/IosShare';
+import PaletteIcon from '@mui/icons-material/Palette';
 import Typography from '@mui/material/Typography';
 import PilotFlightStats from './PilotFlightStats';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -54,7 +55,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     instructor_fee: pilot.instructor_fee || null,
     password: "",
     confirmPassword: "",
-    calendars: [] as { id: string, name: string }[],
+    calendars: [] as { id: string, name: string, color: string }[],
     smile_login: pilot.smile_login || "",
     smile_password: pilot.smile_password || "",
     last_smile_sync: pilot.last_smile_sync || null,
@@ -67,10 +68,10 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
-  const [newCalendar, setNewCalendar] = useState({ id: "", name: "" });
+  const [newCalendar, setNewCalendar] = useState({ id: "", name: "", color: "#4A5568" });
   const [calendarUrl, setCalendarUrl] = useState<string>("");
 
-  const [existingCalendars, setExistingCalendars] = useState<Array<{id: string, name: string}>>([]);
+  const [existingCalendars, setExistingCalendars] = useState<Array<{id: string, name: string, color: string}>>([]);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -101,14 +102,15 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
         // Charger les calendriers existants
         const { data: calendarData, error: calendarError } = await supabase
           .from('instructor_calendars')
-          .select('calendar_id, calendar_name')
+          .select('calendar_id, calendar_name, color')
           .eq('instructor_id', pilot.id);
 
         if (calendarError) throw calendarError;
 
         const calendars = calendarData.map(cal => ({
           id: cal.calendar_id,
-          name: cal.calendar_name
+          name: cal.calendar_name,
+          color: cal.color || "#4A5568" // Couleur par défaut si non définie
         }));
 
         setExistingCalendars(calendars);
@@ -215,7 +217,8 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
               formData.calendars.map(cal => ({
                 instructor_id: pilot.id,
                 calendar_id: cal.id,
-                calendar_name: cal.name
+                calendar_name: cal.name,
+                color: cal.color
               }))
             );
 
@@ -281,7 +284,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
       calendars: [...prev.calendars, newCalendar]
     }));
     setExistingCalendars(prev => [...prev, newCalendar]);
-    setNewCalendar({ id: "", name: "" });
+    setNewCalendar({ id: "", name: "", color: "#4A5568" });
     setShowCalendarModal(false);
     toast.success("Calendrier ajouté avec succès");
   };
@@ -498,12 +501,36 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                   <List>
                     {existingCalendars.map((calendar) => (
                       <ListItem key={calendar.id} className="bg-white rounded-md mb-2 shadow-sm">
+                        <div className="flex items-center" style={{ width: '16px', height: '16px', backgroundColor: calendar.color, marginRight: '12px', borderRadius: '50%' }} />
                         <ListItemText
                           primary={calendar.name}
                           secondary={calendar.id}
                           className="text-gray-800"
                         />
                         <ListItemSecondaryAction>
+                          <IconButton
+                            edge="end"
+                            aria-label="change-color"
+                            onClick={() => {
+                              const newColor = prompt("Entrez une nouvelle couleur (format hex)", calendar.color);
+                              if (newColor && /^#[0-9A-F]{6}$/i.test(newColor)) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  calendars: prev.calendars.map(cal => 
+                                    cal.id === calendar.id ? { ...cal, color: newColor } : cal
+                                  )
+                                }));
+                                setExistingCalendars(prev => prev.map(cal => 
+                                  cal.id === calendar.id ? { ...cal, color: newColor } : cal
+                                ));
+                              } else if (newColor) {
+                                toast.error("Format de couleur invalide. Utilisez le format hexadécimal (ex: #FF0000)");
+                              }
+                            }}
+                            className="mr-2"
+                          >
+                            <PaletteIcon />
+                          </IconButton>
                           <IconButton
                             edge="end"
                             aria-label="delete"
@@ -699,6 +726,14 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
                 onChange={(e) => setNewCalendar(prev => ({ ...prev, name: e.target.value }))}
                 variant="outlined"
                 placeholder="Ex: Calendrier personnel"
+              />
+              <TextField
+                fullWidth
+                label="Couleur du calendrier"
+                value={newCalendar.color}
+                onChange={(e) => setNewCalendar(prev => ({ ...prev, color: e.target.value }))}
+                variant="outlined"
+                placeholder="Ex: #FF0000"
               />
             </div>
           </DialogContent>
