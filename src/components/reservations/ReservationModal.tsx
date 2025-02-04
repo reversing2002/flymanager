@@ -769,6 +769,14 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
   const [showCreditModal, setShowCreditModal] = useState(false);
 
+  // Vérifier si la réservation est passée
+  const isReservationPast = () => {
+    if (!existingReservation) return false;
+    const reservationStart = new Date(existingReservation.startTime);
+    const now = new Date();
+    return reservationStart < now;
+  };
+
   if (showNewFlightForm && existingReservation) {
     const duration = calculateDuration(
       existingReservation.startTime,
@@ -1012,13 +1020,13 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                 </div>
 
                 <div className="mt-6 flex flex-col space-y-6">
-                  {existingReservation && onCreateFlight && canTransformToFlight && !hasExistingFlight && (
+                  {existingReservation && onCreateFlight && canTransformToFlight && !hasExistingFlight && isReservationPast() && (
                     <button
                       type="button"
                       onClick={() => setShowNewFlightForm(true)}
                       className="w-full px-6 py-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 shadow-sm"
                     >
-                      Valider mon vol
+                      Valider le vol
                     </button>
                   )}
 
