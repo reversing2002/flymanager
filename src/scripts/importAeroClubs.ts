@@ -45,36 +45,62 @@ async function parseCSV(file: File): Promise<AeroClub[]> {
   });
 }
 
+async function importAeroClubsBatch(clubs: AeroClub[], accessToken: string, startIndex: number, batchSize: number) {
+  const batchClubs = clubs.slice(startIndex, startIndex + batchSize);
+  
+  const response = await fetch('https://stripe.linked.fr/api/admin/import-clubs', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`
+    },
+    body: JSON.stringify({ clubs: batchClubs })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Erreur lors de l\'import des clubs');
+  }
+
+  return await response.json();
+}
+
 async function importAeroClubs(file: File, accessToken: string, limit: number = 600) {
   try {
     const clubs = await parseCSV(file);
+    const batchSize = 10;
+    const totalBatches = Math.min(Math.ceil(limit / batchSize), Math.ceil(clubs.length / batchSize));
+    
+    let totalSuccess = 0;
+    let totalErrors = 0;
+    const allResults = {
+      success: [] as any[],
+      errors: [] as any[]
+    };
 
-    // Envoyer les clubs au serveur Node.js
-    const response = await fetch('https://stripe.linked.fr/api/admin/import-clubs', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({
-        clubs: clubs.slice(0, limit)
-      })
-    });
+    for (let i = 0; i < totalBatches; i++) {
+      const startIndex = i * batchSize;
+      const results = await importAeroClubsBatch(clubs, accessToken, startIndex, batchSize);
+      
+      totalSuccess += results.success.length;
+      totalErrors += results.errors.length;
+      allResults.success.push(...results.success);
+      allResults.errors.push(...results.errors);
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erreur lors de l\'import des clubs');
+      // Si on a atteint la limite, on arrête
+      if (totalSuccess + totalErrors >= limit) {
+        break;
+      }
     }
 
-    const results = await response.json();
     return {
-      importedCount: results.success.length,
-      errorCount: results.errors.length,
-      limitReached: results.success.length + results.errors.length >= limit,
-      details: results
+      importedCount: totalSuccess,
+      errorCount: totalErrors,
+      limitReached: totalSuccess + totalErrors >= limit,
+      details: allResults
     };
   } catch (error) {
-    console.error('Erreur lors du parsing du fichier:', error);
+    console.error('Erreur lors du traitement des clubs:', error);
     throw error;
   }
 }

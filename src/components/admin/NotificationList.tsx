@@ -10,7 +10,8 @@ import {
   updateNotificationSettings,
   getNotificationTemplates,
   updateNotificationTemplate,
-  createNotificationTemplate
+  createNotificationTemplate,
+  deleteNotificationTemplate
 } from '../../services/notificationService';
 import type { 
   EmailNotification, 
@@ -166,6 +167,22 @@ const NotificationList = () => {
     },
   });
 
+  // Mutation pour supprimer un template
+  const deleteTemplateMutation = useMutation({
+    mutationFn: (templateId: string) =>
+      deleteNotificationTemplate(user?.club?.id!, templateId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['notificationTemplates']);
+      toast.success('Template supprimé');
+      setShowTemplates(false);
+      setSelectedTemplate(null);
+    },
+    onError: (error) => {
+      console.error('Error deleting template:', error);
+      toast.error('Erreur lors de la suppression du template');
+    },
+  });
+
   const handleSettingsSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -205,18 +222,28 @@ const NotificationList = () => {
     const formData = new FormData(e.currentTarget);
     
     if (selectedTemplate) {
-      const updatedTemplate = {
-        id: selectedTemplate.id,
+      const templateData = {
         subject: formData.get('subject') as string,
         html_content: htmlContent,
         name: selectedTemplate.name,
         description: selectedTemplate.description,
         variables: selectedTemplate.variables,
         notification_type: selectedTemplate.notification_type,
-        club_id: user?.club?.id!
+        club_id: user?.club?.id!,
+        is_system: false
       };
-      
-      updateTemplateMutation.mutate(updatedTemplate);
+
+      if (selectedTemplate.is_system) {
+        // Créer une copie personnalisée du template système
+        // On omet l'ID pour laisser la base de données en générer un nouveau
+        createTemplateMutation.mutate(templateData);
+      } else {
+        // Mettre à jour le template personnalisé existant
+        updateTemplateMutation.mutate({
+          ...templateData,
+          id: selectedTemplate.id
+        });
+      }
     }
   };
 
@@ -523,14 +550,32 @@ const NotificationList = () => {
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <h4 className="font-medium">{template.name}</h4>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium">{template.name}</h4>
+                            {template.is_system ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                Système
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                Personnalisé
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-500">{template.description}</p>
                         </div>
                         <button
-                          onClick={() => setSelectedTemplate(template)}
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTemplate(template);
+                          }}
+                          className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md ${
+                            template.is_system 
+                              ? 'text-blue-700 bg-blue-100 hover:bg-blue-200'
+                              : 'text-purple-700 bg-purple-100 hover:bg-purple-200'
+                          }`}
                         >
-                          Personnaliser
+                          {template.is_system ? 'Personnaliser' : 'Modifier'}
                         </button>
                       </div>
                     </div>
@@ -540,9 +585,16 @@ const NotificationList = () => {
             ) : (
               <>
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-medium">
-                    Personnaliser : {selectedTemplate.name}
-                  </h2>
+                  <div>
+                    <h2 className="text-lg font-medium">
+                      {selectedTemplate.is_system ? 'Personnaliser' : 'Modifier'} : {selectedTemplate.name}
+                    </h2>
+                    {selectedTemplate.is_system && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Vous allez créer une copie personnalisée de ce template système. Le template original restera inchangé.
+                      </p>
+                    )}
+                  </div>
                   <button
                     onClick={() => {
                       setShowTemplates(false);
@@ -627,22 +679,41 @@ const NotificationList = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-end space-x-3 mt-6">
+                  <div className="flex justify-end space-x-3 mt-4">
                     <button
                       type="button"
                       onClick={() => {
-                        setShowTemplates(false);
                         setSelectedTemplate(null);
+                        setPreviewMode(false);
                       }}
-                      className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                     >
-                      Annuler
+                      Retour
                     </button>
+                    {!selectedTemplate.is_system && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm('Voulez-vous revenir au template système ? Votre version personnalisée sera supprimée.')) {
+                            // Supprimer le template personnalisé
+                            deleteTemplateMutation.mutate(selectedTemplate.id);
+                          }
+                        }}
+                        className="px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-md hover:bg-red-50"
+                      >
+                        Revenir au template système
+                      </button>
+                    )}
                     <button
                       type="submit"
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      disabled={updateTemplateMutation.isLoading || createTemplateMutation.isLoading}
                     >
-                      Enregistrer
+                      {updateTemplateMutation.isLoading || createTemplateMutation.isLoading
+                        ? 'Enregistrement...'
+                        : selectedTemplate.is_system
+                        ? 'Créer une copie personnalisée'
+                        : 'Enregistrer les modifications'}
                     </button>
                   </div>
                 </form>

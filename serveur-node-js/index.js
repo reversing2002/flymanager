@@ -649,29 +649,40 @@ async function processNotifications() {
           .eq('club_id', club.id)
           .single();
 
-        if (settingsError) {
+        // Utiliser les paramètres par défaut si aucune configuration n'est trouvée
+        const defaultSettings = {
+          mailjet_api_key: process.env.MAILJET_API_KEY,
+          mailjet_api_secret: process.env.MAILJET_API_SECRET,
+          sender_email: process.env.MAILJET_FROM_EMAIL,
+          sender_name: process.env.MAILJET_FROM_NAME
+        };
+
+        // Si pas de settings ou erreur, utiliser les paramètres par défaut
+        const effectiveSettings = settings || defaultSettings;
+
+        if (settingsError && settingsError.code !== 'PGRST116') {
           console.error(`❌ Erreur lors de la récupération des paramètres du club ${club.id}:`, settingsError);
           continue;
         }
 
-        if (!settings) {
-          console.error(`⚠️ Paramètres de notification non trouvés pour le club ${club.id}`);
-          continue;
-        }
+        console.log(`📧 Configuration email: ${effectiveSettings.sender_email || 'Non défini'}`);
+        console.log(`ℹ️ Utilisation des paramètres ${settings ? 'du club' : 'par défaut'}`);
 
-        console.log(`✅ Paramètres trouvés pour le club ${club.id}`);
-        console.log(`📧 Configuration email: ${settings.sender_email || 'Non défini'}`);
+        // Initialiser Mailjet avec les clés API
+        const mailjetApiKey = effectiveSettings.mailjet_api_key;
+        const mailjetApiSecret = effectiveSettings.mailjet_api_secret;
+        const senderEmail = effectiveSettings.sender_email;
+        const senderName = effectiveSettings.sender_name;
 
-        // Initialiser Mailjet avec les clés API du club
-        if (!settings.mailjet_api_key || !settings.mailjet_api_secret) {
-          console.error(`❌ Clés Mailjet manquantes pour le club ${club.id}`);
+        if (!mailjetApiKey || !mailjetApiSecret) {
+          console.error(`❌ Clés Mailjet manquantes pour le club ${club.id} et aucune clé par défaut trouvée`);
           continue;
         }
 
         console.log(`🔑 Initialisation de Mailjet pour le club ${club.id}...`);
         const mailjetClient = Mailjet.apiConnect(
-          settings.mailjet_api_key,
-          settings.mailjet_api_secret
+          mailjetApiKey,
+          mailjetApiSecret
         );
 
         console.log(`📬 Recherche des notifications en attente pour le club ${club.id}...`);
@@ -717,26 +728,37 @@ async function processNotifications() {
             }
 
             // Récupérer le template correspondant au type de notification
-            const { data: template, error: templateError } = await supabase
+            let { data: template, error: templateError } = await supabase
               .from('notification_templates')
               .select('*')
               .eq('club_id', club.id)
               .eq('notification_type', notification.type)
               .single();
 
-            if (templateError) {
-              console.error(`❌ Erreur lors de la récupération du template pour la notification ${notification.id}:`, templateError);
-              continue;
+            if ((!template || templateError) && notification.type) {
+              console.log(`ℹ️ Aucun template trouvé pour le club ${club.id}, recherche d'un template système...`);
+              const { data: systemTemplate, error: systemTemplateError } = await supabase
+                .from('notification_templates')
+                .select('*')
+                .eq('is_system', true)
+                .eq('notification_type', notification.type)
+                .single();
+
+              if (systemTemplateError) {
+                console.error(`❌ Erreur lors de la récupération du template système pour la notification ${notification.id}:`, systemTemplateError);
+                continue;
+              }
+
+              template = systemTemplate;
             }
 
             if (!template) {
-              console.error(`❌ Template non trouvé pour le type ${notification.type}`);
+              console.error(`❌ Aucun template trouvé (ni club ni système) pour le type ${notification.type}`);
               continue;
             }
 
             console.log(`📝 Préparation de l'email pour ${recipientEmail}...`);
-            console.log(`📋 Template: ${template.name}`);
-
+            console.log(`📋 Template: ${template.name} (${template.is_system ? 'Système' : 'Club'})`);
             // Remplacer les variables dans le HTML et le sujet
             let htmlContent = template.html_content;
             let subject = notification.type === 'bulk_email' 
@@ -767,8 +789,8 @@ async function processNotifications() {
               Messages: [
                 {
                   From: {
-                    Email: settings.sender_email,
-                    Name: settings.sender_name,
+                    Email: senderEmail,
+                    Name: senderName,
                   },
                   To: [
                     {
@@ -2198,4 +2220,5 @@ app.listen(PORT, async () => {
   // Synchronisation immédiate des calendriers au démarrage
   console.log('🗓️ Lancement de la synchronisation initiale des calendriers...');
   await syncInstructorCalendars();
+  await processNotifications();
 });

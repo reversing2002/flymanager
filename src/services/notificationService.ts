@@ -243,11 +243,12 @@ export async function getNotificationTemplates(clubId: string): Promise<Notifica
   const { data, error } = await supabase
     .from('notification_templates')
     .select('*')
-    .eq('club_id', clubId)
+    .or(`club_id.eq.${clubId},and(is_system.eq.true)`)
+    .order('is_system')  // true vient après false, donc les personnalisés seront en premier
     .order('name');
 
   if (error) throw error;
-  return data;
+  return data || [];
 }
 
 // Fonction pour récupérer un template spécifique
@@ -255,17 +256,30 @@ export async function getNotificationTemplate(
   clubId: string,
   notificationType: string
 ): Promise<NotificationTemplate | null> {
-  const { data, error } = await supabase
+  // D'abord, chercher un template personnalisé pour le club
+  let { data, error } = await supabase
     .from('notification_templates')
     .select('*')
     .eq('club_id', clubId)
     .eq('notification_type', notificationType)
+    .eq('is_system', false)
     .single();
 
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
+  if (error && error.code !== 'PGRST116') throw error;
+  
+  if (!data) {
+    // Si aucun template personnalisé n'est trouvé, chercher le template système
+    const { data: systemTemplate, error: systemError } = await supabase
+      .from('notification_templates')
+      .select('*')
+      .eq('notification_type', notificationType)
+      .eq('is_system', true)
+      .single();
+
+    if (systemError && systemError.code !== 'PGRST116') throw systemError;
+    return systemTemplate;
   }
+
   return data;
 }
 
@@ -274,19 +288,24 @@ export async function updateNotificationTemplate(
   clubId: string,
   template: NotificationTemplate
 ): Promise<NotificationTemplate> {
+  // Vérifier si c'est un template système
+  if (template.is_system) {
+    // Créer une copie personnalisée pour le club
+    const { id, created_at, updated_at, ...templateData } = template;
+    return createNotificationTemplate(clubId, {
+      ...templateData,
+      club_id: clubId,
+      is_system: false
+    });
+  }
+
+  // Mettre à jour le template personnalisé existant
   const { data, error } = await supabase
     .from('notification_templates')
-    .update({
-      name: template.name,
-      subject: template.subject,
-      html_content: template.html_content,
-      template_id: template.template_id,
-      description: template.description,
-      variables: template.variables,
-      notification_type: template.notification_type
-    })
+    .update(template)
     .eq('id', template.id)
     .eq('club_id', clubId)
+    .eq('is_system', false)
     .select()
     .single();
 
@@ -299,14 +318,36 @@ export async function createNotificationTemplate(
   clubId: string,
   template: Omit<NotificationTemplate, 'id' | 'created_at' | 'updated_at'>
 ): Promise<NotificationTemplate> {
+  const newTemplate = {
+    ...template,
+    club_id: clubId,
+    is_system: false // Les nouveaux templates sont toujours non-système
+  };
+
   const { data, error } = await supabase
     .from('notification_templates')
-    .insert([{ ...template, club_id: clubId }])
+    .insert([newTemplate])
     .select()
     .single();
 
   if (error) throw error;
   return data;
+}
+
+// Fonction pour supprimer un template personnalisé
+export async function deleteNotificationTemplate(
+  clubId: string,
+  templateId: number
+): Promise<void> {
+  const { error } = await supabase
+    .from('notification_templates')
+    .delete()
+    .eq('id', templateId)
+    .eq('club_id', clubId)
+    .eq('is_system', false)
+    .single();
+
+  if (error) throw error;
 }
 
 interface EmailRecipient {

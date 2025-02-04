@@ -33,6 +33,8 @@ export interface NotificationTemplate {
   club_id: string;
   created_at: string;
   updated_at: string;
+  html_content: string;
+  is_system: boolean; // Indique si c'est un template système
 }
 
 export interface NotificationSettings {

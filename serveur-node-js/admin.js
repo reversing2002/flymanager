@@ -1,7 +1,8 @@
 const express = require('express');
-const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
+const router = express.Router();
 
+// Création du client Supabase admin
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -17,47 +18,53 @@ const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
-// Middleware pour vérifier le rôle admin
+// Middleware de vérification admin
 const checkAdminRole = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Token d\'authentification manquant' });
-    }
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Non autorisé' });
+  }
 
+  try {
     const token = authHeader.split(' ')[1];
     const { data: { user }, error } = await adminClient.auth.getUser(token);
     
     if (error) {
-      console.error('Erreur lors de la vérification du token:', error);
-      return res.status(401).json({ error: 'Token invalide' });
+      console.error('❌ Erreur auth.getUser:', error);
+      return res.status(401).json({ error: 'Non autorisé' });
     }
-
+    
     if (!user) {
-      return res.status(401).json({ error: 'Utilisateur non trouvé' });
+      console.error('❌ Utilisateur non trouvé');
+      return res.status(401).json({ error: 'Non autorisé' });
     }
 
-    // Vérifier le rôle admin
-    const { data: roles, error: rolesError } = await adminClient
+    // Vérifier si l'utilisateur est admin via user_group_memberships
+    const { data: groups, error: groupsError } = await adminClient
       .from('user_group_memberships')
-      .select('user_groups (code)')
+      .select(`
+        user_groups (
+          code
+        )
+      `)
       .eq('user_id', user.id);
 
-    if (rolesError) {
-      console.error('Erreur lors de la vérification des rôles:', rolesError);
-      return res.status(500).json({ error: 'Erreur lors de la vérification des rôles' });
+    if (groupsError) {
+      console.error('❌ Erreur récupération groupes:', groupsError);
+      return res.status(500).json({ error: 'Erreur serveur' });
     }
 
-    const isAdmin = roles?.some(membership => membership.user_groups?.code === 'ADMIN');
+    const isAdmin = groups?.some(membership => membership.user_groups?.code === 'ADMIN');
     if (!isAdmin) {
-      return res.status(403).json({ error: 'Accès non autorisé' });
+      console.error('❌ Utilisateur non admin:', user.id);
+      return res.status(403).json({ error: 'Accès refusé' });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    console.error('Erreur dans le middleware admin:', error);
-    res.status(500).json({ error: 'Erreur interne du serveur' });
+    console.error('❌ Erreur middleware admin:', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
   }
 };
 
@@ -166,7 +173,7 @@ router.get('/users/:userId/auth', checkAdminRole, async (req, res) => {
   }
 });
 
-// Supprimer un utilisateur
+// Suppression d'un utilisateur
 router.delete('/users/:userId', checkAdminRole, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -300,25 +307,6 @@ router.post('/users', checkAdminRole, async (req, res) => {
       }
 
       console.log('🔑 Login généré:', login);
-
-      // Créer le club et l'admin via RPC
-      const { data, error: rpcError } = await adminClient.rpc('create_club_with_admin', {
-        p_club_name: club.clubName,
-        p_club_code: club.clubCode || login.substring(0, 10).toUpperCase(),
-        p_admin_email: email,
-        p_admin_password: password,
-        p_admin_login: login,
-        p_admin_first_name: userData.first_name || login,
-        p_admin_last_name: userData.last_name || ''
-      });
-
-      if (rpcError) {
-        console.error('❌ Erreur RPC:', rpcError);
-        throw rpcError;
-      }
-
-      clubId = data;
-      console.log('✅ Club et admin créés avec succès');
 
       // Créer l'utilisateur dans la base de données
       const { data: newUser, error: createError } = await adminClient
@@ -508,7 +496,6 @@ router.put('/users/:userId', checkAdminRole, async (req, res) => {
   }
 });
 
-// Import des clubs
 router.post('/import-clubs', checkAdminRole, async (req, res) => {
   try {
     const { clubs } = req.body;
@@ -523,47 +510,23 @@ router.post('/import-clubs', checkAdminRole, async (req, res) => {
         const adminEmail = club.email || `${clubSlug}@4fly.fr`;
         console.log('🔑 Tentative création club avec admin:', adminEmail);
 
-        // Check if user already exists
+        // Vérifier si l'utilisateur existe déjà
         const { data: existingUser, error: userError } = await adminClient
           .from('users')
-          .select('*')
+          .select('id, club_id')
           .eq('email', adminEmail)
           .single();
 
-        if (userError && userError.code !== 'PGRST116') {
-          throw userError;
-        }
-
         let clubId;
+
         if (existingUser) {
           console.log('ℹ️ Utilisateur existe déjà, mise à jour du club existant');
-          // Get existing club ID if user is already a club member
-          const { data: clubMember } = await adminClient
-            .from('club_members')
-            .select('club_id')
-            .eq('user_id', existingUser.id)
-            .single();
-          
-          if (clubMember) {
-            clubId = clubMember.club_id;
-          }
-        }
-
-        if (!clubId) {
-          // Generate a valid club code (3-10 alphanumeric characters)
-          const generateClubCode = (name) => {
-            // Remove all non-alphanumeric characters and get first 10 chars
-            const code = name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-            // Ensure at least 3 characters
-            return code.length < 3 ? code.padEnd(3, '1') : code.substring(0, 10);
-          };
-
-          const clubCode = club.clubCode || generateClubCode(club.clubName);
-
+          clubId = existingUser.club_id;
+        } else {
           // Créer le club et l'admin via RPC
           const { data, error: rpcError } = await adminClient.rpc('create_club_with_admin', {
             p_club_name: club.clubName,
-            p_club_code: clubCode,
+            p_club_code: generateValidAirfieldCode(club.clubName),
             p_admin_email: adminEmail,
             p_admin_password: generateRandomPassword(),
             p_admin_login: clubSlug,
@@ -577,8 +540,9 @@ router.post('/import-clubs', checkAdminRole, async (req, res) => {
           }
 
           clubId = data;
+          console.log('✅ Club et admin créés avec succès');
         }
-        
+
         // Mettre à jour les informations du club
         const { error: updateError } = await adminClient
           .from('clubs')
@@ -742,6 +706,19 @@ function generateRandomPassword() {
     password += charset[Math.floor(Math.random() * charset.length)];
   }
   return password;
+}
+
+function generateValidAirfieldCode(clubName) {
+  // Convertir en majuscules et ne garder que les caractères alphanumériques
+  const code = clubName.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  
+  // Si le code est trop court, ajouter des chiffres
+  if (code.length < 3) {
+    return code + '000'.slice(0, 3 - code.length);
+  }
+  
+  // Si le code est trop long, le tronquer à 10 caractères
+  return code.slice(0, 10);
 }
 
 function slugify(str, options = {}) {
