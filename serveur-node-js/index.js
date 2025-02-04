@@ -639,8 +639,8 @@ async function processNotifications() {
 
     // Traiter les notifications pour chaque club
     for (const club of clubs) {
-      console.log(`\n🏢 Traitement du club ${club.id}...`);
       try {
+        console.log(`\n🏢 Traitement du club ${club.id}...`);
         // Récupérer d'abord les paramètres du club
         console.log(`⚙️ Récupération des paramètres pour le club ${club.id}...`);
         const { data: settings, error: settingsError } = await supabase
@@ -657,8 +657,16 @@ async function processNotifications() {
           sender_name: process.env.MAILJET_FROM_NAME
         };
 
-        // Si pas de settings ou erreur, utiliser les paramètres par défaut
-        const effectiveSettings = settings || defaultSettings;
+        // Vérifier si on doit utiliser les paramètres par défaut
+        const useDefaultSettings = !settings?.mailjet_api_key || !settings?.mailjet_api_secret;
+
+        // Utiliser soit tous les paramètres du club, soit tous les paramètres par défaut
+        const effectiveSettings = useDefaultSettings ? defaultSettings : {
+          mailjet_api_key: settings.mailjet_api_key,
+          mailjet_api_secret: settings.mailjet_api_secret,
+          sender_email: settings.sender_email || defaultSettings.sender_email,
+          sender_name: settings.sender_name || defaultSettings.sender_name
+        };
 
         if (settingsError && settingsError.code !== 'PGRST116') {
           console.error(`❌ Erreur lors de la récupération des paramètres du club ${club.id}:`, settingsError);
@@ -666,13 +674,22 @@ async function processNotifications() {
         }
 
         console.log(`📧 Configuration email: ${effectiveSettings.sender_email || 'Non défini'}`);
-        console.log(`ℹ️ Utilisation des paramètres ${settings ? 'du club' : 'par défaut'}`);
+        console.log(`ℹ️ Utilisation des paramètres ${useDefaultSettings ? 'par défaut' : 'du club'}`);
 
         // Initialiser Mailjet avec les clés API
         const mailjetApiKey = effectiveSettings.mailjet_api_key;
         const mailjetApiSecret = effectiveSettings.mailjet_api_secret;
         const senderEmail = effectiveSettings.sender_email;
         const senderName = effectiveSettings.sender_name;
+
+        // Debug des paramètres
+        console.log('🔍 Vérification des paramètres Mailjet :', {
+          source: useDefaultSettings ? 'défaut' : 'club',
+          mailjetApiKey: mailjetApiKey ? '✅ Présent' : '❌ Manquant',
+          mailjetApiSecret: mailjetApiSecret ? '✅ Présent' : '❌ Manquant',
+          senderEmail: senderEmail || '❌ Manquant',
+          senderName: senderName || '❌ Manquant'
+        });
 
         if (!mailjetApiKey || !mailjetApiSecret) {
           console.error(`❌ Clés Mailjet manquantes pour le club ${club.id} et aucune clé par défaut trouvée`);
@@ -2216,6 +2233,14 @@ app.post("/account", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+  
+  // Vérification des variables d'environnement Mailjet
+  console.log('📧 Variables Mailjet :', {
+    MAILJET_API_KEY: process.env.MAILJET_API_KEY ? '✅ Défini' : '❌ Non défini',
+    MAILJET_API_SECRET: process.env.MAILJET_API_SECRET ? '✅ Défini' : '❌ Non défini',
+    MAILJET_FROM_EMAIL: process.env.MAILJET_FROM_EMAIL,
+    MAILJET_FROM_NAME: process.env.MAILJET_FROM_NAME
+  });
   
   // Synchronisation immédiate des calendriers au démarrage
   console.log('🗓️ Lancement de la synchronisation initiale des calendriers...');
