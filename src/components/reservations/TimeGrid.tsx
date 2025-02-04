@@ -589,10 +589,6 @@ const TimeGrid: React.FC<TimeGridProps> = ({
         slotEnd <= new Date(r.endTime)
     );
 
-    const flight = reservation
-      ? flights.find((f) => f.reservationId === reservation.id)
-      : null;
-
     if (reservation) {
       return null;
     }
@@ -610,7 +606,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       bgClass = "bg-yellow-50";
     }
     if (isUnavailable) {
-      bgClass = "bg-red-50 cursor-not-allowed";
+      bgClass = "bg-red-100 cursor-not-allowed";
     }
 
     const isSelectable = !isPast && !isUnavailable && (nightFlightsEnabled || !isNight);
@@ -629,11 +625,6 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       >
         {isNight && (
           <Moon className="absolute top-0 right-0 w-3 h-3 text-slate-400 m-0.5" />
-        )}
-        {blockingAvailability && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Wrench className="w-4 h-4 text-red-500" />
-          </div>
         )}
       </div>
     );
@@ -700,6 +691,51 @@ const TimeGrid: React.FC<TimeGridProps> = ({
         </div>
       </div>
     );
+  };
+
+  const renderAircraftUnavailability = (aircraft: Aircraft) => {
+    const aircraftAvailabilities = availabilities.filter(
+      (avail) => avail.aircraft_id === aircraft.id
+    );
+
+    return aircraftAvailabilities.map((availability) => {
+      const startTime = new Date(availability.start_time);
+      const endTime = new Date(availability.end_time);
+      
+      // Calculer la position et la hauteur de la zone d'indisponibilité
+      const startHour = startTime.getHours();
+      const startMinute = startTime.getMinutes();
+      const endHour = endTime.getHours();
+      const endMinute = endTime.getMinutes();
+      
+      const startSlotIndex = timeSlots.findIndex(
+        (slot) => slot.hour === startHour && slot.minute === startMinute
+      );
+      const endSlotIndex = timeSlots.findIndex(
+        (slot) => slot.hour === endHour && slot.minute === endMinute
+      );
+      
+      if (startSlotIndex === -1) return null;
+      
+      const height = (endSlotIndex - startSlotIndex) * 1; // 1rem par créneau de 15 minutes
+      const top = startSlotIndex * 1;
+
+      return (
+        <div
+          key={`unavail-${availability.id}`}
+          className="absolute left-0 right-0 bg-red-100/80 z-30 flex items-center justify-center text-sm font-medium text-red-700 border border-red-200 pointer-events-none"
+          style={{
+            top: `${top}rem`,
+            height: `${Math.max(height, 2)}rem`, // Au moins 2rem de hauteur pour la lisibilité
+          }}
+        >
+          <div className="flex items-center gap-2 px-2 py-1 bg-red-100/90 rounded shadow-sm">
+            <Wrench className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{availability.reason || "En maintenance"}</span>
+          </div>
+        </div>
+      );
+    });
   };
 
   return (
@@ -775,6 +811,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   key={`column-${aircraft.id}`}
                   className="relative border-r border-slate-200"
                 >
+                  {renderAircraftUnavailability(aircraft)}
                   {timeSlots.map(({ hour, minute }, index) => (
                     <div
                       key={`${hour}-${minute}`}
@@ -789,6 +826,13 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                           ? "bg-gray-100"
                           : isNightTime(hour, minute)
                           ? "bg-gray-100"
+                          : availabilities.some(
+                              (avail) =>
+                                avail.aircraft_id === aircraft.id &&
+                                new Date(avail.start_time) <= new Date(selectedDate.setHours(hour, minute)) &&
+                                new Date(avail.end_time) > new Date(selectedDate.setHours(hour, minute))
+                            )
+                          ? "bg-red-100"
                           : "bg-white hover:bg-slate-50"
                       } ${
                         isPastTimeSlot(hour, minute) ? "cursor-not-allowed" : ""
