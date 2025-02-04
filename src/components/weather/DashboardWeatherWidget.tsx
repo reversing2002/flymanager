@@ -166,7 +166,7 @@ const DashboardWeatherWidget = () => {
       )}
       {noCoordinates && (
         <div className="text-amber-500 text-center p-4">
-          Les coordonnées du club ne sont pas renseignées. Veuillez les configurer dans les réglages du club.
+          Les coordonnées GPS doivent être renseignées par un administrateur pour voir la météo.
         </div>
       )}
       {!loading && !error && !noCoordinates && weatherData.map((data, index) => (

@@ -40,7 +40,7 @@ const MiniWindWidget: React.FC = () => {
         }
       } catch (error) {
         console.error('Erreur données vent:', error);
-        setError('Pour visualiser le vent en direct, l\'administrateur doit choisir une station meteo dans les paramètres du club');
+        setError('Pour visualiser le vent en direct, l\'administrateur doit choisir une station meteo dans les paramètres');
       } finally {
         setLoading(false);
       }
