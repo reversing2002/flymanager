@@ -201,20 +201,54 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
 
       // Mise à jour des calendriers si c'est un instructeur
       if (dataToSubmit.roles.includes('INSTRUCTOR')) {
-        // D'abord, supprimer les anciennes entrées
-        const { error: deleteError } = await supabase
+        // Récupérer les calendriers existants
+        const { data: existingCalendarsData } = await supabase
           .from('instructor_calendars')
-          .delete()
+          .select('id, calendar_id')
           .eq('instructor_id', pilot.id);
 
-        if (deleteError) throw deleteError;
+        const existingCalendarIds = new Set(existingCalendarsData?.map(cal => cal.calendar_id) || []);
+        const newCalendarIds = new Set(formData.calendars.map(cal => cal.id));
 
-        // Ensuite, insérer les nouvelles entrées
-        if (formData.calendars.length > 0) {
-          const { error: calendarError } = await supabase
+        // Calendriers à supprimer (ceux qui ne sont plus dans la nouvelle liste)
+        const calendarsToDelete = existingCalendarsData?.filter(cal => !newCalendarIds.has(cal.calendar_id)) || [];
+        
+        // Calendriers à ajouter (ceux qui n'existaient pas avant)
+        const calendarsToAdd = formData.calendars.filter(cal => !existingCalendarIds.has(cal.id));
+
+        // Calendriers à mettre à jour (ceux qui existaient déjà)
+        const calendarsToUpdate = formData.calendars.filter(cal => existingCalendarIds.has(cal.id));
+
+        // Supprimer les calendriers qui ne sont plus utilisés et qui n'ont pas de disponibilités
+        for (const calendar of calendarsToDelete) {
+          // Vérifier s'il y a des disponibilités liées à ce calendrier
+          const { data: availabilities } = await supabase
+            .from('availabilities')
+            .select('id')
+            .eq('instructor_calendar_id', calendar.id)
+            .limit(1);
+
+          // Ne supprimer que si aucune disponibilité n'est liée
+          if (!availabilities?.length) {
+            const { error: deleteError } = await supabase
+              .from('instructor_calendars')
+              .delete()
+              .eq('id', calendar.id);
+
+            if (deleteError) throw deleteError;
+          } else {
+            // Si des disponibilités existent, marquer le calendrier comme inactif ou archivé
+            // Note: Il faudrait ajouter une colonne 'active' ou 'archived_at' à la table instructor_calendars
+            console.warn(`Le calendrier ${calendar.id} ne peut pas être supprimé car il a des disponibilités associées`);
+          }
+        }
+
+        // Ajouter les nouveaux calendriers
+        if (calendarsToAdd.length > 0) {
+          const { error: insertError } = await supabase
             .from('instructor_calendars')
             .insert(
-              formData.calendars.map(cal => ({
+              calendarsToAdd.map(cal => ({
                 instructor_id: pilot.id,
                 calendar_id: cal.id,
                 calendar_name: cal.name,
@@ -222,7 +256,21 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
               }))
             );
 
-          if (calendarError) throw calendarError;
+          if (insertError) throw insertError;
+        }
+
+        // Mettre à jour les calendriers existants
+        for (const calendar of calendarsToUpdate) {
+          const { error: updateError } = await supabase
+            .from('instructor_calendars')
+            .update({
+              calendar_name: calendar.name,
+              color: calendar.color
+            })
+            .eq('instructor_id', pilot.id)
+            .eq('calendar_id', calendar.id);
+
+          if (updateError) throw updateError;
         }
       }
 

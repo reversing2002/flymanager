@@ -23,6 +23,12 @@ export async function getAvailabilitiesForPeriod(
         id,
         registration,
         name
+      ),
+      instructor_calendars!instructor_calendar_id (
+        id,
+        calendar_id,
+        calendar_name,
+        color
       )
     `)
     .or(`and(end_time.gte.${startDate},start_time.lte.${endDate}),and(is_recurring.eq.true,or(recurrence_end_date.gte.${startDate},recurrence_end_date.is.null))`);

@@ -29,6 +29,7 @@ interface TimeGridProps {
     aircraftTypes?: string[];
     instructors?: string[];
   };
+  instructorCalendars?: { id: string; color: string }[];
 }
 
 const TimeGrid: React.FC<TimeGridProps> = ({
@@ -46,6 +47,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   onDateChange,
   nightFlightsEnabled,
   filters,
+  instructorCalendars,
 }) => {
   const { user } = useAuth();
   const [clubCoordinates, setClubCoordinates] = useState<{
@@ -231,6 +233,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                 endOfDay.toISOString(),
                 instructorId
               );
+              console.log(`[TimeGrid] Availabilities pour l'instructeur ${instructorId}:`, availabilities);
               availabilitiesMap[instructorId] = availabilities;
             } catch (error) {
               console.error(`Error loading availabilities for instructor ${instructorId}:`, error);
@@ -239,6 +242,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
         );
       }
 
+      console.log('[TimeGrid] Carte finale des disponibilités:', availabilitiesMap);
       setInstructorAvailabilities(availabilitiesMap);
     };
 
@@ -517,7 +521,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     return (hour < currentHour) || (hour === currentHour && minute < currentMinute);
   };
 
-  const isInstructorAvailable = (instructorId: string, hour: number, minute: number): { available: boolean; availability?: Availability } => {
+  const isInstructorAvailable = (instructorId: string, hour: number, minute: number): { available: boolean; availability?: Availability; calendarColor?: string } => {
     const instructorAvails = instructorAvailabilities[instructorId];
     if (!instructorAvails?.length) return { available: true };
 
@@ -551,9 +555,12 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       return slotTime >= startTime && slotTime < endTime;
     });
 
+    const calendarColor = blockingAvailability?.instructor_calendars?.color;
+
     return { 
       available: !blockingAvailability,
-      availability: blockingAvailability
+      availability: blockingAvailability,
+      calendarColor
     };
   };
 
@@ -738,6 +745,41 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     });
   };
 
+  const renderInstructorUnavailability = (instructor: User, availability: Availability) => {
+    const startTime = new Date(availability.start_time);
+    const endTime = new Date(availability.end_time);
+    const duration = differenceInMinutes(endTime, startTime);
+    const height = (duration / 15) * 1;
+    
+    // Ajuster le calcul de la position en fonction de l'heure de début des créneaux
+    const gridStartHour = clubCoordinates?.reservation_start_hour ?? 7;
+    const top = ((startTime.getHours() - gridStartHour) * 4 + startTime.getMinutes() / 15) * 1;
+
+    const calendarColor = availability.instructor_calendars?.color || '#4A5568';
+
+    return (
+      <div
+        key={`unavail-${availability.id}`}
+        className="absolute inset-x-0 mx-0.5 sm:mx-1 rounded-md text-xs overflow-hidden transition-colors shadow-sm border hover:shadow-md hover:scale-[1.02] transition-all cursor-not-allowed"
+        style={{
+          height: `${height}rem`,
+          top: `${top}rem`,
+          backgroundColor: calendarColor,
+          borderColor: `${calendarColor}33`,
+        }}
+      >
+        <div className="p-1 sm:p-2">
+          <div className="font-medium text-white">
+            {format(startTime, "H'h'mm")} - {format(endTime, "H'h'mm")}
+          </div>
+          <div className="mt-1 line-clamp-2 text-[0.7rem] leading-tight text-white/90">
+            {availability.reason || "Indisponible"}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div ref={timeGridRef} className="relative h-full">
       <div className="h-full overflow-auto">
@@ -864,16 +906,6 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                   {timeSlots.map(({ hour, minute }) => {
                     const { available, availability } = isInstructorAvailable(instructor.id, hour, minute);
                     
-                    // Vérifier si c'est le premier créneau de l'indisponibilité
-                    const isFirstSlotOfAvailability = availability && (
-                      minute === 0 ? 
-                        // Si on est au début d'une heure, vérifier le créneau précédent
-                        !isInstructorAvailable(instructor.id, hour - 1, 45).availability 
-                        : 
-                        // Sinon vérifier le créneau 15 minutes avant
-                        !isInstructorAvailable(instructor.id, hour, minute - 15).availability
-                    );
-                    
                     return (
                       <div
                         key={`${hour}-${minute}`}
@@ -886,8 +918,6 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                             ? "bg-gray-100"
                             : isNightTime(hour, minute)
                             ? "bg-gray-100"
-                            : !available
-                            ? "bg-red-100"
                             : "bg-white hover:bg-slate-50"
                         } ${
                           isPastTimeSlot(hour, minute) || !available ? "cursor-not-allowed" : ""
@@ -895,11 +925,6 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                         data-time={`${hour}-${minute}`}
                         data-instructor={instructor.id}
                       >
-                        {isFirstSlotOfAvailability && (
-                          <div className="absolute left-0 right-0 px-1 text-xs text-red-700 truncate whitespace-nowrap z-10">
-                            {availability.reason || "Indisponible"}
-                          </div>
-                        )}
                         {isFirstNightSlot(hour, minute) && (
                           <div className="absolute -top-1 left-0 w-full flex items-center justify-center">
                             <Moon className="w-3 h-3 text-gray-400" />
@@ -908,8 +933,8 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                       </div>
                     );
                   })}
-                  {getReservationsForInstructor(instructor.id).map((reservation) =>
-                    renderReservation(reservation, true)
+                  {instructorAvailabilities[instructor.id]?.map((availability) => 
+                    availability.slot_type === 'unavailability' && renderInstructorUnavailability(instructor, availability)
                   )}
                 </div>
               ))}
