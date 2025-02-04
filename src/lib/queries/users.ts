@@ -21,6 +21,10 @@ export async function updateUser(
       image_url: data.image_url || null,
       instructor_rate: data.instructor_rate !== undefined ? data.instructor_rate : undefined,
       instructor_fee: data.instructor_fee !== undefined ? data.instructor_fee : undefined,
+      address_1: data.address_1 || null,
+      city: data.city || null,
+      zip_code: data.zip_code || null,
+      country: data.country || null,
       updated_at: new Date().toISOString(),
     };
 

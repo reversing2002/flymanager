@@ -57,7 +57,11 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     calendars: [] as { id: string, name: string }[],
     smile_login: pilot.smile_login || "",
     smile_password: pilot.smile_password || "",
-    last_smile_sync: pilot.last_smile_sync || null
+    last_smile_sync: pilot.last_smile_sync || null,
+    address_1: pilot.address_1 || "",
+    city: pilot.city || "",
+    zip_code: pilot.zip_code || "",
+    country: pilot.country || ""
   });
 
   const [loading, setLoading] = useState(false);
@@ -395,6 +399,52 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
           </Grid>
 
           <Divider className="my-6" />
+
+          {(isAdmin || currentUser?.id === pilot.id) && (
+            <Grid container spacing={2} className="mt-4">
+              <Grid item xs={12}>
+                <Typography variant="h6" className="mb-2">
+                  Adresse postale
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Adresse"
+                  name="address_1"
+                  value={formData.address_1}
+                  onChange={handleChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Ville"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Code postal"
+                  name="zip_code"
+                  value={formData.zip_code}
+                  onChange={handleChange}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Pays"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                />
+              </Grid>
+            </Grid>
+          )}
 
           {isAdmin && (
             <>

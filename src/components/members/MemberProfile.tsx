@@ -170,8 +170,12 @@ const MemberProfile = () => {
         image_url: formData.image_url,
         instructor_rate: formData.instructor_rate,
         instructor_fee: formData.instructor_fee,
-        password: formData.password, // Ajout du mot de passe
-        roles: formData.roles // Ajout des rôles
+        password: formData.password,
+        roles: formData.roles,
+        address_1: formData.address_1,
+        city: formData.city,
+        zip_code: formData.zip_code,
+        country: formData.country
       });
 
       await loadData();
@@ -444,7 +448,7 @@ const MemberProfile = () => {
                     </div>
                   </div>
                 </div>
-                <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Email</dt>
                     <dd className="mt-1 text-sm text-gray-900">
@@ -475,6 +479,19 @@ const MemberProfile = () => {
                       {formatBirthDate(pilot.birth_date, hasFullAccess)}
                     </dd>
                   </div>
+                  {(isAdmin || isOwnProfile) && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Adresse postale</dt>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {[
+                          pilot.address_1,
+                          pilot.zip_code,
+                          pilot.city,
+                          pilot.country
+                        ].filter(Boolean).join(' • ') || "Non renseignée"}
+                      </dd>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -584,6 +601,7 @@ const MemberProfile = () => {
                   </div>
                 </div>
               </div>
+              
 
               {/* Champs personnalisés */}
               <div className="col-span-1">
@@ -632,6 +650,7 @@ const MemberProfile = () => {
               renderContributionsSection()
             )}
             
+
           </div>
         )}
       </main>
