@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { AlertTriangle, Upload, X, Check } from "lucide-react";
+import { AlertTriangle, Upload, X, Check, Plus, Trash2, Calendar, CalendarPlus } from "lucide-react";
 import type { User } from "../../types/database";
 import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -8,12 +8,8 @@ import { getRoleLabel } from "../../lib/utils/roleUtils";
 import { getInitials } from "../../lib/utils/avatarUtils";
 import * as Checkbox from "@radix-ui/react-checkbox";
 import "../../styles/checkbox.css";
-import { Button, Card, CardContent, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Divider, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
-import DeleteIcon from '@mui/icons-material/Delete';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import ImportCalendarIcon from '@mui/icons-material/CalendarToday';
+import { Button, Card, CardContent, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Divider, IconButton, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import IosShareIcon from '@mui/icons-material/IosShare';
-import PaletteIcon from '@mui/icons-material/Palette';
 import Typography from '@mui/material/Typography';
 import PilotFlightStats from './PilotFlightStats';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -55,7 +51,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
     instructor_fee: pilot.instructor_fee || null,
     password: "",
     confirmPassword: "",
-    calendars: [] as { id: string, name: string, color: string }[],
+    calendars: [] as { calendar_id: string, name: string, color: string }[],
     smile_login: pilot.smile_login || "",
     smile_password: pilot.smile_password || "",
     last_smile_sync: pilot.last_smile_sync || null,
@@ -68,10 +64,8 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
-  const [newCalendar, setNewCalendar] = useState({ id: "", name: "", color: "#4A5568" });
+  const [newCalendar, setNewCalendar] = useState({ calendar_id: "", name: "", color: "#4A5568" });
   const [calendarUrl, setCalendarUrl] = useState<string>("");
-
-  const [existingCalendars, setExistingCalendars] = useState<Array<{id: string, name: string, color: string}>>([]);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -108,12 +102,11 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
         if (calendarError) throw calendarError;
 
         const calendars = calendarData.map(cal => ({
-          id: cal.calendar_id,
+          calendar_id: cal.calendar_id,
           name: cal.calendar_name,
           color: cal.color || "#4A5568" // Couleur par défaut si non définie
         }));
 
-        setExistingCalendars(calendars);
         setFormData(prev => ({
           ...prev,
           roles: groups,
@@ -199,6 +192,18 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
         }
       }
 
+      await onSubmit(dataToSubmit);
+
+      if (isAdmin) {
+        const { error: groupsError } = await supabase
+          .rpc('update_user_groups', {
+            p_user_id: pilot.id,
+            p_groups: dataToSubmit.roles
+          });
+
+        if (groupsError) throw groupsError;
+      }
+
       // Mise à jour des calendriers si c'est un instructeur
       if (dataToSubmit.roles.includes('INSTRUCTOR')) {
         // Récupérer les calendriers existants
@@ -208,39 +213,25 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
           .eq('instructor_id', pilot.id);
 
         const existingCalendarIds = new Set(existingCalendarsData?.map(cal => cal.calendar_id) || []);
-        const newCalendarIds = new Set(formData.calendars.map(cal => cal.id));
+        const newCalendarIds = new Set(formData.calendars.map(cal => cal.calendar_id));
 
         // Calendriers à supprimer (ceux qui ne sont plus dans la nouvelle liste)
         const calendarsToDelete = existingCalendarsData?.filter(cal => !newCalendarIds.has(cal.calendar_id)) || [];
         
         // Calendriers à ajouter (ceux qui n'existaient pas avant)
-        const calendarsToAdd = formData.calendars.filter(cal => !existingCalendarIds.has(cal.id));
+        const calendarsToAdd = formData.calendars.filter(cal => !existingCalendarIds.has(cal.calendar_id));
 
         // Calendriers à mettre à jour (ceux qui existaient déjà)
-        const calendarsToUpdate = formData.calendars.filter(cal => existingCalendarIds.has(cal.id));
+        const calendarsToUpdate = formData.calendars.filter(cal => existingCalendarIds.has(cal.calendar_id));
 
-        // Supprimer les calendriers qui ne sont plus utilisés et qui n'ont pas de disponibilités
-        for (const calendar of calendarsToDelete) {
-          // Vérifier s'il y a des disponibilités liées à ce calendrier
-          const { data: availabilities } = await supabase
-            .from('availabilities')
-            .select('id')
-            .eq('instructor_calendar_id', calendar.id)
-            .limit(1);
+        // Supprimer les calendriers qui ne sont plus utilisés
+        if (calendarsToDelete.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('instructor_calendars')
+            .delete()
+            .in('calendar_id', calendarsToDelete.map(cal => cal.calendar_id));
 
-          // Ne supprimer que si aucune disponibilité n'est liée
-          if (!availabilities?.length) {
-            const { error: deleteError } = await supabase
-              .from('instructor_calendars')
-              .delete()
-              .eq('id', calendar.id);
-
-            if (deleteError) throw deleteError;
-          } else {
-            // Si des disponibilités existent, marquer le calendrier comme inactif ou archivé
-            // Note: Il faudrait ajouter une colonne 'active' ou 'archived_at' à la table instructor_calendars
-            console.warn(`Le calendrier ${calendar.id} ne peut pas être supprimé car il a des disponibilités associées`);
-          }
+          if (deleteError) throw deleteError;
         }
 
         // Ajouter les nouveaux calendriers
@@ -250,7 +241,7 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
             .insert(
               calendarsToAdd.map(cal => ({
                 instructor_id: pilot.id,
-                calendar_id: cal.id,
+                calendar_id: cal.calendar_id,
                 calendar_name: cal.name,
                 color: cal.color
               }))
@@ -268,22 +259,10 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
               color: calendar.color
             })
             .eq('instructor_id', pilot.id)
-            .eq('calendar_id', calendar.id);
+            .eq('calendar_id', calendar.calendar_id);
 
           if (updateError) throw updateError;
         }
-      }
-
-      await onSubmit(dataToSubmit);
-
-      if (isAdmin) {
-        const { error: groupsError } = await supabase
-          .rpc('update_user_groups', {
-            p_user_id: pilot.id,
-            p_groups: dataToSubmit.roles
-          });
-
-        if (groupsError) throw groupsError;
       }
 
       toast.success("Profil mis à jour avec succès");
@@ -322,22 +301,31 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
   };
 
   const handleAddCalendar = () => {
-    if (!newCalendar.id || !newCalendar.name) {
-      toast.error("Veuillez remplir tous les champs");
+    if (!newCalendar.calendar_id || !newCalendar.name) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
-
     setFormData(prev => ({
       ...prev,
       calendars: [...prev.calendars, newCalendar]
     }));
-    setExistingCalendars(prev => [...prev, newCalendar]);
-    setNewCalendar({ id: "", name: "", color: "#4A5568" });
+    setNewCalendar({ calendar_id: "", name: "", color: "#4A5568" });
     setShowCalendarModal(false);
-    toast.success("Calendrier ajouté avec succès");
   };
 
-  const isInstructor = formData.roles.includes("INSTRUCTOR");
+  const handleCalendarChange = (index: number, field: 'name' | 'color' | 'calendar_id', value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      calendars: prev.calendars.map((cal, i) => i === index ? { ...cal, [field]: value } : cal)
+    }));
+  };
+
+  const removeCalendar = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      calendars: prev.calendars.filter((cal, i) => i !== index)
+    }));
+  };
 
   const getCalendarUrl = async () => {
     try {
@@ -362,6 +350,8 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
 
   // Vérifier si l'utilisateur peut modifier les informations sensibles
   const canEditSensitiveInfo = isAdmin || currentUser?.id === pilot.id;
+
+  const isInstructor = formData.roles.includes("INSTRUCTOR");
 
   return (
     <Card className="w-full max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
@@ -540,79 +530,85 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
               <Divider className="my-6" />
               
               <Typography variant="h6" className="mb-4 text-gray-700 flex items-center">
-                <CalendarMonthIcon className="mr-2" />
+                <Calendar className="mr-2" />
                 Calendriers synchronisés
               </Typography>
 
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                {existingCalendars.length > 0 ? (
-                  <List>
-                    {existingCalendars.map((calendar) => (
-                      <ListItem key={calendar.id} className="bg-white rounded-md mb-2 shadow-sm">
-                        <div className="flex items-center" style={{ width: '16px', height: '16px', backgroundColor: calendar.color, marginRight: '12px', borderRadius: '50%' }} />
-                        <ListItemText
-                          primary={calendar.name}
-                          secondary={calendar.id}
-                          className="text-gray-800"
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Calendriers</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowCalendarModal(true)}
+                    className="inline-flex items-center gap-2 text-sm font-medium text-sky-600 hover:text-sky-700"
+                  >
+                    <CalendarPlus className="h-4 w-4" />
+                    Ajouter un calendrier
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {formData.calendars.map((calendar, index) => (
+                    <div key={calendar.calendar_id || index} className="flex flex-col gap-2 p-4 rounded-lg border border-gray-200 bg-white">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          ID du calendrier Google
+                        </label>
+                        <input
+                          type="text"
+                          value={calendar.calendar_id}
+                          onChange={(e) => handleCalendarChange(index, 'calendar_id', e.target.value)}
+                          placeholder="example@group.calendar.google.com"
+                          className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
                         />
-                        <ListItemSecondaryAction>
-                          <IconButton
-                            edge="end"
-                            aria-label="change-color"
-                            onClick={() => {
-                              const newColor = prompt("Entrez une nouvelle couleur (format hex)", calendar.color);
-                              if (newColor && /^#[0-9A-F]{6}$/i.test(newColor)) {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  calendars: prev.calendars.map(cal => 
-                                    cal.id === calendar.id ? { ...cal, color: newColor } : cal
-                                  )
-                                }));
-                                setExistingCalendars(prev => prev.map(cal => 
-                                  cal.id === calendar.id ? { ...cal, color: newColor } : cal
-                                ));
-                              } else if (newColor) {
-                                toast.error("Format de couleur invalide. Utilisez le format hexadécimal (ex: #FF0000)");
-                              }
-                            }}
-                            className="mr-2"
-                          >
-                            <PaletteIcon />
-                          </IconButton>
-                          <IconButton
-                            edge="end"
-                            aria-label="delete"
-                            onClick={() => {
-                              setFormData(prev => ({
-                                ...prev,
-                                calendars: prev.calendars.filter(cal => cal.id !== calendar.id)
-                              }));
-                              setExistingCalendars(prev => prev.filter(cal => cal.id !== calendar.id));
-                            }}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </ListItemSecondaryAction>
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Typography variant="body2" className="text-gray-500 italic text-center py-4">
-                    Aucun calendrier synchronisé
-                  </Typography>
-                )}
+                        <p className="mt-1 text-sm text-gray-500">
+                          Vous pouvez trouver l'ID dans les paramètres de votre calendrier Google
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Nom du calendrier
+                          </label>
+                          <input
+                            type="text"
+                            value={calendar.name}
+                            onChange={(e) => handleCalendarChange(index, 'name', e.target.value)}
+                            placeholder="Nom du calendrier"
+                            className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeCalendar(index)}
+                          className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 self-end"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Couleur du calendrier
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={calendar.color || '#4A5568'}
+                            onChange={(e) => handleCalendarChange(index, 'color', e.target.value)}
+                            className="h-10 w-14 rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500 p-1 cursor-pointer"
+                          />
+                          <span className="text-sm text-gray-500">{calendar.color || '#4A5568'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {formData.calendars.length === 0 && (
+                    <div className="text-center py-4 text-sm text-gray-500">
+                      Aucun calendrier configuré
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    startIcon={<ImportCalendarIcon />}
-                    onClick={() => setShowCalendarModal(true)}
-                    className="w-full sm:flex-1"
-                    size="large"
-                  >
-                    Importer un Google Calendar
-                  </Button>
                   <Button
                     variant="outlined"
                     color="primary"
@@ -754,46 +750,72 @@ const EditPilotForm: React.FC<EditPilotFormProps> = ({
         </form>
 
         {/* Modal d'ajout de calendrier */}
-        <Dialog open={showCalendarModal} onClose={() => setShowCalendarModal(false)}>
-          <DialogTitle>Ajouter un calendrier Google</DialogTitle>
+        <Dialog 
+          open={showCalendarModal} 
+          onClose={() => setShowCalendarModal(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            Ajouter un calendrier
+          </DialogTitle>
           <DialogContent>
-            <div className="space-y-4 mt-4">
-              <TextField
-                fullWidth
-                label="ID du calendrier Google"
-                value={newCalendar.id}
-                onChange={(e) => setNewCalendar(prev => ({ ...prev, id: e.target.value }))}
-                variant="outlined"
-                placeholder="ID du calendrier (ex: example@group.calendar.google.com)"
-                helperText="Vous pouvez trouver l'ID dans les paramètres de votre calendrier Google"
-              />
-              <TextField
-                fullWidth
-                label="Nom du calendrier"
-                value={newCalendar.name}
-                onChange={(e) => setNewCalendar(prev => ({ ...prev, name: e.target.value }))}
-                variant="outlined"
-                placeholder="Ex: Calendrier personnel"
-              />
-              <TextField
-                fullWidth
-                label="Couleur du calendrier"
-                value={newCalendar.color}
-                onChange={(e) => setNewCalendar(prev => ({ ...prev, color: e.target.value }))}
-                variant="outlined"
-                placeholder="Ex: #FF0000"
-              />
+            <Typography variant="body2" color="textSecondary" className="mb-4">
+              Ajoutez un nouveau calendrier pour gérer les disponibilités de l'instructeur.
+            </Typography>
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ID du calendrier Google
+                </label>
+                <input
+                  type="text"
+                  value={newCalendar.calendar_id}
+                  onChange={(e) => setNewCalendar(prev => ({ ...prev, calendar_id: e.target.value }))}
+                  placeholder="example@group.calendar.google.com"
+                  className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  Vous pouvez trouver l'ID dans les paramètres de votre calendrier Google
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nom du calendrier
+                </label>
+                <input
+                  type="text"
+                  value={newCalendar.name}
+                  onChange={(e) => setNewCalendar(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Ex: Calendrier personnel"
+                  className="w-full rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Couleur du calendrier
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={newCalendar.color}
+                    onChange={(e) => setNewCalendar(prev => ({ ...prev, color: e.target.value }))}
+                    className="h-10 w-14 rounded-lg border-gray-300 focus:border-sky-500 focus:ring-sky-500 p-1 cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-500">{newCalendar.color}</span>
+                </div>
+              </div>
             </div>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowCalendarModal(false)}>
+            <Button onClick={() => setShowCalendarModal(false)} color="inherit">
               Annuler
             </Button>
-            <Button 
+            <Button
               onClick={handleAddCalendar}
-              variant="contained" 
+              variant="contained"
               color="primary"
-              disabled={!newCalendar.id || !newCalendar.name}
+              disabled={!newCalendar.calendar_id || !newCalendar.name}
             >
               Ajouter
             </Button>
