@@ -97,20 +97,24 @@ export function validateReservationInFuture(
 }
 
 export function validateReservationHours(
-  
   startTime: Date,
-  endTime: Date
+  endTime: Date,
+  club: { 
+    reservation_start_hour: number | null;
+    reservation_end_hour: number | null;
+  }
 ): ValidationError | null {
   const startHour = startTime.getHours();
   const endHour = endTime.getHours();
 
-  return null;
+  // Si les heures de réservation ne sont pas configurées, on utilise les valeurs par défaut
+  const startLimit = club.reservation_start_hour ?? 7;
+  const endLimit = club.reservation_end_hour ?? 21;
 
-  // Vérifier les heures d'ouverture (7h00 - 21h00)
-  if (startHour < 7 || endHour > 21) {
+  if (startHour < startLimit || endHour > endLimit) {
     return {
-      message: "Les réservations sont possibles uniquement entre 7h00 et 21h00",
-      code: "OUTSIDE_OPERATING_HOURS",
+      message: `Les réservations sont possibles uniquement entre ${startLimit}h et ${endLimit}h`,
+      code: "OUTSIDE_RESERVATION_HOURS",
     };
   }
 
@@ -371,6 +375,10 @@ export function validateReservation(
   instructorId: string | null,
   reservations: Reservation[],
   availabilities: Availability[],
+  club: { 
+    reservation_start_hour: number | null;
+    reservation_end_hour: number | null;
+  },
   currentReservationId?: string
 ): ValidationError | null {
   // Validation des horaires de base
@@ -378,14 +386,14 @@ export function validateReservation(
   if (timeValidation) return timeValidation;
 
   // Validation des heures d'ouverture
-  const hoursValidation = validateReservationHours(startTime, endTime);
+  const hoursValidation = validateReservationHours(startTime, endTime, club);
   if (hoursValidation) return hoursValidation;
 
   // Validation que la réservation est dans le futur
   const futureValidation = validateReservationInFuture(startTime);
   if (futureValidation) return futureValidation;
 
-  // Validation des chevauchements de réservations
+  // Validation du chevauchement avec d'autres réservations
   const overlapValidation = validateReservationOverlap(
     startTime,
     endTime,
@@ -395,16 +403,7 @@ export function validateReservation(
   );
   if (overlapValidation) return overlapValidation;
 
-  // Validation des disponibilités de l'avion
-  const availabilityValidation = validateAircraftAvailability(
-    startTime,
-    endTime,
-    aircraftId,
-    availabilities
-  );
-  if (availabilityValidation) return availabilityValidation;
-
-  // Validation des chevauchements pour le pilote
+  // Validation du chevauchement avec les réservations du pilote
   const pilotOverlapValidation = validatePilotOverlap(
     startTime,
     endTime,
@@ -414,7 +413,7 @@ export function validateReservation(
   );
   if (pilotOverlapValidation) return pilotOverlapValidation;
 
-  // Validation des chevauchements pour l'instructeur si présent
+  // Validation du chevauchement avec les réservations de l'instructeur
   if (instructorId) {
     const instructorOverlapValidation = validateInstructorOverlap(
       startTime,
@@ -425,6 +424,15 @@ export function validateReservation(
     );
     if (instructorOverlapValidation) return instructorOverlapValidation;
   }
+
+  // Validation de la disponibilité de l'avion
+  const availabilityValidation = validateAircraftAvailability(
+    startTime,
+    endTime,
+    aircraftId,
+    availabilities
+  );
+  if (availabilityValidation) return availabilityValidation;
 
   return null;
 }

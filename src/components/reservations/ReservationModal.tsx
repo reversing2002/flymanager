@@ -299,6 +299,32 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const [clubSettings, setClubSettings] = useState<{
+    reservation_start_hour: number | null;
+    reservation_end_hour: number | null;
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchClubSettings = async () => {
+      if (!currentUser?.club?.id) return;
+
+      const { data, error } = await supabase
+        .from('clubs')
+        .select('reservation_start_hour, reservation_end_hour')
+        .eq('id', currentUser.club.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching club settings:', error);
+        return;
+      }
+
+      setClubSettings(data);
+    };
+
+    fetchClubSettings();
+  }, [currentUser?.club?.id]);
+
   const checkAircraftAvailability = (aircraftId: string) => {
     const validationError = validateReservation(
       new Date(formData.startTime),
@@ -308,6 +334,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       formData.instructorId || null,
       existingReservations || [],
       availabilities || [],
+      {
+        reservation_start_hour: clubSettings?.reservation_start_hour ?? 7,
+        reservation_end_hour: clubSettings?.reservation_end_hour ?? 21
+      },
       existingReservation?.id
     );
 
@@ -597,8 +627,24 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       setLoading(true);
       setError("");
 
-      // Vérifier la disponibilité avant de soumettre
-      if (!checkAircraftAvailability(formData.aircraftId)) {
+      // Vérifier la disponibilité de l'avion
+      const validationError = validateReservation(
+        new Date(formData.startTime),
+        new Date(formData.endTime),
+        formData.aircraftId,
+        formData.pilotId,
+        formData.instructorId || null,
+        existingReservations || [],
+        availabilities || [],
+        {
+          reservation_start_hour: clubSettings?.reservation_start_hour ?? 7,
+          reservation_end_hour: clubSettings?.reservation_end_hour ?? 21
+        },
+        existingReservation?.id
+      );
+
+      if (validationError) {
+        setError(validationError.message);
         return;
       }
 

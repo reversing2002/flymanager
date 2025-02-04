@@ -110,12 +110,12 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   const hoursColumnRef = useRef<HTMLDivElement>(null);
   const gridContainerRef = useRef<HTMLDivElement>(null);
   const startHour = 7;
-  const endHour = 21;
+  const endHour = 23;
 
   const generateTimeSlots = () => {
     if (!clubCoordinates) {
-      const defaultStartHour = nightFlightsEnabled ? 5 : 7;
-      const defaultEndHour = nightFlightsEnabled ? 23 : 19; 
+      const defaultStartHour = 7;
+      const defaultEndHour = 23;
       return generateSlotsForHours(defaultStartHour, defaultEndHour);
     }
 
@@ -125,14 +125,8 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       clubCoordinates.longitude
     );
 
-    let startHour = nightFlightsEnabled ? 5 : Math.floor(sunTimes.aeroStart.getHours());
-    let endHour = Math.ceil(sunTimes.aeroEnd.getHours());
-
-    if (nightFlightsEnabled) {
-      endHour = Math.max(endHour, 23); 
-    } else {
-      endHour = Math.min(endHour, 19);
-    }
+    let startHour = 7;
+    let endHour = 23;
 
     console.log("=== Debug Time Slots Generation ===");
     console.log("Aero start:", sunTimes.aeroStart.toLocaleTimeString());
@@ -386,7 +380,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     const height = (duration / 15) * 1;
     
     // Ajuster le calcul de la position en fonction de l'heure de début des créneaux
-    const gridStartHour = nightFlightsEnabled ? 5 : 7;
+    const gridStartHour = 7;
     const top = ((startTime.getHours() - gridStartHour) * 4 + startTime.getMinutes() / 15) * 1;
 
     const pilot = users.find((u) => u.id === reservation.pilotId);

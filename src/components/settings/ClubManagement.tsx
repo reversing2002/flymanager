@@ -16,13 +16,8 @@ interface ClubData {
   address: string;
   phone: string;
   email: string;
-  latitude: number | null;
-  longitude: number | null;
-  night_flights_enabled: boolean;
-  commission_rate: number;
-  stripe_account_id: string | null;
-  wind_station_id: string | null;
-  wind_station_name: string | null;
+  reservation_start_hour: number | null;
+  reservation_end_hour: number | null;
 }
 
 interface ClubSettings {
@@ -44,6 +39,7 @@ const ClubManagement = () => {
 
   const tabs = [
     { id: 'general', label: 'Général' },
+    { id: 'hours', label: 'Horaires' },
     { id: 'discovery', label: 'Vols découverte' },
     { id: 'meteo', label: 'Météo' },
     { id: 'website', label: 'Site Web' },
@@ -57,9 +53,8 @@ const ClubManagement = () => {
   }, [user?.club?.id]);
 
   const fetchClubData = async () => {
-    if (!user?.club?.id) return;
-
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('clubs')
         .select('*')
@@ -68,12 +63,17 @@ const ClubManagement = () => {
 
       if (error) throw error;
 
+      // Set default values if not set
       if (data) {
+        data.reservation_start_hour = data.reservation_start_hour ?? 7;
+        data.reservation_end_hour = data.reservation_end_hour ?? 21;
         setClubData(data);
       }
-    } catch (error) {
-      setError('Impossible de charger les informations du club');
-      console.error('Error:', error);
+    } catch (err) {
+      setError('Erreur lors du chargement des données du club');
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -111,6 +111,18 @@ const ClubManagement = () => {
           .eq('id', user.club.id);
 
         if (error) throw error;
+      } else if (activeTab === 'hours') {
+        // Pour l'onglet heures, on met à jour les heures de réservation
+        const { error } = await supabase
+          .from('clubs')
+          .update({
+            reservation_start_hour: parseInt(formData.get('reservation_start_hour') as string),
+            reservation_end_hour: parseInt(formData.get('reservation_end_hour') as string),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.club.id);
+
+        if (error) throw error;
       } else {
         // Pour les autres onglets, on met à jour tous les champs généraux
         const values = {
@@ -119,10 +131,6 @@ const ClubManagement = () => {
           address: formData.get('address') as string,
           phone: formData.get('phone') as string,
           email: formData.get('email') as string,
-          latitude: formData.get('latitude') ? Number(formData.get('latitude')) : null,
-          longitude: formData.get('longitude') ? Number(formData.get('longitude')) : null,
-          night_flights_enabled: formData.get('night_flights_enabled') === 'on',
-          commission_rate: formData.get('commission_rate') ? Number(formData.get('commission_rate')) : 3,
           updated_at: new Date().toISOString(),
         };
 
@@ -141,8 +149,6 @@ const ClubManagement = () => {
               address: values.address,
               phone: values.phone,
               email: values.email,
-              latitude: values.latitude,
-              longitude: values.longitude,
             },
             updated_at: new Date().toISOString(),
           })
@@ -248,36 +254,6 @@ const ClubManagement = () => {
               />
             </div>
             <div>
-              <label htmlFor="latitude" className="block text-sm font-medium text-gray-700">
-                Latitude
-              </label>
-              <input
-                type="number"
-                step="any"
-                name="latitude"
-                id="latitude"
-                value={clubData.latitude || ''}
-                onChange={(e) => setClubData({ ...clubData, latitude: e.target.value ? Number(e.target.value) : null })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                placeholder="Ex: 48.8566"
-              />
-            </div>
-            <div>
-              <label htmlFor="longitude" className="block text-sm font-medium text-gray-700">
-                Longitude
-              </label>
-              <input
-                type="number"
-                step="any"
-                name="longitude"
-                id="longitude"
-                value={clubData.longitude || ''}
-                onChange={(e) => setClubData({ ...clubData, longitude: e.target.value ? Number(e.target.value) : null })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                placeholder="Ex: 2.3522"
-              />
-            </div>
-            <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                 Téléphone
               </label>
@@ -303,36 +279,6 @@ const ClubManagement = () => {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="night_flights_enabled"
-                name="night_flights_enabled"
-                className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
-                defaultChecked={clubData?.night_flights_enabled}
-              />
-              <label htmlFor="night_flights_enabled" className="text-sm font-medium text-gray-700">
-                Autoriser les vols de nuit
-              </label>
-            </div>
-            {isSystemAdmin && (
-              <div>
-                <label htmlFor="commission_rate" className="block text-sm font-medium text-gray-700">
-                  Taux de commission (%)
-                </label>
-                <input
-                  type="number"
-                  name="commission_rate"
-                  id="commission_rate"
-                  value={clubData.commission_rate}
-                  onChange={(e) => setClubData({ ...clubData, commission_rate: Number(e.target.value) })}
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                />
-              </div>
-            )}
           </div>
           <div className="flex justify-end">
             <button
@@ -344,6 +290,66 @@ const ClubManagement = () => {
             </button>
           </div>
         </form>
+      )}
+
+      {activeTab === 'hours' && (
+        <div className="space-y-6">
+          <div className="bg-white shadow sm:rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <h3 className="text-lg font-medium leading-6 text-gray-900">
+                Horaires des réservations
+              </h3>
+              <form onSubmit={handleSubmit}>
+                <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="reservation_start_hour" className="block text-sm font-medium text-gray-700">
+                      Heure de début des réservations
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="23"
+                      name="reservation_start_hour"
+                      id="reservation_start_hour"
+                      value={clubData?.reservation_start_hour ?? 7}
+                      onChange={(e) => setClubData(prev => ({ ...prev!, reservation_start_hour: parseInt(e.target.value) }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="reservation_end_hour" className="block text-sm font-medium text-gray-700">
+                      Heure de fin des réservations
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="23"
+                      name="reservation_end_hour"
+                      id="reservation_end_hour"
+                      value={clubData?.reservation_end_hour ?? 21}
+                      onChange={(e) => setClubData(prev => ({ ...prev!, reservation_end_hour: parseInt(e.target.value) }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <p className="text-sm text-gray-500">
+                    Note : L'heure de début doit être inférieure à l'heure de fin. Les heures doivent être comprises entre 0 et 23.
+                  </p>
+                </div>
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="inline-flex justify-center rounded-md border border-transparent bg-sky-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                  >
+                    {loading ? 'Enregistrement...' : 'Enregistrer'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
 
       {activeTab === 'discovery' && <DiscoveryFlightSettings />}
