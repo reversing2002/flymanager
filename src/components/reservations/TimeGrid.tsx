@@ -51,6 +51,8 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   const [clubCoordinates, setClubCoordinates] = useState<{
     latitude: number;
     longitude: number;
+    reservation_start_hour: number | null;
+    reservation_end_hour: number | null;
   } | null>(null);
   const [maintenanceStats, setMaintenanceStats] = useState<MaintenanceStats>({
     aircraft_stats: [],
@@ -63,12 +65,17 @@ const TimeGrid: React.FC<TimeGridProps> = ({
 
       const { data: clubData } = await supabase
         .from("clubs")
-        .select("latitude, longitude")
+        .select("latitude, longitude, reservation_start_hour, reservation_end_hour")
         .eq("id", user.club.id)
         .single();
 
-      if (clubData?.latitude && clubData?.longitude) {
-        setClubCoordinates(clubData);
+      if (clubData) {
+        setClubCoordinates({
+          latitude: clubData.latitude,
+          longitude: clubData.longitude,
+          reservation_start_hour: clubData.reservation_start_hour ?? 7,
+          reservation_end_hour: clubData.reservation_end_hour ?? 21
+        });
       }
     };
 
@@ -109,31 +116,19 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   const timeGridRef = useRef<HTMLDivElement>(null);
   const hoursColumnRef = useRef<HTMLDivElement>(null);
   const gridContainerRef = useRef<HTMLDivElement>(null);
-  const startHour = 7;
-  const endHour = 23;
 
   const generateTimeSlots = () => {
     if (!clubCoordinates) {
-      const defaultStartHour = 7;
-      const defaultEndHour = 23;
-      return generateSlotsForHours(defaultStartHour, defaultEndHour);
+      // Valeurs par défaut si le club n'est pas configuré
+      return generateSlotsForHours(7, 21);
     }
 
-    const sunTimes = getSunTimes(
-      selectedDate,
-      clubCoordinates.latitude,
-      clubCoordinates.longitude
-    );
-
-    let startHour = 7;
-    let endHour = 23;
+    const startHour = clubCoordinates.reservation_start_hour ?? 7;
+    const endHour = clubCoordinates.reservation_end_hour ?? 21;
 
     console.log("=== Debug Time Slots Generation ===");
-    console.log("Aero start:", sunTimes.aeroStart.toLocaleTimeString());
-    console.log("Aero end:", sunTimes.aeroEnd.toLocaleTimeString());
-    console.log("Night flights enabled:", nightFlightsEnabled);
-    console.log("Final start hour:", startHour);
-    console.log("Final end hour:", endHour);
+    console.log("Club start hour:", startHour);
+    console.log("Club end hour:", endHour);
 
     return generateSlotsForHours(startHour, endHour);
   };
@@ -380,7 +375,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     const height = (duration / 15) * 1;
     
     // Ajuster le calcul de la position en fonction de l'heure de début des créneaux
-    const gridStartHour = 7;
+    const gridStartHour = clubCoordinates?.reservation_start_hour ?? 7;
     const top = ((startTime.getHours() - gridStartHour) * 4 + startTime.getMinutes() / 15) * 1;
 
     const pilot = users.find((u) => u.id === reservation.pilotId);
