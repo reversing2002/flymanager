@@ -208,6 +208,7 @@ interface ReservationModalProps {
   existingReservation?: Reservation;
   onCreateFlight?: (reservation: Reservation) => void;
   comments?: string;
+  nightFlightsEnabled?: boolean;
 }
 
 const ReservationModal: React.FC<ReservationModalProps> = ({
@@ -223,7 +224,13 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   existingReservation,
   onCreateFlight,
   comments,
+  nightFlightsEnabled = false,
 }) => {
+  console.log("=== Debug ReservationModal Props ===");
+  console.log("nightFlightsEnabled:", nightFlightsEnabled);
+  console.log("startTime:", startTime);
+  console.log("endTime:", endTime);
+
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -573,6 +580,19 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       return;
     }
 
+    // Vérifier les heures de début et de fin
+    const startTimeError = validateTime(formData.startTime);
+    if (startTimeError) {
+      setError(startTimeError);
+      return;
+    }
+
+    const endTimeError = validateTime(formData.endTime);
+    if (endTimeError) {
+      setError(endTimeError);
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
@@ -647,15 +667,28 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     return Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)); // Durée en minutes
   };
 
-  const validateTimeSlot = (time: string): boolean => {
+  const validateTime = (time: string): string | null => {
     const date = new Date(time);
     const minutes = date.getMinutes();
-    return minutes % 15 === 0;
+
+    // Vérifier que les minutes sont par tranches de 15
+    if (minutes % 15 !== 0) {
+      return "Les réservations doivent être par tranches de 15 minutes";
+    }
+
+    return null;
   };
 
   const handleTimeChange = (field: 'startTime' | 'endTime', value: string) => {
     const date = new Date(value);
     const roundedDate = roundToQuarterHour(date);
+    
+    // Vérifier la validité de l'heure
+    const timeError = validateTime(roundedDate.toISOString());
+    if (timeError) {
+      setError(timeError);
+      return;
+    }
     
     if (field === 'startTime') {
       const currentEndTime = new Date(formData.endTime);
@@ -664,11 +697,19 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         const newEndTime = new Date(roundedDate.getTime() + 30 * 60000);
         const roundedEndTime = roundToQuarterHour(newEndTime);
         
+        // Vérifier aussi l'heure de fin
+        const endTimeError = validateTime(roundedEndTime.toISOString());
+        if (endTimeError) {
+          setError(endTimeError);
+          return;
+        }
+        
         setFormData(prev => ({
           ...prev,
           startTime: formatDateForInput(roundedDate),
           endTime: formatDateForInput(roundedEndTime)
         }));
+        setError("");
         return;
       }
     }
@@ -677,6 +718,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       ...prev,
       [field]: formatDateForInput(roundedDate)
     }));
+    setError("");
   };
 
   const [showCreditModal, setShowCreditModal] = useState(false);

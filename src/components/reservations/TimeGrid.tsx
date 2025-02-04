@@ -114,8 +114,8 @@ const TimeGrid: React.FC<TimeGridProps> = ({
 
   const generateTimeSlots = () => {
     if (!clubCoordinates) {
-      const defaultStartHour = 7;
-      const defaultEndHour = nightFlightsEnabled ? 21 : 18;
+      const defaultStartHour = nightFlightsEnabled ? 5 : 7;
+      const defaultEndHour = nightFlightsEnabled ? 23 : 19; 
       return generateSlotsForHours(defaultStartHour, defaultEndHour);
     }
 
@@ -125,27 +125,23 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       clubCoordinates.longitude
     );
 
-    const startMinutes =
-      sunTimes.aeroStart.getHours() * 60 + sunTimes.aeroStart.getMinutes();
-    const endMinutes =
-      sunTimes.aeroEnd.getHours() * 60 + sunTimes.aeroEnd.getMinutes();
+    let startHour = nightFlightsEnabled ? 5 : Math.floor(sunTimes.aeroStart.getHours());
+    let endHour = Math.ceil(sunTimes.aeroEnd.getHours());
 
-    const roundedStartMinutes = Math.floor(startMinutes / 15) * 15;
-    const roundedEndMinutes = Math.ceil(endMinutes / 15) * 15;
-
-    const startHour = Math.floor(roundedStartMinutes / 60);
-    const endHour = Math.ceil(roundedEndMinutes / 60);
+    if (nightFlightsEnabled) {
+      endHour = Math.max(endHour, 23); 
+    } else {
+      endHour = Math.min(endHour, 19);
+    }
 
     console.log("=== Debug Time Slots Generation ===");
     console.log("Aero start:", sunTimes.aeroStart.toLocaleTimeString());
     console.log("Aero end:", sunTimes.aeroEnd.toLocaleTimeString());
-    console.log("Rounded start hour:", startHour);
-    console.log("Rounded end hour:", endHour);
+    console.log("Night flights enabled:", nightFlightsEnabled);
+    console.log("Final start hour:", startHour);
+    console.log("Final end hour:", endHour);
 
-    return generateSlotsForHours(
-      startHour,
-      nightFlightsEnabled ? endHour + 1 : endHour
-    );
+    return generateSlotsForHours(startHour, endHour);
   };
 
   const generateSlotsForHours = (startHour: number, endHour: number) => {
@@ -388,9 +384,10 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     const endTime = new Date(reservation.endTime);
     const duration = differenceInMinutes(endTime, startTime);
     const height = (duration / 15) * 1;
-    const top =
-      ((startTime.getHours() - startHour) * 4 + startTime.getMinutes() / 15) *
-      1;
+    
+    // Ajuster le calcul de la position en fonction de l'heure de début des créneaux
+    const gridStartHour = nightFlightsEnabled ? 5 : 7;
+    const top = ((startTime.getHours() - gridStartHour) * 4 + startTime.getMinutes() / 15) * 1;
 
     const pilot = users.find((u) => u.id === reservation.pilotId);
     const instructor = users.find((u) => u.id === reservation.instructorId);
@@ -574,6 +571,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({
   const renderTimeSlot = (aircraft: Aircraft, hour: number, minute: number) => {
     const slotStart = setMinutes(setHours(new Date(selectedDate), hour), minute);
     const slotEnd = setMinutes(setHours(new Date(selectedDate), hour), minute + 30);
+    const isNight = isNightTime(hour, minute);
 
     // Ne garder que les indisponibilités liées à l'avion
     const blockingAvailability = availabilities.find((availability) => {
@@ -592,6 +590,8 @@ const TimeGrid: React.FC<TimeGridProps> = ({
     });
 
     const isUnavailable = !!blockingAvailability;
+    const isPast = isPastTimeSlot(hour, minute);
+    const isCurrent = isCurrentTimeSlot(hour, minute);
 
     const reservation = reservations.find(
       (r) =>
@@ -604,69 +604,49 @@ const TimeGrid: React.FC<TimeGridProps> = ({
       ? flights.find((f) => f.reservationId === reservation.id)
       : null;
 
-    const slotClasses = [
-      "h-4",
-      "border-r",
-      "border-gray-200",
-      "transition-colors",
-      "duration-150",
-      "cursor-pointer",
-      minute === 0 ? "border-t" : "",
-    ];
-
-    if (isUnavailable) {
-      slotClasses.push("bg-red-100 cursor-not-allowed");
-    } else if (reservation) {
-      slotClasses.push(
-        flight ? "bg-blue-500" : "bg-blue-200",
-        "hover:bg-blue-300"
-      );
-    } else {
-      slotClasses.push("hover:bg-gray-100");
+    if (reservation) {
+      return null;
     }
 
-    const handleSlotClick = () => {
-      console.log("=== handleSlotClick dans TimeGrid ===");
-      console.log("Hour:", hour);
-      console.log("Minute:", minute);
-      console.log("AircraftId:", aircraft.id);
-      console.log("IsUnavailable:", isUnavailable);
-      console.log("HasReservation:", !!reservation);
-      
-      if (isUnavailable && blockingAvailability) {
-        const start = new Date(blockingAvailability.start_time);
-        const end = new Date(blockingAvailability.end_time);
-        const reason = blockingAvailability.reason || "Aucune raison spécifiée";
-        
-        console.log("Créneau indisponible:", {
-          start: start.toISOString(),
-          end: end.toISOString(),
-          reason
-        });
-        
-        toast.error(
-          `Créneau indisponible : ${reason}\nDu ${format(start, "dd/MM/yyyy HH:mm", { locale: fr })} au ${format(end, "dd/MM/yyyy HH:mm", { locale: fr })}`,
-          { duration: 4000 }
-        );
-        return;
-      }
-      if (reservation) {
-        console.log("Clic sur réservation existante");
-        onReservationClick(reservation);
-      } else {
-        console.log("Clic sur créneau libre");
-        handleClick(hour, minute, aircraft.id);
-      }
-    };
+    let bgClass = "bg-white hover:bg-sky-50";
+    if (isNight) {
+      bgClass = nightFlightsEnabled 
+        ? "bg-slate-100 hover:bg-sky-50" 
+        : "bg-slate-200 cursor-not-allowed";
+    }
+    if (isPast) {
+      bgClass = "bg-gray-100 cursor-not-allowed";
+    }
+    if (isCurrent) {
+      bgClass = "bg-yellow-50";
+    }
+    if (isUnavailable) {
+      bgClass = "bg-red-50 cursor-not-allowed";
+    }
+
+    const isSelectable = !isPast && !isUnavailable && (nightFlightsEnabled || !isNight);
 
     return (
       <div
-        key={`${aircraft.id}-${hour}-${minute}`}
-        className={slotClasses.join(" ")}
-        onClick={handleSlotClick}
+        key={`${hour}-${minute}-${aircraft.id}`}
+        className={`time-slot ${bgClass} border-b border-r border-gray-200 relative ${
+          isSelectable ? "cursor-pointer" : ""
+        }`}
         data-time={`${hour}-${minute}`}
         data-aircraft={aircraft.id}
-      />
+        onMouseDown={(e) => isSelectable && handleMouseDown(hour, minute, aircraft.id, e)}
+        onMouseMove={() => isSelectable && handleMouseMove(hour, minute)}
+        onMouseUp={(e) => isSelectable && handleMouseUp(e)}
+      >
+        {isNight && (
+          <Moon className="absolute top-0 right-0 w-3 h-3 text-slate-400 m-0.5" />
+        )}
+        {blockingAvailability && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Wrench className="w-4 h-4 text-red-500" />
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -838,7 +818,6 @@ const TimeGrid: React.FC<TimeGridProps> = ({
                       {renderTimeSlot(aircraft, hour, minute)}
                     </div>
                   ))}
-
                   {getReservationsForAircraft(aircraft.id).map((reservation) =>
                     renderReservation(reservation, false)
                   )}
@@ -919,6 +898,8 @@ const TimeGrid: React.FC<TimeGridProps> = ({
           users={users}
           preselectedAircraftId={selectedReservation.aircraftId}
           existingReservation={selectedReservation.reservation}
+          nightFlightsEnabled={nightFlightsEnabled}
+          availabilities={availabilities}
         />
       )}
     </div>

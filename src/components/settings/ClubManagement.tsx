@@ -303,6 +303,18 @@ const ClubManagement = () => {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
               />
             </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="night_flights_enabled"
+                name="night_flights_enabled"
+                className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                defaultChecked={clubData?.night_flights_enabled}
+              />
+              <label htmlFor="night_flights_enabled" className="text-sm font-medium text-gray-700">
+                Autoriser les vols de nuit
+              </label>
+            </div>
             {isSystemAdmin && (
               <div>
                 <label htmlFor="commission_rate" className="block text-sm font-medium text-gray-700">

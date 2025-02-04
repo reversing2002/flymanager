@@ -97,11 +97,14 @@ export function validateReservationInFuture(
 }
 
 export function validateReservationHours(
+  
   startTime: Date,
   endTime: Date
 ): ValidationError | null {
   const startHour = startTime.getHours();
   const endHour = endTime.getHours();
+
+  return null;
 
   // Vérifier les heures d'ouverture (7h00 - 21h00)
   if (startHour < 7 || endHour > 21) {

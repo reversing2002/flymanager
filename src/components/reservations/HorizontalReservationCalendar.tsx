@@ -1129,6 +1129,8 @@ const HorizontalReservationCalendar = ({
           users={users}
           preselectedAircraftId={selectedTimeSlot?.aircraftId}
           existingReservation={selectedReservation}
+          nightFlightsEnabled={clubSettings?.night_flights_enabled ?? false}
+          availabilities={availabilities}
           onCreateFlight={handleCreateFlight}
           onUpdate={handleReservationUpdate}
         />
